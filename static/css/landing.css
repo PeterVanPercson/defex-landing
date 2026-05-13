@@ -862,22 +862,14 @@ html[lang="zh"] input[data-placeholder-zh] { /* handled in JS */ }
 
 /* ======================== LANG TOGGLE ======================== */
 
-.nav__right {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
 .lang {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 10px;
-    background: var(--ink);
-    color: var(--dark-mute);
-    border-radius: 4px;
+    background: transparent;
+    color: var(--mute);
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: 0.06em;
     user-select: none;
 }
@@ -891,12 +883,12 @@ html[lang="zh"] input[data-placeholder-zh] { /* handled in JS */ }
     letter-spacing: inherit;
     transition: color .12s;
 }
-.lang__btn:hover { color: var(--dark-ink); }
-.lang__sep { color: var(--dark-line); }
+.lang__btn:hover { color: var(--ink); }
+.lang__sep { color: var(--line-2); }
 
 html[lang="en"] .lang__btn[data-lang="en"],
 html[lang="zh"] .lang__btn[data-lang="zh"] {
-    color: var(--dark-ink);
+    color: var(--ink);
 }
 
 
@@ -950,6 +942,5 @@ html[lang="zh"] .lang__btn[data-lang="zh"] {
 
 @media (max-width: 480px) {
     .sticky-cta { bottom: 14px; right: 14px; padding: 10px 14px; font-size: 11px; }
-    .nav__right { gap: 12px; }
-    .lang { padding: 5px 8px; font-size: 10px; }
+    .lang { font-size: 11px; }
 }
