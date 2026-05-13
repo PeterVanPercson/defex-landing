@@ -24,40 +24,94 @@
 })();
 
 
-// ===== Animated ASCII cup =====
+// ===== Animated factory line — cycles through fabric / pcb / sheet / cup =====
 (() => {
     const frame = document.getElementById('scanFrame');
     if (!frame) return;
 
     const BELT_LINE = `<span class="belt">${'━'.repeat(56)}</span>`;
+    const DEFECT = '<span class="defect">╳</span>';
 
-    // 5-line coffee cup glyph, 8 chars wide
-    //  ╭─────╮     ← rim
-    //  │     │╮    ← top of body + handle top
-    //  │ ▒▒▒ ││    ← body with coffee
-    //  │     │╯    ← bottom of body + handle bottom
-    //  ╰─────╯     ← base
-    const CUP_OK = [
-        '╭─────╮ ',
-        '│     │╮',
-        '│ ▒▒▒ ││',
-        '│     │╯',
-        '╰─────╯ ',
-    ];
-    // FAIL variant — ╳ marker on the rim where the defect was detected
-    const CUP_BAD = [
-        '╭──<span class="defect">╳</span>──╮ ',
-        '│     │╮',
-        '│ ▒▒▒ ││',
-        '│     │╯',
-        '╰─────╯ ',
+    // Each sample: 8 chars wide × 5 rows tall. `failNote` is shown on FAIL.
+    const SAMPLES = [
+        {
+            name: 'fabric',
+            ok: [
+                '┌──────┐',
+                '│▒▓▒▓▒▓│',
+                '│▓▒▓▒▓▒│',
+                '│▒▓▒▓▒▓│',
+                '└──────┘',
+            ],
+            bad: [
+                '┌──────┐',
+                '│▒▓▒▓▒▓│',
+                '│▓' + DEFECT + '▓▒▓▒│',
+                '│▒▓▒▓▒▓│',
+                '└──────┘',
+            ],
+            failNote: 'stitch defect',
+        },
+        {
+            name: 'pcb',
+            ok: [
+                '┌──────┐',
+                '│ ●━━● │',
+                '│ ┃  ┃ │',
+                '│ ●━━● │',
+                '└──────┘',
+            ],
+            bad: [
+                '┌──────┐',
+                '│ ●━━● │',
+                '│ ┃  ' + DEFECT + ' │',
+                '│ ●━━● │',
+                '└──────┘',
+            ],
+            failNote: 'solder bridge',
+        },
+        {
+            name: 'sheet',
+            ok: [
+                '┌──────┐',
+                '│      │',
+                '│      │',
+                '│      │',
+                '└──────┘',
+            ],
+            bad: [
+                '┌──────┐',
+                '│      │',
+                '│  ' + DEFECT + '   │',
+                '│      │',
+                '└──────┘',
+            ],
+            failNote: 'surface dent',
+        },
+        {
+            name: 'cup',
+            ok: [
+                '╭─────╮ ',
+                '│     │╮',
+                '│ ▒▒▒ ││',
+                '│     │╯',
+                '╰─────╯ ',
+            ],
+            bad: [
+                '╭──' + DEFECT + '──╮ ',
+                '│     │╮',
+                '│ ▒▒▒ ││',
+                '│     │╯',
+                '╰─────╯ ',
+            ],
+            failNote: 'rim chip',
+        },
     ];
 
-    function makeFrame(cupX, cup, label) {
+    function makeFrame(x, glyph, label) {
         const rows = [BELT_LINE];
         for (let r = 0; r < 5; r++) {
-            let line = ' '.repeat(cupX) + cup[r];
-            // place label next to the cup body row (row 2)
+            let line = ' '.repeat(x) + glyph[r];
             if (label && r === 2) {
                 line += '   ' + label;
             }
@@ -67,40 +121,38 @@
         return rows.join('\n');
     }
 
-    // 6-frame cycle: enter → travel → enter scan → result → exit → off-right
-    const FRAMES_PASS = [
-        makeFrame(2,  CUP_OK,  null),
-        makeFrame(14, CUP_OK,  null),
-        makeFrame(24, CUP_OK,  '<span class="scan-act">◉ scanning ...</span>'),
-        makeFrame(24, CUP_OK,  '<span class="ok">✓ PASS</span>'),
-        makeFrame(36, CUP_OK,  null),
-        makeFrame(48, CUP_OK,  null),
-    ];
-    const FRAMES_FAIL = [
-        makeFrame(2,  CUP_OK,  null),
-        makeFrame(14, CUP_OK,  null),
-        makeFrame(24, CUP_OK,  '<span class="scan-act">◉ scanning ...</span>'),
-        makeFrame(24, CUP_BAD, '<span class="fail">✕ FAIL</span>'),
-        makeFrame(36, CUP_BAD, null),
-        makeFrame(48, CUP_BAD, null),
-    ];
+    function buildCycle(sample, isPass) {
+        const finalGlyph = isPass ? sample.ok : sample.bad;
+        const result = isPass
+            ? '<span class="ok">✓ PASS</span>'
+            : `<span class="fail">✕ FAIL · ${sample.failNote}</span>`;
+        return [
+            makeFrame(2,  sample.ok,  null),
+            makeFrame(14, sample.ok,  null),
+            makeFrame(24, sample.ok,  '<span class="scan-act">◉ scanning ...</span>'),
+            makeFrame(24, finalGlyph, result),
+            makeFrame(36, finalGlyph, null),
+            makeFrame(48, finalGlyph, null),
+        ];
+    }
 
     const $status = document.getElementById('scanStatus');
     const $thru   = document.getElementById('scanThru');
     const $fail   = document.getElementById('scanFail');
     const $up     = document.getElementById('scanUp');
 
+    let sampleIdx = 0;
+    let isPass = true;
+    let frames = buildCycle(SAMPLES[sampleIdx], isPass);
     let i = 0;
-    let passCycle = true;
-    // Realistic-feeling starting state — looks like a shift already in progress
+
     let thru  = 4127;
     let fails = 38;
     $thru.textContent = thru.toLocaleString();
     $fail.textContent = fails;
 
     function tick() {
-        const set = passCycle ? FRAMES_PASS : FRAMES_FAIL;
-        frame.innerHTML = set[i];
+        frame.innerHTML = frames[i];
 
         if (i === 0) {
             $status.textContent = 'belt';
@@ -109,7 +161,7 @@
             $status.textContent = 'scanning';
             $status.style.color = '';
         } else if (i === 3) {
-            if (passCycle) {
+            if (isPass) {
                 $status.textContent = 'pass';
                 $status.style.color = 'var(--ok)';
                 thru += 1;
@@ -125,10 +177,12 @@
         }
 
         i += 1;
-        if (i >= set.length) {
+        if (i >= frames.length) {
             i = 0;
-            // 1 in ~4 cycles is a FAIL — keeps the demo lively without making the line look terrible
-            passCycle = Math.random() > 0.25;
+            // Next product: cycle through samples with slight randomness.
+            sampleIdx = (sampleIdx + 1 + Math.floor(Math.random() * 2)) % SAMPLES.length;
+            isPass = Math.random() > 0.25;  // ~1 in 4 fails
+            frames = buildCycle(SAMPLES[sampleIdx], isPass);
         }
     }
 

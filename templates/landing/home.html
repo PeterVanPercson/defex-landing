@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}defex — replaces QC inspectors with AI{% endblock %}
 
@@ -11,7 +12,7 @@
         <span class="marquee__sep">+</span>
         <span class="marquee__item">Keyence ($40K)</span>
         <span class="marquee__sep">+</span>
-        <span class="marquee__item">Defex<span class="dot">.</span> ($1,150)</span>
+        <span class="marquee__item">defex<span class="dot">.</span> ($1,150)</span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">
             <span lang="en">Replaces QC inspectors with AI</span><span lang="zh">用 AI 替代人工质检</span>
@@ -30,7 +31,7 @@
         <span class="marquee__sep">+</span>
         <span class="marquee__item">Keyence ($40K)</span>
         <span class="marquee__sep">+</span>
-        <span class="marquee__item">Defex<span class="dot">.</span> ($1,150)</span>
+        <span class="marquee__item">defex<span class="dot">.</span> ($1,150)</span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">
             <span lang="en">Replaces QC inspectors with AI</span><span lang="zh">用 AI 替代人工质检</span>
@@ -177,12 +178,12 @@
             </span>
         </div>
         <div class="compare__cell compare__cell--us">
-            <span class="compare__brand">Defex</span>
+            <span class="compare__brand">defex</span>
             <span class="compare__price">$1,150 <span class="compare__plus">
                 <span lang="en">+ $210 / mo</span><span lang="zh">+ 每月 $210</span>
             </span></span>
             <span class="compare__note">
-                <span lang="en">edge AI</span><span lang="zh">边缘 AI</span>
+                <span lang="en">managed</span><span lang="zh">全托管</span>
             </span>
         </div>
     </div>
@@ -204,6 +205,18 @@
         <span lang="en">An inspection layer that <em>doesn&rsquo;t need a person.</em></span><span lang="zh">无需人工的 <em>质检层。</em></span>
     </h2>
     <div class="block__body">
+
+        <!-- fig.02 / hardware schematic -->
+        <figure class="hw">
+            <figcaption class="hw__caption">
+                <span class="hw__caption-num">fig.02</span>
+                <span class="hw__caption-title">
+                    <span lang="en">inspection station &middot; camera + edge box + your line</span><span lang="zh">质检工位 &middot; 相机 + 边缘盒子 + 您的产线</span>
+                </span>
+            </figcaption>
+            <img class="hw__svg" src="{% static 'img/hardware.svg' %}" alt="hardware schematic">
+        </figure>
+
         <div class="trio">
             <article class="panel trio__item">
                 <span class="panel__label">fig.a / install</span>

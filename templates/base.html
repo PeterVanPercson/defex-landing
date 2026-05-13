@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}defex — replaces QC inspectors with AI{% endblock %}</title>
-    <meta name="description" content="Defex replaces QC inspectors with AI vision. Sub-$2K to deploy. Built for the bottom 90% of factories.">
+    <meta name="description" content="defex replaces QC inspectors with AI vision. Sub-$2K to deploy. Built for the bottom 90% of factories.">
+    <link rel="canonical" href="https://defex.app/">
 
     <!-- Open Graph / Twitter -->
     <meta property="og:type" content="website">
@@ -21,7 +22,36 @@
     <meta name="twitter:description" content="Sub-$2K to deploy. Built for the bottom 90% of factories that Cognex and Keyence skip.">
     <meta name="twitter:image" content="https://defex.app{% static 'img/og.png' %}">
 
+    <!-- Favicons (SVG for modern browsers, PNG fallback, Apple touch) -->
     <link rel="icon" type="image/svg+xml" href="{% static 'img/defex-mark.svg' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon-16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/apple-touch-icon.png' %}">
+
+    <!-- Structured data (Organization) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "defex",
+      "alternateName": "Defex",
+      "url": "https://defex.app",
+      "logo": "https://defex.app{% static 'img/og.png' %}",
+      "description": "defex replaces QC inspectors with AI vision. Sub-$2K to deploy. Built for the bottom 90% of factories that Cognex and Keyence skip.",
+      "foundingDate": "2026",
+      "founder": [
+        {"@type": "Person", "name": "Husan Mavlonov"},
+        {"@type": "Person", "name": "Hasan Mavlonov"}
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Shanghai",
+        "addressCountry": "CN"
+      },
+      "email": "hello@buildcored.com",
+      "industry": "Industrial AI / Computer Vision"
+    }
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
