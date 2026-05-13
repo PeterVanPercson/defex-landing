@@ -259,23 +259,32 @@
     <h2 class="h2 h2--serif">Tell us about <em>your line.</em></h2>
     <div class="block__body">
 
-        <form class="form" action="mailto:hello@buildcored.com" method="post" enctype="text/plain">
+        {% if messages %}
+          {% for message in messages %}
+            <p class="form__flash form__flash--{{ message.tags }}">{{ message }}</p>
+          {% endfor %}
+        {% endif %}
+
+        <form class="form" action="{% url 'contact' %}" method="post" novalidate>
+            {% csrf_token %}
             <label class="form__row">
                 <span class="form__k">name</span>
-                <input type="text" name="name" required>
+                <input type="text" name="name" autocomplete="name" required>
             </label>
             <label class="form__row">
                 <span class="form__k">factory</span>
-                <input type="text" name="factory" required>
+                <input type="text" name="factory" autocomplete="organization" required>
             </label>
             <label class="form__row">
                 <span class="form__k">email or wechat</span>
-                <input type="text" name="contact" required>
+                <input type="text" name="contact" autocomplete="email" required>
             </label>
             <label class="form__row">
                 <span class="form__k">what you make</span>
                 <input type="text" name="product" placeholder="PCB · sheet metal · textile · ...">
             </label>
+            <input type="text" name="website" tabindex="-1" autocomplete="off"
+                   style="position:absolute;left:-9999px;opacity:0" aria-hidden="true">
             <button type="submit" class="cta cta--full">send &nbsp;&rarr;</button>
         </form>
 

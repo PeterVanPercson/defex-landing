@@ -759,6 +759,22 @@ strong { font-weight: 600; color: var(--ink); }
     padding-bottom: 1px;
 }
 
+.form__flash {
+    margin: 0 0 18px;
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    border-left: 2px solid var(--accent);
+    background: rgba(255, 90, 31, 0.06);
+}
+.form__flash--success {
+    border-left-color: var(--ok);
+    background: rgba(74, 222, 128, 0.08);
+}
+.form__flash--error {
+    border-left-color: var(--accent);
+}
+
 /* ======================== FOOTER ======================== */
 
 .footer {

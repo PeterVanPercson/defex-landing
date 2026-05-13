@@ -51,6 +51,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'landing.middleware.VisitorTrackerMiddleware',
 ]
 
 
@@ -118,3 +120,19 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # DEFAULT FIELD TYPE
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# NOTIFICATIONS (Resend HTTP API)
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+EMAIL_FROM = os.getenv("EMAIL_FROM", "defex <onboarding@resend.dev>")
+NOTIFY_TO = os.getenv("NOTIFY_TO", "husan@buildcored.com")
+
+
+# CACHE — used by VisitorTrackerMiddleware to dedupe IPs per 24h.
+# In-memory is fine for a single-instance free tier; resets on deploy.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "defex-visits",
+    }
+}
