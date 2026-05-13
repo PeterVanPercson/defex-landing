@@ -15,12 +15,12 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.getenv(
     "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,defex-landing.onrender.com,defex.app,www.defex.app"
+    "localhost,127.0.0.1,.onrender.com,defex.app,www.defex.app"
 ).split(",")
 
 CSRF_TRUSTED_ORIGINS = os.getenv(
     "CSRF_TRUSTED_ORIGINS",
-    "https://defex-landing.onrender.com,https://defex.app,https://www.defex.app"
+    "https://*.onrender.com,https://defex.app,https://www.defex.app"
 ).split(",")
 
 # Render terminates SSL at its proxy — trust the X-Forwarded-Proto header.
