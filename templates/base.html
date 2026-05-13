@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}defex — replaces QC inspectors with AI{% endblock %}</title>
+    <meta name="description" content="Defex replaces QC inspectors with AI vision. Sub-$2K to deploy. Built for the bottom 90% of factories.">
+
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/defex-mark.svg' %}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=EB+Garamond:ital,wght@1,400;1,500;1,600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+
+    <!-- Critical intro styles (load before main CSS to avoid flash) -->
+    <style>
+        body.is-loading { overflow: hidden; }
+        .intro {
+            position: fixed; inset: 0;
+            background: #EFEBE4;
+            z-index: 200;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 1; visibility: visible;
+            transition: opacity .45s ease, visibility 0s linear .45s;
+        }
+        .intro.is-done { opacity: 0; visibility: hidden; }
+        .intro__mark { width: 56px; height: 180px; }
+        @media (prefers-reduced-motion: reduce) {
+            .intro { display: none; }
+        }
+    </style>
+</head>
+<body class="is-loading">
+
+    <!-- Intro overlay — three-dot pulse, ~2s -->
+    <div class="intro" id="intro" aria-hidden="true">
+        <svg class="intro__mark" viewBox="0 0 20 64" xmlns="http://www.w3.org/2000/svg">
+            <circle class="intro__dot intro__dot--1" cx="10" cy="10" r="7" fill="#0F1115"/>
+            <circle class="intro__dot intro__dot--2" cx="10" cy="32" r="7" fill="#FF5A1F"/>
+            <circle class="intro__dot intro__dot--3" cx="10" cy="54" r="7" fill="#0F1115"/>
+        </svg>
+    </div>
+
+    {% block content %}{% endblock %}
+    <script src="{% static 'js/landing.js' %}"></script>
+</body>
+</html>

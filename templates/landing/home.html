@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}defex — replaces QC inspectors with AI{% endblock %}
+
+{% block content %}
+
+<!-- TOP MARQUEE — fills the empty top, states the wedge -->
+<section class="marquee marquee--top" aria-hidden="true">
+    <div class="marquee__track">
+        <span class="marquee__item">Cognex ($50K)</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Keyence ($40K)</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Defex<span class="dot">.</span> ($1,150)</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Replaces QC inspectors with AI</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Trained on your defects</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Backed by Z Fellows 2026</span>
+        <span class="marquee__sep">+</span>
+        <!-- duplicate for seamless loop -->
+        <span class="marquee__item">Cognex ($50K)</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Keyence ($40K)</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Defex<span class="dot">.</span> ($1,150)</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Replaces QC inspectors with AI</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Trained on your defects</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Backed by Z Fellows 2026</span>
+        <span class="marquee__sep">+</span>
+    </div>
+</section>
+
+{% include "components/navbar.html" %}
+
+<main class="page">
+
+<!-- HERO — two-column on desktop -->
+<section class="hero hero--split" id="top">
+
+    <div class="hero__text">
+        <div class="hero__chip">
+            <span class="hero__chip-num">00</span>
+            <span class="hero__chip-title">DEFEX · FACTORY VISION INFRASTRUCTURE</span>
+        </div>
+
+        <h1 class="hero__title">
+            the defect<br>
+            <span class="hero__title-soft">is the</span> mark<span class="dot">.</span>
+        </h1>
+
+        <p class="hero__lede">
+            <strong>We replace QC inspectors with AI vision.</strong>
+            Sub-$2K to deploy. Built for the bottom 90% of factories
+            that Cognex and Keyence skip.
+        </p>
+
+        <div class="hero__cta">
+            <a href="#contact" class="cta">Request a pilot &nbsp;&rarr;</a>
+            <a href="#pricing" class="cta-soft">See the math</a>
+        </div>
+
+        <div class="hero__badges">
+            <div class="proof" aria-label="customer proof">
+                <span class="dot-live"></span>
+                <span>1 line in production &middot; textile factory, Uzbekistan &middot; <span class="muted">May 2026</span></span>
+            </div>
+            <div class="proof proof--alt" aria-label="accelerator">
+                <span class="proof__label">Backed by</span>
+                <span class="zf">
+                    <span class="zf__z">z</span><span class="zf__rest">&nbsp;Fellows</span>
+                </span>
+                <span class="proof__year">2026</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ANIMATED SCAN CARD (right column on desktop) -->
+    <div class="scan-card" aria-label="live defex inspection demo">
+        <div class="scan-card__hd">
+            <span class="scan-card__hd-title">FIG.01  //  LIVE INSPECTION</span>
+            <span class="scan-card__hd-ticks" aria-hidden="true">
+                <span class="tick tick--a"></span>
+                <span class="tick tick--b"></span>
+                <span class="tick tick--c"></span>
+            </span>
+        </div>
+
+        <div class="scan-card__body">
+            <div class="scan__hd">
+                <span><span class="dot-live"></span> defex.scan</span>
+                <span class="scan__hd-right">fp16 &middot; 30 fps</span>
+            </div>
+            <pre id="scanFrame" class="scan__frame" aria-hidden="true"></pre>
+            <div class="scan__bar">
+                <span>status <b id="scanStatus">idle</b></span>
+                <span>thru <b id="scanThru">0</b></span>
+                <span>fails <b id="scanFail">0</b></span>
+                <span>up <b id="scanUp">00:00</b></span>
+            </div>
+        </div>
+
+        <div class="scan-card__ft">
+            <span>LINE 03</span>
+            <span><span class="dot-live"></span> LIVE</span>
+        </div>
+    </div>
+
+</section>
+
+<!-- 01 — PROBLEM -->
+<section class="block" id="problem">
+    <div class="block__marker">
+        <span class="block__marker__num">01</span>
+        <span class="block__marker__title">problem</span>
+        <span class="block__marker__rule"></span>
+        <span class="block__marker__stat">2&ndash;3% leaves the line defective</span>
+    </div>
+    <h2 class="h2 h2--serif">Small factories lose <em>2&ndash;3%</em> a day. Nobody sells them a fix.</h2>
+    <div class="block__body block__body--prose">
+        <p><strong>Inspectors miss.</strong> Fatigue hits at hour four. 2&ndash;3% of output leaves the line with a defect no one flagged.</p>
+        <p><strong>The fix exists, just not for them.</strong> Cognex $50K. Keyence $40K. Neither vendor goes below five figures.</p>
+        <p><strong>Edge AI changed the math.</strong> The bottom 90% of factories finally have an option.</p>
+    </div>
+
+    <!-- comparison strip -->
+    <div class="compare" aria-label="price comparison">
+        <div class="compare__cell">
+            <span class="compare__brand">Cognex</span>
+            <span class="compare__price">$30K &ndash; 100K</span>
+            <span class="compare__note">enterprise vendor</span>
+        </div>
+        <div class="compare__cell">
+            <span class="compare__brand">Keyence</span>
+            <span class="compare__price">$40K +</span>
+            <span class="compare__note">enterprise vendor</span>
+        </div>
+        <div class="compare__cell compare__cell--us">
+            <span class="compare__brand">Defex</span>
+            <span class="compare__price">$1,150 <span class="compare__plus">+ $210 / mo</span></span>
+            <span class="compare__note">us</span>
+        </div>
+    </div>
+</section>
+
+<!-- 02 — WHAT DEFEX IS -->
+<section class="block" id="what">
+    <div class="block__marker">
+        <span class="block__marker__num">02</span>
+        <span class="block__marker__title">what defex is</span>
+        <span class="block__marker__rule"></span>
+        <span class="block__marker__stat">under one day to install</span>
+    </div>
+    <h2 class="h2 h2--serif">An inspection layer that <em>doesn&rsquo;t need a person.</em></h2>
+    <div class="block__body">
+        <div class="trio">
+            <article class="panel trio__item">
+                <span class="panel__label">fig.a / install</span>
+                <h3 class="trio__hd">install</h3>
+                <p>
+                    We mount the camera. Plug in the edge box. Wire it to your conveyor.
+                    <em>Under one day, no IT project.</em>
+                </p>
+            </article>
+            <article class="panel trio__item">
+                <span class="panel__label">fig.b / train</span>
+                <h3 class="trio__hd">train</h3>
+                <p>
+                    We train the model on <em>your</em> defects from <em>your</em> samples.
+                    Customer-specific vision model, compiled for the edge.
+                    Thirty frames per second, on-device.
+                </p>
+            </article>
+            <article class="panel trio__item">
+                <span class="panel__label">fig.c / monitor</span>
+                <h3 class="trio__hd">monitor</h3>
+                <p>
+                    We watch the model from afar, retrain weekly,
+                    escalate if it drifts. <em>Your line just runs.</em>
+                </p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<!-- MARQUEE — between section 02 and 03 -->
+<section class="marquee" aria-hidden="true">
+    <div class="marquee__track">
+        <span class="marquee__item">Real-time defect detection</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Edge-native vision</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">PASS / FAIL in 30 ms</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">We install. We train. We monitor.</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">No cloud dependency</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">The defect is the mark</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Real-time defect detection</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Edge-native vision</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">PASS / FAIL in 30 ms</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">We install. We train. We monitor.</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">No cloud dependency</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">The defect is the mark</span>
+        <span class="marquee__sep">+</span>
+    </div>
+</section>
+
+<!-- 03 — THE COST -->
+<section class="block" id="pricing">
+    <div class="block__marker">
+        <span class="block__marker__num">03</span>
+        <span class="block__marker__title">the cost</span>
+        <span class="block__marker__rule"></span>
+        <span class="block__marker__stat">10&ndash;30&times; less than enterprise</span>
+    </div>
+    <h2 class="h2 h2--serif">One line. <em>$1,150.</em></h2>
+    <div class="block__body">
+
+        <div class="panel price">
+            <span class="panel__label">fig.03 / quote</span>
+            <div class="price__num">$1,150<span class="price__unit"> hardware</span></div>
+            <div class="price__sub">$210<span class="price__sub-unit"> / month &middot; model, monitoring, retraining, support</span></div>
+            <div class="price__cap">we own the hardware after install &middot; one line, one number</div>
+            <ul class="price__list">
+                <li><b>$450</b> refundable deposit on signing</li>
+                <li><b>7 days</b> free pilot &mdash; if we don&rsquo;t beat your current escape rate, we pack up</li>
+                <li><b>30 days</b> cancellation notice, any month</li>
+                <li><b>No</b> capex, licences, or yearly contracts</li>
+            </ul>
+        </div>
+
+        <p class="muted price__ltv">
+            First-year LTV per line &asymp; <b>$4,120</b> &mdash; about what one shift
+            of escaped defects costs a 200-person factory.
+        </p>
+    </div>
+</section>
+
+<!-- 04 — CONTACT -->
+<section class="block" id="contact">
+    <div class="block__marker">
+        <span class="block__marker__num">04</span>
+        <span class="block__marker__title">talk to us</span>
+        <span class="block__marker__rule"></span>
+        <span class="block__marker__stat">reply inside one working day</span>
+    </div>
+    <h2 class="h2 h2--serif">Tell us about <em>your line.</em></h2>
+    <div class="block__body">
+
+        <form class="form" action="mailto:hello@buildcored.com" method="post" enctype="text/plain">
+            <label class="form__row">
+                <span class="form__k">name</span>
+                <input type="text" name="name" required>
+            </label>
+            <label class="form__row">
+                <span class="form__k">factory</span>
+                <input type="text" name="factory" required>
+            </label>
+            <label class="form__row">
+                <span class="form__k">email or wechat</span>
+                <input type="text" name="contact" required>
+            </label>
+            <label class="form__row">
+                <span class="form__k">what you make</span>
+                <input type="text" name="product" placeholder="PCB · sheet metal · textile · ...">
+            </label>
+            <button type="submit" class="cta cta--full">send &nbsp;&rarr;</button>
+        </form>
+
+        <p class="muted form__note">
+            Or write us directly &mdash; <a class="form__mail" href="mailto:hello@buildcored.com">hello@buildcored.com</a>
+        </p>
+    </div>
+</section>
+
+</main>
+
+{% include "components/footer.html" %}
+{% endblock %}
