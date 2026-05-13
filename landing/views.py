@@ -1,9 +1,13 @@
+import re
+
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 
 from .forms import ContactForm
-from .notify import send, submission_email
+from .notify import autoresponder_email, send, send_to, submission_email
+
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def home(request):
@@ -14,8 +18,20 @@ def home(request):
 def contact(request):
     form = ContactForm(request.POST)
     if form.is_valid() and not form.is_spam():
-        subject, html = submission_email(form.cleaned_data, request)
+        data = form.cleaned_data
+        # Admin notification → husan@buildcored.com (NOTIFY_TO)
+        subject, html = submission_email(data, request)
         send(subject, html)
+        # Personal autoresponder → submitter, FROM husan@buildcored.com
+        contact_field = (data.get("contact") or "").strip()
+        if EMAIL_RE.match(contact_field):
+            a_subject, a_html = autoresponder_email(data.get("name", ""), data.get("factory", ""))
+            send_to(
+                contact_field,
+                a_subject,
+                a_html,
+                from_addr="Husan Mavlonov <husan@buildcored.com>",
+            )
         messages.success(request, "Got it — we'll reply within one working day.")
     else:
         messages.error(request, "Something looked off. Try again, or email us directly.")

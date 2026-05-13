@@ -146,3 +146,50 @@
     tickUp();
     setInterval(tickUp, 5000);
 })();
+
+
+// ===== Language toggle (EN / 中) =====
+(() => {
+    const root = document.documentElement;
+    const buttons = document.querySelectorAll('.lang__btn');
+    if (!buttons.length) return;
+
+    function applyPlaceholders(lang) {
+        document.querySelectorAll('[data-placeholder-en]').forEach(el => {
+            const v = el.getAttribute('data-placeholder-' + lang);
+            if (v) el.setAttribute('placeholder', v);
+        });
+    }
+
+    function setLang(lang) {
+        if (lang !== 'en' && lang !== 'zh') lang = 'en';
+        root.setAttribute('lang', lang);
+        try { localStorage.setItem('defex.lang', lang); } catch (e) {}
+        applyPlaceholders(lang);
+    }
+
+    // Initial placeholder pass (lang was set pre-paint in base.html).
+    applyPlaceholders(root.getAttribute('lang') || 'en');
+
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => setLang(btn.dataset.lang));
+    });
+})();
+
+
+// ===== Sticky CTA — fade in after scrolling past hero =====
+(() => {
+    const cta = document.getElementById('stickyCta');
+    const hero = document.querySelector('.hero');
+    if (!cta || !hero) return;
+
+    function update() {
+        const heroBottom = hero.offsetTop + hero.offsetHeight;
+        const past = window.scrollY > heroBottom - 80;
+        cta.classList.toggle('is-visible', past);
+    }
+
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+})();

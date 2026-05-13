@@ -48,6 +48,17 @@ def send(subject: str, html: str) -> None:
     threading.Thread(target=_post, args=(payload,), daemon=True).start()
 
 
+def send_to(to_addr: str, subject: str, html: str, from_addr: str | None = None) -> None:
+    """Send to an arbitrary address. Used for autoresponders."""
+    payload = {
+        "from": from_addr or settings.EMAIL_FROM,
+        "to": [to_addr],
+        "subject": subject,
+        "html": html,
+    }
+    threading.Thread(target=_post, args=(payload,), daemon=True).start()
+
+
 def geolocate(ip: str) -> dict:
     """Best-effort IP enrichment. Returns {} on failure."""
     if not ip or ip.startswith(("127.", "10.", "192.168.", "172.")):
@@ -106,6 +117,28 @@ def visitor_email(request) -> tuple[str, str]:
         '<div style="font-family:ui-monospace,monospace;color:#111;max-width:560px">'
         f'<p style="margin:0 0 12px;font-size:14px"><b>New visitor on defex.app</b></p>'
         f'<table style="border-collapse:collapse">{body}</table>'
+        '</div>'
+    )
+    return subject, html
+
+
+def autoresponder_email(name: str, factory: str) -> tuple[str, str]:
+    """(subject, html) sent FROM Husan personally TO the submitter."""
+    first = (name or "there").strip().split()[0] if name else "there"
+    subject = "got your note — defex"
+    html = (
+        '<div style="font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;'
+        'color:#0F1115;line-height:1.55;max-width:540px">'
+        f'<p>Hi {escape(first)},</p>'
+        f'<p>Thanks for telling us about {escape(factory) if factory else "your line"}. '
+        'We&rsquo;ve received your note and will be in touch within one working day '
+        'with next steps and a 15-min slot to talk through your line.</p>'
+        '<p>If you&rsquo;d like to share anything ahead of the call '
+        '&mdash; photos of typical defects, the inspection role you want to replace, '
+        'WeChat ID &mdash; just reply to this email.</p>'
+        '<p style="margin-top:24px">&mdash; Husan<br>'
+        '<span style="color:#7A7B7F;font-size:13px">defex &middot; '
+        '<a href="https://defex.app" style="color:#FF5A1F;text-decoration:none">defex.app</a></span></p>'
         '</div>'
     )
     return subject, html
