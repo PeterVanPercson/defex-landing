@@ -14,6 +14,10 @@ def home(request):
     return render(request, "landing/home.html", {"form": ContactForm()})
 
 
+def pricing(request):
+    return render(request, "landing/pricing.html")
+
+
 @require_http_methods(["POST"])
 def contact(request):
     form = ContactForm(request.POST)

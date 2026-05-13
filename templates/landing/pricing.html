@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}defex pricing — calculator per line{% endblock %}
+
+{% block content %}
+
+<!-- TOP MARQUEE — slimmer version, pricing-themed -->
+<section class="marquee marquee--top" aria-hidden="true">
+    <div class="marquee__track">
+        <span class="marquee__item">Cognex ($50K)</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Keyence ($40K)</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">defex<span class="dot">.</span> ($1,150 / line)</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">
+            <span lang="en">20% off every additional line</span><span lang="zh">第二条起每条 8 折</span>
+        </span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">
+            <span lang="en">No yearly contracts</span><span lang="zh">无年度合同</span>
+        </span>
+        <span class="marquee__sep">+</span>
+        <!-- duplicate for seamless loop -->
+        <span class="marquee__item">Cognex ($50K)</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">Keyence ($40K)</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">defex<span class="dot">.</span> ($1,150 / line)</span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">
+            <span lang="en">20% off every additional line</span><span lang="zh">第二条起每条 8 折</span>
+        </span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">
+            <span lang="en">No yearly contracts</span><span lang="zh">无年度合同</span>
+        </span>
+        <span class="marquee__sep">+</span>
+    </div>
+</section>
+
+<header class="nav">
+    <a href="/" class="nav__brand" aria-label="defex home">
+        <svg class="nav__mark" viewBox="0 0 20 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="10" cy="10" r="7" fill="currentColor"/>
+            <circle cx="10" cy="32" r="7" fill="#FF5A1F"/>
+            <circle cx="10" cy="54" r="7" fill="currentColor"/>
+        </svg>
+        <span class="nav__word">defex<span class="dot">.</span></span>
+    </a>
+    <a href="/" class="nav__home">
+        <span lang="en">&larr; home</span><span lang="zh">&larr; 首页</span>
+    </a>
+    <div class="lang" role="group" aria-label="language">
+        <button type="button" class="lang__btn" data-lang="en" aria-label="English">EN</button>
+        <span class="lang__sep">/</span>
+        <button type="button" class="lang__btn" data-lang="zh" aria-label="中文">中</button>
+    </div>
+</header>
+
+<main class="page">
+
+<!-- HERO — single column, the calculator IS the hero -->
+<section class="hero hero--single" id="top">
+    <div class="hero__chip">
+        <span class="hero__chip-num">00</span>
+        <span class="hero__chip-title">
+            <span lang="en">PRICING &middot; PER LINE</span><span lang="zh">定价 &middot; 按产线</span>
+        </span>
+    </div>
+
+    <h1 class="hero__title hero__title--pricing">
+        <span lang="en">How many<br><span class="hero__title-soft">lines do</span> you run<span class="dot">?</span></span><span lang="zh">您有<br><span class="hero__title-soft">几条</span> 产线<span class="dot">?</span></span>
+    </h1>
+
+    <p class="hero__lede">
+        <span lang="en"><strong>First line: $1,150 + $210 / month.</strong>
+        Every line after that: 20% off. We own the hardware after install.
+        No yearly contracts. 7-day free pilot.</span><span lang="zh"><strong>首条产线：$1,150 + $210 / 月。</strong>之后每条 8 折。硬件安装后归我们所有。无年度合同。7 天免费试点。</span>
+    </p>
+</section>
+
+<!-- CALCULATOR -->
+<section class="block" id="calc">
+    <div class="block__marker">
+        <span class="block__marker__num">01</span>
+        <span class="block__marker__title">
+            <span lang="en">calculator</span><span lang="zh">计算器</span>
+        </span>
+        <span class="block__marker__rule"></span>
+        <span class="block__marker__stat" id="calcStat" data-en="${total} hardware · ${monthly} / mo" data-zh="${total} 硬件 · 每月 ${monthly}">
+            $1,150 hardware · $210 / mo
+        </span>
+    </div>
+
+    <div class="calc">
+        <!-- LINES STEPPER -->
+        <div class="calc__lines">
+            <label class="calc__label" for="linesInput">
+                <span lang="en">number of lines</span><span lang="zh">产线数量</span>
+            </label>
+            <div class="stepper" role="group" aria-label="number of lines">
+                <button type="button" class="stepper__btn" id="linesMinus" aria-label="fewer lines">&minus;</button>
+                <input type="number" id="linesInput" class="stepper__val" value="1" min="1" max="50" inputmode="numeric">
+                <button type="button" class="stepper__btn" id="linesPlus" aria-label="more lines">+</button>
+            </div>
+        </div>
+
+        <!-- BREAKDOWN TABLE -->
+        <table class="calc__table" aria-live="polite">
+            <thead>
+                <tr>
+                    <th>
+                        <span lang="en">item</span><span lang="zh">项目</span>
+                    </th>
+                    <th class="calc__num-col">
+                        <span lang="en">hardware</span><span lang="zh">硬件</span>
+                    </th>
+                    <th class="calc__num-col">
+                        <span lang="en">monthly</span><span lang="zh">月费</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="calcRows"><!-- filled by JS --></tbody>
+            <tfoot>
+                <tr class="calc__total">
+                    <td>
+                        <strong><span lang="en">total</span><span lang="zh">合计</span></strong>
+                    </td>
+                    <td class="calc__num-col"><strong id="totalHw">$1,150</strong></td>
+                    <td class="calc__num-col"><strong id="totalMo">$210</strong></td>
+                </tr>
+                <tr class="calc__yr">
+                    <td colspan="2" class="muted">
+                        <span lang="en">first-year total (hardware + 12 months)</span><span lang="zh">首年总额（硬件 + 12 个月）</span>
+                    </td>
+                    <td class="calc__num-col"><b id="totalYr">$3,670</b></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- PERKS GRID -->
+        <ul class="calc__perks">
+            <li>
+                <span lang="en"><b>$450</b> refundable deposit on signing</span><span lang="zh"><b>$450</b> 签约可退押金</span>
+            </li>
+            <li>
+                <span lang="en"><b>7 days</b> free pilot &mdash; if we don't beat your current escape rate, we pack up</span><span lang="zh"><b>7 天</b>免费试点 &mdash; 若未能超越您当前漏检率，我们撤场</span>
+            </li>
+            <li>
+                <span lang="en"><b>30 days</b> cancellation notice, any month</span><span lang="zh"><b>30 天</b>解约通知，任何月份</span>
+            </li>
+            <li>
+                <span lang="en"><b>No</b> capex, licences, or yearly contracts</span><span lang="zh"><b>无</b>固定资产投入、许可证或年度合同</span>
+            </li>
+        </ul>
+
+        <!-- COMPARISON STRIP -->
+        <div class="compare compare--pricing" aria-label="vs enterprise">
+            <div class="compare__cell">
+                <span class="compare__brand">Cognex</span>
+                <span class="compare__price">$30K &ndash; 100K</span>
+                <span class="compare__note">
+                    <span lang="en">per line, capex</span><span lang="zh">每条产线，固定资产</span>
+                </span>
+            </div>
+            <div class="compare__cell">
+                <span class="compare__brand">Keyence</span>
+                <span class="compare__price">$40K +</span>
+                <span class="compare__note">
+                    <span lang="en">per line, capex</span><span lang="zh">每条产线，固定资产</span>
+                </span>
+            </div>
+            <div class="compare__cell compare__cell--us">
+                <span class="compare__brand">defex</span>
+                <span class="compare__price" id="comparePrice">$1,150 <span class="compare__plus">+ $210 / mo</span></span>
+                <span class="compare__note">
+                    <span lang="en">managed</span><span lang="zh">全托管</span>
+                </span>
+            </div>
+        </div>
+
+        <div class="calc__ctas">
+            <a href="/#contact" class="cta">
+                <span lang="en">Request a pilot &nbsp;&rarr;</span><span lang="zh">申请试点 &nbsp;&rarr;</span>
+            </a>
+            <a href="/" class="cta-soft">
+                <span lang="en">&larr; back to home</span><span lang="zh">&larr; 返回首页</span>
+            </a>
+        </div>
+
+        <p class="muted price__ltv" style="margin-top:32px">
+            <span lang="en">First-year LTV per line &asymp; <b>$4,120</b> &mdash; about what one shift of escaped defects costs a 200-person factory.</span><span lang="zh">首年每条产线 LTV &asymp; <b>$4,120</b> &mdash; 大约相当于一个 200 人工厂一班漏检瑕疵的损失。</span>
+        </p>
+    </div>
+</section>
+
+</main>
+
+{% include "components/footer.html" %}
+
+<script>
+(function () {
+    var BASE_HW = 1150;
+    var BASE_MO = 210;
+    var DISCOUNT = 0.20;  // 20% off every line after the first
+
+    var $input  = document.getElementById('linesInput');
+    var $minus  = document.getElementById('linesMinus');
+    var $plus   = document.getElementById('linesPlus');
+    var $rows   = document.getElementById('calcRows');
+    var $totalHw = document.getElementById('totalHw');
+    var $totalMo = document.getElementById('totalMo');
+    var $totalYr = document.getElementById('totalYr');
+    var $stat    = document.getElementById('calcStat');
+    var $compare = document.getElementById('comparePrice');
+
+    function fmt(n) {
+        return '$' + n.toLocaleString('en-US');
+    }
+
+    function lineLabel(idx) {
+        // Returns HTML pair (EN / CN)
+        if (idx === 0) {
+            return '<span lang="en">Line 1 &middot; full</span>' +
+                   '<span lang="zh">第 1 条 &middot; 标价</span>';
+        }
+        return '<span lang="en">Line ' + (idx + 1) + ' &middot; &minus;20%</span>' +
+               '<span lang="zh">第 ' + (idx + 1) + ' 条 &middot; &minus;20%</span>';
+    }
+
+    function render() {
+        var n = parseInt($input.value, 10);
+        if (isNaN(n) || n < 1) { n = 1; $input.value = 1; }
+        if (n > 50) { n = 50; $input.value = 50; }
+
+        // Build rows
+        var html = '';
+        var hwTotal = 0, moTotal = 0;
+        for (var i = 0; i < n; i++) {
+            var hw = i === 0 ? BASE_HW : Math.round(BASE_HW * (1 - DISCOUNT));
+            var mo = i === 0 ? BASE_MO : Math.round(BASE_MO * (1 - DISCOUNT));
+            hwTotal += hw;
+            moTotal += mo;
+            html +=
+              '<tr>' +
+                '<td>' + lineLabel(i) + '</td>' +
+                '<td class="calc__num-col">' + fmt(hw) + '</td>' +
+                '<td class="calc__num-col">' + fmt(mo) + '<span class="muted"> / mo</span></td>' +
+              '</tr>';
+        }
+        $rows.innerHTML = html;
+
+        var yr = hwTotal + moTotal * 12;
+        $totalHw.textContent = fmt(hwTotal);
+        $totalMo.textContent = fmt(moTotal);
+        $totalYr.textContent = fmt(yr);
+
+        // Top-right stat in the section marker
+        var statTpl_en = $stat.getAttribute('data-en');
+        var statTpl_zh = $stat.getAttribute('data-zh');
+        var hwS = fmt(hwTotal), moS = fmt(moTotal);
+        $stat.innerHTML =
+            '<span lang="en">' + statTpl_en.replace('${total}', hwS).replace('${monthly}', moS + ' / mo') + '</span>' +
+            '<span lang="zh">' + statTpl_zh.replace('${total}', hwS).replace('${monthly}', moS + ' / mo') + '</span>';
+
+        // Compare strip price reflects current calc
+        $compare.innerHTML = fmt(hwTotal) +
+            ' <span class="compare__plus">+ ' + fmt(moTotal) + ' / mo</span>';
+    }
+
+    $minus.addEventListener('click', function () {
+        $input.value = Math.max(1, (parseInt($input.value, 10) || 1) - 1);
+        render();
+    });
+    $plus.addEventListener('click', function () {
+        $input.value = Math.min(50, (parseInt($input.value, 10) || 1) + 1);
+        render();
+    });
+    $input.addEventListener('input', render);
+    $input.addEventListener('change', render);
+
+    render();
+})();
+</script>
+
+{% endblock %}
