@@ -262,8 +262,8 @@
         var statTpl_zh = $stat.getAttribute('data-zh');
         var hwS = fmt(hwTotal), moS = fmt(moTotal);
         $stat.innerHTML =
-            '<span lang="en">' + statTpl_en.replace('${total}', hwS).replace('${monthly}', moS + ' / mo') + '</span>' +
-            '<span lang="zh">' + statTpl_zh.replace('${total}', hwS).replace('${monthly}', moS + ' / mo') + '</span>';
+            '<span lang="en">' + statTpl_en.replace('${total}', hwS).replace('${monthly}', moS) + '</span>' +
+            '<span lang="zh">' + statTpl_zh.replace('${total}', hwS).replace('${monthly}', moS) + '</span>';
 
         // Compare strip price reflects current calc
         $compare.innerHTML = fmt(hwTotal) +

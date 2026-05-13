@@ -1043,6 +1043,7 @@ html[lang="zh"] .lang__btn[data-lang="zh"] {
     color: var(--bg);
     font-size: 16px;
 }
+.calc__total td strong { color: var(--bg); }
 .calc__total td .muted { color: var(--dark-mute); }
 .calc__yr td {
     background: var(--bg-2);
