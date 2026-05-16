@@ -341,14 +341,38 @@ strong { font-weight: 600; color: var(--ink); }
     color: var(--ink);
     letter-spacing: 0.01em;
 }
-/* "Backed by Z Fellows" — same mono pill as the customer chip, just a
-   darker border to read as institutional. No off-palette blue, no
-   baseline hacks: one line, one font. */
+/* "Backed by  z Fellows" — darker border to read as institutional.
+   Everything centered on one line; the wordmark is sized close to the
+   12px mono label so they read as a single phrase, blue z popping. */
 .proof--alt {
     border-color: var(--ink);
+    gap: 7px;
+    align-items: center;
 }
-.proof b {
-    font-weight: 600;
+.proof__label {
+    font-family: var(--font-mono);
+    color: var(--ink-2);
+    line-height: 1;
+}
+.zf {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+.zf__z {
+    font-size: 1.35em;
+    background: linear-gradient(160deg, #5AA8F5 0%, #2E6FE5 52%, #1E50C8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+.zf__rest {
     color: var(--ink);
 }
 
