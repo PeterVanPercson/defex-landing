@@ -1,13 +1,16 @@
-"""Resend HTTP API wrapper + visitor enrichment.
+"""Resend HTTP API wrapper.
 
-Email is sent in a background thread so request latency is unaffected.
+Email is sent SYNCHRONOUSLY in the request path. This is required on
+serverless (Vercel): the function is frozen the moment the HTTP response
+is returned, so a background thread would never run — emails would
+silently never send. A contact form taking ~0.5s extra is fine.
+
 If Resend isn't configured (no API key), calls log and return silently —
 the site still works, you just don't get pings.
 """
 from __future__ import annotations
 
 import logging
-import threading
 from html import escape
 
 import requests
@@ -16,7 +19,6 @@ from django.conf import settings
 log = logging.getLogger(__name__)
 
 RESEND_URL = "https://api.resend.com/emails"
-IPAPI_URL = "https://ipapi.co/{ip}/json/"
 
 
 def _post(payload: dict) -> None:
@@ -29,7 +31,7 @@ def _post(payload: dict) -> None:
             RESEND_URL,
             headers={"Authorization": f"Bearer {api_key}"},
             json=payload,
-            timeout=10,
+            timeout=8,
         )
         if r.status_code >= 300:
             log.warning("resend error %s: %s", r.status_code, r.text[:300])
@@ -38,42 +40,27 @@ def _post(payload: dict) -> None:
 
 
 def send(subject: str, html: str) -> None:
-    """Fire-and-forget email to NOTIFY_TO via Resend."""
-    payload = {
+    """Synchronous email to NOTIFY_TO via Resend."""
+    _post({
         "from": settings.EMAIL_FROM,
         "to": [settings.NOTIFY_TO],
         "subject": subject,
         "html": html,
-    }
-    threading.Thread(target=_post, args=(payload,), daemon=True).start()
+    })
 
 
 def send_to(to_addr: str, subject: str, html: str, from_addr: str | None = None) -> None:
-    """Send to an arbitrary address. Used for autoresponders."""
-    payload = {
+    """Synchronous send to an arbitrary address. Used for autoresponders."""
+    _post({
         "from": from_addr or settings.EMAIL_FROM,
         "to": [to_addr],
         "subject": subject,
         "html": html,
-    }
-    threading.Thread(target=_post, args=(payload,), daemon=True).start()
-
-
-def geolocate(ip: str) -> dict:
-    """Best-effort IP enrichment. Returns {} on failure."""
-    if not ip or ip.startswith(("127.", "10.", "192.168.", "172.")):
-        return {}
-    try:
-        r = requests.get(IPAPI_URL.format(ip=ip), timeout=4)
-        if r.status_code == 200:
-            return r.json() or {}
-    except requests.RequestException:
-        pass
-    return {}
+    })
 
 
 def client_ip(request) -> str:
-    """Get the real client IP, honoring Render's X-Forwarded-For."""
+    """Get the real client IP, honoring the proxy's X-Forwarded-For."""
     fwd = request.META.get("HTTP_X_FORWARDED_FOR", "")
     if fwd:
         return fwd.split(",")[0].strip()
@@ -81,27 +68,21 @@ def client_ip(request) -> str:
 
 
 def visitor_email(request) -> tuple[str, str]:
-    """Build (subject, html) describing a single visitor."""
+    """Build (subject, html) describing a single visitor.
+
+    No external geo lookup — it added latency, an external dependency, a
+    1000/day rate cap, and a hang risk in the request path. The IP is
+    included; geo can be resolved later if ever needed.
+    """
     ip = client_ip(request)
     ua = request.META.get("HTTP_USER_AGENT", "")
     referrer = request.META.get("HTTP_REFERER", "")
     lang = request.META.get("HTTP_ACCEPT_LANGUAGE", "")
     path = request.get_full_path()
 
-    geo = geolocate(ip)
-    city = geo.get("city") or ""
-    region = geo.get("region") or ""
-    country = geo.get("country_name") or geo.get("country") or ""
-    org = geo.get("org") or ""
-    location = " · ".join(x for x in (city, region, country) if x) or "unknown"
-
-    subj_loc = country or "unknown"
-    subject = f"defex · visit from {subj_loc}"
-
+    subject = f"defex · visit ({ip or 'unknown ip'})"
     rows = [
-        ("Location", location),
         ("IP", ip or "—"),
-        ("Org / ISP", org or "—"),
         ("Referrer", referrer or "direct"),
         ("Path", path),
         ("Language", lang or "—"),
@@ -115,7 +96,7 @@ def visitor_email(request) -> tuple[str, str]:
     )
     html = (
         '<div style="font-family:ui-monospace,monospace;color:#111;max-width:560px">'
-        f'<p style="margin:0 0 12px;font-size:14px"><b>New visitor on defex.app</b></p>'
+        '<p style="margin:0 0 12px;font-size:14px"><b>New visitor on defex.app</b></p>'
         f'<table style="border-collapse:collapse">{body}</table>'
         '</div>'
     )
@@ -151,8 +132,6 @@ def submission_email(data: dict, request) -> tuple[str, str]:
     contact = data.get("contact", "")
     product = data.get("product", "")
     ip = client_ip(request)
-    geo = geolocate(ip)
-    country = geo.get("country_name") or geo.get("country") or ""
 
     subject = f"defex · pilot request — {name} ({factory})"
     rows = [
@@ -160,7 +139,6 @@ def submission_email(data: dict, request) -> tuple[str, str]:
         ("Factory", factory),
         ("Email / WeChat", contact),
         ("Makes", product),
-        ("From", country or "—"),
         ("IP", ip or "—"),
     ]
     body = "".join(

@@ -1,34 +1,41 @@
-"""Visitor tracker: one notification email per unique IP per day.
+"""Visitor tracker: one notification email per browser per ~24h.
 
-Filters out static files, admin, bots, and Render's own health checker.
-Falls back gracefully if anything goes wrong — never blocks the response.
+Dedup is COOKIE-based, not server-cache based. On serverless (Vercel)
+every request can hit a fresh instance, so an in-process cache (LocMem)
+never dedupes — you'd get an email on every single page load. A cookie
+travels with the browser and works statelessly.
+
+Set VISITOR_PINGS=0 in the environment to turn this off entirely
+(recommended once you have real analytics — see notes).
 """
 from __future__ import annotations
 
 import logging
+import os
 import re
 
-from django.core.cache import cache
-
-from .notify import client_ip, send, visitor_email
+from .notify import send, visitor_email
 
 log = logging.getLogger(__name__)
+
+_ENABLED = os.getenv("VISITOR_PINGS", "1") != "0"
+_COOKIE = "dxv"
+_MAX_AGE = 60 * 60 * 24  # 24h
 
 # Common bot / crawler signatures we don't want to email about.
 _BOT_RE = re.compile(
     r"bot|spider|crawler|crawling|slurp|googlebot|bingbot|baiduspider|yandex|"
     r"ahrefs|semrush|mj12|dotbot|petalbot|facebookexternalhit|"
     r"go-http-client|python-requests|curl/|wget/|httpx|node-fetch|axios|"
-    r"uptimerobot|pingdom|statuscake|datadog|newrelic|prometheus",
+    r"uptimerobot|pingdom|statuscake|datadog|newrelic|prometheus|vercel",
     re.IGNORECASE,
 )
 
-# Paths we should never ping for.
 _IGNORE_PREFIXES = ("/static/", "/admin", "/favicon", "/robots", "/sitemap")
 
 
 class VisitorTrackerMiddleware:
-    """Send one email per unique IP per 24 hours on page loads."""
+    """Email once per browser per 24h on real page loads."""
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -36,26 +43,31 @@ class VisitorTrackerMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         try:
-            self._maybe_notify(request)
+            if self._should_notify(request):
+                subject, html = visitor_email(request)
+                send(subject, html)  # synchronous — serverless-safe
+                response.set_cookie(
+                    _COOKIE, "1",
+                    max_age=_MAX_AGE,
+                    secure=True,
+                    httponly=True,
+                    samesite="Lax",
+                )
         except Exception as e:  # never break the site over a notification
             log.warning("visitor tracker error: %s", e)
         return response
 
-    def _maybe_notify(self, request):
+    def _should_notify(self, request) -> bool:
+        if not _ENABLED:
+            return False
         if request.method != "GET":
-            return
+            return False
+        if request.COOKIES.get(_COOKIE):
+            return False
         path = request.path
         if any(path.startswith(p) for p in _IGNORE_PREFIXES):
-            return
+            return False
         ua = request.META.get("HTTP_USER_AGENT", "")
         if not ua or _BOT_RE.search(ua):
-            return
-        ip = client_ip(request)
-        if not ip:
-            return
-        cache_key = f"visit:{ip}"
-        if cache.get(cache_key):
-            return
-        cache.set(cache_key, 1, timeout=60 * 60 * 24)  # 24 hours
-        subject, html = visitor_email(request)
-        send(subject, html)
+            return False
+        return True
