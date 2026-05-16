@@ -15,16 +15,20 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.getenv(
     "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,.onrender.com,defex.app,www.defex.app"
+    "localhost,127.0.0.1,.onrender.com,.vercel.app,defex.app,www.defex.app"
 ).split(",")
 
 CSRF_TRUSTED_ORIGINS = os.getenv(
     "CSRF_TRUSTED_ORIGINS",
-    "https://*.onrender.com,https://defex.app,https://www.defex.app"
+    "https://*.onrender.com,https://*.vercel.app,https://defex.app,https://www.defex.app"
 ).split(",")
 
-# Render terminates SSL at its proxy — trust the X-Forwarded-Proto header.
+# Render / Vercel terminate SSL at their proxy — trust X-Forwarded-Proto.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Serverless (Vercel) has a read-only filesystem — keep flash messages in a
+# signed cookie so a form submit never needs to write to the DB/session.
+MESSAGE_STORAGE = "django.contrib.messages.storage.cookie.CookieStorage"
 
 
 # APPLICATIONS
