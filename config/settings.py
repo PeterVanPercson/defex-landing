@@ -131,12 +131,7 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 EMAIL_FROM = os.getenv("EMAIL_FROM", "defex <onboarding@resend.dev>")
 NOTIFY_TO = os.getenv("NOTIFY_TO", "husan@buildcored.com")
 
-
-# CACHE — used by VisitorTrackerMiddleware to dedupe IPs per 24h.
-# In-memory is fine for a single-instance free tier; resets on deploy.
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "defex-visits",
-    }
-}
+# Autoresponder emails an arbitrary address from the form (spam-amplification
+# surface). Set AUTORESPONDER=0 to kill it instantly with no redeploy if abuse
+# starts, until a captcha (Cloudflare Turnstile) is wired on the form.
+AUTORESPONDER = os.getenv("AUTORESPONDER", "1") != "0"
