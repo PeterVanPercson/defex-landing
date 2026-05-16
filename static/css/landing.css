@@ -341,42 +341,14 @@ strong { font-weight: 600; color: var(--ink); }
     color: var(--ink);
     letter-spacing: 0.01em;
 }
+/* "Backed by Z Fellows" — same mono pill as the customer chip, just a
+   darker border to read as institutional. No off-palette blue, no
+   baseline hacks: one line, one font. */
 .proof--alt {
     border-color: var(--ink);
-    gap: 8px;
 }
-.proof__label {
-    font-family: var(--font-mono);
-    color: var(--ink-2);
-}
-.proof__year {
-    font-family: var(--font-mono);
-    color: var(--mute);
-    font-size: 11px;
-    letter-spacing: 0.04em;
-    margin-left: 2px;
-}
-
-/* Z Fellows wordmark — blue-gradient z + bold "Fellows" */
-.zf {
-    display: inline-flex;
-    align-items: baseline;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    line-height: 1;
-    letter-spacing: -0.025em;
-}
-.zf__z {
-    font-size: 1.25em;
-    background: linear-gradient(180deg, #6FB6F5 0%, #2E6FE5 55%, #1957C9 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    padding-right: 1px;
-}
-.zf__rest {
+.proof b {
+    font-weight: 600;
     color: var(--ink);
 }
 
@@ -892,19 +864,6 @@ html[lang="zh"] .lang__btn[data-lang="zh"] {
 }
 
 
-/* ======================== Z FELLOWS CHIP (cleanup) ======================== */
-
-/* Force same baseline/centerline for "Backed by" + the z Fellows wordmark */
-.proof--alt {
-    align-items: center;
-}
-.proof__label {
-    line-height: 1;
-}
-.zf {
-    align-items: center;
-    line-height: 1;
-}
 
 
 /* ======================== PRICING PAGE ======================== */
