@@ -67,42 +67,6 @@ def client_ip(request) -> str:
     return request.META.get("REMOTE_ADDR", "")
 
 
-def visitor_email(request) -> tuple[str, str]:
-    """Build (subject, html) describing a single visitor.
-
-    No external geo lookup — it added latency, an external dependency, a
-    1000/day rate cap, and a hang risk in the request path. The IP is
-    included; geo can be resolved later if ever needed.
-    """
-    ip = client_ip(request)
-    ua = request.META.get("HTTP_USER_AGENT", "")
-    referrer = request.META.get("HTTP_REFERER", "")
-    lang = request.META.get("HTTP_ACCEPT_LANGUAGE", "")
-    path = request.get_full_path()
-
-    subject = f"defex · visit ({ip or 'unknown ip'})"
-    rows = [
-        ("IP", ip or "—"),
-        ("Referrer", referrer or "direct"),
-        ("Path", path),
-        ("Language", lang or "—"),
-        ("User-Agent", ua or "—"),
-    ]
-    body = "".join(
-        f'<tr><td style="padding:4px 12px 4px 0;color:#888;font-size:12px;'
-        f'vertical-align:top;white-space:nowrap">{escape(k)}</td>'
-        f'<td style="padding:4px 0;font-size:13px;word-break:break-all">{escape(v)}</td></tr>'
-        for k, v in rows
-    )
-    html = (
-        '<div style="font-family:ui-monospace,monospace;color:#111;max-width:560px">'
-        '<p style="margin:0 0 12px;font-size:14px"><b>New visitor on defex.app</b></p>'
-        f'<table style="border-collapse:collapse">{body}</table>'
-        '</div>'
-    )
-    return subject, html
-
-
 def autoresponder_email(name: str, factory: str) -> tuple[str, str]:
     """(subject, html) sent FROM Husan personally TO the submitter."""
     first = (name or "there").strip().split()[0] if name else "there"
