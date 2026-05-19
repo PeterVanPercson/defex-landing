@@ -43,3 +43,4 @@ htmlcov/
 
 # Legacy template files (not used)
 templatemo_619_axis_industrial/
+.vercel
