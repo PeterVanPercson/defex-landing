@@ -1,40 +1,48 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}defex — replaces QC inspectors with AI{% endblock %}
+{% block title %}defex — edge AI factory inspection for the Yangtze River Delta{% endblock %}
 
 {% block content %}
 
 <!-- TOP MARQUEE — fills the empty top, states the wedge -->
 <section class="marquee marquee--top" aria-hidden="true">
     <div class="marquee__track">
-        <span class="marquee__item">Cognex ($50K)</span>
+        <span class="marquee__item">Cognex ($30K&ndash;100K)</span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">Keyence ($40K)</span>
         <span class="marquee__sep">+</span>
-        <span class="marquee__item">defex<span class="dot">.</span> ($1,150)</span>
+        <span class="marquee__item">defex<span class="dot">.</span> ($5K + $350/mo)</span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">
-            <span lang="en">Replaces QC inspectors with AI</span><span lang="zh">用 AI 替代人工质检</span>
+            <span lang="en">Edge AI &middot; 50 ms &middot; no cloud</span><span lang="zh">边缘 AI &middot; 50 毫秒 &middot; 无云端</span>
         </span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">
             <span lang="en">Trained on your defects</span><span lang="zh">基于您的瑕疵训练</span>
+        </span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">
+            <span lang="en">Yangtze River Delta</span><span lang="zh">长三角</span>
         </span>
         <span class="marquee__sep">+</span>
         <!-- duplicate for seamless loop -->
-        <span class="marquee__item">Cognex ($50K)</span>
+        <span class="marquee__item">Cognex ($30K&ndash;100K)</span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">Keyence ($40K)</span>
         <span class="marquee__sep">+</span>
-        <span class="marquee__item">defex<span class="dot">.</span> ($1,150)</span>
+        <span class="marquee__item">defex<span class="dot">.</span> ($5K + $350/mo)</span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">
-            <span lang="en">Replaces QC inspectors with AI</span><span lang="zh">用 AI 替代人工质检</span>
+            <span lang="en">Edge AI &middot; 50 ms &middot; no cloud</span><span lang="zh">边缘 AI &middot; 50 毫秒 &middot; 无云端</span>
         </span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">
             <span lang="en">Trained on your defects</span><span lang="zh">基于您的瑕疵训练</span>
+        </span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item">
+            <span lang="en">Yangtze River Delta</span><span lang="zh">长三角</span>
         </span>
         <span class="marquee__sep">+</span>
     </div>
@@ -51,7 +59,7 @@
         <div class="hero__chip">
             <span class="hero__chip-num">00</span>
             <span class="hero__chip-title">
-                <span lang="en">DEFEX &middot; FACTORY VISION INFRASTRUCTURE</span><span lang="zh">DEFEX &middot; 工厂视觉基础设施</span>
+                <span lang="en">DEFEX &middot; YRD FACTORY VISION INFRASTRUCTURE</span><span lang="zh">DEFEX &middot; 长三角工厂视觉基础设施</span>
             </span>
         </div>
 
@@ -60,10 +68,9 @@
         </h1>
 
         <p class="hero__lede">
-            <span lang="en"><strong>We replace QC inspectors with AI vision.</strong>
-            Sub-$2K to deploy. Built for the bottom 90% of factories
-            that Cognex and Keyence skip.</span><span lang="zh"><strong>我们用 AI 视觉替代质检员。</strong>
-            部署成本低于 $2,000。专为 Cognex、Keyence 跳过的 90% 中小工厂打造。</span>
+            <span lang="en"><strong>Jetson-powered defect inspection for the Yangtze River Delta.</strong>
+            ~$5,000 to deploy. Built for foreign-invested SMEs where Cognex and Keyence don&rsquo;t fit on a plant manager&rsquo;s discretionary spend.</span><span lang="zh"><strong>Jetson 边缘 AI 缺陷质检 &middot; 长三角。</strong>
+            部署成本约 $5,000。专为外资中小工厂打造 &mdash; Cognex、Keyence 不愿降价的那片市场。</span>
         </p>
 
         <div class="hero__cta">
@@ -88,6 +95,12 @@
                 </span>
                 <span class="zf">
                     <span class="zf__z">z</span><span class="zf__rest">Fellows</span>
+                </span>
+            </div>
+            <div class="proof" aria-label="nvidia inception applicant">
+                <span class="dot-live"></span>
+                <span>
+                    <span lang="en">NVIDIA Inception &middot; <span class="muted">applicant</span></span><span lang="zh">NVIDIA Inception &middot; <span class="muted">申请中</span></span>
                 </span>
             </div>
         </div>
@@ -146,10 +159,10 @@
             <span lang="en"><strong>Inspectors miss.</strong> Fatigue hits at hour four. 2&ndash;3% of output leaves the line with a defect no one flagged.</span><span lang="zh"><strong>人工会漏检。</strong>第四小时疲劳袭来。2&ndash;3% 的产品带着无人察觉的瑕疵流出产线。</span>
         </p>
         <p>
-            <span lang="en"><strong>The fix exists, just not for them.</strong> Cognex $50K. Keyence $40K. Neither vendor goes below five figures.</span><span lang="zh"><strong>方案存在，但不为他们准备。</strong>Cognex 5 万美元。Keyence 4 万美元。两家都不愿降至五位数以下。</span>
+            <span lang="en"><strong>The fix exists, just not for them.</strong> Cognex $30K&ndash;100K. Keyence $40K+. Domestic challengers (微亿智造, 创新奇智) $80K&ndash;200K. None go below five figures.</span><span lang="zh"><strong>方案存在，但不为他们准备。</strong>Cognex $30K&ndash;100K。Keyence $40K+。国产挑战者（微亿智造、创新奇智）$80K&ndash;200K。没人愿意降到五位数以下。</span>
         </p>
         <p>
-            <span lang="en"><strong>Edge AI changed the math.</strong> The bottom 90% of factories finally have an option.</span><span lang="zh"><strong>边缘 AI 改变了经济账。</strong>底层 90% 的工厂终于有了选择。</span>
+            <span lang="en"><strong>Edge AI changed the math.</strong> OpEx-priced edge AI finally fits inside plant-manager discretionary spend.</span><span lang="zh"><strong>边缘 AI 改变了经济账。</strong>按运营开支定价的边缘 AI，终于落进了厂长的可自由支配预算。</span>
         </p>
     </div>
 
@@ -171,8 +184,8 @@
         </div>
         <div class="compare__cell compare__cell--us">
             <span class="compare__brand">defex</span>
-            <span class="compare__price">$1,150 <span class="compare__plus">
-                <span lang="en">+ $210 / mo</span><span lang="zh">+ 每月 $210</span>
+            <span class="compare__price">$5,000 <span class="compare__plus">
+                <span lang="en">+ $350 / mo</span><span lang="zh">+ 每月 $350</span>
             </span></span>
             <span class="compare__note">
                 <span lang="en">managed</span><span lang="zh">全托管</span>
@@ -204,8 +217,8 @@
                     <span lang="en">install</span><span lang="zh">安装</span>
                 </h3>
                 <p>
-                    <span lang="en">We mount the camera. Plug in the edge box. Wire it to your conveyor.
-                    <em>Under one day, no IT project.</em></span><span lang="zh">我们安装相机。接入边缘盒子。连接您的产线。<em>1 天完成，无需 IT 项目。</em></span>
+                    <span lang="en">Camera mounted. Hardware trigger via GPIO. Modbus TCP into your existing PLC.
+                    <em>Under one day, no IT project.</em></span><span lang="zh">相机安装到位。GPIO 硬件触发。Modbus TCP 接入您现有的 PLC。<em>1 天完成，无需 IT 项目。</em></span>
                 </p>
             </article>
             <article class="panel trio__item">
@@ -214,9 +227,9 @@
                     <span lang="en">train</span><span lang="zh">训练</span>
                 </h3>
                 <p>
-                    <span lang="en">We train the model on <em>your</em> defects from <em>your</em> samples.
-                    Customer-specific vision model, compiled for the edge.
-                    Thirty frames per second, on-device.</span><span lang="zh">我们用<em>您的</em>瑕疵样本训练<em>您的</em>模型。客户专属视觉模型，编译到边缘设备。每秒 30 帧，本地推理。</span>
+                    <span lang="en">YOLOv8 trained on <em>your</em> defects from <em>your</em> samples.
+                    TensorRT FP16 on the NVIDIA Jetson &mdash; 30 fps on-device,
+                    <em>sub-50 ms decisions.</em> No cloud.</span><span lang="zh">在<em>您的</em>瑕疵样本上训练 YOLOv8。NVIDIA Jetson 上 TensorRT FP16 推理 &mdash; 30 帧/秒，<em>50 毫秒内出结果。</em>无云端。</span>
                 </p>
             </article>
             <article class="panel trio__item">
@@ -225,8 +238,8 @@
                     <span lang="en">monitor</span><span lang="zh">监测</span>
                 </h3>
                 <p>
-                    <span lang="en">We watch the model from afar, retrain weekly,
-                    escalate if it drifts. <em>Your line just runs.</em></span><span lang="zh">我们远程监测模型，每周重训，发现漂移立即介入。<em>您的产线只管运行。</em></span>
+                    <span lang="en">We watch the model from afar. Quarterly retrain on
+                    your line data. Drift alarms. <em>Your line just runs.</em></span><span lang="zh">我们远程监测模型。每季度基于您的产线数据重训。漂移告警。<em>您的产线只管运行。</em></span>
                 </p>
             </article>
         </div>
@@ -240,7 +253,9 @@
         <span class="marquee__sep">+</span>
         <span class="marquee__item"><span lang="en">Edge-native vision</span><span lang="zh">边缘原生视觉</span></span>
         <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">PASS / FAIL in 30 ms</span><span lang="zh">PASS / FAIL 30 毫秒</span></span>
+        <span class="marquee__item"><span lang="en">PASS / FAIL in 50 ms</span><span lang="zh">PASS / FAIL 50 毫秒</span></span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item"><span lang="en">Modbus TCP into your PLC</span><span lang="zh">Modbus TCP 接入您的 PLC</span></span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item"><span lang="en">We install. We train. We monitor.</span><span lang="zh">我们安装。我们训练。我们监测。</span></span>
         <span class="marquee__sep">+</span>
@@ -252,7 +267,9 @@
         <span class="marquee__sep">+</span>
         <span class="marquee__item"><span lang="en">Edge-native vision</span><span lang="zh">边缘原生视觉</span></span>
         <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">PASS / FAIL in 30 ms</span><span lang="zh">PASS / FAIL 30 毫秒</span></span>
+        <span class="marquee__item"><span lang="en">PASS / FAIL in 50 ms</span><span lang="zh">PASS / FAIL 50 毫秒</span></span>
+        <span class="marquee__sep">+</span>
+        <span class="marquee__item"><span lang="en">Modbus TCP into your PLC</span><span lang="zh">Modbus TCP 接入您的 PLC</span></span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item"><span lang="en">We install. We train. We monitor.</span><span lang="zh">我们安装。我们训练。我们监测。</span></span>
         <span class="marquee__sep">+</span>
@@ -276,16 +293,16 @@
         </span>
     </div>
     <h2 class="h2 h2--serif">
-        <span lang="en">One line. <em>$1,150.</em></span><span lang="zh">一条产线。<em>$1,150。</em></span>
+        <span lang="en">One line. <em>$5,000.</em></span><span lang="zh">一条产线。<em>$5,000。</em></span>
     </h2>
     <div class="block__body">
 
         <div class="panel price">
             <span class="panel__label">fig.02 / quote</span>
-            <div class="price__num">$1,150<span class="price__unit">
-                <span lang="en"> hardware</span><span lang="zh"> 硬件</span>
+            <div class="price__num">$5,000<span class="price__unit">
+                <span lang="en"> station</span><span lang="zh"> 工位</span>
             </span></div>
-            <div class="price__sub">$210<span class="price__sub-unit">
+            <div class="price__sub">$350<span class="price__sub-unit">
                 <span lang="en"> / month &middot; model, monitoring, retraining, support</span><span lang="zh"> / 月 &middot; 模型、监测、重训、支持</span>
             </span></div>
             <div class="price__cap">
@@ -293,10 +310,10 @@
             </div>
             <ul class="price__list">
                 <li>
-                    <span lang="en"><b>$450</b> refundable deposit on signing</span><span lang="zh"><b>$450</b> 签约可退押金</span>
+                    <span lang="en"><b>$2,500</b> deposit on PO signing (50%)</span><span lang="zh"><b>$2,500</b> 签订 PO 时支付定金（50%）</span>
                 </li>
                 <li>
-                    <span lang="en"><b>7 days</b> free pilot &mdash; if we don&rsquo;t beat your current escape rate, we pack up</span><span lang="zh"><b>7 天</b>免费试点 &mdash; 若未能超越您当前漏检率，我们撤场</span>
+                    <span lang="en"><b>28 days</b> free pilot &mdash; benchmark customer only</span><span lang="zh"><b>28 天</b>免费试点 &mdash; 仅限灯塔客户</span>
                 </li>
                 <li>
                     <span lang="en"><b>30 days</b> cancellation notice, any month</span><span lang="zh"><b>30 天</b>解约通知，任何月份</span>
@@ -308,13 +325,13 @@
         </div>
 
         <p class="muted price__ltv">
-            <span lang="en">First-year LTV per line &asymp; <b>$4,120</b> &mdash; about what one shift
-            of escaped defects costs a 200-person factory.</span><span lang="zh">首年每条产线 LTV &asymp; <b>$4,120</b> &mdash; 大约相当于一个 200 人工厂一班漏检瑕疵的损失。</span>
+            <span lang="en">First-year revenue per line &asymp; <b>$9,300</b> &mdash; about what one shift
+            of escaped defects costs a 500-worker plant.</span><span lang="zh">首年每条产线营收 &asymp; <b>$9,300</b> &mdash; 大约相当于一个 500 人工厂一班漏检瑕疵的损失。</span>
         </p>
 
         <p class="price__more">
             <a href="{% url 'pricing' %}" class="price__more-link">
-                <span lang="en">multi-line calculator &mdash; 20% off every line after the first &rarr;</span><span lang="zh">多产线计算器 &mdash; 第二条起每条 8 折 &rarr;</span>
+                <span lang="en">three SKU tiers &mdash; single-cam, dual-cam, full line &rarr;</span><span lang="zh">三档 SKU &mdash; 单相机、双相机、整线 &rarr;</span>
             </a>
         </p>
     </div>

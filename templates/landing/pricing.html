@@ -1,21 +1,21 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}defex pricing — calculator per line{% endblock %}
+{% block title %}defex pricing — three SKU tiers{% endblock %}
 
 {% block content %}
 
-<!-- TOP MARQUEE — slimmer version, pricing-themed -->
+<!-- TOP MARQUEE — slimmer pricing-themed band -->
 <section class="marquee marquee--top" aria-hidden="true">
     <div class="marquee__track">
-        <span class="marquee__item">Cognex ($50K)</span>
+        <span class="marquee__item">Cognex ($30K&ndash;100K)</span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">Keyence ($40K)</span>
         <span class="marquee__sep">+</span>
-        <span class="marquee__item">defex<span class="dot">.</span> ($1,150 / line)</span>
+        <span class="marquee__item">defex<span class="dot">.</span> ($5K + $350/mo)</span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">
-            <span lang="en">20% off every additional line</span><span lang="zh">第二条起每条 8 折</span>
+            <span lang="en">Three tiers &middot; one product</span><span lang="zh">三档 SKU &middot; 一个产品</span>
         </span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">
@@ -23,14 +23,14 @@
         </span>
         <span class="marquee__sep">+</span>
         <!-- duplicate for seamless loop -->
-        <span class="marquee__item">Cognex ($50K)</span>
+        <span class="marquee__item">Cognex ($30K&ndash;100K)</span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">Keyence ($40K)</span>
         <span class="marquee__sep">+</span>
-        <span class="marquee__item">defex<span class="dot">.</span> ($1,150 / line)</span>
+        <span class="marquee__item">defex<span class="dot">.</span> ($5K + $350/mo)</span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">
-            <span lang="en">20% off every additional line</span><span lang="zh">第二条起每条 8 折</span>
+            <span lang="en">Three tiers &middot; one product</span><span lang="zh">三档 SKU &middot; 一个产品</span>
         </span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">
@@ -61,103 +61,155 @@
 
 <main class="page">
 
-<!-- HERO — single column, the calculator IS the hero -->
+<!-- HERO — single column -->
 <section class="hero hero--single" id="top">
     <div class="hero__chip">
         <span class="hero__chip-num">00</span>
         <span class="hero__chip-title">
-            <span lang="en">PRICING &middot; PER LINE</span><span lang="zh">定价 &middot; 按产线</span>
+            <span lang="en">PRICING &middot; THREE TIERS</span><span lang="zh">定价 &middot; 三档 SKU</span>
         </span>
     </div>
 
     <h1 class="hero__title hero__title--pricing">
-        <span lang="en">How many<br><span class="hero__title-soft">lines do</span> you run<span class="dot">?</span></span><span lang="zh">您有<br><span class="hero__title-soft">几条</span> 产线<span class="dot">?</span></span>
+        <span lang="en">Three tiers.<br><span class="hero__title-soft">One</span> product<span class="dot">.</span></span><span lang="zh">三档 SKU。<br><span class="hero__title-soft">一个</span> 产品<span class="dot">.</span></span>
     </h1>
 
     <p class="hero__lede">
-        <span lang="en"><strong>First line: $1,150 + $210 / month.</strong>
-        Every line after that: 20% off. We own the hardware after install.
-        No yearly contracts. 7-day free pilot.</span><span lang="zh"><strong>首条产线：$1,150 + $210 / 月。</strong>之后每条 8 折。硬件安装后归我们所有。无年度合同。7 天免费试点。</span>
+        <span lang="en"><strong>Single-cam: $5,000 + $350 / month.</strong>
+        Dual-cam and full-line SKUs ship Q4 2026. 28-day free pilot for the lighthouse customer.</span><span lang="zh"><strong>单相机：$5,000 + $350 / 月。</strong>双相机与整线 SKU 于 2026 Q4 交付。28 天免费试点 — 仅限灯塔客户。</span>
     </p>
 </section>
 
-<!-- CALCULATOR -->
-<section class="block" id="calc">
+<!-- 01 — SKU TIERS -->
+<section class="block" id="tiers">
     <div class="block__marker">
         <span class="block__marker__num">01</span>
         <span class="block__marker__title">
-            <span lang="en">calculator</span><span lang="zh">计算器</span>
+            <span lang="en">tiers</span><span lang="zh">SKU 档位</span>
         </span>
         <span class="block__marker__rule"></span>
-        <span class="block__marker__stat" id="calcStat" data-en="${total} hardware · ${monthly} / mo" data-zh="${total} 硬件 · 每月 ${monthly}">
-            $1,150 hardware · $210 / mo
+        <span class="block__marker__stat">
+            <span lang="en">single-cam ships v1</span><span lang="zh">单相机 v1 现货</span>
         </span>
     </div>
 
-    <div class="calc">
-        <!-- LINES STEPPER -->
-        <div class="calc__lines">
-            <label class="calc__label" for="linesInput">
-                <span lang="en">number of lines</span><span lang="zh">产线数量</span>
-            </label>
-            <div class="stepper" role="group" aria-label="number of lines">
-                <button type="button" class="stepper__btn" id="linesMinus" aria-label="fewer lines">&minus;</button>
-                <input type="number" id="linesInput" class="stepper__val" value="1" min="1" max="50" inputmode="numeric">
-                <button type="button" class="stepper__btn" id="linesPlus" aria-label="more lines">+</button>
-            </div>
+    <!-- Three SKU tier cards, using the compare strip pattern.
+         Single-cam is the highlighted "us" cell (shipping now). -->
+    <div class="compare compare--pricing" aria-label="SKU tiers">
+        <div class="compare__cell compare__cell--us">
+            <span class="compare__brand">
+                <span lang="en">single-cam</span><span lang="zh">单相机</span>
+            </span>
+            <span class="compare__price">$5,000 <span class="compare__plus">
+                <span lang="en">+ $350 / mo</span><span lang="zh">+ 每月 $350</span>
+            </span></span>
+            <span class="compare__note">
+                <span lang="en">1 camera &middot; 1 defect class &middot; Modbus TCP &middot; v1 shipping</span><span lang="zh">1 相机 &middot; 1 缺陷类 &middot; Modbus TCP &middot; v1 现货</span>
+            </span>
         </div>
+        <div class="compare__cell">
+            <span class="compare__brand">
+                <span lang="en">dual-cam</span><span lang="zh">双相机</span>
+            </span>
+            <span class="compare__price">$7,900 <span class="compare__plus">
+                <span lang="en">+ $570 / mo</span><span lang="zh">+ 每月 $570</span>
+            </span></span>
+            <span class="compare__note">
+                <span lang="en">2 stations on one line &middot; multi-cam fusion &middot; Q4 2026</span><span lang="zh">同一产线 2 工位 &middot; 多相机融合 &middot; 2026 Q4</span>
+            </span>
+        </div>
+        <div class="compare__cell">
+            <span class="compare__brand">
+                <span lang="en">line</span><span lang="zh">整线</span>
+            </span>
+            <span class="compare__price">$10,000+ <span class="compare__plus">
+                <span lang="en">+ $850+ / mo</span><span lang="zh">+ 每月 $850+</span>
+            </span></span>
+            <span class="compare__note">
+                <span lang="en">3+ stations &middot; central dashboard &middot; Q4 2026</span><span lang="zh">3+ 工位 &middot; 中央仪表盘 &middot; 2026 Q4</span>
+            </span>
+        </div>
+    </div>
+</section>
 
-        <!-- BREAKDOWN TABLE -->
-        <table class="calc__table" aria-live="polite">
-            <thead>
-                <tr>
-                    <th>
-                        <span lang="en">item</span><span lang="zh">项目</span>
-                    </th>
-                    <th class="calc__num-col">
-                        <span lang="en">hardware</span><span lang="zh">硬件</span>
-                    </th>
-                    <th class="calc__num-col">
-                        <span lang="en">monthly</span><span lang="zh">月费</span>
-                    </th>
-                </tr>
-            </thead>
-            <tbody id="calcRows"><!-- filled by JS --></tbody>
-            <tfoot>
-                <tr class="calc__total">
-                    <td>
-                        <strong><span lang="en">total</span><span lang="zh">合计</span></strong>
-                    </td>
-                    <td class="calc__num-col"><strong id="totalHw">$1,150</strong></td>
-                    <td class="calc__num-col"><strong id="totalMo">$210</strong></td>
-                </tr>
-                <tr class="calc__yr">
-                    <td colspan="2" class="muted">
-                        <span lang="en">first-year total (hardware + 12 months)</span><span lang="zh">首年总额（硬件 + 12 个月）</span>
-                    </td>
-                    <td class="calc__num-col"><b id="totalYr">$3,670</b></td>
-                </tr>
-            </tfoot>
-        </table>
+<!-- 02 — BENCHMARK PILOT -->
+<section class="block" id="pilot">
+    <div class="block__marker">
+        <span class="block__marker__num">02</span>
+        <span class="block__marker__title">
+            <span lang="en">benchmark pilot</span><span lang="zh">基准试点</span>
+        </span>
+        <span class="block__marker__rule"></span>
+        <span class="block__marker__stat">
+            <span lang="en">28-day cap &middot; lighthouse only</span><span lang="zh">28 天上限 &middot; 仅限灯塔客户</span>
+        </span>
+    </div>
+    <div class="block__body">
+        <div class="panel price">
+            <span class="panel__label">fig.02 / pilot</span>
+            <div class="price__num">$0<span class="price__unit">
+                <span lang="en"> hardware</span><span lang="zh"> 硬件</span>
+            </span></div>
+            <div class="price__sub">$0<span class="price__sub-unit">
+                <span lang="en"> / month &middot; full single-cam station, installed on your line</span><span lang="zh"> / 月 &middot; 完整单相机工位，部署到您的产线</span>
+            </span></div>
+            <div class="price__cap">
+                <span lang="en">lighthouse customer only &middot; case-study + reference call rights</span><span lang="zh">仅限灯塔客户 &middot; 案例研究与参考通话权</span>
+            </div>
+            <ul class="price__list">
+                <li>
+                    <span lang="en"><b>28 days</b> on-site &mdash; we install, train on your defects, run the line</span><span lang="zh"><b>28 天</b>现场 &mdash; 我们安装、训练您的瑕疵、运行产线</span>
+                </li>
+                <li>
+                    <span lang="en"><b>If</b> we don&rsquo;t beat your current escape rate, we pack up</span><span lang="zh"><b>若</b>未能超越您当前漏检率，我们撤场</span>
+                </li>
+                <li>
+                    <span lang="en"><b>Customer</b> agrees to a 90-second case-study video and 1 reference call</span><span lang="zh"><b>客户</b>同意 90 秒案例视频与 1 次参考通话</span>
+                </li>
+                <li>
+                    <span lang="en"><b>Pilot</b> converts to single-cam SKU on Day 29 if both sides green-light</span><span lang="zh"><b>试点</b>在第 29 天双方确认后转为单相机 SKU</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
 
-        <!-- PERKS GRID -->
-        <ul class="calc__perks">
+<!-- 03 — PERKS + VS ENTERPRISE -->
+<section class="block" id="perks">
+    <div class="block__marker">
+        <span class="block__marker__num">03</span>
+        <span class="block__marker__title">
+            <span lang="en">all paid tiers include</span><span lang="zh">所有付费档位包含</span>
+        </span>
+        <span class="block__marker__rule"></span>
+        <span class="block__marker__stat">
+            <span lang="en">no capex, no yearly contracts</span><span lang="zh">无固定资产，无年度合同</span>
+        </span>
+    </div>
+    <div class="block__body">
+        <ul class="price__list">
             <li>
-                <span lang="en"><b>$450</b> refundable deposit on signing</span><span lang="zh"><b>$450</b> 签约可退押金</span>
+                <span lang="en"><b>$2,500</b> deposit on PO signing (50%)</span><span lang="zh"><b>$2,500</b> 签订 PO 时支付定金（50%）</span>
             </li>
             <li>
-                <span lang="en"><b>7 days</b> free pilot &mdash; if we don't beat your current escape rate, we pack up</span><span lang="zh"><b>7 天</b>免费试点 &mdash; 若未能超越您当前漏检率，我们撤场</span>
+                <span lang="en"><b>Remote</b> support, response &lt; 24 hr</span><span lang="zh"><b>远程</b>支持，24 小时内响应</span>
             </li>
             <li>
-                <span lang="en"><b>30 days</b> cancellation notice, any month</span><span lang="zh"><b>30 天</b>解约通知，任何月份</span>
+                <span lang="en"><b>Quarterly</b> model retraining on your line data</span><span lang="zh"><b>每季度</b>基于您的产线数据重训模型</span>
             </li>
             <li>
-                <span lang="en"><b>No</b> capex, licences, or yearly contracts</span><span lang="zh"><b>无</b>固定资产投入、许可证或年度合同</span>
+                <span lang="en"><b>On-site</b> service visits up to 2 / year &middot; 12-month parts warranty</span><span lang="zh"><b>现场</b>服务每年至多 2 次 &middot; 12 个月零件保修</span>
+            </li>
+            <li>
+                <span lang="en"><b>Chinese-language</b> operator training (2 hr session for QC manager + line workers)</span><span lang="zh"><b>中文</b>操作员培训（QC 经理与产线工人 2 小时）</span>
+            </li>
+            <li>
+                <span lang="en"><b>30 days</b> cancellation notice, any month &middot; no yearly lock-in</span><span lang="zh"><b>30 天</b>解约通知，任何月份 &middot; 无年度锁定</span>
             </li>
         </ul>
 
-        <!-- COMPARISON STRIP -->
-        <div class="compare compare--pricing" aria-label="vs enterprise">
+        <!-- vs enterprise -->
+        <div class="compare compare--pricing" aria-label="vs enterprise" style="margin-top:36px">
             <div class="compare__cell">
                 <span class="compare__brand">Cognex</span>
                 <span class="compare__price">$30K &ndash; 100K</span>
@@ -174,14 +226,14 @@
             </div>
             <div class="compare__cell compare__cell--us">
                 <span class="compare__brand">defex</span>
-                <span class="compare__price" id="comparePrice">$1,150 <span class="compare__plus">+ $210 / mo</span></span>
+                <span class="compare__price">$5,000 <span class="compare__plus">+ $350 / mo</span></span>
                 <span class="compare__note">
                     <span lang="en">managed</span><span lang="zh">全托管</span>
                 </span>
             </div>
         </div>
 
-        <div class="calc__ctas">
+        <div class="hero__cta" style="margin-top:36px">
             <a href="/#contact" class="cta">
                 <span lang="en">Request a pilot &nbsp;&rarr;</span><span lang="zh">申请试点 &nbsp;&rarr;</span>
             </a>
@@ -191,7 +243,7 @@
         </div>
 
         <p class="muted price__ltv" style="margin-top:32px">
-            <span lang="en">First-year LTV per line &asymp; <b>$4,120</b> &mdash; about what one shift of escaped defects costs a 200-person factory.</span><span lang="zh">首年每条产线 LTV &asymp; <b>$4,120</b> &mdash; 大约相当于一个 200 人工厂一班漏检瑕疵的损失。</span>
+            <span lang="en">First-year revenue per line &asymp; <b>$9,300</b> &mdash; about what one shift of escaped defects costs a 500-worker plant.</span><span lang="zh">首年每条产线营收 &asymp; <b>$9,300</b> &mdash; 大约相当于一个 500 人工厂一班漏检瑕疵的损失。</span>
         </p>
     </div>
 </section>
@@ -199,90 +251,5 @@
 </main>
 
 {% include "components/footer.html" %}
-
-<script>
-(function () {
-    var BASE_HW = 1150;
-    var BASE_MO = 210;
-    var DISCOUNT = 0.20;  // 20% off every line after the first
-
-    var $input  = document.getElementById('linesInput');
-    var $minus  = document.getElementById('linesMinus');
-    var $plus   = document.getElementById('linesPlus');
-    var $rows   = document.getElementById('calcRows');
-    var $totalHw = document.getElementById('totalHw');
-    var $totalMo = document.getElementById('totalMo');
-    var $totalYr = document.getElementById('totalYr');
-    var $stat    = document.getElementById('calcStat');
-    var $compare = document.getElementById('comparePrice');
-
-    function fmt(n) {
-        return '$' + n.toLocaleString('en-US');
-    }
-
-    function lineLabel(idx) {
-        // Returns HTML pair (EN / CN)
-        if (idx === 0) {
-            return '<span lang="en">Line 1 &middot; full</span>' +
-                   '<span lang="zh">第 1 条 &middot; 标价</span>';
-        }
-        return '<span lang="en">Line ' + (idx + 1) + ' &middot; &minus;20%</span>' +
-               '<span lang="zh">第 ' + (idx + 1) + ' 条 &middot; &minus;20%</span>';
-    }
-
-    function render() {
-        var n = parseInt($input.value, 10);
-        if (isNaN(n) || n < 1) { n = 1; $input.value = 1; }
-        if (n > 50) { n = 50; $input.value = 50; }
-
-        // Build rows
-        var html = '';
-        var hwTotal = 0, moTotal = 0;
-        for (var i = 0; i < n; i++) {
-            var hw = i === 0 ? BASE_HW : Math.round(BASE_HW * (1 - DISCOUNT));
-            var mo = i === 0 ? BASE_MO : Math.round(BASE_MO * (1 - DISCOUNT));
-            hwTotal += hw;
-            moTotal += mo;
-            html +=
-              '<tr>' +
-                '<td>' + lineLabel(i) + '</td>' +
-                '<td class="calc__num-col">' + fmt(hw) + '</td>' +
-                '<td class="calc__num-col">' + fmt(mo) + '<span class="muted"> / mo</span></td>' +
-              '</tr>';
-        }
-        $rows.innerHTML = html;
-
-        var yr = hwTotal + moTotal * 12;
-        $totalHw.textContent = fmt(hwTotal);
-        $totalMo.textContent = fmt(moTotal);
-        $totalYr.textContent = fmt(yr);
-
-        // Top-right stat in the section marker
-        var statTpl_en = $stat.getAttribute('data-en');
-        var statTpl_zh = $stat.getAttribute('data-zh');
-        var hwS = fmt(hwTotal), moS = fmt(moTotal);
-        $stat.innerHTML =
-            '<span lang="en">' + statTpl_en.replace('${total}', hwS).replace('${monthly}', moS) + '</span>' +
-            '<span lang="zh">' + statTpl_zh.replace('${total}', hwS).replace('${monthly}', moS) + '</span>';
-
-        // Compare strip price reflects current calc
-        $compare.innerHTML = fmt(hwTotal) +
-            ' <span class="compare__plus">+ ' + fmt(moTotal) + ' / mo</span>';
-    }
-
-    $minus.addEventListener('click', function () {
-        $input.value = Math.max(1, (parseInt($input.value, 10) || 1) - 1);
-        render();
-    });
-    $plus.addEventListener('click', function () {
-        $input.value = Math.min(50, (parseInt($input.value, 10) || 1) + 1);
-        render();
-    });
-    $input.addEventListener('input', render);
-    $input.addEventListener('change', render);
-
-    render();
-})();
-</script>
 
 {% endblock %}
