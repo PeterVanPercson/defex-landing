@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}defex — edge AI factory inspection for the Yangtze River Delta{% endblock %}
+{% block title %}defex — automated visual inspection for factories{% endblock %}
 
 {% block content %}
 
@@ -12,7 +12,7 @@
         <span class="marquee__sep">+</span>
         <span class="marquee__item">Keyence ($40K)</span>
         <span class="marquee__sep">+</span>
-        <span class="marquee__item">defex<span class="dot">.</span> ($5K + $350/mo)</span>
+        <span class="marquee__item">defex<span class="dot">.</span> ($4,900 + $350/mo)</span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">
             <span lang="en">Edge AI &middot; 50 ms &middot; no cloud</span><span lang="zh">边缘 AI &middot; 50 毫秒 &middot; 无云端</span>
@@ -23,7 +23,7 @@
         </span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">
-            <span lang="en">Yangtze River Delta</span><span lang="zh">长三角</span>
+            <span lang="en">San Francisco Bay Area</span><span lang="zh">旧金山湾区</span>
         </span>
         <span class="marquee__sep">+</span>
         <!-- duplicate for seamless loop -->
@@ -31,7 +31,7 @@
         <span class="marquee__sep">+</span>
         <span class="marquee__item">Keyence ($40K)</span>
         <span class="marquee__sep">+</span>
-        <span class="marquee__item">defex<span class="dot">.</span> ($5K + $350/mo)</span>
+        <span class="marquee__item">defex<span class="dot">.</span> ($4,900 + $350/mo)</span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">
             <span lang="en">Edge AI &middot; 50 ms &middot; no cloud</span><span lang="zh">边缘 AI &middot; 50 毫秒 &middot; 无云端</span>
@@ -42,7 +42,7 @@
         </span>
         <span class="marquee__sep">+</span>
         <span class="marquee__item">
-            <span lang="en">Yangtze River Delta</span><span lang="zh">长三角</span>
+            <span lang="en">San Francisco Bay Area</span><span lang="zh">旧金山湾区</span>
         </span>
         <span class="marquee__sep">+</span>
     </div>
@@ -59,7 +59,7 @@
         <div class="hero__chip">
             <span class="hero__chip-num">00</span>
             <span class="hero__chip-title">
-                <span lang="en">DEFEX &middot; YRD FACTORY VISION INFRASTRUCTURE</span><span lang="zh">DEFEX &middot; 长三角工厂视觉基础设施</span>
+                <span lang="en">DEFEX &middot; FACTORY VISION INFRASTRUCTURE</span><span lang="zh">DEFEX &middot; 工厂视觉基础设施</span>
             </span>
         </div>
 
@@ -68,14 +68,14 @@
         </h1>
 
         <p class="hero__lede">
-            <span lang="en"><strong>Jetson-powered defect inspection for the Yangtze River Delta.</strong>
-            ~$5,000 to deploy. Built for foreign-invested SMEs where Cognex and Keyence don&rsquo;t fit on a plant manager&rsquo;s discretionary spend.</span><span lang="zh"><strong>Jetson 边缘 AI 缺陷质检 &middot; 长三角。</strong>
-            部署成本约 $5,000。专为外资中小工厂打造 &mdash; Cognex、Keyence 不愿降价的那片市场。</span>
+            <span lang="en"><strong>Jetson-powered defect inspection, installed in a day.</strong>
+            $4,900 to deploy. Built for factories where Cognex and Keyence don&rsquo;t fit on a plant manager&rsquo;s discretionary spend.</span><span lang="zh"><strong>Jetson 边缘 AI 缺陷质检，一天部署。</strong>
+            部署成本 $4,900。专为中小工厂打造 &mdash; Cognex、Keyence 不愿降价的那片市场。</span>
         </p>
 
         <div class="hero__cta">
             <a href="#contact" class="cta">
-                <span lang="en">Request a pilot &nbsp;&rarr;</span><span lang="zh">申请试点 &nbsp;&rarr;</span>
+                <span lang="en">Book a 10-day benchmark &nbsp;&rarr;</span><span lang="zh">预约 10 天基准测试 &nbsp;&rarr;</span>
             </a>
             <a href="#pricing" class="cta-soft">
                 <span lang="en">See the math</span><span lang="zh">查看定价</span>
@@ -125,6 +125,36 @@
 
 </section>
 
+<!-- 00b — DEMO VIDEO — hides itself until static/video/demo.mp4 exists -->
+<section class="block" id="demo">
+    <div class="block__marker">
+        <span class="block__marker__num">00</span>
+        <span class="block__marker__title">
+            <span lang="en">watch it run</span><span lang="zh">看它运行</span>
+        </span>
+        <span class="block__marker__rule"></span>
+        <span class="block__marker__stat">
+            <span lang="en">live on a Jetson &middot; sub-50 ms</span><span lang="zh">Jetson 实机 &middot; 50 毫秒内</span>
+        </span>
+    </div>
+    <div class="block__body">
+        <div class="panel">
+            <span class="panel__label">fig.00 / demo</span>
+            <video id="demoVideo" controls playsinline preload="metadata"
+                   style="width:100%;display:block;border-radius:10px;background:#0F1115"
+                   src="{% static 'video/demo.mp4' %}"></video>
+        </div>
+    </div>
+</section>
+<script>
+(function () {
+    var v = document.getElementById('demoVideo');
+    var sec = document.getElementById('demo');
+    if (!v || !sec) return;
+    v.addEventListener('error', function () { sec.style.display = 'none'; }, true);
+})();
+</script>
+
 <!-- 01 — PROBLEM -->
 <section class="block" id="problem">
     <div class="block__marker">
@@ -142,10 +172,10 @@
     </h2>
     <div class="block__body block__body--prose">
         <p>
-            <span lang="en"><strong>Inspectors miss.</strong> Fatigue hits at hour four. 2&ndash;3% of output leaves the line with a defect no one flagged.</span><span lang="zh"><strong>人工会漏检。</strong>第四小时疲劳袭来。2&ndash;3% 的产品带着无人察觉的瑕疵流出产线。</span>
+            <span lang="en"><strong>Inspectors are expensive, and they miss.</strong> A US quality inspector runs $22.80/hr at the median &mdash; $65&ndash;85K a year loaded per shift &mdash; and fatigue still hits at hour four. 2&ndash;3% of output leaves the line with a defect no one flagged.</span><span lang="zh"><strong>人工质检昂贵，且会漏检。</strong>美国质检员中位工资 $22.80/小时，每班全负担成本约 $65&ndash;85K/年 &mdash; 第四小时疲劳依旧袭来。2&ndash;3% 的产品带着无人察觉的瑕疵流出产线。</span>
         </p>
         <p>
-            <span lang="en"><strong>The fix exists, just not for them.</strong> Cognex $30K&ndash;100K. Keyence $40K+. Domestic challengers (微亿智造, 创新奇智) $80K&ndash;200K. None go below five figures.</span><span lang="zh"><strong>方案存在，但不为他们准备。</strong>Cognex $30K&ndash;100K。Keyence $40K+。国产挑战者（微亿智造、创新奇智）$80K&ndash;200K。没人愿意降到五位数以下。</span>
+            <span lang="en"><strong>The fix exists, just not for them.</strong> Cognex $30K&ndash;100K. Keyence $40K+. Newer AI-vision vendors $80K&ndash;200K per line. None go below five figures.</span><span lang="zh"><strong>方案存在，但不为他们准备。</strong>Cognex $30K&ndash;100K。Keyence $40K+。新型 AI 视觉厂商每线 $80K&ndash;200K。没人愿意降到五位数以下。</span>
         </p>
         <p>
             <span lang="en"><strong>Edge AI changed the math.</strong> OpEx-priced edge AI finally fits inside plant-manager discretionary spend.</span><span lang="zh"><strong>边缘 AI 改变了经济账。</strong>按运营开支定价的边缘 AI，终于落进了厂长的可自由支配预算。</span>
@@ -170,7 +200,7 @@
         </div>
         <div class="compare__cell compare__cell--us">
             <span class="compare__brand">defex</span>
-            <span class="compare__price">$5,000 <span class="compare__plus">
+            <span class="compare__price">$4,900 <span class="compare__plus">
                 <span lang="en">+ $350 / mo</span><span lang="zh">+ 每月 $350</span>
             </span></span>
             <span class="compare__note">
@@ -279,13 +309,13 @@
         </span>
     </div>
     <h2 class="h2 h2--serif">
-        <span lang="en">One line. <em>$5,000.</em></span><span lang="zh">一条产线。<em>$5,000。</em></span>
+        <span lang="en">One line. <em>$4,900.</em></span><span lang="zh">一条产线。<em>$4,900。</em></span>
     </h2>
     <div class="block__body">
 
         <div class="panel price">
             <span class="panel__label">fig.02 / quote</span>
-            <div class="price__num">$5,000<span class="price__unit">
+            <div class="price__num">$4,900<span class="price__unit">
                 <span lang="en"> station</span><span lang="zh"> 工位</span>
             </span></div>
             <div class="price__sub">$350<span class="price__sub-unit">
@@ -296,10 +326,10 @@
             </div>
             <ul class="price__list">
                 <li>
-                    <span lang="en"><b>$2,500</b> deposit on PO signing (50%)</span><span lang="zh"><b>$2,500</b> 签订 PO 时支付定金（50%）</span>
+                    <span lang="en"><b>$2,450</b> deposit on PO signing (50%)</span><span lang="zh"><b>$2,450</b> 签订 PO 时支付定金（50%）</span>
                 </li>
                 <li>
-                    <span lang="en"><b>28 days</b> free pilot &mdash; benchmark customer only</span><span lang="zh"><b>28 天</b>免费试点 &mdash; 仅限灯塔客户</span>
+                    <span lang="en"><b>10-day</b> benchmark &mdash; $1,900, credited fully against install</span><span lang="zh"><b>10 天</b>基准测试 &mdash; $1,900，全额抵扣安装费</span>
                 </li>
                 <li>
                     <span lang="en"><b>30 days</b> cancellation notice, any month</span><span lang="zh"><b>30 天</b>解约通知，任何月份</span>
@@ -311,8 +341,8 @@
         </div>
 
         <p class="muted price__ltv">
-            <span lang="en">First-year revenue per line &asymp; <b>$9,300</b> &mdash; about what one shift
-            of escaped defects costs a 500-worker plant.</span><span lang="zh">首年每条产线营收 &asymp; <b>$9,300</b> &mdash; 大约相当于一个 500 人工厂一班漏检瑕疵的损失。</span>
+            <span lang="en">One inspector shift runs <b>$65&ndash;85K a year</b> loaded. Defex is $350 a month
+            &mdash; the install pays for itself in weeks.</span><span lang="zh">一个质检班次的全负担成本约 <b>$65&ndash;85K/年</b>。Defex 每月 $350 &mdash; 安装费数周即可回本。</span>
         </p>
 
         <p class="price__more">
@@ -362,7 +392,7 @@
             </label>
             <label class="form__row">
                 <span class="form__k">
-                    <span lang="en">email or wechat</span><span lang="zh">邮箱或微信</span>
+                    <span lang="en">email or phone</span><span lang="zh">邮箱或电话</span>
                 </span>
                 <input type="text" name="contact" autocomplete="email" required>
             </label>
@@ -381,7 +411,7 @@
 
         <p class="muted form__note">
             <span lang="en">Or write us directly &mdash;</span><span lang="zh">或直接联系我们 &mdash;</span>
-            <a class="form__mail" href="mailto:hello@buildcored.com">hello@buildcored.com</a>
+            <a class="form__mail" href="mailto:husan@defex.app">husan@defex.app</a>
         </p>
     </div>
 </section>
@@ -392,7 +422,7 @@
 
 <!-- Sticky CTA — fades in after hero -->
 <a href="#contact" class="sticky-cta" id="stickyCta" aria-label="request a pilot">
-    <span lang="en">request a pilot &rarr;</span><span lang="zh">申请试点 &rarr;</span>
+    <span lang="en">book a benchmark &rarr;</span><span lang="zh">预约基准测试 &rarr;</span>
 </a>
 
 {% endblock %}
