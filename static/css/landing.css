@@ -375,6 +375,24 @@ strong { font-weight: 600; color: var(--ink); }
 .zf__rest {
     color: var(--ink);
 }
+/* Founders Inc / Silkroad Fellows sit beside the zFellows wordmark; sized to the
+   13px wordmark rather than the 12px mono label so the row reads as one phrase. */
+.backer {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+}
+.backer-sep {
+    color: var(--line-2);
+    font-size: 12px;
+    line-height: 1;
+}
+@media (max-width: 560px) {
+    .proof--alt { flex-wrap: wrap; row-gap: 5px; }
+}
 
 /* ======================== SCAN CARD (right column) ======================== */
 
