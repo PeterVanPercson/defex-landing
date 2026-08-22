@@ -247,3 +247,54 @@
     window.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
 })();
+
+/* ---------- MVP demo loop (fig.00) ----------------------------------
+   Autoplays muted and looping, pauses off-screen, degrades to the poster
+   image if the file is missing or the codec is refused. */
+(function () {
+    const video  = document.getElementById('mvpVideo');
+    const panel  = document.getElementById('mvpPanel');
+    const toggle = document.getElementById('mvpToggle');
+    if (!video || !panel) return;
+
+    video.addEventListener('error', () => panel.classList.add('mvp--fallback'), true);
+
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let wanted = !calm;
+
+    function label() {
+        const on = !video.paused;
+        toggle.setAttribute('aria-pressed', String(!on));
+        toggle.querySelectorAll('[lang]').forEach(el => {
+            const en = el.getAttribute('lang') === 'en';
+            el.textContent = on ? (en ? 'pause' : '暂停') : (en ? 'play' : '播放');
+        });
+    }
+
+    function play() {
+        const p = video.play();
+        if (p && p.catch) p.catch(() => {});
+    }
+
+    if (calm) video.pause();
+
+    if (toggle) {
+        toggle.addEventListener('click', () => {
+            wanted = video.paused;
+            wanted ? play() : video.pause();
+            label();
+        });
+        video.addEventListener('play', label);
+        video.addEventListener('pause', label);
+        label();
+    }
+
+    if ('IntersectionObserver' in window) {
+        new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) { if (wanted) play(); }
+                else video.pause();
+            });
+        }, { threshold: 0.2 }).observe(video);
+    }
+})();
