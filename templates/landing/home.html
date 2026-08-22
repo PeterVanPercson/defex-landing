@@ -132,8 +132,8 @@
 
 </section>
 
-<!-- 00b — DEMO VIDEO — hides itself until static/video/demo.mp4 exists -->
-<section class="block" id="demo">
+<!-- 00 — MVP / WATCH IT RUN -->
+<section class="block" id="mvp">
     <div class="block__marker">
         <span class="block__marker__num">00</span>
         <span class="block__marker__title">
@@ -141,26 +141,57 @@
         </span>
         <span class="block__marker__rule"></span>
         <span class="block__marker__stat">
-            <span lang="en">live on a Jetson &middot; sub-50 ms</span><span lang="zh">Jetson 实机 &middot; 50 毫秒内</span>
+            <span lang="en">MVP bench test &middot; Jetson Orin Nano</span><span lang="zh">MVP 台架测试 &middot; Jetson Orin Nano</span>
         </span>
     </div>
+    <h2 class="h2 h2--serif">
+        <span lang="en">It calls the defect <em>before you see it.</em></span><span lang="zh">在你看见之前，<em>它已标出瑕疵。</em></span>
+    </h2>
     <div class="block__body">
-        <div class="panel">
-            <span class="panel__label">fig.00 / demo</span>
-            <video id="demoVideo" controls playsinline preload="metadata"
-                   style="width:100%;display:block;border-radius:10px;background:#0F1115"
-                   src="{% static 'video/demo.mp4' %}"></video>
-        </div>
+        <figure class="panel mvp" id="mvpPanel">
+            <span class="panel__label">fig.00 / mvp</span>
+
+            <div class="mvp__frame">
+                <video class="mvp__video" id="mvpVideo"
+                       muted loop autoplay playsinline preload="metadata"
+                       poster="{% static 'img/mvp-poster.jpg' %}"
+                       aria-label="Defex MVP: YOLOv8 running on a Jetson Orin Nano, boxing defects on PCB samples in real time">
+                    <source src="{% static 'video/mvp-loop.mp4' %}" type="video/mp4">
+                </video>
+                <img class="mvp__fallback" src="{% static 'img/mvp-poster.jpg' %}" alt="Defex detector boxing missing holes on a PCB sample">
+                <button type="button" class="mvp__toggle" id="mvpToggle" aria-pressed="false">
+                    <span lang="en">pause</span><span lang="zh">暂停</span>
+                </button>
+                <div class="mvp__hud" aria-hidden="true">
+                    <span class="mvp__hud-l"><span class="dot-live"></span>defex.detect</span>
+                    <span class="mvp__hud-r">yolov8 &middot; jetson orin nano &middot; on-device</span>
+                </div>
+            </div>
+
+            <ul class="mvp__classes" aria-label="defect classes in this model">
+                <li>missing_hole</li>
+                <li>mouse_bite</li>
+                <li>open_circuit</li>
+                <li>short</li>
+                <li>spur</li>
+                <li>spurious_copper</li>
+            </ul>
+
+            <figcaption class="mvp__cap">
+                <span lang="en">Unedited capture from the defex MVP &mdash; a Jetson Orin Nano running YOLOv8 over PCB
+                reference samples, six defect classes, every box drawn on the device with nothing sent to a cloud.
+                This is the bench rig. The line running in Uzbekistan uses the same stack against fabric defects.</span><span lang="zh">defex MVP 的未剪辑实拍 &mdash; Jetson Orin Nano 运行 YOLOv8，检测 PCB 参考样件上的六类瑕疵，
+                全部推理在设备端完成，数据不出厂。这是台架样机；乌兹别克斯坦在产的产线使用同一套方案检测织物瑕疵。</span>
+            </figcaption>
+        </figure>
+
+        <p class="mvp__next">
+            <a href="#contact" class="mvp__next-link">
+                <span lang="en">run it on your defects &mdash; 10-day benchmark &rarr;</span><span lang="zh">用您的瑕疵样本实测 &mdash; 10 天基准测试 &rarr;</span>
+            </a>
+        </p>
     </div>
 </section>
-<script>
-(function () {
-    var v = document.getElementById('demoVideo');
-    var sec = document.getElementById('demo');
-    if (!v || !sec) return;
-    v.addEventListener('error', function () { sec.style.display = 'none'; }, true);
-})();
-</script>
 
 <!-- 01 — PROBLEM -->
 <section class="block" id="problem">
