@@ -390,10 +390,10 @@ strong { font-weight: 600; color: var(--ink); }
     font-size: 12px;
     line-height: 1;
 }
-/* zFellows and Founders Inc are not closed yet — each carries a small mono
-   "incoming" so the chip states status, not just names. Silkroad has none.
-   .prog keeps a name glued to its tag: when the chip wraps on a phone it
-   breaks BETWEEN programs, never inside a name. */
+/* zFellows is not closed yet, so it carries a small mono "incoming"; Founders
+   Inc and Silkroad Fellows stand on their own. .prog keeps a name glued to its
+   tag: when the chip wraps on a phone it breaks BETWEEN programs, never
+   inside a name. */
 .prog {
     display: inline-flex;
     align-items: baseline;
