@@ -390,6 +390,27 @@ strong { font-weight: 600; color: var(--ink); }
     font-size: 12px;
     line-height: 1;
 }
+/* zFellows and Founders Inc are not closed yet — each carries a small mono
+   "incoming" so the chip states status, not just names. Silkroad has none.
+   .prog keeps a name glued to its tag: when the chip wraps on a phone it
+   breaks BETWEEN programs, never inside a name. */
+.prog {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    white-space: nowrap;
+}
+.backer-inc {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-left: -2px;
+    position: relative;
+    top: -1px;
+}
 @media (max-width: 560px) {
     .proof--alt { flex-wrap: wrap; row-gap: 5px; }
 }
