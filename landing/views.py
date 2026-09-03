@@ -1,12 +1,15 @@
+import json
 import re
 
 from django.conf import settings
 from django.contrib import messages
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from .forms import ContactForm
-from .notify import autoresponder_email, send, send_to, submission_email
+from .notify import autoresponder_email, client_ip, send, send_to, submission_email
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -45,3 +48,62 @@ def contact(request):
         messages.error(request, "Something looked off. Try again, or email us directly.")
     referer = request.META.get("HTTP_REFERER", "/")
     return redirect(referer.split("#")[0] + "#contact")
+
+
+# ---------------------------------------------------------------------------
+# /ping/ — husanmavlonov.com asks people for a name + email before it hands out
+# the Telegram channel; that page is static (GitHub Pages) so it has no way to
+# send mail. This endpoint is the one piece of server it borrows: it only ever
+# emails PING_TO (Husan), never the submitter, so it cannot be used to spam a
+# third party. Locked to the personal site's origin.
+# ---------------------------------------------------------------------------
+PING_ORIGINS = {
+    "https://husanmavlonov.com",
+    "https://www.husanmavlonov.com",
+}
+
+
+def _cors(response, origin):
+    if origin in PING_ORIGINS:
+        response["Access-Control-Allow-Origin"] = origin
+        response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type"
+        response["Access-Control-Max-Age"] = "86400"
+    response["Vary"] = "Origin"
+    return response
+
+
+@csrf_exempt
+@require_http_methods(["POST", "OPTIONS"])
+def ping(request):
+    origin = request.META.get("HTTP_ORIGIN", "")
+    if request.method == "OPTIONS":
+        return _cors(HttpResponse(status=204), origin)
+    if origin not in PING_ORIGINS:
+        return _cors(JsonResponse({"ok": False, "error": "origin"}, status=403), origin)
+
+    try:
+        payload = json.loads((request.body or b"")[:2000].decode("utf-8") or "{}")
+    except (ValueError, UnicodeDecodeError):
+        return _cors(JsonResponse({"ok": False, "error": "body"}, status=400), origin)
+
+    # honeypot: real people never fill a hidden field
+    if str(payload.get("website", "")).strip():
+        return _cors(JsonResponse({"ok": True}), origin)
+
+    name = str(payload.get("name", "")).strip()[:80]
+    email = str(payload.get("email", "")).strip()[:120]
+    if not name or not EMAIL_RE.match(email):
+        return _cors(JsonResponse({"ok": False, "error": "fields"}, status=400), origin)
+
+    from html import escape as _esc
+    html = (
+        '<div style="font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;'
+        'color:#0F1115;line-height:1.6;max-width:520px">'
+        "<p><strong>Telegram channel request</strong></p>"
+        f"<p>name: {_esc(name)}<br>email: {_esc(email)}</p>"
+        f'<p style="color:#7A7B7F;font-size:13px">via husanmavlonov.com &middot; ip {_esc(client_ip(request))}</p>'
+        "</div>"
+    )
+    send_to(settings.PING_TO, f"telegram request — {name}", html)
+    return _cors(JsonResponse({"ok": True}), origin)

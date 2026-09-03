@@ -128,6 +128,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 EMAIL_FROM = os.getenv("EMAIL_FROM", "defex <onboarding@resend.dev>")
 NOTIFY_TO = os.getenv("NOTIFY_TO", "husan@buildcored.com")
+# personal-site pings (telegram channel requests) land here, not in the defex inbox
+PING_TO = os.getenv("PING_TO", "husanmavlonov79@gmail.com")
 
 # Autoresponder emails an arbitrary address from the form (spam-amplification
 # surface). Set AUTORESPONDER=0 to kill it instantly with no redeploy if abuse
