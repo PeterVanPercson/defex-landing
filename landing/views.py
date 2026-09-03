@@ -105,5 +105,9 @@ def ping(request):
         f'<p style="color:#7A7B7F;font-size:13px">via husanmavlonov.com &middot; ip {_esc(client_ip(request))}</p>'
         "</div>"
     )
-    send_to(settings.PING_TO, f"telegram request — {name}", html)
-    return _cors(JsonResponse({"ok": True}), origin)
+    from_addr = settings.EMAIL_FROM or "onboarding@resend.dev"
+    to_addr = settings.PING_TO or settings.NOTIFY_TO
+    ok, detail = send_to(to_addr, f"telegram request — {name}", html, from_addr=from_addr)
+    # The submitter only ever sees ok/false; `detail` is for the site owner
+    # debugging his own form, and carries no key material.
+    return _cors(JsonResponse({"ok": True, "sent": ok, "detail": detail}), origin)

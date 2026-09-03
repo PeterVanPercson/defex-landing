@@ -21,11 +21,13 @@ log = logging.getLogger(__name__)
 RESEND_URL = "https://api.resend.com/emails"
 
 
-def _post(payload: dict) -> None:
+def _post(payload: dict) -> tuple[bool, str]:
+    """Send via Resend. Returns (ok, detail) so callers that care — /ping/ — can
+    report a failure instead of swallowing it. Fire-and-forget callers ignore it."""
     api_key = settings.RESEND_API_KEY
     if not api_key:
         log.info("resend skipped: RESEND_API_KEY not set; would send %s", payload.get("subject"))
-        return
+        return False, "no api key"
     try:
         r = requests.post(
             RESEND_URL,
@@ -35,13 +37,16 @@ def _post(payload: dict) -> None:
         )
         if r.status_code >= 300:
             log.warning("resend error %s: %s", r.status_code, r.text[:300])
+            return False, f"{r.status_code}: {r.text[:200]}"
+        return True, "sent"
     except requests.RequestException as e:
         log.warning("resend network error: %s", e)
+        return False, f"network: {e}"
 
 
-def send(subject: str, html: str) -> None:
+def send(subject: str, html: str) -> tuple[bool, str]:
     """Synchronous email to NOTIFY_TO via Resend."""
-    _post({
+    return _post({
         "from": settings.EMAIL_FROM,
         "to": [settings.NOTIFY_TO],
         "subject": subject,
@@ -49,9 +54,9 @@ def send(subject: str, html: str) -> None:
     })
 
 
-def send_to(to_addr: str, subject: str, html: str, from_addr: str | None = None) -> None:
+def send_to(to_addr: str, subject: str, html: str, from_addr: str | None = None) -> tuple[bool, str]:
     """Synchronous send to an arbitrary address. Used for autoresponders."""
-    _post({
+    return _post({
         "from": from_addr or settings.EMAIL_FROM,
         "to": [to_addr],
         "subject": subject,
