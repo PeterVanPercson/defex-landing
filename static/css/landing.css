@@ -341,42 +341,7 @@ strong { font-weight: 600; color: var(--ink); }
     color: var(--ink);
     letter-spacing: 0.01em;
 }
-/* "Backed by  z Fellows" — darker border to read as institutional.
-   Everything centered on one line; the wordmark is sized close to the
-   12px mono label so they read as a single phrase, blue z popping. */
-.proof--alt {
-    border-color: var(--ink);
-    gap: 7px;
-    align-items: center;
-}
-.proof__label {
-    font-family: var(--font-mono);
-    color: var(--ink-2);
-    line-height: 1;
-}
-.zf {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 3px;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-    line-height: 1;
-    letter-spacing: -0.02em;
-}
-.zf__z {
-    font-size: 1.35em;
-    background: linear-gradient(160deg, #5AA8F5 0%, #2E6FE5 52%, #1E50C8 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-}
-.zf__rest {
-    color: var(--ink);
-}
-/* Founders Inc / Silkroad Fellows sit beside the zFellows wordmark; sized to the
-   13px wordmark rather than the 12px mono label so the row reads as one phrase. */
+/* the single program chip: Founders Inc */
 .backer {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-weight: 600;
@@ -384,11 +349,6 @@ strong { font-weight: 600; color: var(--ink); }
     line-height: 1;
     letter-spacing: -0.015em;
     color: var(--ink);
-}
-.backer-sep {
-    color: var(--line-2);
-    font-size: 12px;
-    line-height: 1;
 }
 /* .prog keeps each program name intact: when the chip wraps on a phone it
    breaks BETWEEN programs, never inside a name. */
