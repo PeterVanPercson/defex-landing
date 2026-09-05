@@ -118,6 +118,11 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # WhiteNoise — serve from finders so it works even if collectstatic hasn't run
 WHITENOISE_USE_FINDERS = True
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+# the demo videos are already compressed — brotli/gzip on 30MB of H.264 just burns build minutes
+WHITENOISE_SKIP_COMPRESS_EXTENSIONS = (
+    'jpg', 'jpeg', 'png', 'gif', 'webp', 'zip', 'gz', 'tgz', 'bz2', 'tbz', 'xz', 'br',
+    'swf', 'flv', 'woff', 'woff2', 'mp4', 'webm', 'm4v',
+)
 
 
 # DEFAULT FIELD TYPE

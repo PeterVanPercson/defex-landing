@@ -5,41 +5,6 @@
 
 {% block content %}
 
-<!-- TOP MARQUEE — slimmer pricing-themed band -->
-<section class="marquee marquee--top" aria-hidden="true">
-    <div class="marquee__track">
-        <span class="marquee__item">Cognex ($30K&ndash;100K)</span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">Keyence ($40K)</span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">defex<span class="dot">.</span> ($4,900 + $350/mo)</span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">
-            <span lang="en">Three tiers &middot; one product</span><span lang="zh">三档 SKU &middot; 一个产品</span>
-        </span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">
-            <span lang="en">No yearly contracts</span><span lang="zh">无年度合同</span>
-        </span>
-        <span class="marquee__sep">+</span>
-        <!-- duplicate for seamless loop -->
-        <span class="marquee__item">Cognex ($30K&ndash;100K)</span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">Keyence ($40K)</span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">defex<span class="dot">.</span> ($4,900 + $350/mo)</span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">
-            <span lang="en">Three tiers &middot; one product</span><span lang="zh">三档 SKU &middot; 一个产品</span>
-        </span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">
-            <span lang="en">No yearly contracts</span><span lang="zh">无年度合同</span>
-        </span>
-        <span class="marquee__sep">+</span>
-    </div>
-</section>
-
 <header class="nav">
     <a href="/" class="nav__brand" aria-label="defex home">
         <svg class="nav__mark" viewBox="0 0 20 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -49,13 +14,13 @@
         </svg>
         <span class="nav__word">defex<span class="dot">.</span></span>
     </a>
-    <a href="/" class="nav__home">
-        <span lang="en">&larr; home</span><span lang="zh">&larr; 首页</span>
-    </a>
-    <div class="lang" role="group" aria-label="language">
-        <button type="button" class="lang__btn" data-lang="en" aria-label="English">EN</button>
-        <span class="lang__sep">/</span>
-        <button type="button" class="lang__btn" data-lang="zh" aria-label="中文">中</button>
+    <div class="nav__right">
+        <a href="/" class="nav__home"><span lang="en">&larr; home</span><span lang="zh">&larr; 首页</span></a>
+        <div class="lang" role="group" aria-label="language">
+            <button type="button" class="lang__btn" data-lang="en" aria-label="English">EN</button>
+            <span class="lang__sep">/</span>
+            <button type="button" class="lang__btn" data-lang="zh" aria-label="中文">中</button>
+        </div>
     </div>
 </header>
 
@@ -63,13 +28,6 @@
 
 <!-- HERO — single column -->
 <section class="hero hero--single" id="top">
-    <div class="hero__chip">
-        <span class="hero__chip-num">00</span>
-        <span class="hero__chip-title">
-            <span lang="en">PRICING &middot; THREE TIERS</span><span lang="zh">定价 &middot; 三档 SKU</span>
-        </span>
-    </div>
-
     <h1 class="hero__title hero__title--pricing">
         <span lang="en">Three tiers.<br><span class="hero__title-soft">One</span> product<span class="dot">.</span></span><span lang="zh">三档 SKU。<br><span class="hero__title-soft">一个</span> 产品<span class="dot">.</span></span>
     </h1>
@@ -83,11 +41,9 @@
 <!-- 01 — SKU TIERS -->
 <section class="block" id="tiers">
     <div class="block__marker">
-        <span class="block__marker__num">01</span>
         <span class="block__marker__title">
             <span lang="en">tiers</span><span lang="zh">SKU 档位</span>
         </span>
-        <span class="block__marker__rule"></span>
         <span class="block__marker__stat">
             <span lang="en">single-cam ships v1</span><span lang="zh">单相机 v1 现货</span>
         </span>
@@ -135,18 +91,15 @@
 <!-- 02 — BENCHMARK PILOT -->
 <section class="block" id="pilot">
     <div class="block__marker">
-        <span class="block__marker__num">02</span>
         <span class="block__marker__title">
             <span lang="en">benchmark pilot</span><span lang="zh">基准试点</span>
         </span>
-        <span class="block__marker__rule"></span>
         <span class="block__marker__stat">
             <span lang="en">10 days &middot; three August slots</span><span lang="zh">10 天 &middot; 8 月仅三个名额</span>
         </span>
     </div>
     <div class="block__body">
-        <div class="panel price">
-            <span class="panel__label">fig.02 / pilot</span>
+        <div class="price">
             <div class="price__num">$1,900<span class="price__unit">
                 <span lang="en"> benchmark</span><span lang="zh"> 基准测试</span>
             </span></div>
@@ -177,11 +130,9 @@
 <!-- 03 — PERKS + VS ENTERPRISE -->
 <section class="block" id="perks">
     <div class="block__marker">
-        <span class="block__marker__num">03</span>
         <span class="block__marker__title">
             <span lang="en">all paid tiers include</span><span lang="zh">所有付费档位包含</span>
         </span>
-        <span class="block__marker__rule"></span>
         <span class="block__marker__stat">
             <span lang="en">no capex, no yearly contracts</span><span lang="zh">无固定资产，无年度合同</span>
         </span>

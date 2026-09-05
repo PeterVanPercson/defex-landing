@@ -1,206 +1,4 @@
-// defex — intro overlay fade + animated ASCII cup + counters + uptime
-
-// ===== Intro overlay (3-dot pulse, ~2s) =====
-(() => {
-    const intro = document.getElementById('intro');
-    const body = document.body;
-    if (!intro) return;
-
-    const reduced = window.matchMedia &&
-                    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) {
-        intro.remove();
-        body.classList.remove('is-loading');
-        return;
-    }
-
-    // Total animation: dot stagger ends at 1.25s, pulse runs 1.45–2.00s.
-    // Fade overlay starting at 2.05s, remove at 2.55s.
-    setTimeout(() => {
-        intro.classList.add('is-done');
-        body.classList.remove('is-loading');
-    }, 2050);
-    setTimeout(() => intro.remove(), 2600);
-})();
-
-
-// ===== Animated factory line — cycles through fabric / pcb / sheet / cup =====
-(() => {
-    const frame = document.getElementById('scanFrame');
-    if (!frame) return;
-
-    const BELT_LINE = `<span class="belt">${'━'.repeat(56)}</span>`;
-    const DEFECT = '<span class="defect">╳</span>';
-
-    // Each sample: 8 chars wide × 5 rows tall. `failNote` is shown on FAIL.
-    const SAMPLES = [
-        {
-            name: 'fabric',
-            ok: [
-                '┌──────┐',
-                '│▒▓▒▓▒▓│',
-                '│▓▒▓▒▓▒│',
-                '│▒▓▒▓▒▓│',
-                '└──────┘',
-            ],
-            bad: [
-                '┌──────┐',
-                '│▒▓▒▓▒▓│',
-                '│▓' + DEFECT + '▓▒▓▒│',
-                '│▒▓▒▓▒▓│',
-                '└──────┘',
-            ],
-            failNote: 'stitch defect',
-        },
-        {
-            name: 'pcb',
-            ok: [
-                '┌──────┐',
-                '│ ●━━● │',
-                '│ ┃  ┃ │',
-                '│ ●━━● │',
-                '└──────┘',
-            ],
-            bad: [
-                '┌──────┐',
-                '│ ●━━● │',
-                '│ ┃  ' + DEFECT + ' │',
-                '│ ●━━● │',
-                '└──────┘',
-            ],
-            failNote: 'solder bridge',
-        },
-        {
-            name: 'sheet',
-            ok: [
-                '┌──────┐',
-                '│      │',
-                '│      │',
-                '│      │',
-                '└──────┘',
-            ],
-            bad: [
-                '┌──────┐',
-                '│      │',
-                '│  ' + DEFECT + '   │',
-                '│      │',
-                '└──────┘',
-            ],
-            failNote: 'surface dent',
-        },
-        {
-            name: 'cup',
-            ok: [
-                '╭─────╮ ',
-                '│     │╮',
-                '│ ▒▒▒ ││',
-                '│     │╯',
-                '╰─────╯ ',
-            ],
-            bad: [
-                '╭──' + DEFECT + '──╮ ',
-                '│     │╮',
-                '│ ▒▒▒ ││',
-                '│     │╯',
-                '╰─────╯ ',
-            ],
-            failNote: 'rim chip',
-        },
-    ];
-
-    function makeFrame(x, glyph, label) {
-        const rows = [BELT_LINE];
-        for (let r = 0; r < 5; r++) {
-            let line = ' '.repeat(x) + glyph[r];
-            if (label && r === 2) {
-                line += '   ' + label;
-            }
-            rows.push(line);
-        }
-        rows.push(BELT_LINE);
-        return rows.join('\n');
-    }
-
-    function buildCycle(sample, isPass) {
-        const finalGlyph = isPass ? sample.ok : sample.bad;
-        const result = isPass
-            ? '<span class="ok">✓ PASS</span>'
-            : `<span class="fail">✕ FAIL · ${sample.failNote}</span>`;
-        return [
-            makeFrame(2,  sample.ok,  null),
-            makeFrame(14, sample.ok,  null),
-            makeFrame(24, sample.ok,  '<span class="scan-act">◉ scanning ...</span>'),
-            makeFrame(24, finalGlyph, result),
-            makeFrame(36, finalGlyph, null),
-            makeFrame(48, finalGlyph, null),
-        ];
-    }
-
-    const $status = document.getElementById('scanStatus');
-    const $thru   = document.getElementById('scanThru');
-    const $fail   = document.getElementById('scanFail');
-    const $up     = document.getElementById('scanUp');
-
-    let sampleIdx = 0;
-    let isPass = true;
-    let frames = buildCycle(SAMPLES[sampleIdx], isPass);
-    let i = 0;
-
-    let thru  = 4127;
-    let fails = 38;
-    $thru.textContent = thru.toLocaleString();
-    $fail.textContent = fails;
-
-    function tick() {
-        frame.innerHTML = frames[i];
-
-        if (i === 0) {
-            $status.textContent = 'belt';
-            $status.style.color = '';
-        } else if (i === 2) {
-            $status.textContent = 'scanning';
-            $status.style.color = '';
-        } else if (i === 3) {
-            if (isPass) {
-                $status.textContent = 'pass';
-                $status.style.color = 'var(--ok)';
-                thru += 1;
-                $thru.textContent = thru.toLocaleString();
-            } else {
-                $status.textContent = 'fail';
-                $status.style.color = 'var(--fail)';
-                thru += 1;
-                fails += 1;
-                $thru.textContent = thru.toLocaleString();
-                $fail.textContent = fails;
-            }
-        }
-
-        i += 1;
-        if (i >= frames.length) {
-            i = 0;
-            // Next product: cycle through samples with slight randomness.
-            sampleIdx = (sampleIdx + 1 + Math.floor(Math.random() * 2)) % SAMPLES.length;
-            isPass = Math.random() > 0.25;  // ~1 in 4 fails
-            frames = buildCycle(SAMPLES[sampleIdx], isPass);
-        }
-    }
-
-    tick();
-    setInterval(tick, 520);
-
-    // shift uptime — looks like the line has been running 2h 17m+ already
-    const shiftStart = Date.now() - (2 * 3600 + 17 * 60) * 1000;
-    function tickUp() {
-        const sec = Math.floor((Date.now() - shiftStart) / 1000);
-        const h = String(Math.floor(sec / 3600)).padStart(2, '0');
-        const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
-        $up.textContent = `${h}:${m}`;
-    }
-    tickUp();
-    setInterval(tickUp, 5000);
-})();
-
+// defex — language toggle + the demo video. Nothing else moves on this page.
 
 // ===== Language toggle (EN / 中) =====
 (() => {
@@ -214,87 +12,45 @@
             if (v) el.setAttribute('placeholder', v);
         });
     }
-
     function setLang(lang) {
         if (lang !== 'en' && lang !== 'zh') lang = 'en';
         root.setAttribute('lang', lang);
         try { localStorage.setItem('defex.lang', lang); } catch (e) {}
         applyPlaceholders(lang);
     }
-
-    // Initial placeholder pass (lang was set pre-paint in base.html).
     applyPlaceholders(root.getAttribute('lang') || 'en');
-
-    buttons.forEach(btn => {
-        btn.addEventListener('click', () => setLang(btn.dataset.lang));
-    });
+    buttons.forEach(btn => btn.addEventListener('click', () => setLang(btn.dataset.lang)));
 })();
 
-
-// ===== Sticky CTA — fade in after scrolling past hero =====
+// ===== Demo video — plays like a gif when scrolled into view, sound is opt-in =====
 (() => {
-    const cta = document.getElementById('stickyCta');
-    const hero = document.querySelector('.hero');
-    if (!cta || !hero) return;
+    const video = document.getElementById('demoVideo');
+    const sound = document.getElementById('demoSound');
+    if (!video) return;
 
-    function update() {
-        const heroBottom = hero.offsetTop + hero.offsetHeight;
-        const past = window.scrollY > heroBottom - 80;
-        cta.classList.toggle('is-visible', past);
-    }
+    // one rendition per screen: phones get the 720p file, everything else 1080p
+    const small = window.matchMedia('(max-width: 700px)').matches;
+    // data-src-1080 does not camelCase (a digit follows the hyphen), so read the attribute
+    video.src = video.getAttribute(small ? 'data-src-720' : 'data-src-1080');
 
-    update();
-    window.addEventListener('scroll', update, { passive: true });
-    window.addEventListener('resize', update);
-})();
-
-/* ---------- MVP demo loop (fig.00) ----------------------------------
-   Autoplays muted and looping, pauses off-screen, degrades to the poster
-   image if the file is missing or the codec is refused. */
-(function () {
-    const video  = document.getElementById('mvpVideo');
-    const panel  = document.getElementById('mvpPanel');
-    const toggle = document.getElementById('mvpToggle');
-    if (!video || !panel) return;
-
-    video.addEventListener('error', () => panel.classList.add('mvp--fallback'), true);
-
-    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let wanted = !calm;
-
-    function label() {
-        const on = !video.paused;
-        toggle.setAttribute('aria-pressed', String(!on));
-        toggle.querySelectorAll('[lang]').forEach(el => {
-            const en = el.getAttribute('lang') === 'en';
-            el.textContent = on ? (en ? 'pause' : '暂停') : (en ? 'play' : '播放');
-        });
-    }
-
-    function play() {
-        const p = video.play();
-        if (p && p.catch) p.catch(() => {});
-    }
-
-    if (calm) video.pause();
-
-    if (toggle) {
-        toggle.addEventListener('click', () => {
-            wanted = video.paused;
-            wanted ? play() : video.pause();
-            label();
-        });
-        video.addEventListener('play', label);
-        video.addEventListener('pause', label);
-        label();
-    }
+    let inView = false;
+    const play = () => { const p = video.play(); if (p && p.catch) p.catch(() => {}); };
 
     if ('IntersectionObserver' in window) {
-        new IntersectionObserver((entries) => {
-            entries.forEach(e => {
-                if (e.isIntersecting) { if (wanted) play(); }
-                else video.pause();
-            });
-        }, { threshold: 0.2 }).observe(video);
+        new IntersectionObserver(entries => {
+            inView = entries[0].isIntersecting;
+            if (inView) play(); else video.pause();
+        }, { threshold: 0.45 }).observe(video);
+    } else {
+        play();
+    }
+
+    if (sound) {
+        sound.addEventListener('click', () => {
+            const on = video.muted;           // about to turn sound on
+            video.muted = !on;
+            sound.setAttribute('aria-pressed', on ? 'true' : 'false');
+            if (on && inView) play();
+        });
     }
 })();

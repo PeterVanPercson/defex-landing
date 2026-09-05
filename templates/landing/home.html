@@ -5,204 +5,59 @@
 
 {% block content %}
 
-<!-- TOP MARQUEE — fills the empty top, states the wedge -->
-<section class="marquee marquee--top" aria-hidden="true">
-    <div class="marquee__track">
-        <span class="marquee__item">Cognex ($30K&ndash;100K)</span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">Keyence ($40K)</span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">defex<span class="dot">.</span> ($4,900 + $350/mo)</span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">
-            <span lang="en">Edge AI &middot; 50 ms &middot; no cloud</span><span lang="zh">边缘 AI &middot; 50 毫秒 &middot; 无云端</span>
-        </span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">
-            <span lang="en">Trained on your defects</span><span lang="zh">基于您的瑕疵训练</span>
-        </span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">
-            <span lang="en">San Francisco Bay Area</span><span lang="zh">旧金山湾区</span>
-        </span>
-        <span class="marquee__sep">+</span>
-        <!-- duplicate for seamless loop -->
-        <span class="marquee__item">Cognex ($30K&ndash;100K)</span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">Keyence ($40K)</span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">defex<span class="dot">.</span> ($4,900 + $350/mo)</span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">
-            <span lang="en">Edge AI &middot; 50 ms &middot; no cloud</span><span lang="zh">边缘 AI &middot; 50 毫秒 &middot; 无云端</span>
-        </span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">
-            <span lang="en">Trained on your defects</span><span lang="zh">基于您的瑕疵训练</span>
-        </span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item">
-            <span lang="en">San Francisco Bay Area</span><span lang="zh">旧金山湾区</span>
-        </span>
-        <span class="marquee__sep">+</span>
-    </div>
-</section>
-
 {% include "components/navbar.html" %}
 
 <main class="page">
 
-<!-- HERO — two-column on desktop -->
-<section class="hero hero--split" id="top">
-
-    <div class="hero__text">
-        <div class="hero__chip">
-            <span class="hero__chip-num">00</span>
-            <span class="hero__chip-title">
-                <span lang="en">DEFEX &middot; FACTORY VISION INFRASTRUCTURE</span><span lang="zh">DEFEX &middot; 工厂视觉基础设施</span>
-            </span>
-        </div>
-
-        <h1 class="hero__title">
-            <span lang="en">the defect<br><span class="hero__title-soft">is the</span> mark<span class="dot">.</span></span><span lang="zh">瑕疵<br><span class="hero__title-soft">即是</span> 标记<span class="dot">.</span></span>
-        </h1>
-
-        <p class="hero__lede">
-            <span lang="en"><strong>Jetson-powered defect inspection, installed in a day.</strong>
-            $4,900 to deploy. Built for factories where Cognex and Keyence don&rsquo;t fit on a plant manager&rsquo;s discretionary spend.</span><span lang="zh"><strong>Jetson 边缘 AI 缺陷质检，一天部署。</strong>
-            部署成本 $4,900。专为中小工厂打造 &mdash; Cognex、Keyence 不愿降价的那片市场。</span>
-        </p>
-
-        <div class="hero__cta">
-            <a href="#contact" class="cta">
-                <span lang="en">Book a 10-day benchmark &nbsp;&rarr;</span><span lang="zh">预约 10 天基准测试 &nbsp;&rarr;</span>
-            </a>
-            <a href="#pricing" class="cta-soft">
-                <span lang="en">See the math</span><span lang="zh">查看定价</span>
-            </a>
-        </div>
-
-        <div class="hero__badges">
-            <div class="proof" aria-label="customer proof">
-                <span class="dot-live"></span>
-                <span>
-                    <span lang="en">1 line in production &middot; textile factory, Uzbekistan &middot; <span class="muted">September 2026</span></span><span lang="zh">1 条产线已投产 &middot; 乌兹别克斯坦纺织厂 &middot; <span class="muted">2026 年 9 月</span></span>
-                </span>
-            </div>
-            <div class="proof proof--alt" aria-label="programs">
-                <span class="prog"><span class="backer">Founders Inc</span></span>
-            </div>
-        </div>
-    </div>
-
-    <!-- ANIMATED SCAN CARD (right column on desktop) -->
-    <div class="scan-card" aria-label="live defex inspection demo">
-        <div class="scan-card__hd">
-            <span class="scan-card__hd-title">FIG.01  //  LIVE INSPECTION</span>
-            <span class="scan-card__hd-ticks" aria-hidden="true">
-                <span class="tick tick--a"></span>
-                <span class="tick tick--b"></span>
-                <span class="tick tick--c"></span>
-            </span>
-        </div>
-
-        <div class="scan-card__body">
-            <div class="scan__hd">
-                <span><span class="dot-live"></span> defex.scan</span>
-                <span class="scan__hd-right">fp16 &middot; 30 fps</span>
-            </div>
-            <pre id="scanFrame" class="scan__frame" aria-hidden="true"></pre>
-            <div class="scan__bar">
-                <span>status <b id="scanStatus">idle</b></span>
-                <span>thru <b id="scanThru">0</b></span>
-                <span>fails <b id="scanFail">0</b></span>
-                <span>up <b id="scanUp">00:00</b></span>
-            </div>
-        </div>
-
-        <div class="scan-card__ft">
-            <span>LINE 03</span>
-            <span><span class="dot-live"></span> LIVE</span>
-        </div>
-    </div>
-
+<!-- HERO -->
+<section class="hero" id="top">
+    <h1 class="hero__title">
+        <span lang="en">the defect is the mark<span class="dot">.</span></span><span lang="zh">瑕疵即是标记<span class="dot">.</span></span>
+    </h1>
+    <p class="hero__lede">
+        <span lang="en">Jetson-powered defect inspection, installed in a day. $4,900 to deploy. Built for factories where Cognex and Keyence don&rsquo;t fit on a plant manager&rsquo;s discretionary spend.</span><span lang="zh">Jetson 边缘 AI 缺陷质检，一天部署。部署成本 $4,900。专为中小工厂打造 &mdash; Cognex、Keyence 不愿降价的那片市场。</span>
+    </p>
+    <p class="hero__spec">
+        <span lang="en">nvidia jetson &middot; installed in a day &middot; $4,900 + $350 / mo &middot; no cloud</span><span lang="zh">nvidia jetson &middot; 一天部署 &middot; $4,900 + $350 / 月 &middot; 无云端</span>
+    </p>
+    <p class="hero__cta">
+        <a href="#contact" class="link link--strong"><span lang="en">Book a 10-day benchmark &rarr;</span><span lang="zh">预约 10 天基准测试 &rarr;</span></a>
+        <a href="#pricing" class="link"><span lang="en">See the math</span><span lang="zh">查看定价</span></a>
+    </p>
+    <p class="hero__proof">
+        <span lang="en">1 line in production &middot; textile factory, Uzbekistan &middot; September 2026 &middot; Founders Inc</span><span lang="zh">1 条产线已投产 &middot; 乌兹别克斯坦纺织厂 &middot; 2026 年 9 月 &middot; Founders Inc</span>
+    </p>
 </section>
 
-<!-- 00 — MVP / WATCH IT RUN -->
-<section class="block" id="mvp">
-    <div class="block__marker">
-        <span class="block__marker__num">00</span>
-        <span class="block__marker__title">
-            <span lang="en">watch it run</span><span lang="zh">看它运行</span>
-        </span>
-        <span class="block__marker__rule"></span>
-        <span class="block__marker__stat">
-            <span lang="en">MVP bench test &middot; Jetson Orin Nano</span><span lang="zh">MVP 台架测试 &middot; Jetson Orin Nano</span>
-        </span>
-    </div>
-    <h2 class="h2 h2--serif">
-        <span lang="en">It calls the defect <em>before you see it.</em></span><span lang="zh">在你看见之前，<em>它已标出瑕疵。</em></span>
-    </h2>
-    <div class="block__body">
-        <figure class="panel mvp" id="mvpPanel">
-            <span class="panel__label">fig.00 / mvp</span>
-
-            <div class="mvp__frame">
-                <video class="mvp__video" id="mvpVideo"
-                       muted loop autoplay playsinline preload="metadata"
-                       poster="{% static 'img/mvp-poster.jpg' %}"
-                       aria-label="Defex MVP: YOLOv8 running on a Jetson Orin Nano, boxing defects on PCB samples in real time">
-                    <source src="{% static 'video/mvp-loop.mp4' %}" type="video/mp4">
-                </video>
-                <img class="mvp__fallback" src="{% static 'img/mvp-poster.jpg' %}" alt="Defex detector boxing missing holes on a PCB sample">
-                <button type="button" class="mvp__toggle" id="mvpToggle" aria-pressed="false">
-                    <span lang="en">pause</span><span lang="zh">暂停</span>
-                </button>
-                <div class="mvp__hud" aria-hidden="true">
-                    <span class="mvp__hud-l"><span class="dot-live"></span>defex.detect</span>
-                    <span class="mvp__hud-r">yolov8 &middot; jetson orin nano &middot; on-device</span>
-                </div>
-            </div>
-
-            <ul class="mvp__classes" aria-label="defect classes in this model">
-                <li>missing_hole</li>
-                <li>mouse_bite</li>
-                <li>open_circuit</li>
-                <li>short</li>
-                <li>spur</li>
-                <li>spurious_copper</li>
-            </ul>
-
-            <figcaption class="mvp__cap">
-                <span lang="en">Unedited capture from the defex MVP &mdash; a Jetson Orin Nano running YOLOv8 over PCB
-                reference samples, six defect classes, every box drawn on the device with nothing sent to a cloud.
-                This is the bench rig. The line running in Uzbekistan uses the same stack against fabric defects.</span><span lang="zh">defex MVP 的未剪辑实拍 &mdash; Jetson Orin Nano 运行 YOLOv8，检测 PCB 参考样件上的六类瑕疵，
-                全部推理在设备端完成，数据不出厂。这是台架样机；乌兹别克斯坦在产的产线使用同一套方案检测织物瑕疵。</span>
-            </figcaption>
-        </figure>
-
-        <p class="mvp__next">
-            <a href="#contact" class="mvp__next-link">
-                <span lang="en">run it on your defects &mdash; 10-day benchmark &rarr;</span><span lang="zh">用您的瑕疵样本实测 &mdash; 10 天基准测试 &rarr;</span>
-            </a>
-        </p>
-    </div>
+<!-- DEMO — plays when it scrolls into view, sound is opt-in -->
+<section class="demo" id="mvp">
+    <figure class="demo__fig">
+        <div class="demo__frame">
+            <video class="demo__video" id="demoVideo"
+                   muted loop playsinline preload="metadata"
+                   poster="{% static 'img/demo-poster.jpg' %}"
+                   data-src-1080="{% static 'video/demo-1080.mp4' %}"
+                   data-src-720="{% static 'video/demo-720.mp4' %}"
+                   aria-label="defex MVP demo: live defect detection on a Jetson"></video>
+            <button type="button" class="demo__sound" id="demoSound" aria-pressed="false">
+                <span class="demo__sound-off"><span lang="en">sound off</span><span lang="zh">声音关</span></span>
+                <span class="demo__sound-on"><span lang="en">sound on</span><span lang="zh">声音开</span></span>
+            </button>
+        </div>
+        <figcaption class="demo__cap">
+            <span lang="en">Unedited. A Jetson Orin Nano running YOLOv8 on the bench &mdash; every box drawn on the device, nothing sent to a cloud. The line in Uzbekistan runs the same stack on fabric.</span><span lang="zh">未剪辑实拍。Jetson Orin Nano 台架运行 YOLOv8 &mdash; 全部推理在设备端完成，数据不出厂。乌兹别克斯坦的产线用同一套方案检测织物。</span>
+        </figcaption>
+    </figure>
 </section>
 
-<!-- 01 — PROBLEM -->
+<!-- PROBLEM -->
 <section class="block" id="problem">
     <div class="block__marker">
-        <span class="block__marker__num">01</span>
-        <span class="block__marker__title">
-            <span lang="en">problem</span><span lang="zh">问题</span>
-        </span>
-        <span class="block__marker__rule"></span>
-        <span class="block__marker__stat">
-            <span lang="en">2&ndash;3% leaves the line defective</span><span lang="zh">2&ndash;3% 缺陷品流出产线</span>
-        </span>
+        <span class="block__marker__title"><span lang="en">problem</span><span lang="zh">问题</span></span>
+        <span class="block__marker__stat"><span lang="en">2&ndash;3% leaves the line defective</span><span lang="zh">2&ndash;3% 缺陷品流出产线</span></span>
     </div>
-    <h2 class="h2 h2--serif">
-        <span lang="en">Small factories lose <em>2&ndash;3%</em> a day. Nobody sells them a fix.</span><span lang="zh">中小工厂每天损失 <em>2&ndash;3%</em>。没人为他们提供方案。</span>
+    <h2 class="h2">
+        <span lang="en">Small factories lose 2&ndash;3% a day. Nobody sells them a fix.</span><span lang="zh">中小工厂每天损失 2&ndash;3%。没人为他们提供方案。</span>
     </h2>
     <div class="block__body block__body--prose">
         <p>
@@ -215,237 +70,121 @@
             <span lang="en"><strong>Edge AI changed the math.</strong> OpEx-priced edge AI finally fits inside plant-manager discretionary spend.</span><span lang="zh"><strong>边缘 AI 改变了经济账。</strong>按运营开支定价的边缘 AI，终于落进了厂长的可自由支配预算。</span>
         </p>
     </div>
-
-    <!-- comparison strip -->
     <div class="compare" aria-label="price comparison">
         <div class="compare__cell">
             <span class="compare__brand">Cognex</span>
             <span class="compare__price">$30K &ndash; 100K</span>
-            <span class="compare__note">
-                <span lang="en">enterprise vendor</span><span lang="zh">面向大企业</span>
-            </span>
+            <span class="compare__note"><span lang="en">enterprise vendor</span><span lang="zh">面向大企业</span></span>
         </div>
         <div class="compare__cell">
             <span class="compare__brand">Keyence</span>
             <span class="compare__price">$40K +</span>
-            <span class="compare__note">
-                <span lang="en">enterprise vendor</span><span lang="zh">面向大企业</span>
-            </span>
+            <span class="compare__note"><span lang="en">enterprise vendor</span><span lang="zh">面向大企业</span></span>
         </div>
         <div class="compare__cell compare__cell--us">
-            <span class="compare__brand">defex</span>
-            <span class="compare__price">$4,900 <span class="compare__plus">
-                <span lang="en">+ $350 / mo</span><span lang="zh">+ 每月 $350</span>
-            </span></span>
-            <span class="compare__note">
-                <span lang="en">managed</span><span lang="zh">全托管</span>
-            </span>
+            <span class="compare__brand">defex<span class="dot">.</span></span>
+            <span class="compare__price">$4,900 <span class="compare__plus"><span lang="en">+ $350 / mo</span><span lang="zh">+ 每月 $350</span></span></span>
+            <span class="compare__note"><span lang="en">managed</span><span lang="zh">全托管</span></span>
         </div>
     </div>
 </section>
 
-<!-- 02 — WHAT DEFEX IS -->
+<!-- WHAT DEFEX IS -->
 <section class="block" id="what">
     <div class="block__marker">
-        <span class="block__marker__num">02</span>
-        <span class="block__marker__title">
-            <span lang="en">what defex is</span><span lang="zh">defex 是什么</span>
-        </span>
-        <span class="block__marker__rule"></span>
-        <span class="block__marker__stat">
-            <span lang="en">under one day to install</span><span lang="zh">1 天内部署完成</span>
-        </span>
+        <span class="block__marker__title"><span lang="en">what defex is</span><span lang="zh">defex 是什么</span></span>
+        <span class="block__marker__stat"><span lang="en">under one day to install</span><span lang="zh">1 天内部署完成</span></span>
     </div>
-    <h2 class="h2 h2--serif">
-        <span lang="en">An inspection layer that <em>doesn&rsquo;t need a person.</em></span><span lang="zh">无需人工的 <em>质检层。</em></span>
+    <h2 class="h2">
+        <span lang="en">An inspection layer that doesn&rsquo;t need a person.</span><span lang="zh">无需人工的质检层。</span>
     </h2>
     <div class="block__body">
-        <div class="trio">
-            <article class="panel trio__item">
-                <span class="panel__label">fig.a / install</span>
-                <h3 class="trio__hd">
-                    <span lang="en">install</span><span lang="zh">安装</span>
-                </h3>
-                <p>
-                    <span lang="en">Camera mounted. Hardware trigger via GPIO. Modbus TCP into your existing PLC.
-                    <em>Under one day, no IT project.</em></span><span lang="zh">相机安装到位。GPIO 硬件触发。Modbus TCP 接入您现有的 PLC。<em>1 天完成，无需 IT 项目。</em></span>
-                </p>
-            </article>
-            <article class="panel trio__item">
-                <span class="panel__label">fig.b / train</span>
-                <h3 class="trio__hd">
-                    <span lang="en">train</span><span lang="zh">训练</span>
-                </h3>
-                <p>
-                    <span lang="en">YOLOv8 trained on <em>your</em> defects from <em>your</em> samples.
-                    TensorRT FP16 on the NVIDIA Jetson &mdash; 30 fps on-device,
-                    <em>sub-50 ms decisions.</em> No cloud.</span><span lang="zh">在<em>您的</em>瑕疵样本上训练 YOLOv8。NVIDIA Jetson 上 TensorRT FP16 推理 &mdash; 30 帧/秒，<em>50 毫秒内出结果。</em>无云端。</span>
-                </p>
-            </article>
-            <article class="panel trio__item">
-                <span class="panel__label">fig.c / monitor</span>
-                <h3 class="trio__hd">
-                    <span lang="en">monitor</span><span lang="zh">监测</span>
-                </h3>
-                <p>
-                    <span lang="en">We watch the model from afar. Quarterly retrain on
-                    your line data. Drift alarms. <em>Your line just runs.</em></span><span lang="zh">我们远程监测模型。每季度基于您的产线数据重训。漂移告警。<em>您的产线只管运行。</em></span>
-                </p>
-            </article>
-        </div>
+        <dl class="steps">
+            <div class="steps__item">
+                <dt><span lang="en">install</span><span lang="zh">安装</span></dt>
+                <dd><span lang="en">Camera mounted. Hardware trigger via GPIO. Modbus TCP into your existing PLC. Under one day, no IT project.</span><span lang="zh">相机安装到位。GPIO 硬件触发。Modbus TCP 接入您现有的 PLC。1 天完成，无需 IT 项目。</span></dd>
+            </div>
+            <div class="steps__item">
+                <dt><span lang="en">train</span><span lang="zh">训练</span></dt>
+                <dd><span lang="en">YOLOv8 trained on your defects from your samples. TensorRT FP16 on the NVIDIA Jetson &mdash; 30 fps on-device, sub-50 ms decisions. No cloud.</span><span lang="zh">在您的瑕疵样本上训练 YOLOv8。NVIDIA Jetson 上 TensorRT FP16 推理 &mdash; 30 帧/秒，50 毫秒内出结果。无云端。</span></dd>
+            </div>
+            <div class="steps__item">
+                <dt><span lang="en">monitor</span><span lang="zh">监测</span></dt>
+                <dd><span lang="en">We watch the model from afar. Quarterly retrain on your line data. Drift alarms. Your line just runs.</span><span lang="zh">我们远程监测模型。每季度基于您的产线数据重训。漂移告警。您的产线只管运行。</span></dd>
+            </div>
+        </dl>
     </div>
 </section>
 
-<!-- MARQUEE — between section 02 and 03 -->
-<section class="marquee" aria-hidden="true">
-    <div class="marquee__track">
-        <span class="marquee__item"><span lang="en">Real-time defect detection</span><span lang="zh">实时瑕疵检测</span></span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">Edge-native vision</span><span lang="zh">边缘原生视觉</span></span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">PASS / FAIL in 50 ms</span><span lang="zh">PASS / FAIL 50 毫秒</span></span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">Modbus TCP into your PLC</span><span lang="zh">Modbus TCP 接入您的 PLC</span></span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">We install. We train. We monitor.</span><span lang="zh">我们安装。我们训练。我们监测。</span></span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">No cloud dependency</span><span lang="zh">无需云端</span></span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">The defect is the mark</span><span lang="zh">瑕疵即是标记</span></span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">Real-time defect detection</span><span lang="zh">实时瑕疵检测</span></span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">Edge-native vision</span><span lang="zh">边缘原生视觉</span></span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">PASS / FAIL in 50 ms</span><span lang="zh">PASS / FAIL 50 毫秒</span></span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">Modbus TCP into your PLC</span><span lang="zh">Modbus TCP 接入您的 PLC</span></span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">We install. We train. We monitor.</span><span lang="zh">我们安装。我们训练。我们监测。</span></span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">No cloud dependency</span><span lang="zh">无需云端</span></span>
-        <span class="marquee__sep">+</span>
-        <span class="marquee__item"><span lang="en">The defect is the mark</span><span lang="zh">瑕疵即是标记</span></span>
-        <span class="marquee__sep">+</span>
-    </div>
-</section>
-
-<!-- 03 — THE COST -->
+<!-- PRICE -->
 <section class="block" id="pricing">
     <div class="block__marker">
-        <span class="block__marker__num">03</span>
-        <span class="block__marker__title">
-            <span lang="en">the cost</span><span lang="zh">成本</span>
-        </span>
-        <span class="block__marker__rule"></span>
-        <span class="block__marker__stat">
-            <span lang="en">10&ndash;30&times; less than enterprise</span><span lang="zh">比企业方案便宜 10&ndash;30 倍</span>
-        </span>
+        <span class="block__marker__title"><span lang="en">the cost</span><span lang="zh">成本</span></span>
+        <span class="block__marker__stat"><span lang="en">10&ndash;30&times; less than enterprise</span><span lang="zh">比企业方案便宜 10&ndash;30 倍</span></span>
     </div>
-    <h2 class="h2 h2--serif">
-        <span lang="en">One line. <em>$4,900.</em></span><span lang="zh">一条产线。<em>$4,900。</em></span>
+    <h2 class="h2">
+        <span lang="en">One line. $4,900.</span><span lang="zh">一条产线。$4,900。</span>
     </h2>
     <div class="block__body">
-
-        <div class="panel price">
-            <span class="panel__label">fig.02 / quote</span>
-            <div class="price__num">$4,900<span class="price__unit">
-                <span lang="en"> station</span><span lang="zh"> 工位</span>
-            </span></div>
-            <div class="price__sub">$350<span class="price__sub-unit">
-                <span lang="en"> / month &middot; model, monitoring, retraining, support</span><span lang="zh"> / 月 &middot; 模型、监测、重训、支持</span>
-            </span></div>
-            <div class="price__cap">
-                <span lang="en">we own the hardware after install &middot; one line, one number</span><span lang="zh">硬件安装后归我们所有 &middot; 一条产线，一个数字</span>
-            </div>
+        <div class="price">
+            <div class="price__num">$4,900<span class="price__unit"><span lang="en"> station</span><span lang="zh"> 工位</span></span></div>
+            <div class="price__sub">$350<span class="price__sub-unit"><span lang="en"> / month &middot; model, monitoring, retraining, support</span><span lang="zh"> / 月 &middot; 模型、监测、重训、支持</span></span></div>
+            <div class="price__cap"><span lang="en">we own the hardware after install &middot; one line, one number</span><span lang="zh">硬件安装后归我们所有 &middot; 一条产线，一个数字</span></div>
             <ul class="price__list">
-                <li>
-                    <span lang="en"><b>$2,450</b> deposit on PO signing (50%)</span><span lang="zh"><b>$2,450</b> 签订 PO 时支付定金（50%）</span>
-                </li>
-                <li>
-                    <span lang="en"><b>10-day</b> benchmark &mdash; $1,900, credited fully against install</span><span lang="zh"><b>10 天</b>基准测试 &mdash; $1,900，全额抵扣安装费</span>
-                </li>
-                <li>
-                    <span lang="en"><b>30 days</b> cancellation notice, any month</span><span lang="zh"><b>30 天</b>解约通知，任何月份</span>
-                </li>
-                <li>
-                    <span lang="en"><b>No</b> capex, licences, or yearly contracts</span><span lang="zh"><b>无</b>固定资产投入、许可证或年度合同</span>
-                </li>
+                <li><span lang="en"><b>$2,450</b> deposit on PO signing (50%)</span><span lang="zh"><b>$2,450</b> 签订 PO 时支付定金（50%）</span></li>
+                <li><span lang="en"><b>10-day</b> benchmark &mdash; $1,900, credited fully against install</span><span lang="zh"><b>10 天</b>基准测试 &mdash; $1,900，全额抵扣安装费</span></li>
+                <li><span lang="en"><b>30 days</b> cancellation notice, any month</span><span lang="zh"><b>30 天</b>解约通知，任何月份</span></li>
+                <li><span lang="en"><b>No</b> capex, licences, or yearly contracts</span><span lang="zh"><b>无</b>固定资产投入、许可证或年度合同</span></li>
             </ul>
         </div>
-
         <p class="muted price__ltv">
-            <span lang="en">One inspector shift runs <b>$65&ndash;85K a year</b> loaded. Defex is $350 a month
-            &mdash; the install pays for itself in weeks.</span><span lang="zh">一个质检班次的全负担成本约 <b>$65&ndash;85K/年</b>。Defex 每月 $350 &mdash; 安装费数周即可回本。</span>
+            <span lang="en">One inspector shift runs <b>$65&ndash;85K a year</b> loaded. defex is $350 a month &mdash; the install pays for itself in weeks.</span><span lang="zh">一个质检班次的全负担成本约 <b>$65&ndash;85K/年</b>。defex 每月 $350 &mdash; 安装费数周即可回本。</span>
         </p>
-
         <p class="price__more">
-            <a href="{% url 'pricing' %}" class="price__more-link">
-                <span lang="en">three SKU tiers &mdash; single-cam, dual-cam, full line &rarr;</span><span lang="zh">三档 SKU &mdash; 单相机、双相机、整线 &rarr;</span>
-            </a>
+            <a href="{% url 'pricing' %}" class="link"><span lang="en">three SKU tiers &mdash; single-cam, dual-cam, full line &rarr;</span><span lang="zh">三档 SKU &mdash; 单相机、双相机、整线 &rarr;</span></a>
         </p>
     </div>
 </section>
 
-<!-- 04 — CONTACT -->
+<!-- CONTACT -->
 <section class="block" id="contact">
     <div class="block__marker">
-        <span class="block__marker__num">04</span>
-        <span class="block__marker__title">
-            <span lang="en">talk to us</span><span lang="zh">联系我们</span>
-        </span>
-        <span class="block__marker__rule"></span>
-        <span class="block__marker__stat">
-            <span lang="en">reply inside one working day</span><span lang="zh">1 个工作日内回复</span>
-        </span>
+        <span class="block__marker__title"><span lang="en">talk to us</span><span lang="zh">联系我们</span></span>
+        <span class="block__marker__stat"><span lang="en">reply inside one working day</span><span lang="zh">1 个工作日内回复</span></span>
     </div>
-    <h2 class="h2 h2--serif">
-        <span lang="en">Tell us about <em>your line.</em></span><span lang="zh">告诉我们 <em>您的产线。</em></span>
+    <h2 class="h2">
+        <span lang="en">Tell us about your line.</span><span lang="zh">告诉我们您的产线。</span>
     </h2>
     <div class="block__body">
-
         {% if messages %}
           {% for message in messages %}
             <p class="form__flash form__flash--{{ message.tags }}">{{ message }}</p>
           {% endfor %}
         {% endif %}
-
         <form class="form" action="{% url 'contact' %}" method="post" novalidate>
             {% csrf_token %}
             <label class="form__row">
-                <span class="form__k">
-                    <span lang="en">name</span><span lang="zh">姓名</span>
-                </span>
+                <span class="form__k"><span lang="en">name</span><span lang="zh">姓名</span></span>
                 <input type="text" name="name" autocomplete="name" required>
             </label>
             <label class="form__row">
-                <span class="form__k">
-                    <span lang="en">factory</span><span lang="zh">工厂</span>
-                </span>
+                <span class="form__k"><span lang="en">factory</span><span lang="zh">工厂</span></span>
                 <input type="text" name="factory" autocomplete="organization" required>
             </label>
             <label class="form__row">
-                <span class="form__k">
-                    <span lang="en">email or phone</span><span lang="zh">邮箱或电话</span>
-                </span>
+                <span class="form__k"><span lang="en">email or phone</span><span lang="zh">邮箱或电话</span></span>
                 <input type="text" name="contact" autocomplete="email" required>
             </label>
             <label class="form__row">
-                <span class="form__k">
-                    <span lang="en">what you make</span><span lang="zh">生产什么</span>
-                </span>
+                <span class="form__k"><span lang="en">what you make</span><span lang="zh">生产什么</span></span>
                 <input type="text" name="product" data-placeholder-en="PCB · sheet metal · textile · ..." data-placeholder-zh="PCB · 钣金 · 纺织 · ..." placeholder="PCB · sheet metal · textile · ...">
             </label>
-            <input type="text" name="website" tabindex="-1" autocomplete="off"
-                   style="position:absolute;left:-9999px;opacity:0" aria-hidden="true">
-            <button type="submit" class="cta cta--full">
-                <span lang="en">send &nbsp;&rarr;</span><span lang="zh">发送 &nbsp;&rarr;</span>
-            </button>
+            <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0" aria-hidden="true">
+            <button type="submit" class="btn"><span lang="en">send &nbsp;&rarr;</span><span lang="zh">发送 &nbsp;&rarr;</span></button>
         </form>
-
         <p class="muted form__note">
             <span lang="en">Or write us directly &mdash;</span><span lang="zh">或直接联系我们 &mdash;</span>
-            <a class="form__mail" href="mailto:husan@defex.app">husan@defex.app</a>
+            <a class="link" href="mailto:husan@defex.app">husan@defex.app</a>
         </p>
     </div>
 </section>
@@ -453,10 +192,5 @@
 </main>
 
 {% include "components/footer.html" %}
-
-<!-- Sticky CTA — fades in after hero -->
-<a href="#contact" class="sticky-cta" id="stickyCta" aria-label="request a pilot">
-    <span lang="en">book a benchmark &rarr;</span><span lang="zh">预约基准测试 &rarr;</span>
-</a>
 
 {% endblock %}
