@@ -140,3 +140,12 @@ PING_TO = os.getenv("PING_TO", "husanmavlonov79@gmail.com")
 # surface). Set AUTORESPONDER=0 to kill it instantly with no redeploy if abuse
 # starts, until a captcha (Cloudflare Turnstile) is wired on the form.
 AUTORESPONDER = os.getenv("AUTORESPONDER", "1") != "0"
+
+# Quality Review: credentials only live on the server. Choose a JSON-mode
+# text model from the current Token Factory catalog; no stale model default.
+NEBIUS_API_KEY = os.getenv("NEBIUS_API_KEY", "")
+NEBIUS_MODEL = os.getenv("NEBIUS_MODEL", "")
+# Custom CSV inference requires this separate demo access code. Public visitors
+# can run the bundled synthetic examples without seeing any credentials.
+REVIEW_ACCESS_CODE = os.getenv("REVIEW_ACCESS_CODE", "")
+REVIEW_ENABLED = os.getenv("REVIEW_ENABLED", "1") == "1"

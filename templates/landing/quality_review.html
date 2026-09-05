@@ -1,0 +1,36 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Quality Review · defex{% endblock %}
+{% block description %}Turn inspection records into a quality review with traceable evidence.{% endblock %}
+{% block canonical %}https://defex.app/quality-review/{% endblock %}
+{% block og_title %}Quality Review · defex{% endblock %}
+{% block og_description %}Review inspection records with evidence beside every finding.{% endblock %}
+{% block og_url %}https://defex.app/quality-review/{% endblock %}
+{% block twitter_title %}Quality Review · defex{% endblock %}
+{% block twitter_description %}Review inspection records with evidence beside every finding.{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/quality-review.css' %}">{% endblock %}
+{% block content %}
+<header class="nav"><a class="nav__brand" href="/">defex<span class="dot">.</span></a><a class="link" href="/#demo">Physical MVP video</a></header>
+<main class="page review" id="review-app" data-analyze="{% url 'review_analyze' %}" data-generate="{% url 'review_generate' %}">
+    <div class="review-heading"><p class="eyebrow">INSPECTION → REVIEW → ACTION</p><h1>What needs attention<span class="dot">?</span></h1><p>Review inspection results, check the evidence, and decide what to investigate next.</p></div>
+    {% if not review_ready %}<p class="notice">Live AI reporting is awaiting connection. Sample data and source statistics work now; no AI report will be simulated.</p>{% endif %}
+    <div class="review-grid">
+        <section class="review-panel" aria-labelledby="input-title">
+            <h2 id="input-title">1. Choose inspection data</h2>
+            <p class="small">Start with a synthetic example. These are test records, not customer results.</p>
+            <div class="sample-buttons"><button type="button" data-sample="defect-spike">Defect spike</button><button type="button" data-sample="clean-run">No FAIL decisions</button><button type="button" data-sample="uncertain">Uncertain results</button></div>
+            <p id="source-label" class="small">Choose a sample or upload your inspection CSV.</p>
+            <label for="csv-file" class="upload-label">Or choose a CSV file <input id="csv-file" type="file" accept=".csv,text/csv"></label>
+            <details><summary>CSV format and data handling</summary><p class="small">Columns: timestamp, product, decision, defect_class, confidence. Timestamps need a timezone. One row per inspection; PASS or FAIL; confidence from 0 to 1 or blank. Maximum 5,000 rows / 256 KB. Use non-identifying product codes.</p><p class="small">The server calculates aggregates. Report generation sends counts, product and defect labels, hourly groups, and data-quality warnings to Nebius. It sends no images or raw inspection rows. Uploaded files and custom reports are not saved by this app. Nebius's own data policies apply.</p><a class="link small" href="{% url 'review_sample' 'defect-spike' %}">Download synthetic CSV</a></details>
+            <div id="custom-access" hidden><label for="access-code">Review access code</label><input id="access-code" type="password" autocomplete="off"><p class="small">Required for reports on your own CSV. Sample reports need no code.</p></div>
+            <label class="consent"><input type="checkbox" id="consent">I can share these aggregate inspection statistics with Nebius to generate a report.</label>
+            <button id="generate" class="primary" type="button" disabled>Generate quality review</button>
+            <p class="small">AI reports require internet. Physical inspection stays on your device.</p>
+        </section>
+        <section class="review-panel evidence-panel" aria-labelledby="evidence-title"><h2 id="evidence-title">2. Verify the source</h2><div id="statistics"><p class="empty">Your counts and defect rates appear here before anything is sent to Nebius.</p></div></section>
+    </div>
+    <p id="status" role="status" aria-live="polite"></p>
+    <section id="report-panel" class="review-panel report-panel" hidden aria-labelledby="report-title"><div class="report-header"><h2 id="report-title">3. Review the findings</h2><button type="button" id="download-report">Download report + evidence</button></div><p id="measurement" class="small"></p><div id="report"></div></section>
+    <p class="small review-footer">Decision support for a human quality manager. Inspection logs alone cannot establish root cause, detection accuracy, or whether a shipment is safe to release.</p>
+    <form hidden>{% csrf_token %}</form>
+</main><script src="{% static 'js/quality-review.js' %}" defer></script>
+{% endblock %}

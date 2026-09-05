@@ -26,6 +26,12 @@ jobs:
       - name: Django system check
         run: python manage.py check
 
+      - name: Quality Review regression tests
+        run: python manage.py test
+
+      - name: Quality Review JavaScript syntax
+        run: node --check static/js/quality-review.js
+
       - name: collectstatic
         run: python manage.py collectstatic --no-input
 
