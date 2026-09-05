@@ -28,8 +28,10 @@
     const sound = document.getElementById('demoSound');
     if (!video) return;
 
-    // one rendition per screen: phones get the 720p file, everything else 1080p
-    const small = window.matchMedia('(max-width: 700px)').matches;
+    // one rendition per device: phones get the 720p file, everything else 1080p.
+    // Decided by the physical screen, not the window — a desktop window that
+    // happens to be narrow at load should still get the sharp file.
+    const small = (window.screen && window.screen.width <= 800);
     // data-src-1080 does not camelCase (a digit follows the hyphen), so read the attribute
     video.src = video.getAttribute(small ? 'data-src-720' : 'data-src-1080');
 

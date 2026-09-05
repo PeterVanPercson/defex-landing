@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}defex — automated visual inspection for factories{% endblock %}
+{% block title %}defex — a camera that catches bad products before they ship{% endblock %}
 
 {% block content %}
 
@@ -12,20 +12,20 @@
 <!-- HERO -->
 <section class="hero" id="top">
     <h1 class="hero__title">
-        <span lang="en">the defect is the mark<span class="dot">.</span></span><span lang="zh">瑕疵即是标记<span class="dot">.</span></span>
+        <span lang="en">Catch bad products before they leave your factory<span class="dot">.</span></span><span lang="zh">把次品拦在出厂之前<span class="dot">.</span></span>
     </h1>
     <p class="hero__lede">
-        <span lang="en">Jetson-powered defect inspection, installed in a day. $4,900 to deploy. Built for factories where Cognex and Keyence don&rsquo;t fit on a plant manager&rsquo;s discretionary spend.</span><span lang="zh">Jetson 边缘 AI 缺陷质检，一天部署。部署成本 $4,900。专为中小工厂打造 &mdash; Cognex、Keyence 不愿降价的那片市场。</span>
+        <span lang="en">defex is a small camera box we install on your production line in one day. It looks at every item that passes and flags the ones with a defect &mdash; a scratch, a hole, a missing part &mdash; so nobody has to stand there checking by eye.</span><span lang="zh">defex 是一个小小的摄像头盒子，一天就能装到您的产线上。它盯着经过的每一件产品，发现有问题的 &mdash; 划痕、破洞、缺件 &mdash; 马上标出来，不用再靠人站在那儿用眼睛看。</span>
     </p>
     <p class="hero__spec">
-        <span lang="en">nvidia jetson &middot; installed in a day &middot; $4,900 + $350 / mo &middot; no cloud</span><span lang="zh">nvidia jetson &middot; 一天部署 &middot; $4,900 + $350 / 月 &middot; 无云端</span>
+        <span lang="en">installed in one day &middot; $4,900 once + $350 a month &middot; works without internet</span><span lang="zh">一天装好 &middot; 一次 $4,900 + 每月 $350 &middot; 不用联网</span>
     </p>
     <p class="hero__cta">
-        <a href="#contact" class="link link--strong"><span lang="en">Book a 10-day benchmark &rarr;</span><span lang="zh">预约 10 天基准测试 &rarr;</span></a>
-        <a href="#pricing" class="link"><span lang="en">See the math</span><span lang="zh">查看定价</span></a>
+        <a href="#contact" class="link link--strong"><span lang="en">Book a 10-day trial &rarr;</span><span lang="zh">预约 10 天试用 &rarr;</span></a>
+        <a href="#pricing" class="link"><span lang="en">See the price</span><span lang="zh">看价格</span></a>
     </p>
     <p class="hero__proof">
-        <span lang="en">1 line in production &middot; textile factory, Uzbekistan &middot; September 2026 &middot; Founders Inc</span><span lang="zh">1 条产线已投产 &middot; 乌兹别克斯坦纺织厂 &middot; 2026 年 9 月 &middot; Founders Inc</span>
+        <span lang="en">Running today at a textile factory in Uzbekistan &middot; since September 2026 &middot; backed by Founders Inc</span><span lang="zh">已在乌兹别克斯坦一家纺织厂运行 &middot; 2026 年 9 月起 &middot; Founders Inc 支持</span>
     </p>
 </section>
 
@@ -38,14 +38,14 @@
                    poster="{% static 'img/demo-poster.jpg' %}"
                    data-src-1080="{% static 'video/demo-1080.mp4' %}"
                    data-src-720="{% static 'video/demo-720.mp4' %}"
-                   aria-label="defex MVP demo: live defect detection on a Jetson"></video>
+                   aria-label="defex demo: the camera spotting defects as items pass"></video>
             <button type="button" class="demo__sound" id="demoSound" aria-pressed="false">
                 <span class="demo__sound-off"><span lang="en">sound off</span><span lang="zh">声音关</span></span>
                 <span class="demo__sound-on"><span lang="en">sound on</span><span lang="zh">声音开</span></span>
             </button>
         </div>
         <figcaption class="demo__cap">
-            <span lang="en">Unedited. A Jetson Orin Nano running YOLOv8 on the bench &mdash; every box drawn on the device, nothing sent to a cloud. The line in Uzbekistan runs the same stack on fabric.</span><span lang="zh">未剪辑实拍。Jetson Orin Nano 台架运行 YOLOv8 &mdash; 全部推理在设备端完成，数据不出厂。乌兹别克斯坦的产线用同一套方案检测织物。</span>
+            <span lang="en">Filmed on a phone, no edits: our test unit spotting defects on circuit boards as they pass. The same box is checking fabric at the factory in Uzbekistan.</span><span lang="zh">手机实拍，未经剪辑：我们的测试机正在识别经过的电路板上的瑕疵。同一个盒子正在乌兹别克斯坦的工厂里检查布料。</span>
         </figcaption>
     </figure>
 </section>
@@ -53,64 +53,64 @@
 <!-- PROBLEM -->
 <section class="block" id="problem">
     <div class="block__marker">
-        <span class="block__marker__title"><span lang="en">problem</span><span lang="zh">问题</span></span>
-        <span class="block__marker__stat"><span lang="en">2&ndash;3% leaves the line defective</span><span lang="zh">2&ndash;3% 缺陷品流出产线</span></span>
+        <span class="block__marker__title"><span lang="en">the problem</span><span lang="zh">问题</span></span>
+        <span class="block__marker__stat"><span lang="en">2&ndash;3 in every 100 items ship with a defect</span><span lang="zh">每 100 件里有 2&ndash;3 件带着瑕疵出厂</span></span>
     </div>
     <h2 class="h2">
-        <span lang="en">Small factories lose 2&ndash;3% a day. Nobody sells them a fix.</span><span lang="zh">中小工厂每天损失 2&ndash;3%。没人为他们提供方案。</span>
+        <span lang="en">Checking by eye is expensive, and it misses things.</span><span lang="zh">靠人眼检查，又贵，又会漏。</span>
     </h2>
     <div class="block__body block__body--prose">
         <p>
-            <span lang="en"><strong>Inspectors are expensive, and they miss.</strong> A US quality inspector runs $22.80/hr at the median &mdash; $65&ndash;85K a year loaded per shift &mdash; and fatigue still hits at hour four. 2&ndash;3% of output leaves the line with a defect no one flagged.</span><span lang="zh"><strong>人工质检昂贵，且会漏检。</strong>美国质检员中位工资 $22.80/小时，每班全负担成本约 $65&ndash;85K/年 &mdash; 第四小时疲劳依旧袭来。2&ndash;3% 的产品带着无人察觉的瑕疵流出产线。</span>
+            <span lang="en"><strong>An inspector costs $65,000&ndash;85,000 a year per shift.</strong> By the fourth hour, eyes get tired. Around 2&ndash;3% of what leaves a small factory has a defect nobody caught &mdash; and it&rsquo;s the customer who finds it.</span><span lang="zh"><strong>一个质检员每班每年要花 $65,000&ndash;85,000。</strong>到第四个小时，眼睛就累了。小工厂出厂的产品里，大约 2&ndash;3% 带着没人发现的瑕疵 &mdash; 最后是客户发现的。</span>
         </p>
         <p>
-            <span lang="en"><strong>The fix exists, just not for them.</strong> Cognex $30K&ndash;100K. Keyence $40K+. Newer AI-vision vendors $80K&ndash;200K per line. None go below five figures.</span><span lang="zh"><strong>方案存在，但不为他们准备。</strong>Cognex $30K&ndash;100K。Keyence $40K+。新型 AI 视觉厂商每线 $80K&ndash;200K。没人愿意降到五位数以下。</span>
+            <span lang="en"><strong>Machines that do this automatically exist &mdash; for big plants.</strong> They start at $30,000 and go past $100,000, before the consultants. Nobody built one a small factory could afford.</span><span lang="zh"><strong>能自动做这件事的机器是有的 &mdash; 但那是给大厂的。</strong>起价 $30,000，动辄超过 $100,000，还不算顾问费。没有人做一台小工厂买得起的。</span>
         </p>
         <p>
-            <span lang="en"><strong>Edge AI changed the math.</strong> OpEx-priced edge AI finally fits inside plant-manager discretionary spend.</span><span lang="zh"><strong>边缘 AI 改变了经济账。</strong>按运营开支定价的边缘 AI，终于落进了厂长的可自由支配预算。</span>
+            <span lang="en"><strong>The technology got cheap. We packaged it.</strong> defex costs about what one inspector costs in a month, and it never gets tired.</span><span lang="zh"><strong>技术已经便宜了，我们把它打包好了。</strong>defex 的花费差不多是一个质检员一个月的工资，而且它永远不会累。</span>
         </p>
     </div>
     <div class="compare" aria-label="price comparison">
         <div class="compare__cell">
             <span class="compare__brand">Cognex</span>
             <span class="compare__price">$30K &ndash; 100K</span>
-            <span class="compare__note"><span lang="en">enterprise vendor</span><span lang="zh">面向大企业</span></span>
+            <span class="compare__note"><span lang="en">built for big plants</span><span lang="zh">为大厂而建</span></span>
         </div>
         <div class="compare__cell">
             <span class="compare__brand">Keyence</span>
             <span class="compare__price">$40K +</span>
-            <span class="compare__note"><span lang="en">enterprise vendor</span><span lang="zh">面向大企业</span></span>
+            <span class="compare__note"><span lang="en">built for big plants</span><span lang="zh">为大厂而建</span></span>
         </div>
         <div class="compare__cell compare__cell--us">
             <span class="compare__brand">defex<span class="dot">.</span></span>
             <span class="compare__price">$4,900 <span class="compare__plus"><span lang="en">+ $350 / mo</span><span lang="zh">+ 每月 $350</span></span></span>
-            <span class="compare__note"><span lang="en">managed</span><span lang="zh">全托管</span></span>
+            <span class="compare__note"><span lang="en">installed and looked after by us</span><span lang="zh">我们安装，我们维护</span></span>
         </div>
     </div>
 </section>
 
-<!-- WHAT DEFEX IS -->
+<!-- WHAT YOU GET -->
 <section class="block" id="what">
     <div class="block__marker">
-        <span class="block__marker__title"><span lang="en">what defex is</span><span lang="zh">defex 是什么</span></span>
-        <span class="block__marker__stat"><span lang="en">under one day to install</span><span lang="zh">1 天内部署完成</span></span>
+        <span class="block__marker__title"><span lang="en">what you get</span><span lang="zh">您得到什么</span></span>
+        <span class="block__marker__stat"><span lang="en">up and running in one day</span><span lang="zh">一天内上线</span></span>
     </div>
     <h2 class="h2">
-        <span lang="en">An inspection layer that doesn&rsquo;t need a person.</span><span lang="zh">无需人工的质检层。</span>
+        <span lang="en">One box. We install it, teach it your products, and keep it running.</span><span lang="zh">一个盒子。我们来装，教它认识您的产品，并一直照看它。</span>
     </h2>
     <div class="block__body">
         <dl class="steps">
             <div class="steps__item">
-                <dt><span lang="en">install</span><span lang="zh">安装</span></dt>
-                <dd><span lang="en">Camera mounted. Hardware trigger via GPIO. Modbus TCP into your existing PLC. Under one day, no IT project.</span><span lang="zh">相机安装到位。GPIO 硬件触发。Modbus TCP 接入您现有的 PLC。1 天完成，无需 IT 项目。</span></dd>
+                <dt><span lang="en">day one</span><span lang="zh">第一天</span></dt>
+                <dd><span lang="en">We mount a camera over your line and connect it to your existing machine, so a bad item gets stopped or marked. Done in a day. Nothing about how you work changes.</span><span lang="zh">我们把摄像头装在产线上方，接到您现有的机器上，有问题的产品会被拦下或标记。一天完成。您的生产方式不用改。</span></dd>
             </div>
             <div class="steps__item">
-                <dt><span lang="en">train</span><span lang="zh">训练</span></dt>
-                <dd><span lang="en">YOLOv8 trained on your defects from your samples. TensorRT FP16 on the NVIDIA Jetson &mdash; 30 fps on-device, sub-50 ms decisions. No cloud.</span><span lang="zh">在您的瑕疵样本上训练 YOLOv8。NVIDIA Jetson 上 TensorRT FP16 推理 &mdash; 30 帧/秒，50 毫秒内出结果。无云端。</span></dd>
+                <dt><span lang="en">week one</span><span lang="zh">第一周</span></dt>
+                <dd><span lang="en">We show it examples of your good and bad items. From then on it recognises your defects &mdash; not some generic list.</span><span lang="zh">我们给它看您的好品和次品样本。从此它认识的是您的瑕疵，而不是一份通用清单。</span></dd>
             </div>
             <div class="steps__item">
-                <dt><span lang="en">monitor</span><span lang="zh">监测</span></dt>
-                <dd><span lang="en">We watch the model from afar. Quarterly retrain on your line data. Drift alarms. Your line just runs.</span><span lang="zh">我们远程监测模型。每季度基于您的产线数据重训。漂移告警。您的产线只管运行。</span></dd>
+                <dt><span lang="en">every month after</span><span lang="zh">之后的每个月</span></dt>
+                <dd><span lang="en">We check on it remotely, keep it accurate as your products change, and fix anything that slips. You just run your line.</span><span lang="zh">我们远程照看它，产品变了也保持准确，出现偏差就修正。您只管生产。</span></dd>
             </div>
         </dl>
     </div>
@@ -119,29 +119,29 @@
 <!-- PRICE -->
 <section class="block" id="pricing">
     <div class="block__marker">
-        <span class="block__marker__title"><span lang="en">the cost</span><span lang="zh">成本</span></span>
-        <span class="block__marker__stat"><span lang="en">10&ndash;30&times; less than enterprise</span><span lang="zh">比企业方案便宜 10&ndash;30 倍</span></span>
+        <span class="block__marker__title"><span lang="en">the price</span><span lang="zh">价格</span></span>
+        <span class="block__marker__stat"><span lang="en">10&ndash;30&times; less than the machines above</span><span lang="zh">比上面那些机器便宜 10&ndash;30 倍</span></span>
     </div>
     <h2 class="h2">
-        <span lang="en">One line. $4,900.</span><span lang="zh">一条产线。$4,900。</span>
+        <span lang="en">One line. $4,900 to start, then $350 a month.</span><span lang="zh">一条产线。起步 $4,900，之后每月 $350。</span>
     </h2>
     <div class="block__body">
         <div class="price">
-            <div class="price__num">$4,900<span class="price__unit"><span lang="en"> station</span><span lang="zh"> 工位</span></span></div>
-            <div class="price__sub">$350<span class="price__sub-unit"><span lang="en"> / month &middot; model, monitoring, retraining, support</span><span lang="zh"> / 月 &middot; 模型、监测、重训、支持</span></span></div>
-            <div class="price__cap"><span lang="en">we own the hardware after install &middot; one line, one number</span><span lang="zh">硬件安装后归我们所有 &middot; 一条产线，一个数字</span></div>
+            <div class="price__num">$4,900<span class="price__unit"><span lang="en"> to install</span><span lang="zh"> 安装</span></span></div>
+            <div class="price__sub">$350<span class="price__sub-unit"><span lang="en"> / month &middot; the software, monitoring, updates and support</span><span lang="zh"> / 月 &middot; 软件、监测、更新和支持</span></span></div>
+            <div class="price__cap"><span lang="en">we own and maintain the hardware &middot; no surprises</span><span lang="zh">硬件归我们所有并由我们维护 &middot; 没有意外费用</span></div>
             <ul class="price__list">
-                <li><span lang="en"><b>$2,450</b> deposit on PO signing (50%)</span><span lang="zh"><b>$2,450</b> 签订 PO 时支付定金（50%）</span></li>
-                <li><span lang="en"><b>10-day</b> benchmark &mdash; $1,900, credited fully against install</span><span lang="zh"><b>10 天</b>基准测试 &mdash; $1,900，全额抵扣安装费</span></li>
-                <li><span lang="en"><b>30 days</b> cancellation notice, any month</span><span lang="zh"><b>30 天</b>解约通知，任何月份</span></li>
-                <li><span lang="en"><b>No</b> capex, licences, or yearly contracts</span><span lang="zh"><b>无</b>固定资产投入、许可证或年度合同</span></li>
+                <li><span lang="en"><b>$2,450</b> when you sign, the rest when it&rsquo;s installed</span><span lang="zh"><b>$2,450</b> 签约时付，其余安装完成后付</span></li>
+                <li><span lang="en"><b>10-day trial first</b> &mdash; $1,900, fully credited if you continue</span><span lang="zh"><b>先试用 10 天</b> &mdash; $1,900，继续合作则全额抵扣</span></li>
+                <li><span lang="en"><b>Cancel any month</b> with 30 days&rsquo; notice</span><span lang="zh"><b>任何月份都可取消</b>，提前 30 天通知即可</span></li>
+                <li><span lang="en"><b>Nothing to buy</b> &mdash; no equipment, no licences, no yearly contract</span><span lang="zh"><b>不用买任何东西</b> &mdash; 没有设备、没有许可证、没有年度合同</span></li>
             </ul>
         </div>
         <p class="muted price__ltv">
-            <span lang="en">One inspector shift runs <b>$65&ndash;85K a year</b> loaded. defex is $350 a month &mdash; the install pays for itself in weeks.</span><span lang="zh">一个质检班次的全负担成本约 <b>$65&ndash;85K/年</b>。defex 每月 $350 &mdash; 安装费数周即可回本。</span>
+            <span lang="en">One inspector shift costs <b>$65&ndash;85K a year</b>. defex is $4,200 a year. It pays for itself in weeks.</span><span lang="zh">一个质检员班次每年要 <b>$65&ndash;85K</b>。defex 一年 $4,200。几周就回本。</span>
         </p>
         <p class="price__more">
-            <a href="{% url 'pricing' %}" class="link"><span lang="en">three SKU tiers &mdash; single-cam, dual-cam, full line &rarr;</span><span lang="zh">三档 SKU &mdash; 单相机、双相机、整线 &rarr;</span></a>
+            <a href="{% url 'pricing' %}" class="link"><span lang="en">Bigger lines? See the three sizes &rarr;</span><span lang="zh">产线更大？看三种规格 &rarr;</span></a>
         </p>
     </div>
 </section>
@@ -150,10 +150,10 @@
 <section class="block" id="contact">
     <div class="block__marker">
         <span class="block__marker__title"><span lang="en">talk to us</span><span lang="zh">联系我们</span></span>
-        <span class="block__marker__stat"><span lang="en">reply inside one working day</span><span lang="zh">1 个工作日内回复</span></span>
+        <span class="block__marker__stat"><span lang="en">we reply within one working day</span><span lang="zh">一个工作日内回复</span></span>
     </div>
     <h2 class="h2">
-        <span lang="en">Tell us about your line.</span><span lang="zh">告诉我们您的产线。</span>
+        <span lang="en">Tell us what you make.</span><span lang="zh">告诉我们您生产什么。</span>
     </h2>
     <div class="block__body">
         {% if messages %}
@@ -177,13 +177,13 @@
             </label>
             <label class="form__row">
                 <span class="form__k"><span lang="en">what you make</span><span lang="zh">生产什么</span></span>
-                <input type="text" name="product" data-placeholder-en="PCB · sheet metal · textile · ..." data-placeholder-zh="PCB · 钣金 · 纺织 · ..." placeholder="PCB · sheet metal · textile · ...">
+                <input type="text" name="product" data-placeholder-en="clothing · metal parts · circuit boards · ..." data-placeholder-zh="服装 · 金属件 · 电路板 · ..." placeholder="clothing · metal parts · circuit boards · ...">
             </label>
             <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0" aria-hidden="true">
             <button type="submit" class="btn"><span lang="en">send &nbsp;&rarr;</span><span lang="zh">发送 &nbsp;&rarr;</span></button>
         </form>
         <p class="muted form__note">
-            <span lang="en">Or write us directly &mdash;</span><span lang="zh">或直接联系我们 &mdash;</span>
+            <span lang="en">Or just email us &mdash;</span><span lang="zh">或者直接发邮件 &mdash;</span>
             <a class="link" href="mailto:husan@defex.app">husan@defex.app</a>
         </p>
     </div>
