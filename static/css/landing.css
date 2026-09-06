@@ -79,6 +79,74 @@ strong, b { font-weight: 600; color: var(--ink); }
 .page { max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); }
 
 .hero { padding: clamp(56px, 12vh, 140px) 0 clamp(28px, 5vh, 56px); max-width: 820px; }
+
+/* hero loop: the animation owns the first screen; the words sit at its foot */
+.hero--loop {
+    position: relative;
+    max-width: none;
+    min-height: calc(100vh - 86px);
+    min-height: calc(100dvh - 86px);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 0 clamp(28px, 5vh, 56px);
+}
+.hero--loop .hero__title, .hero--loop .hero__sub, .hero--loop .hero__spec { position: relative; z-index: 1; max-width: 820px; }
+.stage {
+    position: absolute;
+    inset: 0 calc(-1 * var(--pad)) 0 calc(-1 * var(--pad));
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    --pitch: 0.2;               /* plate + gap, as a fraction of the stage width */
+    --plate-w: 12vw;            /* the visible plate: ~60% of a pitch */
+    --row-y: 40%;               /* row centreline */
+    /* the sprite carries its own shadow, so the plate is not at the sprite's centre */
+    --sprite-ratio: 1400 / 1012;
+    --plate-cx: 0.4921;
+    --plate-cy: 0.4901;
+    --plate-frac: 0.9286;     /* plate width as a fraction of the sprite */
+}
+.plate {
+    position: absolute;
+    left: 0; top: var(--row-y);
+    width: calc(var(--plate-w) / var(--plate-frac));   /* --plate-w is the visible plate */
+    aspect-ratio: var(--sprite-ratio);
+    transform: translate3d(-200vw, -50%, 0);
+    will-change: transform;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+}
+.plate--bad { background-image: var(--plate-bad); }
+.plate__dot {
+    position: absolute;
+    left: calc(var(--plate-cx) * 100%); top: calc(var(--plate-cy) * 100%);
+    width: calc(var(--plate-frac) * 54 / 85 * 30%);   /* 30% of the plate's short side */
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--accent);   /* the exact period of "defex." */
+    transform: translate(-50%, -50%);
+    opacity: 0;
+}
+.plate.is-flagged .plate__dot { opacity: 1; }
+.stage__log {
+    position: absolute;
+    right: var(--pad);
+    /* just under the row: row centre + half a plate height (plate is 54/85 of --plate-w) */
+    top: calc(var(--row-y) + var(--plate-w) * 0.318 + 18px);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--mute);
+    letter-spacing: 0.02em;
+}
+@media (max-width: 700px) {
+    .stage { --pitch: 0.3; --plate-w: 18vw; --row-y: 34%; }
+    .stage__log { right: var(--pad); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .plate { transition: none !important; }
+}
+
 .hero__title {
     font-size: clamp(38px, 5.2vw, 64px);
     line-height: 1.02;
@@ -333,6 +401,7 @@ html[lang="zh"] .lang__btn[data-lang="zh"] { color: var(--ink); }
     .steps__item { grid-template-columns: 1fr; gap: 6px; }
     .jobs__row { grid-template-columns: 1fr; gap: 4px; }
     .hero { padding-top: 40px; }
+    .hero--loop { min-height: calc(100svh - 85px); padding-top: 0; }
     .block__marker { flex-direction: column; gap: 4px; }
     .block__marker__stat { text-align: left; }
     .footer { flex-direction: column; }
