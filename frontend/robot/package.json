@@ -1,0 +1,14 @@
+{
+  "name": "defex-robot-source",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild defex-robot.js --bundle --minify --target=es2020 --format=iife --global-name=DefexRobotWeb --legal-comments=external --outfile=../../static/defex/defex-robot.js"
+  },
+  "dependencies": {
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10"
+  }
+}

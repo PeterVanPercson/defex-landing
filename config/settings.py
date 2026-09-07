@@ -130,7 +130,7 @@ mimetypes.add_type('model/gltf-binary', '.glb')
 # The hero film, model and component under /static/defex/ are large and change
 # rarely. Cache them for a day in browsers and a year on Vercel's edge; the
 # templates append ?v=DEFEX_ASSET_VERSION, so bump it whenever a file changes.
-DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "1")
+DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "2")
 
 
 def _static_headers(headers, path, url):

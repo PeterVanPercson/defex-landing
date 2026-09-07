@@ -1,5 +1,5 @@
 :root {
-    --bg: #ECEAE6;
+    --bg: #c3c2c0;
     --ink: #0F1115;
     --ink-soft: rgba(15, 17, 21, .72);
     --mute: rgba(15, 17, 21, .5);
@@ -36,26 +36,29 @@ h1, h2 { font-weight: 600; letter-spacing: -.03em; text-wrap: balance; }
 .pill:active { transform: scale(.98); }
 .pill--wide { height: 48px; padding: 0 30px; font-size: 15px; }
 
-/* hero: the film first, the headline as its caption. The column shrinks with the
-   viewport height so the headline clears the fold on laptops. */
-.hero { width: min(100% - 2 * var(--pad), var(--max), calc((100svh - 260px) * 16 / 9)); min-width: min(100% - 2 * var(--pad), 640px); margin-inline: auto; padding-top: 8px; }
-.hero__stage { position: relative; border-radius: var(--radius); overflow: hidden; background: #c3c2c0; isolation: isolate; }
-.hero__stage::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: inset 0 0 0 1px var(--line); }
-defex-robot { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: inherit; --defex-accent: #FF5A1F; }
+/* The stage stays in view while the film follows the page scroll. */
+.hero { position: relative; height: 245svh; }
+.hero__sticky { position: sticky; top: var(--nav); height: calc(100svh - var(--nav)); overflow: clip; }
+.hero__stage { position: absolute; top: 43%; left: 50%; width: min(1440px, 112%); transform: translate(-50%, -50%); }
+defex-robot { display: block; width: 100%; aspect-ratio: 16 / 9; --defex-accent: #FF5A1F; mask-image: radial-gradient(ellipse at 50% 43%, #000 43%, transparent 73%); -webkit-mask-image: radial-gradient(ellipse at 50% 43%, #000 43%, transparent 73%); }
 .hero__poster { display: block; width: 100%; height: 100%; object-fit: contain; }
-.hero__copy { padding-top: 40px; max-width: 20ch; }
-h1 { font-size: clamp(40px, 5vw, 72px); line-height: 1; }
-.hero__sub { margin-top: 20px; max-width: 44ch; font-size: clamp(17px, 1.4vw, 20px); line-height: 1.45; color: var(--ink-soft); }
-
-/* about: kicker borrowed from the film, one title, three quiet rows */
-.about { max-width: var(--max); margin-inline: auto; padding: clamp(96px, 14vh, 160px) var(--pad) 0; }
-.kicker { display: flex; align-items: center; gap: 10px; font: 500 13px/1 var(--mono); letter-spacing: .04em; color: var(--ink-soft); }
-.kicker__dash { display: inline-block; width: 16px; height: 2px; background: var(--accent); }
-.about h2 { margin-top: 12px; max-width: 36ch; font-size: clamp(28px, 3.2vw, 40px); line-height: 1.1; }
-.rows { margin-top: 40px; border-bottom: 1px solid var(--line); }
-.rows__row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 9fr); gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); align-items: baseline; }
-.rows dt { font: 500 12px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
-.rows dd { font-size: clamp(18px, 1.6vw, 22px); line-height: 1.4; color: rgba(15, 17, 21, .84); }
+.hero__copy { position: absolute; bottom: 8%; left: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); right: var(--pad); pointer-events: none; }
+h1 { max-width: 22ch; font-size: clamp(38px, 5.5vw, 80px); line-height: 1.04; letter-spacing: -.055em; }
+h1 span { color: #515456; }
+.has-scroll .hero__copy { opacity: var(--copy-opacity, 0); transform: translateY(calc((1 - var(--copy-opacity, 0)) * 30px)); }
+.scroll-cue, .rotate-cue { position: absolute; bottom: 30px; left: 0; right: 0; text-align: center; font-size: 14px; color: #454749; pointer-events: none; }
+.scroll-cue span { display: inline-block; margin-left: 12px; }
+.has-scroll .scroll-cue { opacity: var(--cue-opacity, 1); }
+.rotate-cue { display: none; text-align: right; right: var(--pad); bottom: 22px; font-size: 13px; }
+.is-interactive .rotate-cue { display: block; }
+.about { max-width: var(--max); margin-inline: auto; padding: 64px var(--pad) 0; }
+.kicker { display: flex; align-items: center; gap: 12px; font: 500 16px/1.4 var(--font); letter-spacing: -.02em; }
+.kicker__dash { width: 20px; height: 2px; background: var(--accent); }
+.rows { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; margin-top: 36px; }
+.rows__row { padding-top: 22px; border-top: 1px solid rgba(15,17,21,.22); }
+.rows dt { display: flex; justify-content: space-between; align-items: baseline; font-size: clamp(25px, 3vw, 36px); letter-spacing: -.04em; }
+.step-number { order: 1; font: 400 13px/1.4 var(--mono); color: #55585a; letter-spacing: 0; }
+.rows dd { margin-top: 22px; max-width: 27ch; font-size: 17px; line-height: 1.5; color: #454749; }
 
 /* contact */
 .contact { max-width: var(--max); margin-inline: auto; padding: clamp(96px, 14vh, 160px) var(--pad) clamp(96px, 14vh, 160px); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px clamp(32px, 5vw, 80px); }
@@ -66,7 +69,7 @@ h1 { font-size: clamp(40px, 5vw, 72px); line-height: 1; }
 
 .form { display: grid; gap: 16px; }
 .form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.field { display: grid; gap: 8px; font: 500 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+.field { display: grid; gap: 8px; font: 500 14px/1.4 var(--font); letter-spacing: .01em; text-transform: uppercase; color: var(--mute); }
 .field input, .field textarea { width: 100%; padding: 0 14px; border: 1px solid rgba(15, 17, 21, .12); border-radius: 12px; background: #fff; font: 16px/1.5 var(--font); color: var(--ink); letter-spacing: 0; text-transform: none; transition: border-color .15s; }
 .field input { height: 48px; }
 .field textarea { padding: 12px 14px; resize: vertical; min-height: 96px; }
@@ -85,32 +88,37 @@ h1 { font-size: clamp(40px, 5vw, 72px); line-height: 1; }
 }
 
 @media (max-width: 720px) {
-    :root { --radius: 12px; --nav: 56px; --pad: 16px; }
+    :root { --radius: 12px; --nav: 56px; --pad: 22px; }
     .brand { font-size: 19px; }
-    .pill { height: 36px; padding: 0 16px; }
-    .hero { width: calc(100% - 24px); min-width: 0; padding-top: 4px; }
-    .hero__copy { padding-top: 32px; padding-inline: 4px; max-width: none; }
-    h1 { font-size: clamp(38px, 10.5vw, 44px); line-height: 1.05; letter-spacing: -.02em; }
-    .hero__sub { font-size: 17px; }
-    .about, .contact { padding-top: 96px; }
-    .contact { padding-bottom: 96px; }
-    .about h2, .contact h2 { font-size: 28px; }
-    .rows__row { grid-template-columns: 1fr; gap: 8px; padding: 20px 0; }
-    .rows dd { font-size: 18px; }
+    .pill { min-height: 44px; padding: 0 16px; }
+    .hero { height: 220svh; }
+    .hero__stage { top: 34%; width: 135%; }
+    .hero__copy { bottom: 14%; }
+    h1 { font-size: clamp(34px, 8.6vw, 56px); max-width: 20ch; line-height: 1.08; letter-spacing: -.045em; }
+    .rows { grid-template-columns: 1fr; gap: 26px; margin-top: 28px; }
+    .rows__row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 24px; padding-top: 22px; }
+    .rows dt { display: block; font-size: 25px; }
+    .step-number { display: block; margin-bottom: 14px; }
+    .rows dd { margin-top: 29px; font-size: 16px; }
+    .about { padding-top: 40px; }
+    .contact { padding-top: 80px; padding-bottom: 80px; }
+    .contact h2 { font-size: 28px; }
     .form__row { grid-template-columns: 1fr; }
-    .field input { height: 44px; }
+    .field input { height: 48px; }
     .form .pill--wide { width: 100%; }
     .footer { flex-direction: column; align-items: flex-start; gap: 10px; }
 }
-
-/* Below a 520px component width the component adds a 44px toolbar row under the
-   film, so a 16:9 host would shrink the film. 4:3 keeps the film full width with
-   thin bars, and the backdrop gradient meets the film's edge colours. */
-@media (max-width: 544px) {
-    defex-robot { aspect-ratio: 4 / 3; --defex-aspect-ratio: 4 / 3; --defex-background: linear-gradient(180deg, #c3c2c0 0%, #c2c1bf 22%, #bdbcb8 45%, #c9c8c4 66%, #dcdcda 79%, #e5e4e2 100%); }
+@media (max-height: 540px) and (min-width: 721px) {
+    .hero__stage { width: 75%; top: 40%; }
+    h1 { font-size: 36px; }
 }
-
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
+    .hero { height: auto; }
+    .hero__sticky { position: relative; top: 0; min-height: 680px; height: 95svh; }
+    .hero__copy, .has-scroll .hero__copy { opacity: 1; transform: none; }
+    .scroll-cue { display: none; }
     .pill, .link, .field input, .field textarea { transition: none; }
 }
+html:not(.has-scroll) .hero { height: auto; }
+html:not(.has-scroll) .hero__sticky { position: relative; top: 0; min-height: 600px; }

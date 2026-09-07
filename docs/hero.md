@@ -3,8 +3,7 @@
 The hero is the `<defex-robot>` web component in `static/defex/`. It shows the
 poster, plays the five-second ray-traced intro (robot → optical zoom into the
 eye → "ultra inspection" → return), then crossfades to a live three.js model of
-the same robot. Visitors rotate it 360° by moving the mouse across it, dragging
-on touch, or with the arrow keys. Space pauses the orbit, R replays the intro.
+the same robot. Visitors rotate it by dragging or using the arrow keys after the scroll sequence.
 
 ## Files
 
@@ -22,29 +21,30 @@ compositor and the component source):
 `~/Downloads/defex-ultra-inspection-source/` (film) and
 `~/Downloads/bf2b8420-4670-4b2b-96c9-5a121c71cc01/` (component, `npm ci && npm run build`).
 
+## Interaction
+
+The opening plays automatically to the lens at 1.65 seconds. Scrolling through
+`.hero` then seeks through the rest of the film, reveals the headline, and
+hands off to the live model. Scrolling back restores the corresponding film
+frame. Hover tracking and automatic orbit are disabled; drag and arrow keys
+rotate the model after the handoff. Replay/Pause controls and the toolbar gap
+are hidden. Reduced-motion visitors see the still model and headline without
+the extended sticky scroll section.
+
+The page and the feathered, frameless stage share a neutral gray background.
+`static/js/robot-scroll.js` maps page progress to `setScrollProgress()` and the
+headline opacity. `frontend/robot/defex-robot.js` is the editable component.
+
+## Build and checks
+
+Run `npm ci --prefix frontend/robot`, then
+`npm run build --prefix frontend/robot`. Commit the generated component and
+license notice in `static/defex/`. Run
+`node --test frontend/robot/defex-robot.test.js` and `python manage.py test`.
+
 ## Serving and caching
 
-Everything is served by WhiteNoise from the Vercel Python function, same as the
-rest of `/static/`. Files under `/static/defex/` get
-`Cache-Control: public, max-age=86400, s-maxage=31536000` (see
-`WHITENOISE_ADD_HEADERS_FUNCTION` in `config/settings.py`), so Vercel's edge
-keeps them for a year. The templates append `?v={{ asset_v }}`; **bump
-`DEFEX_ASSET_VERSION` in settings (or the env var) whenever a file in
-`static/defex/` changes**, otherwise browsers and the edge keep the old one.
-
-## Page integration
-
-`templates/landing/home.html` passes explicit `video-src`, `model-src` and
-`poster-src` attributes, so the component does not depend on resolving
-`assets/` next to its script URL. The light-DOM `<img>` inside the element is
-the no-JS / pre-upgrade fallback. On viewports ≤700px `static/css/site.css`
-switches the stage to a square (`--defex-aspect-ratio: 1 / 1`) with a backdrop
-gradient tuned to the film's top and bottom edge colours.
-
-## Checking it
-
-`python3 manage.py test` asserts the assets are served with the long-cache
-header. For a visual pass without the Chrome extension, run a headless Chrome
-with `--use-angle=swiftshader --enable-unsafe-swiftshader` via puppeteer-core
-and poll `document.querySelector('defex-robot').getState().phase` until it is
-`interactive`, then drag across the stage and confirm `rotationDegrees` changed.
+WhiteNoise serves the assets through the existing Vercel Python function.
+`DEFEX_ASSET_VERSION` is appended to media/component URLs; bump its default
+and any environment override whenever those assets change. The CSS also has
+an explicit version in `templates/base.html`.
