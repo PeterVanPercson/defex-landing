@@ -2,8 +2,7 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="preload" as="image" href="{% static 'img/robot-poster.webp' %}">
-<link rel="modulepreload" href="https://ajax.googleapis.com/ajax/libs/model-viewer/4.1.0/model-viewer.min.js">
+<link rel="preload" as="image" href="{% static 'defex/assets/defex-poster.jpg' %}?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
@@ -20,40 +19,45 @@
 <main>
     <section class="hero" id="top" aria-labelledby="hero-title">
         <div class="hero__stage">
-            <model-viewer id="robot"
-                src="{% static 'models/defex-robot.glb' %}"
-                poster="{% static 'img/robot-poster.webp' %}"
-                alt="The Defex manufacturing robot"
-                loading="eager" reveal="auto"
-                camera-controls disable-zoom disable-pan touch-action="pan-y"
-                interaction-prompt="none"
-                auto-rotate auto-rotate-delay="0" rotation-per-second="5deg"
-                camera-orbit="-22deg 84deg 105%" min-camera-orbit="auto 70deg auto" max-camera-orbit="auto 100deg auto"
-                field-of-view="28deg"
-                environment-image="neutral" exposure="1.15"
-                shadow-intensity="0.8" shadow-softness="0.9">
-                <img slot="poster" src="{% static 'img/robot-poster.webp' %}" alt="" class="hero__poster">
-            </model-viewer>
+            <defex-robot id="robot"
+                video-src="{% static 'defex/assets/defex-intro.mp4' %}?v={{ asset_v }}"
+                model-src="{% static 'defex/assets/defex-robot.glb' %}?v={{ asset_v }}"
+                poster-src="{% static 'defex/assets/defex-poster.jpg' %}?v={{ asset_v }}"
+                quality="high" rotation-duration="80">
+                <img src="{% static 'defex/assets/defex-poster.jpg' %}?v={{ asset_v }}" alt="The Defex inspection robot: a white and charcoal robot with two camera eyes and orange details" class="hero__poster" width="1920" height="1080">
+            </defex-robot>
         </div>
         <div class="hero__copy">
-            <h1 id="hero-title">Robots for manufacturing.</h1>
-            <p>Defex builds robots for the factory floor.</p>
+            <h1 id="hero-title">It spots. You ship<span class="dot">.</span></h1>
+            <p class="hero__sub">A camera that catches defective products before they ship.</p>
         </div>
+    </section>
+
+    <section class="about" id="about" aria-labelledby="about-title">
+        <p class="kicker"><span class="kicker__dash" aria-hidden="true"></span>ultra inspection</p>
+        <h2 id="about-title">Robots for manufacturing, with vision.</h2>
+        <dl class="rows">
+            <div class="rows__row"><dt>Install</dt><dd>Installed at your factory, alongside your inspectors.</dd></div>
+            <div class="rows__row"><dt>Train</dt><dd>Trained on your products.</dd></div>
+            <div class="rows__row"><dt>Inspect</dt><dd>Inspecting offline.</dd></div>
+        </dl>
     </section>
 
     <section class="contact" id="contact" aria-labelledby="contact-title">
         <div class="contact__intro">
-            <h2 id="contact-title">Get in touch.</h2>
-            <p>or email <a class="link" href="mailto:husan@defex.app">husan@defex.app</a></p>
+            <h2 id="contact-title">Tell us what you make.</h2>
+            <p class="contact__alt">or email <a class="link" href="mailto:husan@defex.app">husan@defex.app</a></p>
         </div>
         <form class="form" action="{% url 'contact' %}" method="post">
             {% csrf_token %}
             {% if messages %}{% for message in messages %}<p class="form__flash form__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
-            <label class="field"><span>Name</span><input type="text" name="name" autocomplete="name" maxlength="120" required></label>
-            <label class="field"><span>Company</span><input type="text" name="factory" autocomplete="organization" maxlength="200" required></label>
+            <div class="form__row">
+                <label class="field"><span>Name</span><input type="text" name="name" autocomplete="name" maxlength="120" required></label>
+                <label class="field"><span>Company</span><input type="text" name="factory" autocomplete="organization" maxlength="200" required></label>
+            </div>
             <label class="field"><span>Email or phone</span><input type="text" name="contact" autocomplete="email" maxlength="200" required></label>
-            <label class="field"><span>What you make</span><input type="text" name="product" maxlength="200"></label>
-            <input type="text" name="website" tabindex="-1" autocomplete="off" class="honeypot" aria-hidden="true">
+            <label class="field"><span>What you make</span><textarea name="product" rows="3" maxlength="200"></textarea></label>
+            <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
             <button type="submit" class="pill pill--wide">Send</button>
         </form>
     </section>
@@ -61,26 +65,10 @@
 
 <footer class="footer">
     <a href="#top" class="brand brand--small" aria-label="defex, back to top"><span>defex<span class="dot">.</span></span></a>
-    <span>© {% now "Y" %} Defex · San Francisco</span>
+    <span class="footer__line">© {% now "Y" %} Defex · San Francisco</span>
 </footer>
 {% endblock %}
 
 {% block extra_scripts %}
-<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.1.0/model-viewer.min.js"></script>
-<script>
-(function () {
-    var mv = document.getElementById('robot');
-    if (!mv) return;
-    // Portrait viewports need the wider auto framing or the shoulders leave the frame.
-    function frame() {
-        var portrait = mv.clientWidth < mv.clientHeight * 1.1;
-        mv.setAttribute('field-of-view', portrait ? 'auto' : '28deg');
-        mv.setAttribute('camera-orbit', portrait ? '-22deg 84deg auto' : '-22deg 84deg 105%');
-    }
-    frame();
-    window.addEventListener('resize', frame);
-    mv.addEventListener('load', function () { mv.setAttribute('data-loaded', '1'); });
-    mv.addEventListener('error', function () { mv.setAttribute('data-error', '1'); });
-})();
-</script>
+<script src="{% static 'defex/defex-robot.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}

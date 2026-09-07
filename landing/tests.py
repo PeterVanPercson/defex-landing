@@ -43,7 +43,14 @@ class QualityReviewTests(SimpleTestCase):
     def test_pages_and_analyze(self):
         for path in ("/", "/quality-review/"):
             self.assertEqual(self.client.get(path).status_code, 200)
-        self.assertContains(self.client.get("/"), "Robots for manufacturing")
+        home = self.client.get("/")
+        self.assertContains(home, "Robots for manufacturing")
+        self.assertContains(home, "<defex-robot")
+        for asset in ("defex/defex-robot.js", "defex/assets/defex-intro.mp4",
+                      "defex/assets/defex-robot.glb", "defex/assets/defex-poster.jpg"):
+            response = self.client.get(f"/static/{asset}?v=1")
+            self.assertEqual(response.status_code, 200, asset)
+            self.assertIn("s-maxage", response["Cache-Control"])
         response = self.post("analyze", {"sample_id": "defect-spike"})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["summary"]["inspected"], 60)

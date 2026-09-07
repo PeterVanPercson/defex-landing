@@ -3,24 +3,27 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}defex — Robots for manufacturing.{% endblock %}</title>
-    <meta name="description" content="{% block description %}Defex builds robots for the factory floor.{% endblock %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}defex — Robots for manufacturing, with vision.{% endblock %}</title>
+    <meta name="description" content="{% block description %}Defex builds robots that catch defective products before they ship. Trained on your products. Inspecting offline.{% endblock %}">
     <link rel="canonical" href="{% block canonical %}https://defex.app/{% endblock %}">
-    <meta name="theme-color" content="#EFEBE4">
+    <meta name="theme-color" content="#F1EFEB">
+    <meta name="color-scheme" content="light">
 
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="defex">
-    <meta property="og:title" content="{% block og_title %}defex — Robots for manufacturing.{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}Defex builds robots for the factory floor.{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}defex — Robots for manufacturing, with vision.{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Defex builds robots that catch defective products before they ship. Trained on your products. Inspecting offline.{% endblock %}">
     <meta property="og:url" content="{% block og_url %}https://defex.app/{% endblock %}">
-    <meta property="og:image" content="https://defex.app{% static 'img/og.png' %}">
+    <meta property="og:image" content="https://defex.app{% static 'img/og.jpg' %}">
+    <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="The Defex robot's camera eye beside the words ultra inspection">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{% block twitter_title %}defex — Robots for manufacturing.{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}Defex builds robots for the factory floor.{% endblock %}">
-    <meta name="twitter:image" content="https://defex.app{% static 'img/og.png' %}">
+    <meta name="twitter:title" content="{% block twitter_title %}defex — Robots for manufacturing, with vision.{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Defex builds robots that catch defective products before they ship. Trained on your products. Inspecting offline.{% endblock %}">
+    <meta name="twitter:image" content="https://defex.app{% static 'img/og.jpg' %}">
 
     <link rel="icon" type="image/svg+xml" href="{% static 'img/defex-mark.svg' %}">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
@@ -33,15 +36,16 @@
       "@type": "Organization",
       "name": "defex",
       "url": "https://defex.app",
-      "logo": "https://defex.app{% static 'img/og.png' %}",
-      "description": "Defex builds robots for the factory floor.",
-      "email": "husan@defex.app"
+      "logo": "https://defex.app{% static 'img/og.jpg' %}",
+      "description": "Defex builds robots for manufacturing, with vision.",
+      "email": "husan@defex.app",
+      "address": {"@type": "PostalAddress", "addressLocality": "San Francisco", "addressRegion": "CA", "addressCountry": "US"}
     }
     </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/site.css' %}">
     {% block extra_head %}{% endblock %}
 </head>

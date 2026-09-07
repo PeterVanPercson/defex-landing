@@ -127,6 +127,19 @@ WHITENOISE_SKIP_COMPRESS_EXTENSIONS = (
 WHITENOISE_MIMETYPES = {'.glb': 'model/gltf-binary', '.wasm': 'application/wasm'}
 mimetypes.add_type('model/gltf-binary', '.glb')
 
+# The hero film, model and component under /static/defex/ are large and change
+# rarely. Cache them for a day in browsers and a year on Vercel's edge; the
+# templates append ?v=DEFEX_ASSET_VERSION, so bump it whenever a file changes.
+DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "1")
+
+
+def _static_headers(headers, path, url):
+    if url.startswith("/static/defex/"):
+        headers["Cache-Control"] = "public, max-age=86400, s-maxage=31536000, stale-while-revalidate=604800"
+
+
+WHITENOISE_ADD_HEADERS_FUNCTION = _static_headers
+
 
 # DEFAULT FIELD TYPE
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

@@ -15,7 +15,7 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def home(request):
-    return render(request, "landing/home.html", {"form": ContactForm()})
+    return render(request, "landing/home.html", {"form": ContactForm(), "asset_v": settings.DEFEX_ASSET_VERSION})
 
 
 @require_http_methods(["POST"])
