@@ -41,9 +41,9 @@ class QualityReviewTests(SimpleTestCase):
                 summarize(",".join(FIELDS) + f"\n{stamp},A,PASS,,{confidence}")
 
     def test_pages_and_analyze(self):
-        for path in ("/", "/pricing/", "/quality-review/"):
+        for path in ("/", "/quality-review/"):
             self.assertEqual(self.client.get(path).status_code, 200)
-        self.assertContains(self.client.get("/"), "/quality-review/")
+        self.assertContains(self.client.get("/"), "Robots for manufacturing")
         response = self.post("analyze", {"sample_id": "defect-spike"})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["summary"]["inspected"], 60)

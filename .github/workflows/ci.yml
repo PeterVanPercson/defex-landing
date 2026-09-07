@@ -43,7 +43,7 @@ jobs:
             sleep 1
           done
           code_home=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/)
-          code_pricing=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/pricing/)
-          echo "home=$code_home pricing=$code_pricing"
+          code_review=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/quality-review/)
+          echo "home=$code_home review=$code_review"
           test "$code_home" = "200"
-          test "$code_pricing" = "200"
+          test "$code_review" = "200"

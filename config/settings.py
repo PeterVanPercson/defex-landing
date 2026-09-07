@@ -1,5 +1,6 @@
 # config/settings.py
 
+import mimetypes
 import os
 from pathlib import Path
 
@@ -121,8 +122,10 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 # the demo videos are already compressed — brotli/gzip on 30MB of H.264 just burns build minutes
 WHITENOISE_SKIP_COMPRESS_EXTENSIONS = (
     'jpg', 'jpeg', 'png', 'gif', 'webp', 'zip', 'gz', 'tgz', 'bz2', 'tbz', 'xz', 'br',
-    'swf', 'flv', 'woff', 'woff2', 'mp4', 'webm', 'm4v',
+    'swf', 'flv', 'woff', 'woff2', 'mp4', 'webm', 'm4v', 'glb',
 )
+WHITENOISE_MIMETYPES = {'.glb': 'model/gltf-binary', '.wasm': 'application/wasm'}
+mimetypes.add_type('model/gltf-binary', '.glb')
 
 
 # DEFAULT FIELD TYPE

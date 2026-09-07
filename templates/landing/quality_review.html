@@ -7,9 +7,9 @@
 {% block og_url %}https://defex.app/quality-review/{% endblock %}
 {% block twitter_title %}Quality Review · defex{% endblock %}
 {% block twitter_description %}Review inspection records with evidence beside every finding.{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% static 'css/quality-review.css' %}">{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/landing.css' %}"><link rel="stylesheet" href="{% static 'css/quality-review.css' %}">{% endblock %}
 {% block content %}
-<header class="nav"><a class="nav__brand" href="/">defex<span class="dot">.</span></a><a class="link" href="/#demo">Physical MVP video</a></header>
+<header class="nav"><a class="nav__brand" href="/">defex<span class="dot">.</span></a><a class="link" href="/">Home</a></header>
 <main class="page review" id="review-app" data-analyze="{% url 'review_analyze' %}" data-generate="{% url 'review_generate' %}">
     <div class="review-heading"><p class="eyebrow">INSPECTION → REVIEW → ACTION</p><h1>What needs attention<span class="dot">?</span></h1><p>Review inspection results, check the evidence, and decide what to investigate next.</p></div>
     {% if not review_ready %}<p class="notice">Live AI reporting is awaiting connection. Sample data and source statistics work now; no AI report will be simulated.</p>{% endif %}

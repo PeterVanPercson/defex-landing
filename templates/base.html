@@ -4,79 +4,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}defex — We know what's bad.{% endblock %}</title>
-    <meta name="description" content="{% block description %}A camera that catches defective products before they ship. Installed in a day. $4,900 once, $350 a month.{% endblock %}">
+    <title>{% block title %}defex — Robots for manufacturing.{% endblock %}</title>
+    <meta name="description" content="{% block description %}Defex builds robots for the factory floor.{% endblock %}">
     <link rel="canonical" href="{% block canonical %}https://defex.app/{% endblock %}">
+    <meta name="theme-color" content="#EFEBE4">
 
-    <!-- Open Graph / Twitter -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="defex">
-    <meta property="og:title" content="{% block og_title %}defex — We know what's bad.{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}A camera that catches defective products before they ship. Installed in a day. $4,900 once, $350 a month.{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}defex — Robots for manufacturing.{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Defex builds robots for the factory floor.{% endblock %}">
     <meta property="og:url" content="{% block og_url %}https://defex.app/{% endblock %}">
     <meta property="og:image" content="https://defex.app{% static 'img/og.png' %}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{% block twitter_title %}defex — We know what's bad.{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}A camera that catches defective products before they ship. Installed in a day. $4,900 once, $350 a month.{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}defex — Robots for manufacturing.{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Defex builds robots for the factory floor.{% endblock %}">
     <meta name="twitter:image" content="https://defex.app{% static 'img/og.png' %}">
 
-    <!-- Favicons (SVG for modern browsers, PNG fallback, Apple touch) -->
     <link rel="icon" type="image/svg+xml" href="{% static 'img/defex-mark.svg' %}">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
     <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon-16.png' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/apple-touch-icon.png' %}">
 
-    <!-- Structured data (Organization) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "defex",
-      "alternateName": "Defex",
       "url": "https://defex.app",
       "logo": "https://defex.app{% static 'img/og.png' %}",
-      "description": "A camera that catches defective products before they ship. Installed in a day. $4,900 once, $350 a month.",
-      "foundingDate": "2026",
-      "founder": [
-        {"@type": "Person", "name": "Husan Mavlonov"},
-        {"@type": "Person", "name": "Hasan Mavlonov"}
-      ],
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Shanghai",
-        "addressCountry": "CN"
-      },
-      "email": "husan@defex.app",
-      "industry": "Industrial AI / Computer Vision"
+      "description": "Defex builds robots for the factory floor.",
+      "email": "husan@defex.app"
     }
     </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700;800&display=swap" rel="stylesheet">
-
-    <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
     {% block extra_head %}{% endblock %}
-
-
-    <!-- Language boot — set html[lang] before paint to avoid flash -->
-    <script>
-        (function () {
-            try {
-                var saved = localStorage.getItem('defex.lang');
-                var lang = saved || ((navigator.language || 'en').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en');
-                document.documentElement.setAttribute('lang', lang);
-            } catch (e) {}
-        })();
-    </script>
 </head>
 <body>
-
-
     {% block content %}{% endblock %}
-    <script src="{% static 'js/landing.js' %}"></script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>
