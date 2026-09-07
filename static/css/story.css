@@ -175,3 +175,59 @@ html[lang="zh"] h2 { letter-spacing: -.025em; line-height: 1.2; }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
 }
+
+/* Film first: a complete opening scene before the product pitch. */
+.intro { padding-top: 12px; }
+.story-film { max-width: min(100%, calc(64svh * 16 / 9)); margin-inline: auto; }
+.film-label, .film-time { font-size: 12px; }
+.film-button { font-size: 14px; min-height: 44px; }
+.film-transcript { margin: 8px auto 0; max-width: min(100%, calc(64svh * 16 / 9)); font-size: 12px; }
+.story-description p { font-size: 16px; }
+.intro__heading { margin: 56px 0 0; gap: 40px; }
+.intro__aside p { margin: 0; }
+.how { margin-top: 56px; }
+.how__copy h2 { margin-bottom: 24px; }
+.how__copy .section-lead { font-size: 18px; max-width: 300px; line-height: 1.5; }
+.floor-film figcaption, .fine-print { font-size: 12px; }
+.story-nav__links, .action--small, .text-link, .review-link, .careers__cta { font-size: 14px; }
+.contact-section { border-top: 1px solid var(--line); align-items: start; }
+.contact-copy h2 { margin-bottom: 24px; }
+.contact-form { border-block: 1px solid var(--line); padding-block: 16px; }
+.contact-form summary, .terms summary { cursor: pointer; font-size: 16px; padding-block: 8px; }
+.contact-form .form { margin-top: 20px; }
+.form__k { font-size: 14px; }
+.form input { font-size: 16px; }
+.careers summary { justify-content: flex-end; }
+.compact-pricing { padding-block: 40px 80px; }
+.compact-pricing h1 { font-size: clamp(44px, 7vw, 80px); margin-bottom: 40px; }
+.pricing-scroll { overflow-x: auto; }
+.pricing-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 16px; }
+.pricing-table td, .pricing-table th { padding: 22px 18px; border-bottom: 1px solid var(--line); }
+.pricing-table th:first-child { padding-left: 0; }
+.pricing-table thead th { font-size: 14px; font-weight: 400; color: var(--mute); }
+.pricing-table tbody th { font-weight: 500; }
+.pricing-table tbody tr:first-child { color: var(--accent); }
+.trial-short { margin-block: 48px 28px; }
+.trial-short h2 { font-size: clamp(32px, 4vw, 48px); margin-bottom: 12px; }
+.terms { border-top: 1px solid var(--line); padding-block: 12px; }
+.terms ul { padding: 16px 0 12px 22px; max-width: 700px; }
+.terms li { margin-bottom: 12px; }
+.compact-pricing > .action { margin-top: 28px; }
+@media (max-width: 700px) {
+    .intro { padding-top: 0; }
+    .intro__heading { margin-top: 32px; }
+    .film-controls { flex-wrap: wrap; gap: 10px; }
+    .film-progress { min-width: 20px; }
+    .story-nav__links { display: flex; }
+    .story-nav__links a:first-child { display: none; }
+    .story-nav__right > .action { display: none; }
+    .intro__aside { margin-top: 24px; }
+    .how { margin-top: 36px; }
+    .how__grid { gap: 28px; }
+    .how__copy { text-align: center; }
+    .how__copy .section-lead, .how__copy .fine-print { margin-inline: auto; }
+    .review-link { justify-content: center; }
+    .pricing-table { font-size: 14px; }
+    .pricing-table td, .pricing-table th { padding: 16px 8px; }
+    .pricing-table thead th { font-size: 14px; }
+}
