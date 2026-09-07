@@ -1,10 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
-
-{% block title %}defex pricing — three sizes, one product{% endblock %}
-
+{% block title %}defex — Pricing{% endblock %}
+{% block canonical %}https://defex.app/pricing/{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/story.css' %}">{% endblock %}
 {% block content %}
-
 <header class="nav">
     <a href="/" class="nav__brand" aria-label="defex home">
         <svg class="nav__mark" viewBox="0 0 20 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -24,110 +23,8 @@
     </div>
 </header>
 
-<main class="page">
-
-<section class="hero hero--single" id="top">
-    <h1 class="hero__title hero__title--pricing">
-        <span lang="en">Three sizes.<br><span class="hero__title-soft">One</span> product<span class="dot">.</span></span><span lang="zh">三种规格。<br><span class="hero__title-soft">一个</span>产品<span class="dot">.</span></span>
-    </h1>
-    <p class="hero__lede">
-        <span lang="en">One camera: $4,900 + $350 a month. Every plan starts with a 10-day trial.</span><span lang="zh">一台摄像头：$4,900 + 每月 $350。所有方案都从 10 天试用开始。</span>
-    </p>
-</section>
-
-<!-- SIZES -->
-<section class="block" id="tiers">
-    <div class="block__marker">
-        <span class="block__marker__title"><span lang="en">sizes</span><span lang="zh">规格</span></span>
-        <span class="block__marker__stat"><span lang="en">one camera available now</span><span lang="zh">单摄像头现已可订</span></span>
-    </div>
-    <div class="compare compare--pricing" aria-label="sizes">
-        <div class="compare__cell compare__cell--us">
-            <span class="compare__brand"><span lang="en">one camera</span><span lang="zh">一台摄像头</span></span>
-            <span class="compare__price">$4,900 <span class="compare__plus"><span lang="en">+ $350 / mo</span><span lang="zh">+ 每月 $350</span></span></span>
-            <span class="compare__note"><span lang="en">watches one spot on one line &middot; available now</span><span lang="zh">盯一条产线上的一个位置 &middot; 现已可订</span></span>
-        </div>
-        <div class="compare__cell">
-            <span class="compare__brand"><span lang="en">two cameras</span><span lang="zh">两台摄像头</span></span>
-            <span class="compare__price">$7,900 <span class="compare__plus"><span lang="en">+ $570 / mo</span><span lang="zh">+ 每月 $570</span></span></span>
-            <span class="compare__note"><span lang="en">two spots on the same line &middot; late 2026</span><span lang="zh">同一条产线上的两个位置 &middot; 2026 年底</span></span>
-        </div>
-        <div class="compare__cell">
-            <span class="compare__brand"><span lang="en">whole line</span><span lang="zh">整条产线</span></span>
-            <span class="compare__price"><span lang="en">from $10,000</span><span lang="zh">$10,000 起</span> <span class="compare__plus"><span lang="en">+ from $850 / mo</span><span lang="zh">+ 每月 $850 起</span></span></span>
-            <span class="compare__note"><span lang="en">three or more spots, one screen to watch them all &middot; late 2026</span><span lang="zh">三个及以上位置，一块屏幕看全部 &middot; 2026 年底</span></span>
-        </div>
-    </div>
-</section>
-
-<!-- THE TRIAL -->
-<section class="block" id="pilot">
-    <div class="block__marker">
-        <span class="block__marker__title"><span lang="en">the 10-day trial</span><span lang="zh">10 天试用</span></span>
-        <span class="block__marker__stat"><span lang="en">a few slots each quarter</span><span lang="zh">每季度名额有限</span></span>
-    </div>
-    <div class="block__body">
-        <div class="price">
-            <div class="price__num">$1,900<span class="price__unit"><span lang="en"> for the trial</span><span lang="zh"> 试用费</span></span></div>
-            <div class="price__sub">100%<span class="price__sub-unit"><span lang="en"> credited if you continue</span><span lang="zh"> 继续合作则全额抵扣</span></span></div>
-            <div class="price__cap"><span lang="en">runs next to your inspectors &middot; nothing on your line changes &middot; the pass mark is agreed in writing first</span><span lang="zh">与您的质检员并行 &middot; 不改动产线 &middot; 通过标准事先书面约定</span></div>
-            <ul class="price__list">
-                <li><span lang="en"><b>10 days at your factory</b> &mdash; we install it, teach it your products, and run it next to your inspectors</span><span lang="zh"><b>在您的工厂 10 天</b> &mdash; 我们安装、教它认识您的产品，并与您的质检员并行运行</span></li>
-                <li><span lang="en"><b>We agree the pass mark before we start</b> &mdash; it has to agree with your inspectors 95% of the time, or we pack up and leave</span><span lang="zh"><b>开始前先约定通过标准</b> &mdash; 它必须与您的质检员 95% 以上一致，否则我们收拾东西走人</span></li>
-                <li><span lang="en"><b>You</b> agree to a short 90-second video about the result and one reference call</span><span lang="zh"><b>您</b>同意拍一段 90 秒的成果短片，并接一次推荐电话</span></li>
-                <li><span lang="en"><b>If both sides are happy</b>, it stays from day 11 as the one-camera plan &mdash; the $1,900 comes off the price</span><span lang="zh"><b>双方满意的话</b>，第 11 天起转为单摄像头方案 &mdash; $1,900 从价格里扣除</span></li>
-            </ul>
-        </div>
-    </div>
-</section>
-
-<!-- EVERY PLAN INCLUDES -->
-<section class="block" id="perks">
-    <div class="block__marker">
-        <span class="block__marker__title"><span lang="en">every plan includes</span><span lang="zh">每个方案都包含</span></span>
-        <span class="block__marker__stat"><span lang="en">nothing to buy, no yearly contract</span><span lang="zh">不用买设备，没有年度合同</span></span>
-    </div>
-    <div class="block__body">
-        <ul class="price__list">
-            <li><span lang="en"><b>$2,450</b> when you sign, the rest when it&rsquo;s installed</span><span lang="zh"><b>$2,450</b> 签约时付，其余安装完成后付</span></li>
-            <li><span lang="en"><b>Help by phone or message</b>, answered within a day</span><span lang="zh"><b>电话或消息支持</b>，一天内答复</span></li>
-            <li><span lang="en"><b>Kept accurate</b> &mdash; we re-teach it every quarter as your products change</span><span lang="zh"><b>保持准确</b> &mdash; 产品变化时，我们每季度重新教它</span></li>
-            <li><span lang="en"><b>Up to two visits a year</b> &middot; 12-month parts warranty</span><span lang="zh"><b>每年最多两次上门</b> &middot; 12 个月零件保修</span></li>
-            <li><span lang="en"><b>A 2-hour training</b> for your quality manager and line workers</span><span lang="zh"><b>2 小时培训</b>，给您的质量主管和产线工人</span></li>
-            <li><span lang="en"><b>Cancel any month</b> with 30 days&rsquo; notice</span><span lang="zh"><b>任何月份都可取消</b>，提前 30 天通知即可</span></li>
-        </ul>
-
-        <div class="compare compare--pricing" aria-label="price comparison" style="margin-top:36px">
-            <div class="compare__cell">
-                <span class="compare__brand">Cognex</span>
-                <span class="compare__price">$30K &ndash; 100K</span>
-                <span class="compare__note"><span lang="en">per line, paid up front</span><span lang="zh">每条产线，一次付清</span></span>
-            </div>
-            <div class="compare__cell">
-                <span class="compare__brand">Keyence</span>
-                <span class="compare__price">$40K +</span>
-                <span class="compare__note"><span lang="en">per line, paid up front</span><span lang="zh">每条产线，一次付清</span></span>
-            </div>
-            <div class="compare__cell compare__cell--us">
-                <span class="compare__brand">defex<span class="dot">.</span></span>
-                <span class="compare__price">$4,900 <span class="compare__plus"><span lang="en">+ $350 / mo</span><span lang="zh">+ 每月 $350</span></span></span>
-                <span class="compare__note"><span lang="en">installed and looked after by us</span><span lang="zh">我们安装，我们维护</span></span>
-            </div>
-        </div>
-
-        <p class="hero__cta" style="margin-top:36px">
-            <a href="/#contact" class="link link--strong"><span lang="en">Book the 10-day trial &rarr;</span><span lang="zh">预约 10 天试用 &rarr;</span></a>
-            <a href="/" class="link"><span lang="en">&larr; back to home</span><span lang="zh">&larr; 返回首页</span></a>
-        </p>
-
-        <p class="muted price__ltv">
-            <span lang="en">A quality inspector costs <b>$65&ndash;85K a year</b> per shift. defex is $4,900 once and $350 a month.</span><span lang="zh">一个质检员每班每年要 <b>$65&ndash;85K</b>。defex 一次 $4,900，每月 $350。</span>
-        </p>
-    </div>
-</section>
-
-</main>
-
-{% include "components/footer.html" %}
-
-{% endblock %}
+<main class="shell compact-pricing">
+<h1><span lang="en">Start small.</span><span lang="zh">从一台开始。</span></h1>
+<div class="pricing-scroll"><table class="pricing-table"><thead><tr><th><span lang="en">Setup</span><span lang="zh">方案</span></th><th><span lang="en">Once</span><span lang="zh">一次性</span></th><th><span lang="en">/ month</span><span lang="zh">每月</span></th><th><span lang="en">Available</span><span lang="zh">供应时间</span></th></tr></thead><tbody><tr><th scope="row"><span lang="en">1 camera</span><span lang="zh">1 台摄像头</span></th><td>$4,900</td><td>$350</td><td><span lang="en">Now</span><span lang="zh">现已可订</span></td></tr><tr><th scope="row"><span lang="en">2 cameras</span><span lang="zh">2 台摄像头</span></th><td>$7,900</td><td>$570</td><td><span lang="en">Late 2026</span><span lang="zh">2026 年底</span></td></tr><tr><th scope="row"><span lang="en">Whole line</span><span lang="zh">整线</span></th><td><span lang="en">From $10,000</span><span lang="zh">$10,000 起</span></td><td><span lang="en">From $850</span><span lang="zh">$850 起</span></td><td><span lang="en">Late 2026</span><span lang="zh">2026 年底</span></td></tr></tbody></table></div>
+<div class="trial-short"><h2><span lang="en">10 days. $1,900.</span><span lang="zh">10 天。$1,900。</span></h2><p><span lang="en">Fully credited if you continue.</span><span lang="zh">继续合作则全额抵扣。</span></p></div>
+<details class="terms"><summary><span lang="en">Trial terms</span><span lang="zh">试用条款</span></summary><ul><li><span lang="en">Installed and trained at your factory, alongside your inspectors.</span><span lang="zh">在您的工厂安装、训练，与质检员并行运行。</span></li><li><span lang="en">Pass mark agreed in writing first: 95% agreement with your inspectors, or we remove it.</span><span lang="zh">事先书面约定：与质检员达到 95% 一致，否则撤走设备。</span></li><li><span lang="en">You agree to a 90-second results video and one reference call.</span><span lang="zh">您同意拍摄 90 秒成果短片，并接一次推荐电话。</span></li><li><span lang="en">If both sides agree, the one-camera plan starts on day 11; $1,900 is deducted.</span><span lang="zh">双方同意后，第 11 天转为单摄像头方案，抵扣 $1,900。</span></li></ul></details><details class="terms"><summary><span lang="en">Payment &amp; support</span><span lang="zh">付款与服务</span></summary><ul><li><span lang="en">One camera: $2,450 at signing; balance at installation.</span><span lang="zh">单摄像头：签约付 $2,450，安装后付余款。</span></li><li><span lang="en">Phone/message support within a day. Quarterly retraining.</span><span lang="zh">电话或消息一天内答复。每季度重新训练。</span></li><li><span lang="en">Up to two visits/year. 12-month parts warranty. Two-hour staff training.</span><span lang="zh">每年最多两次上门。零件保修 12 个月。员工培训 2 小时。</span></li><li><span lang="en">Cancel any month with 30 days’ notice.</span><span lang="zh">提前 30 天通知，任何月份均可取消。</span></li></ul></details><a class="action" href="/#contact"><span lang="en">Let’s talk ↗</span><span lang="zh">聊一聊 ↗</span></a></main><footer class="story-footer shell"><a class="wordmark" href="/">defex<span>.</span></a><span class="fine-print">© {% now "Y" %} defex</span></footer>{% endblock %}
