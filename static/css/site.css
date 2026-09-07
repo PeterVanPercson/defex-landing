@@ -11,8 +11,6 @@
     --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --pad: clamp(16px, 3vw, 32px);
-    --hero-gap: clamp(20px, 4vh, 48px);
-    --lede-space: 210px;
     --max: 1200px;
     --radius: 20px;
     --nav: 64px;
@@ -45,29 +43,29 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 .pill:active { transform: scale(.98); }
 .pill--wide { height: 45px; padding: 0 28px; font-size: 14px; }
 
-/* Hero: the film is pinned while the page scrolls past it, and the scroll
-   position drives the frame. The headline lives inside the pinned frame so the
-   viewport always holds a whole composition rather than a floating strip: a
-   16:9 film on a portrait phone is only ~220px tall and looked pasted on.
-   The top and bottom edges are masked so the film dissolves into the page
-   instead of cutting against it, whatever frame is on screen. */
+/* Hero. Landscape pins the film full-bleed for the length of .hero and the
+   scroll position drives the frame. Portrait does not pin at all: a 16:9 film
+   is only ~265px tall on a phone, so pinning it inside a full viewport left it
+   floating in dead space. There it sits in normal flow with the headline right
+   under it, which fills the screen.
+   Both get a masked top and bottom edge so the film dissolves into the page
+   rather than cutting against it, whatever frame is on screen. */
 .hero { position: relative; }
 .hero__sticky { position: relative; display: grid; place-items: center; }
-.hero__inner { width: 100%; display: grid; gap: var(--hero-gap); }
 .hero__film { display: block; width: 100%; height: auto; margin-inline: auto; background: var(--bg);
     -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 6%, #000 94%, transparent 100%);
             mask-image: linear-gradient(to bottom, transparent 0, #000 6%, #000 94%, transparent 100%); }
-.lede { padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
-.lede h1 { max-width: 22ch; font-size: clamp(31px, 4.4vw, 63px); line-height: 1.06; letter-spacing: -.05em; }
-.lede h1 span { color: #79828E; }
 .scroll-cue { display: none; }
 
 .has-scroll-film .hero { height: 420svh; }
 .has-scroll-film .hero__sticky { position: sticky; top: var(--nav); height: calc(100svh - var(--nav)); overflow: clip; }
-/* leave room for the headline, then give the film whatever height is left */
-.has-scroll-film .hero__film { width: min(100%, calc((100svh - var(--nav) - var(--lede-space)) * 16 / 9)); }
+.has-scroll-film .hero__film { width: min(100%, calc((100svh - var(--nav)) * 16 / 9)); }
 .has-scroll-film .scroll-cue { display: block; position: absolute; left: 0; right: 0; bottom: 20px; margin: 0; text-align: center; font-size: 12px; color: var(--mute); opacity: var(--cue-opacity, 1); pointer-events: none; }
 .scroll-cue span { display: inline-block; margin-left: 9px; }
+
+.lede { padding: clamp(44px, 8vh, 96px) max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))) 0; }
+.lede h1 { max-width: 22ch; font-size: clamp(31px, 4.4vw, 63px); line-height: 1.06; letter-spacing: -.05em; }
+.lede h1 span { color: #79828E; }
 
 /* where it started: its own page, one line and the original clip */
 .origin-page { min-height: calc(100svh - var(--nav) - 92px); display: grid; align-items: center; }
@@ -116,6 +114,17 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 .footer { max-width: var(--max); margin-inline: auto; padding: 24px var(--pad) 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid var(--line); }
 .footer__line { font: 400 12px/1.5 var(--mono); color: var(--mute); }
 
+/* Anything squarer than 13/10 cannot be filled by a 16:9 film, so it does not
+   get pinned: the film would float in dead space. Below this the film sits in
+   normal flow, scrubs as the page moves past it, and the next section starts
+   right underneath. Covers every phone and every tablet held upright. */
+@media (max-aspect-ratio: 13/10) {
+    .has-scroll-film .hero { height: auto; }
+    .has-scroll-film .hero__sticky { position: static; height: auto; overflow: clip; }
+    .has-scroll-film .hero__film { width: 100%; }
+    .has-scroll-film .scroll-cue { display: none; }
+}
+
 @media (max-width: 900px) {
     .contact { grid-template-columns: 1fr; gap: 32px; }
     .origin { grid-template-columns: 1fr; gap: 28px; justify-items: start; }
@@ -124,15 +133,11 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 }
 
 @media (max-width: 720px) {
-    :root { --radius: 12px; --nav: 56px; --pad: 22px; --hero-gap: 26px; --lede-space: 104px; }
-    .has-scroll-film .hero { height: 260svh; }
-    /* a 16:9 film cannot fill a portrait screen, so sit the composition above
-       centre where the eye lands instead of floating it in the middle with a
-       matching gap above and below */
-    .has-scroll-film .hero__sticky { padding-bottom: 14vh; }
+    :root { --radius: 12px; --nav: 56px; --pad: 22px; }
     /* the baked "ultra inspection" title ends at 89% of frame width, so 10% a
        side is the whole safe crop budget. It buys ~20% more film height. */
     .has-scroll-film .hero__film { width: 120%; margin-left: -10%; }
+    .lede { padding-top: clamp(26px, 4vh, 40px); }
     .brand { font-size: 17px; }
     .pill { min-height: 44px; padding: 0 16px; }
     .lede h1 { font-size: clamp(28px, 7.2vw, 45px); max-width: 20ch; line-height: 1.1; letter-spacing: -.04em; }
@@ -150,7 +155,6 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
     .footer { flex-direction: column; align-items: flex-start; gap: 10px; }
 }
 @media (max-height: 540px) and (min-width: 721px) {
-    :root { --lede-space: 118px; --hero-gap: 16px; }
     .lede h1 { font-size: 26px; }
 }
 @media (prefers-reduced-motion: reduce) {

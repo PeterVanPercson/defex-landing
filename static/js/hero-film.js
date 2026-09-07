@@ -49,9 +49,12 @@
     let ready = false, seeking = false, running = false, unlocked = false;
     let target = 0, shown = 0, lastFrame = -1, lastTick = 0;
 
+    // Landscape pins the film, so progress is the travel through .hero's extra
+    // height. Portrait does not pin, so it runs off plain page scroll instead.
     function scrollProgress() {
         const distance = hero.offsetHeight - sticky.offsetHeight;
-        return clamp((scrollY - hero.offsetTop) / Math.max(1, distance), 0, 1);
+        if (distance > 40) return clamp((scrollY - hero.offsetTop) / distance, 0, 1);
+        return clamp(scrollY / Math.max(1, innerHeight * 1.4), 0, 1);
     }
 
     // One seek in flight at a time, quantised to real frames. Assigning
