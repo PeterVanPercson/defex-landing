@@ -2,38 +2,30 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="preload" as="image" href="{% static 'defex/assets/defex-poster.jpg' %}?v={{ asset_v }}">
+<link rel="preload" as="image" href="{% static 'defex/assets/defex-final-frame.webp' %}?v={{ asset_v }}">
+<link rel="preload" as="video" type="video/mp4" href="{% static 'defex/assets/defex-intro-scroll.mp4' %}?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
 <a class="skip" href="#contact">Skip to contact</a>
 
-<header class="topbar">
-    <a href="/" class="brand" aria-label="defex home">
-        <svg viewBox="0 0 20 64" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="currentColor"/><circle cx="10" cy="32" r="7" fill="#FF5A1F"/><circle cx="10" cy="54" r="7" fill="currentColor"/></svg>
-        <span>defex<span class="dot">.</span></span>
-    </a>
-    <a href="#contact" class="pill">Get in touch</a>
-</header>
+{% include "landing/_topbar.html" %}
 
 <main>
-    <section class="hero" id="top" aria-labelledby="hero-title">
+    <!-- The film is pinned and advances with the scroll, so the whole eight
+         seconds is visible however fast you move. It never plays on its own. -->
+    <section class="hero" id="top" aria-label="Defex introduction film">
         <div class="hero__sticky">
-            <div class="hero__stage">
-                <defex-robot id="robot" scroll-driven controls="false" hover="false" auto-rotate="false"
-                    video-src="{% static 'defex/assets/defex-intro.mp4' %}?v={{ asset_v }}"
-                    model-src="{% static 'defex/assets/defex-robot.glb' %}?v={{ asset_v }}"
-                    poster-src="{% static 'defex/assets/defex-poster.jpg' %}?v={{ asset_v }}"
-                    quality="balanced">
-                    <img src="{% static 'defex/assets/defex-poster.jpg' %}?v={{ asset_v }}" alt="The Defex robot with two camera eyes" class="hero__poster" width="1920" height="1080">
-                </defex-robot>
-            </div>
-            <div class="hero__copy">
-                <h1 id="hero-title">Robots for manufacturing<br><span>with a great vision</span></h1>
-            </div>
-            <p class="scroll-cue" aria-hidden="true">Scroll to explore <span>↓</span></p>
-            <p class="rotate-cue" aria-hidden="true">Drag to rotate</p>
+            <video class="hero__film" id="film" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"
+                   width="1920" height="1080"
+                   poster="{% static 'defex/assets/defex-final-frame.webp' %}?v={{ asset_v }}"
+                   src="{% static 'defex/assets/defex-intro-scroll.mp4' %}?v={{ asset_v }}"></video>
+            <p class="scroll-cue" aria-hidden="true">Scroll <span>&#8595;</span></p>
         </div>
+    </section>
+
+    <section class="lede" aria-labelledby="hero-title">
+        <h1 id="hero-title">Robots for manufacturing<br><span>with a great vision</span></h1>
     </section>
 
     <section class="about" id="about" aria-labelledby="about-title">
@@ -72,6 +64,5 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{% static 'defex/defex-robot.js' %}?v={{ asset_v }}" defer></script>
-<script src="{% static 'js/robot-scroll.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/hero-film.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}

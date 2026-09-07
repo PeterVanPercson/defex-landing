@@ -18,6 +18,10 @@ def home(request):
     return render(request, "landing/home.html", {"form": ContactForm(), "asset_v": settings.DEFEX_ASSET_VERSION})
 
 
+def where_it_started(request):
+    return render(request, "landing/origin.html", {"asset_v": settings.DEFEX_ASSET_VERSION})
+
+
 @require_http_methods(["POST"])
 def contact(request):
     form = ContactForm(request.POST)

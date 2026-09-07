@@ -1,6 +1,5 @@
 # config/settings.py
 
-import mimetypes
 import os
 from pathlib import Path
 
@@ -124,13 +123,12 @@ WHITENOISE_SKIP_COMPRESS_EXTENSIONS = (
     'jpg', 'jpeg', 'png', 'gif', 'webp', 'zip', 'gz', 'tgz', 'bz2', 'tbz', 'xz', 'br',
     'swf', 'flv', 'woff', 'woff2', 'mp4', 'webm', 'm4v', 'glb',
 )
-WHITENOISE_MIMETYPES = {'.glb': 'model/gltf-binary', '.wasm': 'application/wasm'}
-mimetypes.add_type('model/gltf-binary', '.glb')
+WHITENOISE_MIMETYPES = {'.wasm': 'application/wasm'}
 
-# The hero film, model and component under /static/defex/ are large and change
+# The hero film, poster and component under /static/defex/ are large and change
 # rarely. Cache them for a day in browsers and a year on Vercel's edge; the
 # templates append ?v=DEFEX_ASSET_VERSION, so bump it whenever a file changes.
-DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "2")
+DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "6")
 
 
 def _static_headers(headers, path, url):

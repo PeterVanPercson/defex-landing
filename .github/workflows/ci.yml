@@ -29,17 +29,11 @@ jobs:
       - name: Quality Review regression tests
         run: python manage.py test
 
-      - name: Quality Review JavaScript syntax
+      - name: Front-end JavaScript syntax
         run: |
           node --check static/js/quality-review.js
-          node --check static/js/robot-scroll.js
-
-      - name: Robot scroll and interaction tests
-        run: |
-          npm ci --prefix frontend/robot --no-audit --no-fund
-          node --test frontend/robot/defex-robot.test.js
-          npm run build --prefix frontend/robot
-          git diff --exit-code -- static/defex/defex-robot.js static/defex/defex-robot.js.LEGAL.txt
+          node --check static/js/hero-film.js
+          node --check static/js/origin.js
 
       - name: collectstatic
         run: python manage.py collectstatic --no-input

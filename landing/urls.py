@@ -1,10 +1,11 @@
 from django.urls import path
 
-from .views import contact, home, ping
+from .views import contact, home, ping, where_it_started
 from .review_views import quality_review, review_analyze, review_generate, review_sample
 
 urlpatterns = [
     path('', home, name='home'),
+    path('where-it-started/', where_it_started, name='where_it_started'),
     path('contact/', contact, name='contact'),
     path('ping/', ping, name='ping'),
     path('quality-review/', quality_review, name='quality_review'),

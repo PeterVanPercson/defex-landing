@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Where it started · defex{% endblock %}
+{% block description %}Defex started off helping factory lines detect defects with vision.{% endblock %}
+{% block canonical %}https://defex.app/where-it-started/{% endblock %}
+{% block og_title %}Where it started · defex{% endblock %}
+{% block og_description %}Defex started off helping factory lines detect defects with vision.{% endblock %}
+{% block og_url %}https://defex.app/where-it-started/{% endblock %}
+{% block twitter_title %}Where it started · defex{% endblock %}
+{% block twitter_description %}Defex started off helping factory lines detect defects with vision.{% endblock %}
+
+{% block content %}
+<a class="skip" href="#origin-title">Skip to the story</a>
+
+{% include "landing/_topbar.html" with page='origin' %}
+
+<main class="origin-page">
+    <section class="origin" aria-labelledby="origin-title">
+        <div class="origin__copy">
+            <h1 class="kicker" id="origin-title"><span class="kicker__dash" aria-hidden="true"></span>where it started</h1>
+            <p>We started off helping factory lines detect defects with vision.</p>
+        </div>
+        <figure class="origin__film">
+            <video class="origin__video" id="origin-video" muted playsinline preload="metadata" disablepictureinpicture
+                   width="720" height="1280"
+                   poster="{% static 'video/origin-poster.jpg' %}?v={{ asset_v }}"
+                   src="{% static 'video/origin.mp4' %}?v={{ asset_v }}"></video>
+            <button type="button" class="playpause" id="playpause" aria-label="Pause the film"></button>
+            <span class="flash" id="flash" aria-hidden="true"></span>
+            <button type="button" class="sound" id="sound" aria-pressed="false" aria-label="Turn on sound"></button>
+        </figure>
+    </section>
+</main>
+
+<footer class="footer">
+    <a href="/" class="brand brand--small" aria-label="defex, back to home"><span>defex<span class="dot">.</span></span></a>
+    <span class="footer__line">© {% now "Y" %} Defex · San Francisco</span>
+</footer>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/origin.js' %}?v={{ asset_v }}" defer></script>
+{% endblock %}

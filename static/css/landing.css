@@ -5,14 +5,15 @@
    ======================================================================== */
 
 :root {
-    --bg:      #f6f6f7;
-    --ink:     #0a0a0a;
-    --ink-2:   #2a2a2a;
-    --mute:    #7a7a7a;
-    --line:    #e6e6e6;
-    --line-2:  #cfcfcf;
+    --bg:      #090F15;
+    --surface: #10171F;
+    --ink:     #EAE8E3;
+    --ink-2:   #C9C7C2;
+    --mute:    #8C8A86;
+    --line:    rgba(234, 232, 227, .14);
+    --line-2:  rgba(234, 232, 227, .22);
     --accent:  #FF5A1F;
-    --ok:      #1f9d55;
+    --ok:      #4ED07F;
 
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
@@ -168,7 +169,7 @@ strong, b { font-weight: 600; color: var(--ink); }
 /* nav CTA: the one black pill */
 .pill {
     font: 500 13px/1 var(--font-sans);
-    color: #fff;
+    color: var(--bg);
     background: var(--ink);
     border-radius: 999px;
     padding: 10px 16px;
@@ -222,9 +223,9 @@ strong, b { font-weight: 600; color: var(--ink); }
     right: 12px; bottom: 12px;
     font: 500 11px/1 var(--font-mono);
     letter-spacing: 0.06em;
-    color: #fff;
-    background: rgba(0, 0, 0, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: var(--bg);
+    background: rgba(9, 15, 21, 0.72);
+    border: 1px solid rgba(234, 232, 227, 0.3);
     border-radius: 999px;
     padding: 8px 12px;
     cursor: pointer;
@@ -327,7 +328,7 @@ strong, b { font-weight: 600; color: var(--ink); }
     margin-top: 22px;
     font: 500 13px/1 var(--font-mono);
     letter-spacing: 0.04em;
-    color: #fff;
+    color: var(--bg);
     background: var(--ink);
     border: 0;
     border-radius: 6px;
@@ -343,9 +344,9 @@ strong, b { font-weight: 600; color: var(--ink); }
     font-family: var(--font-mono);
     font-size: 12px;
     border-left: 2px solid var(--accent);
-    background: rgba(255, 90, 31, 0.06);
+    background: rgba(255, 90, 31, 0.12);
 }
-.form__flash--success { border-left-color: var(--ok); background: rgba(31, 157, 85, 0.07); }
+.form__flash--success { border-left-color: var(--ok); background: rgba(78, 208, 127, 0.12); }
 
 /* footer */
 .footer {

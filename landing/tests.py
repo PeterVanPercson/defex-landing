@@ -41,16 +41,24 @@ class QualityReviewTests(SimpleTestCase):
                 summarize(",".join(FIELDS) + f"\n{stamp},A,PASS,,{confidence}")
 
     def test_pages_and_analyze(self):
-        for path in ("/", "/quality-review/"):
+        for path in ("/", "/where-it-started/", "/quality-review/"):
             self.assertEqual(self.client.get(path).status_code, 200)
         home = self.client.get("/")
         self.assertContains(home, "Robots for manufacturing")
-        self.assertContains(home, "<defex-robot")
-        for asset in ("defex/defex-robot.js", "defex/assets/defex-intro.mp4",
-                      "defex/assets/defex-robot.glb", "defex/assets/defex-poster.jpg"):
+        self.assertContains(home, 'id="film"')
+        self.assertContains(home, "/where-it-started/")
+        self.assertNotContains(home, 'id="origin-video"')
+        origin = self.client.get("/where-it-started/")
+        self.assertEqual(origin.status_code, 200)
+        self.assertContains(origin, 'id="origin-video"')
+        self.assertContains(origin, 'id="playpause"')
+        self.assertContains(origin, "started off helping factory lines")
+        for asset in ("defex/assets/defex-intro-scroll.mp4", "defex/assets/defex-final-frame.webp"):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
+        for asset in ("js/hero-film.js", "js/origin.js", "video/origin.mp4", "video/origin-poster.jpg"):
+            self.assertEqual(self.client.get(f"/static/{asset}").status_code, 200, asset)
         response = self.post("analyze", {"sample_id": "defect-spike"})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["summary"]["inspected"], 60)
