@@ -1,4 +1,7 @@
 import json
+from pathlib import Path
+
+from django.conf import settings
 from unittest.mock import Mock, patch
 
 import requests
@@ -63,6 +66,27 @@ class QualityReviewTests(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["summary"]["inspected"], 60)
         self.assertEqual(self.post("analyze", []).status_code, 400)
+
+    def test_every_class_on_the_marketing_pages_is_styled(self):
+        """A CSS edit that drops a rule block renders the section unstyled but
+        still returns 200, so nothing else here catches it. This does."""
+        import re
+        root = Path(settings.BASE_DIR)
+        css = (root / "static/css/site.css").read_text()
+        # rules inside a media query do not style the default (desktop) case
+        top = re.sub(r"@media[^{]*\{(?:[^{}]|\{[^{}]*\})*\}", "", css, flags=re.S)
+        used = set()
+        for name in ("home.html", "origin.html", "_topbar.html"):
+            markup = (root / "templates/landing" / name).read_text()
+            for attr in re.findall(r'class="([^"]*)"', markup):
+                used |= {c for c in attr.split() if re.fullmatch(r"[a-z][a-z0-9_-]*", c)}
+        # set by JS, by Django message tags, or intentionally unstyled wrappers
+        dynamic = {"has-scroll-film", "form__flash--error", "contact__intro"}
+        for name in sorted(used - dynamic):
+            # a whole selector, so .kicker__dash cannot satisfy a check for .kicker
+            token = re.compile(rf"\.{re.escape(name)}(?![\w-])")
+            self.assertRegex(css, token, f".{name} has no rule at all")
+            self.assertRegex(top, token, f".{name} is only styled inside a media query")
 
     def test_csrf(self):
         client = Client(enforce_csrf_checks=True)
