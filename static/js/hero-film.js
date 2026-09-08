@@ -10,25 +10,22 @@
     const FRAME = 1 / FPS;
     // The film finishes a little before the pin releases, so the last frame holds.
     const SCRUB_END = 0.9;
-    // Exponential approach. Higher is snappier, lower is heavier.
-    const EASE = 4.2;
+    // Exponential approach toward the scroll position. The page itself scrolls
+    // natively, so the film has to follow it closely: a soft ease looks smooth in
+    // isolation but leaves the film trailing, and when the pin releases the rest
+    // of the animation plays off screen. Measured at 2922px of scrub on a 893px
+    // viewport, EASE 8 ran 3.8s behind a hard flick and lost 833ms off screen;
+    // 28 lands under 450ms behind and loses nothing. It is still enough easing to
+    // hide the 24fps quantisation. Higher is more literal, lower is more floaty.
+    const EASE = 28;
 
-    // Cadence lock. While the film is catching up it advances at a fixed ceiling,
-    // and that ceiling has to divide the display refresh or frames get held for an
-    // uneven number of refreshes (2, 1, 2, 2, 1) and stutter even though every
-    // frame is present. Pick the ceiling so FPS * rate divides the refresh exactly:
-    // 60Hz and 120Hz both land on 1.25 (30 film-fps, 2 and 4 refreshes a frame),
-    // 144Hz lands on 1.2. Nothing about the image changes, only frame timing.
-    const TARGET_RATE = 2.5;
-    const COMMON_HZ = [60, 75, 90, 100, 120, 144, 165, 240];
+    // Safety clamp only, set far above anything scrolling asks for so it never
+    // introduces lag of its own. An earlier version capped this at 2.5x realtime
+    // and that cap, not the ease, was what made a fast scroll outrun the film.
+    // This only stops a single frame from trying to jump the entire film after
+    // an anchor jump or a Home keypress.
+    const MAX_RATE = 40;
     let refresh = 60;
-    let rate = 1.25;
-
-    function lockCadence(hz) {
-        refresh = hz;
-        const held = Math.max(1, Math.round(hz / (FPS * TARGET_RATE)));
-        rate = hz / (FPS * held);
-    }
 
     function measureRefresh() {
         const deltas = [];
@@ -39,9 +36,7 @@
             if (++seen < 24) { requestAnimationFrame(sample); return; }
             deltas.sort((a, b) => a - b);
             const median = deltas[deltas.length >> 1];
-            if (!(median > 1 && median < 60)) return;
-            const hz = 1000 / median;
-            lockCadence(COMMON_HZ.find((c) => Math.abs(c - hz) < 4) || Math.round(hz));
+            if (median > 1 && median < 60) refresh = Math.round(1000 / median);
         };
         requestAnimationFrame(sample);
     }
@@ -94,16 +89,7 @@
         const dt = lastTick ? Math.min(.05, (now - lastTick) / 1000) : 1 / refresh;
         lastTick = now;
         const gap = target - shown;
-        const eased = gap * (1 - Math.exp(-EASE * dt));
-        const ceiling = rate * dt;
-        if (Math.abs(eased) > ceiling) {
-            // Rate limited. Step in whole refresh intervals rather than by the
-            // measured delta, so a jittery or dropped frame cannot break cadence.
-            const intervals = clamp(Math.round(dt * refresh), 1, 4);
-            shown += Math.sign(gap) * rate * intervals / refresh;
-        } else {
-            shown += eased;
-        }
+        shown += clamp(gap * (1 - Math.exp(-EASE * dt)), -MAX_RATE * dt, MAX_RATE * dt);
         if (Math.abs(target - shown) < FRAME / 3) shown = target;
         paint();
         if (shown !== target) requestAnimationFrame(tick);
@@ -156,53 +142,8 @@
     const wide = film.dataset.src;
     if (wide) film.src = (small && Math.min(innerWidth, innerHeight) <= 820) ? small : wide;
 
-    // Scroll damping inside the pinned hero.
-    //
-    // The rate ceiling keeps the film smooth, but it also means a fast flick asks
-    // for more film than the ceiling will deliver: 4000px/s demands about 12x
-    // realtime against a 2.5x cap. The film falls behind, the pin releases while
-    // it is still mid-way, and the rest plays off screen. That is the animation
-    // "being missed".
-    //
-    // So cap the input instead. Each wheel event is clamped to the distance the
-    // locked cadence can actually render in the time since the last one, derived
-    // from the geometry so it stays right at any viewport size.
-    //
-    // The scroll is applied synchronously here on purpose. An earlier version
-    // queued the excess and drained it on requestAnimationFrame, which meant a
-    // throttled or delayed rAF left the page preventDefault-ed and completely
-    // unscrollable. Nothing is deferred now, so there is no state to get stuck in.
-    let lastWheel = 0;
-
-    function scrollLimit() {
-        if (scrubSpan <= 40 || !isFinite(film.duration) || film.duration <= 0) return 0;
-        return (scrubSpan * SCRUB_END / film.duration) * rate;   // px per second
-    }
-
-    // pure arithmetic against the cached geometry, no layout read
-    function insideScrub() {
-        return scrubSpan > 40 && scrollY >= heroTop && scrollY <= heroTop + scrubSpan;
-    }
-
-    function onWheel(event) {
-        // never fight zoom, an unready film, or a visitor who asked for less motion
-        if (event.ctrlKey || !ready || reduced.matches || !insideScrub()) return;
-        const limit = scrollLimit();
-        if (!limit) return;
-        const now = performance.now();
-        const dt = lastWheel ? Math.min(.1, (now - lastWheel) / 1000) : 1 / 60;
-        lastWheel = now;
-        const allowed = limit * dt;
-        if (Math.abs(event.deltaY) <= allowed) return;   // already slow enough, leave it native
-        event.preventDefault();
-        scrollBy(0, clamp(event.deltaY, -allowed, allowed));
-    }
-
     if (!reduced.matches) {
         document.documentElement.classList.add('has-scroll-film');
-        // On the hero only. A non-passive wheel listener on window takes the whole
-        // site off the compositor fast path and makes every scroll wait for JS.
-        hero.addEventListener('wheel', onWheel, { passive: false });
         measureGeometry();
         measureRefresh();
         addEventListener('scroll', onScroll, { passive: true });
