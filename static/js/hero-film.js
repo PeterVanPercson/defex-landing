@@ -60,15 +60,27 @@
 
     // One seek in flight at a time, quantised to real frames. Assigning
     // currentTime every animation frame queues seeks the decoder never clears.
+    // A seek into an unbuffered range, or a backgrounded tab, can swallow the
+    // seeked event. Without the watchdog the flag stays set and the film is
+    // frozen for the rest of the visit, which looked like the animation
+    // "skipping". 400ms is far longer than a real seek on an all-intra file.
+    let seekWatchdog = 0;
+    function releaseSeek() {
+        clearTimeout(seekWatchdog);
+        seeking = false;
+    }
     function paint() {
         if (seeking || !ready) return;
         const frame = Math.round(shown / FRAME);
         if (frame === lastFrame) return;
         lastFrame = frame;
         seeking = true;
+        clearTimeout(seekWatchdog);
+        seekWatchdog = setTimeout(() => { seeking = false; lastFrame = -1; paint(); }, 400);
         film.currentTime = frame * FRAME;
     }
-    film.addEventListener('seeked', () => { seeking = false; paint(); });
+    film.addEventListener('seeked', () => { releaseSeek(); paint(); });
+    film.addEventListener('error', releaseSeek);
 
     function tick(now) {
         const dt = lastTick ? Math.min(.05, (now - lastTick) / 1000) : 1 / refresh;
@@ -107,11 +119,18 @@
 
     function hold() { shown = target = film.duration - FRAME; lastFrame = -1; paint(); }
 
-    film.addEventListener('loadedmetadata', () => {
+    function markReady() {
+        if (ready || film.readyState < 2) return;   // 2 = HAVE_CURRENT_DATA
         ready = true;
         if (reduced.matches) hold();
         else onScroll();
-    });
+    }
+    // readyState 2 is the first point a seek is guaranteed to have a frame to
+    // land on. loadedmetadata (readyState 1) only knows the duration.
+    film.addEventListener('loadeddata', markReady);
+    film.addEventListener('canplay', markReady);
+    film.addEventListener('canplaythrough', markReady);
+    film.addEventListener('loadedmetadata', markReady);
 
     // iOS will not paint a seek until the element has been allowed to decode once.
     function unlock() {
@@ -121,6 +140,12 @@
         if (played && played.then) played.then(() => film.pause()).catch(() => {});
         else film.pause();
     }
+
+    // Choose the source before load. A phone does not need the 1440-wide file,
+    // and 4.4MB over mobile data is most of why the film was not ready in time.
+    const small = film.dataset.srcSm;
+    const wide = film.dataset.src;
+    if (wide) film.src = (small && Math.min(innerWidth, innerHeight) <= 820) ? small : wide;
 
     if (!reduced.matches) {
         document.documentElement.classList.add('has-scroll-film');

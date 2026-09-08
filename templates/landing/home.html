@@ -2,8 +2,7 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="preload" as="image" href="{% static 'defex/assets/defex-final-frame.webp' %}?v={{ asset_v }}">
-<link rel="preload" as="video" type="video/mp4" href="{% static 'defex/assets/defex-intro-scroll.mp4' %}?v={{ asset_v }}">
+<link rel="preload" as="image" href="{% static 'defex/assets/defex-first-frame.webp' %}?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
@@ -16,10 +15,14 @@
          seconds is visible however fast you move. It never plays on its own. -->
     <section class="hero" id="top" aria-labelledby="hero-title">
         <div class="hero__sticky">
+            <!-- The poster is the film's FIRST frame, not its last. It used to be the
+                 final frame, so a slow connection showed the robot already in its
+                 ending pose and the film looked like it had been skipped. -->
             <video class="hero__film" id="film" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"
                    width="1920" height="1080"
-                   poster="{% static 'defex/assets/defex-final-frame.webp' %}?v={{ asset_v }}"
-                   src="{% static 'defex/assets/defex-intro-scroll.mp4' %}?v={{ asset_v }}"></video>
+                   poster="{% static 'defex/assets/defex-first-frame.webp' %}?v={{ asset_v }}"
+                   data-src="{% static 'defex/assets/defex-intro-scroll.mp4' %}?v={{ asset_v }}"
+                   data-src-sm="{% static 'defex/assets/defex-intro-scroll-1080.mp4' %}?v={{ asset_v }}"></video>
             <div class="lede">
                 <h1 id="hero-title">Robots for manufacturing<br><span>with a great vision</span></h1>
             </div>

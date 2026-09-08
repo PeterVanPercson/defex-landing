@@ -56,7 +56,8 @@ class QualityReviewTests(SimpleTestCase):
         self.assertContains(origin, 'id="origin-video"')
         self.assertContains(origin, 'id="playpause"')
         self.assertContains(origin, "started off helping factory lines")
-        for asset in ("defex/assets/defex-intro-scroll.mp4", "defex/assets/defex-final-frame.webp"):
+        for asset in ("defex/assets/defex-intro-scroll.mp4", "defex/assets/defex-intro-scroll-1080.mp4",
+                      "defex/assets/defex-first-frame.webp"):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
