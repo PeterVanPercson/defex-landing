@@ -11,6 +11,8 @@
     --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --pad: clamp(16px, 3vw, 32px);
+    --hero-gap: clamp(18px, 3.5vh, 40px);
+    --lede-space: 168px;
     --max: 1200px;
     --radius: 20px;
     --nav: 64px;
@@ -51,7 +53,7 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
    Both get a masked top and bottom edge so the film dissolves into the page
    rather than cutting against it, whatever frame is on screen. */
 .hero { position: relative; }
-.hero__sticky { position: relative; display: grid; place-items: center; }
+.hero__sticky { position: relative; display: grid; place-items: center; align-content: center; gap: var(--hero-gap); }
 .hero__film { display: block; width: 100%; height: auto; margin-inline: auto; background: var(--bg);
     -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 6%, #000 94%, transparent 100%);
             mask-image: linear-gradient(to bottom, transparent 0, #000 6%, #000 94%, transparent 100%); }
@@ -59,12 +61,13 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 
 .has-scroll-film .hero { height: 420svh; }
 .has-scroll-film .hero__sticky { position: sticky; top: var(--nav); height: calc(100svh - var(--nav)); overflow: clip; }
-.has-scroll-film .hero__film { width: min(100%, calc((100svh - var(--nav)) * 16 / 9)); }
-.has-scroll-film .scroll-cue { display: block; position: absolute; left: 0; right: 0; bottom: 20px; margin: 0; text-align: center; font-size: 12px; color: var(--mute); opacity: var(--cue-opacity, 1); pointer-events: none; }
+.has-scroll-film .hero__film { width: min(100%, calc((100svh - var(--nav) - var(--lede-space)) * 16 / 9)); }
+/* the headline now sits in the frame, so the cue moves out of its way */
+.has-scroll-film .scroll-cue { display: block; position: absolute; right: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); bottom: 16px; margin: 0; font-size: 12px; color: var(--mute); opacity: var(--cue-opacity, 1); pointer-events: none; }
 .scroll-cue span { display: inline-block; margin-left: 9px; }
 
-.lede { padding: clamp(44px, 8vh, 96px) max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))) 0; }
-.lede h1 { max-width: 22ch; font-size: clamp(31px, 4.4vw, 63px); line-height: 1.06; letter-spacing: -.05em; }
+.lede { width: 100%; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
+.lede h1 { max-width: 22ch; font-size: clamp(31px, 3.2vw, 46px); line-height: 1.08; letter-spacing: -.045em; }
 .lede h1 span { color: #79828E; }
 
 /* what we do */
@@ -133,6 +136,11 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
    screen. Pinned, the film stays put for the whole eight seconds. */
 @media (max-aspect-ratio: 13/10) {
     .has-scroll-film .hero { height: 300svh; }
+    /* A 16:9 film is a 221px strip on a phone. Cropping to 5:4 makes it 314px.
+       object-position 63% is the only window that keeps both the robot, which
+       spans 19-77% of frame width, and the baked title, which runs to 89%. */
+    .has-scroll-film .hero__film { width: 100%; margin-left: 0; aspect-ratio: 5 / 4; object-fit: cover; object-position: 63% center; }
+    .has-scroll-film .hero__sticky { align-content: start; padding-top: 4vh; }
 }
 
 @media (max-width: 900px) {
@@ -146,11 +154,10 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
     :root { --radius: 12px; --nav: 56px; --pad: 22px; }
     /* the baked "ultra inspection" title ends at 89% of frame width, so 10% a
        side is the whole safe crop budget. It buys ~20% more film height. */
-    .has-scroll-film .hero__film { width: 120%; margin-left: -10%; }
-    .lede { padding-top: clamp(26px, 4vh, 40px); }
+    :root { --lede-space: 0px; }
     .brand { font-size: 17px; }
     .pill { min-height: 44px; padding: 0 16px; }
-    .lede h1 { font-size: clamp(28px, 7.2vw, 45px); max-width: 20ch; line-height: 1.1; letter-spacing: -.04em; }
+    .lede h1 { font-size: clamp(30px, 8vw, 40px); max-width: 18ch; line-height: 1.12; letter-spacing: -.035em; }
     .rows { grid-template-columns: 1fr; gap: 26px; margin-top: 28px; }
     .rows__row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 24px; padding-top: 22px; }
     .rows dt { display: block; font-size: 21px; }
