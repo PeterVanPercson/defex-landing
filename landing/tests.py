@@ -63,7 +63,7 @@ class QualityReviewTests(SimpleTestCase):
         self.assertContains(origin, 'id="origin-video"')
         self.assertContains(origin, 'id="playpause"')
         self.assertContains(origin, "started off helping factory lines")
-        self.assertContains(origin, "We ship AI visual inspection today")
+        self.assertContains(origin, "how we learned the camera is not enough")
         for asset in ("defex/assets/defex-intro-scroll.mp4", "defex/assets/defex-intro-scroll-1080.mp4",
                       "defex/assets/defex-first-frame.webp"):
             response = self.client.get(f"/static/{asset}?v=1")
