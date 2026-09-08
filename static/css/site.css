@@ -59,7 +59,7 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
             mask-image: linear-gradient(to bottom, transparent 0, #000 6%, #000 94%, transparent 100%); }
 .scroll-cue { display: none; }
 
-.has-scroll-film .hero { height: 420svh; }
+.has-scroll-film .hero { height: 560svh; }
 .has-scroll-film .hero__sticky { position: sticky; top: var(--nav); height: calc(100svh - var(--nav)); overflow: clip; }
 .has-scroll-film .hero__film { width: min(100%, calc((100svh - var(--nav) - var(--lede-space)) * 16 / 9)); }
 /* the headline now sits in the frame, so the cue moves out of its way */
@@ -135,7 +135,7 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
    frozen frame before it scrolled away, and the other six seconds ran off
    screen. Pinned, the film stays put for the whole eight seconds. */
 @media (max-aspect-ratio: 13/10) {
-    .has-scroll-film .hero { height: 300svh; }
+    .has-scroll-film .hero { height: 400svh; }
     /* A 16:9 film is a 221px strip on a phone. Cropping to 5:4 makes it 314px.
        object-position 63% is the only window that keeps both the robot, which
        spans 19-77% of frame width, and the baked title, which runs to 89%. */
