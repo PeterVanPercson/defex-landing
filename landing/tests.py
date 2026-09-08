@@ -47,7 +47,11 @@ class QualityReviewTests(SimpleTestCase):
         for path in ("/", "/where-it-started/", "/quality-review/"):
             self.assertEqual(self.client.get(path).status_code, 200)
         home = self.client.get("/")
-        self.assertContains(home, "Robots for manufacturing")
+        # the headline and the three steps must match the deck, not the
+        # superseded vision-inspection positioning they replaced
+        self.assertContains(home, "Robots that assemble parts")
+        for step in ("Assemble", "Verify", "Recover"):
+            self.assertContains(home, f">{step}</dt>")
         self.assertContains(home, 'id="film"')
         self.assertContains(home, "/where-it-started/")
         self.assertNotContains(home, 'id="origin-video"')
