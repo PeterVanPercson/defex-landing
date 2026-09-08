@@ -19,7 +19,7 @@
     // frame is present. Pick the ceiling so FPS * rate divides the refresh exactly:
     // 60Hz and 120Hz both land on 1.25 (30 film-fps, 2 and 4 refreshes a frame),
     // 144Hz lands on 1.2. Nothing about the image changes, only frame timing.
-    const TARGET_RATE = 1.3;
+    const TARGET_RATE = 2.5;
     const COMMON_HZ = [60, 75, 90, 100, 120, 144, 165, 240];
     let refresh = 60;
     let rate = 1.25;
@@ -147,8 +147,52 @@
     const wide = film.dataset.src;
     if (wide) film.src = (small && Math.min(innerWidth, innerHeight) <= 820) ? small : wide;
 
+    // Scroll damping inside the pinned hero.
+    //
+    // The rate ceiling keeps the film smooth, but it also means a fast flick asks
+    // for more film than the ceiling will deliver: 4000px/s demands about 12x
+    // realtime against a 2.5x cap. The film falls behind, the pin releases while
+    // it is still mid-way, and the rest plays off screen. That is the animation
+    // "being missed".
+    //
+    // So cap the input instead. Each wheel event is clamped to the distance the
+    // locked cadence can actually render in the time since the last one, derived
+    // from the geometry so it stays right at any viewport size.
+    //
+    // The scroll is applied synchronously here on purpose. An earlier version
+    // queued the excess and drained it on requestAnimationFrame, which meant a
+    // throttled or delayed rAF left the page preventDefault-ed and completely
+    // unscrollable. Nothing is deferred now, so there is no state to get stuck in.
+    let lastWheel = 0;
+
+    function scrollLimit() {
+        const distance = hero.offsetHeight - sticky.offsetHeight;
+        if (distance <= 40 || !isFinite(film.duration) || film.duration <= 0) return 0;
+        return (distance * SCRUB_END / film.duration) * rate;   // px per second
+    }
+
+    function insideScrub() {
+        const box = hero.getBoundingClientRect();
+        return box.top <= 0 && box.bottom >= innerHeight;
+    }
+
+    function onWheel(event) {
+        // never fight zoom, an unready film, or a visitor who asked for less motion
+        if (event.ctrlKey || !ready || reduced.matches || !insideScrub()) return;
+        const limit = scrollLimit();
+        if (!limit) return;
+        const now = performance.now();
+        const dt = lastWheel ? Math.min(.1, (now - lastWheel) / 1000) : 1 / 60;
+        lastWheel = now;
+        const allowed = limit * dt;
+        if (Math.abs(event.deltaY) <= allowed) return;   // already slow enough, leave it native
+        event.preventDefault();
+        scrollBy(0, clamp(event.deltaY, -allowed, allowed));
+    }
+
     if (!reduced.matches) {
         document.documentElement.classList.add('has-scroll-film');
+        addEventListener('wheel', onWheel, { passive: false });
         measureRefresh();
         addEventListener('scroll', onScroll, { passive: true });
         addEventListener('resize', onScroll, { passive: true });
