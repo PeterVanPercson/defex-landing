@@ -125,15 +125,14 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 .footer__line { font: 400 12px/1.5 var(--mono); color: var(--mute); }
 .footer__links { display: flex; align-items: center; gap: clamp(14px, 2vw, 24px); }
 
-/* Anything squarer than 13/10 cannot be filled by a 16:9 film, so it does not
-   get pinned: the film would float in dead space. Below this the film sits in
-   normal flow, scrubs as the page moves past it, and the next section starts
-   right underneath. Covers every phone and every tablet held upright. */
+/* Portrait keeps the pin. Letting the film sit in normal flow here was a bug:
+   a 16:9 film is only ~265px tall on a phone, so it cleared the top of the
+   screen after ~320px of scroll, which is 27% of the way through the scrub.
+   The film's first second is a near-still hold, so all anyone ever saw was a
+   frozen frame before it scrolled away, and the other six seconds ran off
+   screen. Pinned, the film stays put for the whole eight seconds. */
 @media (max-aspect-ratio: 13/10) {
-    .has-scroll-film .hero { height: auto; }
-    .has-scroll-film .hero__sticky { position: static; height: auto; overflow: clip; }
-    .has-scroll-film .hero__film { width: 100%; }
-    .has-scroll-film .scroll-cue { display: none; }
+    .has-scroll-film .hero { height: 300svh; }
 }
 
 @media (max-width: 900px) {
