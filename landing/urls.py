@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import contact, home, ping, where_it_started
+from .views import contact, home, ping, robots, sitemap, where_it_started
 from .review_views import quality_review, review_analyze, review_generate, review_sample
 
 urlpatterns = [
@@ -8,6 +8,8 @@ urlpatterns = [
     path('where-it-started/', where_it_started, name='where_it_started'),
     path('contact/', contact, name='contact'),
     path('ping/', ping, name='ping'),
+    path('robots.txt', robots, name='robots'),
+    path('sitemap.xml', sitemap, name='sitemap'),
     path('quality-review/', quality_review, name='quality_review'),
     path('quality-review/analyze/', review_analyze, name='review_analyze'),
     path('quality-review/generate/', review_generate, name='review_generate'),

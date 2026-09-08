@@ -88,6 +88,27 @@ class QualityReviewTests(SimpleTestCase):
             self.assertRegex(css, token, f".{name} has no rule at all")
             self.assertRegex(top, token, f".{name} is only styled inside a media query")
 
+    def test_crawl_surface(self):
+        robots = self.client.get("/robots.txt")
+        self.assertEqual(robots.status_code, 200)
+        self.assertIn("text/plain", robots["Content-Type"])
+        self.assertIn("Sitemap: http://testserver/sitemap.xml", robots.content.decode())
+
+        sitemap = self.client.get("/sitemap.xml")
+        self.assertEqual(sitemap.status_code, 200)
+        self.assertIn("xml", sitemap["Content-Type"])
+        body = sitemap.content.decode()
+        for path in ("/", "/where-it-started/", "/quality-review/"):
+            self.assertIn(f"<loc>http://testserver{path}</loc>", body)
+
+        # the demo page was unreachable from the site for weeks; keep it linked
+        home = self.client.get("/").content.decode()
+        self.assertIn("/quality-review/", home)
+
+        # the founder link must stay bidirectional with husanmavlonov.com
+        self.assertIn("https://husanmavlonov.com/#person", home)
+        self.assertIn("https://defex.app/#org", home)
+
     def test_csrf(self):
         client = Client(enforce_csrf_checks=True)
         self.assertEqual(client.post("/quality-review/analyze/",

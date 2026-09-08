@@ -1,10 +1,12 @@
 import json
 import re
+from datetime import date
 
 from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
@@ -20,6 +22,49 @@ def home(request):
 
 def where_it_started(request):
     return render(request, "landing/origin.html", {"asset_v": settings.DEFEX_ASSET_VERSION})
+
+
+# Crawl surface. Both are views rather than static files so they cannot drift
+# out of sync with urls.py, and so Vercel serves them from the same function.
+SITEMAP_PAGES = (
+    ("home", "1.0", "weekly"),
+    ("where_it_started", "0.7", "monthly"),
+    ("quality_review", "0.8", "monthly"),
+)
+
+
+def robots(request):
+    body = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /contact/\n"
+        "\n"
+        "User-agent: Googlebot\nAllow: /\n"
+        "\n"
+        "User-agent: Bingbot\nAllow: /\n"
+        "\n"
+        "User-agent: YandexBot\nAllow: /\n"
+        "\n"
+        f"Sitemap: {request.build_absolute_uri('/sitemap.xml')}\n"
+        "Host: defex.app\n"
+    )
+    return HttpResponse(body, content_type="text/plain; charset=utf-8")
+
+
+def sitemap(request):
+    today = date.today().isoformat()
+    urls = "".join(
+        f"<url><loc>{request.build_absolute_uri(reverse(name))}</loc>"
+        f"<lastmod>{today}</lastmod><changefreq>{freq}</changefreq>"
+        f"<priority>{prio}</priority></url>"
+        for name, prio, freq in SITEMAP_PAGES
+    )
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        f"{urls}</urlset>"
+    )
+    return HttpResponse(xml, content_type="application/xml; charset=utf-8")
 
 
 @require_http_methods(["POST"])

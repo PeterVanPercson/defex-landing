@@ -59,6 +59,10 @@
 
 <footer class="footer">
     <a href="#top" class="brand brand--small" aria-label="defex, back to top"><span>defex<span class="dot">.</span></span></a>
+    <nav class="footer__links">
+        <a class="navlink" href="{% url 'quality_review' %}">Quality review</a>
+        <a class="navlink" href="{% url 'where_it_started' %}">Where it started</a>
+    </nav>
     <span class="footer__line">© {% now "Y" %} Defex · San Francisco</span>
 </footer>
 {% endblock %}

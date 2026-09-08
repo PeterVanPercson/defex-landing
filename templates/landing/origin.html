@@ -4,6 +4,10 @@
 {% block title %}Where it started · defex{% endblock %}
 {% block description %}Defex started off helping factory lines detect defects with vision.{% endblock %}
 {% block canonical %}https://defex.app/where-it-started/{% endblock %}
+{% block page_id %}https://defex.app/where-it-started/{% endblock %}
+{% block page_url %}https://defex.app/where-it-started/{% endblock %}
+{% block page_name %}Where it started · defex{% endblock %}
+{% block keywords %}defex origin story, factory line vision, defect detection startup, NVIDIA Jetson inspection, Husan Mavlonov defex{% endblock %}
 {% block og_title %}Where it started · defex{% endblock %}
 {% block og_description %}Defex started off helping factory lines detect defects with vision.{% endblock %}
 {% block og_url %}https://defex.app/where-it-started/{% endblock %}
@@ -35,6 +39,9 @@
 
 <footer class="footer">
     <a href="/" class="brand brand--small" aria-label="defex, back to home"><span>defex<span class="dot">.</span></span></a>
+    <nav class="footer__links">
+        <a class="navlink" href="{% url 'quality_review' %}">Quality review</a>
+    </nav>
     <span class="footer__line">© {% now "Y" %} Defex · San Francisco</span>
 </footer>
 {% endblock %}

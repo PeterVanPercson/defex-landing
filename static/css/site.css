@@ -123,6 +123,7 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 /* footer */
 .footer { max-width: var(--max); margin-inline: auto; padding: 24px var(--pad) 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid var(--line); }
 .footer__line { font: 400 12px/1.5 var(--mono); color: var(--mute); }
+.footer__links { display: flex; align-items: center; gap: clamp(14px, 2vw, 24px); }
 
 /* Anything squarer than 13/10 cannot be filled by a 16:9 film, so it does not
    get pinned: the film would float in dead space. Below this the film sits in

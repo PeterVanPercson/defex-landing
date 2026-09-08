@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}defex — Robots for manufacturing, with vision.{% endblock %}</title>
+    <meta name="keywords" content="{% block keywords %}AI visual inspection, automated optical inspection, defect detection, machine vision quality control, factory inspection robot, edge AI, NVIDIA Jetson inspection, offline defect detection, manufacturing QC automation, PCB inspection, computer vision manufacturing, defex{% endblock %}">
     <meta name="description" content="{% block description %}Defex builds robots that catch defective products before they ship. Trained on your products. Inspecting offline.{% endblock %}">
     <link rel="canonical" href="{% block canonical %}https://defex.app/{% endblock %}">
     <meta name="theme-color" content="{% block theme_color %}#090F15{% endblock %}">
@@ -30,23 +31,82 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon-16.png' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/apple-touch-icon.png' %}">
 
+    <!-- One graph, so Google resolves defex and its founder as linked entities.
+         husanmavlonov.com already points its Person node at defex.app/#org; this
+         is the other half of that link. knowsAbout carries the search terms
+         structurally, which is what actually gets read, rather than stuffing
+         them into visible copy. -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "defex",
-      "url": "https://defex.app",
-      "logo": "https://defex.app{% static 'img/og.jpg' %}",
-      "description": "Defex builds robots for manufacturing, with vision.",
-      "email": "husan@defex.app",
-      "address": {"@type": "PostalAddress", "addressLocality": "San Francisco", "addressRegion": "CA", "addressCountry": "US"}
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://defex.app/#org",
+          "name": "defex",
+          "alternateName": ["Defex", "defex.app", "Defex AI", "Дефекс"],
+          "url": "https://defex.app/",
+          "logo": {"@type": "ImageObject", "url": "https://defex.app{% static 'img/og.jpg' %}", "width": 1200, "height": 630},
+          "image": "https://defex.app{% static 'img/og.jpg' %}",
+          "description": "Defex builds AI vision robots for manufacturing quality control. Automated defect detection on the factory line, trained on your products and inspecting offline on NVIDIA Jetson edge hardware.",
+          "slogan": "Robots for manufacturing, with a great vision.",
+          "email": "husan@defex.app",
+          "foundingDate": "2025",
+          "founder": {
+            "@type": "Person",
+            "@id": "https://husanmavlonov.com/#person",
+            "name": "Husan Mavlonov",
+            "alternateName": ["Хусан Мавлонов", "Xusan Mavlonov", "Husan Mavlonоv"],
+            "url": "https://husanmavlonov.com/"
+          },
+          "address": {"@type": "PostalAddress", "addressLocality": "San Francisco", "addressRegion": "CA", "addressCountry": "US"},
+          "areaServed": ["US", "UZ", "CN", "KG", "KZ"],
+          "knowsAbout": [
+            "AI visual inspection",
+            "automated optical inspection",
+            "machine vision quality control",
+            "defect detection",
+            "factory line inspection",
+            "edge AI inference",
+            "NVIDIA Jetson",
+            "computer vision for manufacturing",
+            "offline defect detection",
+            "PCB inspection",
+            "manufacturing QC automation",
+            "industrial robotics"
+          ],
+          "sameAs": [
+            "https://husanmavlonov.com/",
+            "https://www.linkedin.com/in/husan-mavlonov",
+            "https://github.com/PeterVanPercson",
+            "https://x.com/MavlonovHusan"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://defex.app/#website",
+          "url": "https://defex.app/",
+          "name": "defex",
+          "inLanguage": "en",
+          "publisher": {"@id": "https://defex.app/#org"}
+        },
+        {
+          "@type": "WebPage",
+          "@id": "{% block page_id %}https://defex.app/{% endblock %}#webpage",
+          "url": "{% block page_url %}https://defex.app/{% endblock %}",
+          "name": "{% block page_name %}defex — Robots for manufacturing, with vision.{% endblock %}",
+          "isPartOf": {"@id": "https://defex.app/#website"},
+          "about": {"@id": "https://defex.app/#org"},
+          "inLanguage": "en"
+        }
+      ]
     }
     </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/site.css' %}?v=9">
+    <link rel="stylesheet" href="{% static 'css/site.css' %}?v=10">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
