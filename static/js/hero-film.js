@@ -49,12 +49,20 @@
     let ready = false, seeking = false, running = false, unlocked = false;
     let target = 0, shown = 0, lastFrame = -1, lastTick = 0;
 
+    // Geometry is cached. Reading offsetHeight or getBoundingClientRect inside the
+    // scroll and wheel handlers forces a synchronous layout on every event, and a
+    // trackpad fires around a hundred a second. Measure on resize instead.
+    let heroTop = 0, scrubSpan = 0;
+    function measureGeometry() {
+        heroTop = hero.offsetTop;
+        scrubSpan = hero.offsetHeight - sticky.offsetHeight;
+    }
+
     // Progress is the travel through .hero's extra height above the pinned box.
     // Both orientations pin now; the second branch is the no-CSS fallback, where
     // .hero has no extra height and there is nothing to measure against.
     function scrollProgress() {
-        const distance = hero.offsetHeight - sticky.offsetHeight;
-        if (distance > 40) return clamp((scrollY - hero.offsetTop) / distance, 0, 1);
+        if (scrubSpan > 40) return clamp((scrollY - heroTop) / scrubSpan, 0, 1);
         return clamp(scrollY / Math.max(1, innerHeight * 1.4), 0, 1);
     }
 
@@ -122,6 +130,7 @@
     function markReady() {
         if (ready || film.readyState < 2) return;   // 2 = HAVE_CURRENT_DATA
         ready = true;
+        measureGeometry();
         if (reduced.matches) hold();
         else onScroll();
     }
@@ -166,14 +175,13 @@
     let lastWheel = 0;
 
     function scrollLimit() {
-        const distance = hero.offsetHeight - sticky.offsetHeight;
-        if (distance <= 40 || !isFinite(film.duration) || film.duration <= 0) return 0;
-        return (distance * SCRUB_END / film.duration) * rate;   // px per second
+        if (scrubSpan <= 40 || !isFinite(film.duration) || film.duration <= 0) return 0;
+        return (scrubSpan * SCRUB_END / film.duration) * rate;   // px per second
     }
 
+    // pure arithmetic against the cached geometry, no layout read
     function insideScrub() {
-        const box = hero.getBoundingClientRect();
-        return box.top <= 0 && box.bottom >= innerHeight;
+        return scrubSpan > 40 && scrollY >= heroTop && scrollY <= heroTop + scrubSpan;
     }
 
     function onWheel(event) {
@@ -192,10 +200,13 @@
 
     if (!reduced.matches) {
         document.documentElement.classList.add('has-scroll-film');
-        addEventListener('wheel', onWheel, { passive: false });
+        // On the hero only. A non-passive wheel listener on window takes the whole
+        // site off the compositor fast path and makes every scroll wait for JS.
+        hero.addEventListener('wheel', onWheel, { passive: false });
+        measureGeometry();
         measureRefresh();
         addEventListener('scroll', onScroll, { passive: true });
-        addEventListener('resize', onScroll, { passive: true });
+        addEventListener('resize', () => { measureGeometry(); onScroll(); }, { passive: true });
         addEventListener('pageshow', onScroll);
         addEventListener('touchstart', unlock, { once: true, passive: true });
         addEventListener('pointerdown', unlock, { once: true });
