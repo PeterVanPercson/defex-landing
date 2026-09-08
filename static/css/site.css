@@ -12,7 +12,7 @@
     --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --pad: clamp(16px, 3vw, 32px);
     --hero-gap: clamp(18px, 3.5vh, 40px);
-    --lede-space: 168px;
+    --lede-space: clamp(96px, 19vh, 180px);
     --max: 1200px;
     --radius: 20px;
     --nav: 64px;
@@ -173,6 +173,7 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 }
 @media (max-height: 540px) and (min-width: 721px) {
     .lede h1 { font-size: 26px; }
+    .lede h1 br { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }

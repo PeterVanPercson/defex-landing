@@ -49,8 +49,9 @@
     let ready = false, seeking = false, running = false, unlocked = false;
     let target = 0, shown = 0, lastFrame = -1, lastTick = 0;
 
-    // Landscape pins the film, so progress is the travel through .hero's extra
-    // height. Portrait does not pin, so it runs off plain page scroll instead.
+    // Progress is the travel through .hero's extra height above the pinned box.
+    // Both orientations pin now; the second branch is the no-CSS fallback, where
+    // .hero has no extra height and there is nothing to measure against.
     function scrollProgress() {
         const distance = hero.offsetHeight - sticky.offsetHeight;
         if (distance > 40) return clamp((scrollY - hero.offsetTop) / distance, 0, 1);
