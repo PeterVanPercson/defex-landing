@@ -55,7 +55,6 @@ class QualityReviewTests(SimpleTestCase):
         # the A1 cell is unbuilt and the deck labels it PROPOSED on four
         # slides, so the page must not assert it as a shipping product
         self.assertContains(home, "building")
-        self.assertContains(home, "We ship AI visual inspection today")
         self.assertContains(home, 'id="film"')
         self.assertContains(home, "/where-it-started/")
         self.assertNotContains(home, 'id="origin-video"')
@@ -64,6 +63,7 @@ class QualityReviewTests(SimpleTestCase):
         self.assertContains(origin, 'id="origin-video"')
         self.assertContains(origin, 'id="playpause"')
         self.assertContains(origin, "started off helping factory lines")
+        self.assertContains(origin, "We ship AI visual inspection today")
         for asset in ("defex/assets/defex-intro-scroll.mp4", "defex/assets/defex-intro-scroll-1080.mp4",
                       "defex/assets/defex-first-frame.webp"):
             response = self.client.get(f"/static/{asset}?v=1")

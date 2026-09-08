@@ -79,12 +79,12 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 .rows dt { display: flex; justify-content: space-between; align-items: baseline; font-size: clamp(21px, 2.4vw, 29px); letter-spacing: -.035em; }
 .step-number { order: 1; font: 400 13px/1.4 var(--mono); color: var(--mute); letter-spacing: 0; }
 .rows dd { margin-top: 20px; max-width: 29ch; font-size: 15px; line-height: 1.55; color: var(--ink-soft); }
-.rows__note { max-width: 62ch; margin-top: 40px; font-size: 15px; line-height: 1.55; color: var(--mute); }
 
 /* where it started: its own page, one line and the original clip */
 .origin-page { min-height: calc(100svh - var(--nav) - 92px); display: grid; align-items: center; }
 .origin { max-width: var(--max); margin-inline: auto; width: 100%; padding: clamp(48px, 8vh, 104px) var(--pad); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: clamp(28px, 5vw, 80px); align-items: center; }
 .origin__copy p { margin-top: 20px; max-width: 26ch; font-size: clamp(20px, 2.6vw, 31px); line-height: 1.28; letter-spacing: -.03em; font-weight: 600; }
+.origin__copy p.origin__note { max-width: 44ch; margin-top: 24px; font-size: 15px; line-height: 1.55; letter-spacing: 0; font-weight: 400; color: var(--ink-soft); }
 .origin__film { position: relative; margin: 0; border-radius: var(--radius); overflow: hidden; background: var(--surface); }
 .origin__video { display: block; width: 100%; height: auto; }
 
