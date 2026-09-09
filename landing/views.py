@@ -46,7 +46,6 @@ SITEMAP_PAGES = (
     ("home", "1.0", "weekly"),
     ("where_it_started", "0.7", "monthly"),
     ("careers", "0.8", "weekly"),
-    ("quality_review", "0.8", "monthly"),
 )
 
 

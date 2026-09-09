@@ -167,7 +167,11 @@
         addEventListener('scroll', onScroll, { passive: true });
         addEventListener('scroll', syncNav, { passive: true });
         addEventListener('resize', () => { measureGeometry(); onScroll(); syncNav(); }, { passive: true });
-        addEventListener('pageshow', onScroll);
+        // Also on pageshow and load: Chrome restores the scroll position on a
+        // reload and on back/forward without firing a scroll event, so a
+        // refresh partway down the page left the nav painted for the top.
+        addEventListener('pageshow', () => { measureGeometry(); onScroll(); syncNav(); });
+        addEventListener('load', () => { measureGeometry(); onScroll(); syncNav(); });
         addEventListener('touchstart', unlock, { once: true, passive: true });
         addEventListener('pointerdown', unlock, { once: true });
         onScroll();

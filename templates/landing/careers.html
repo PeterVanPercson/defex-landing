@@ -22,13 +22,13 @@
 <main class="page">
     <header class="masthead">
         <p class="eyebrow">Join us</p>
-        <h1>Build the machine that proves it worked.</h1>
+        <h1 class="engraved">Build the machine that proves it worked.</h1>
         <p class="masthead__lead">We are a small team building a cell that assembles a part and then physically tests the joint it just made. We are looking for people who want to work on real hardware, in a real factory, on a question that has not been answered yet.</p>
     </header>
 
     <section class="group" id="roles" aria-labelledby="fulltime-title">
         <div class="group__head">
-            <h2 id="fulltime-title">Full-time</h2>
+            <h2 class="engraved" id="fulltime-title">Full-time</h2>
             <p class="group__meta">01 role &middot; San Francisco, CA &middot; On-site</p>
         </div>
 
@@ -89,7 +89,7 @@
 
     <section class="apply" id="application" aria-labelledby="apply-title">
         <p class="eyebrow">Application &middot; Short version</p>
-        <h2 id="apply-title">Build with us.</h2>
+        <h2 class="engraved" id="apply-title">Build with us.</h2>
         <p class="apply__lead">Send one strong example of work you personally made. No cover letter.</p>
         <form class="form form--apply" action="{% url 'apply' %}" method="post">
             {% csrf_token %}
@@ -114,7 +114,6 @@
 </main>
 
 <footer class="footer">
-    <a class="navlink" href="{% url 'quality_review' %}">Quality review</a>
     <span class="footer__line">Defex</span>
     <span class="footer__line">San Francisco, CA</span>
     <span class="footer__fine">&copy; {% now "Y" %} Defex. All rights reserved.</span>
