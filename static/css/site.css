@@ -32,13 +32,13 @@ body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font); -w
    behind it would put a hard black rectangle on cream. Origami gets a light
    ground for free because their hero is a live <canvas>, not a movie. */
 .hero {
-    --bg: #090F15;
-    --surface: #10171F;
+    --bg: #3A342C;
+    --surface: #464036;
     --ink: #EAE8E3;
     --ink-soft: rgba(234, 232, 227, .74);
-    --mute: rgba(234, 232, 227, .58);
-    --line: rgba(234, 232, 227, .14);
-    --on-accent: #EAE8E3;
+    --mute: rgba(234, 232, 227, .64);
+    --line: rgba(234, 232, 227, .18);
+    --on-accent: #1A1815;
     background: var(--bg);
     color: var(--ink);
 }
@@ -89,7 +89,7 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 
 .lede { width: 100%; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
 .lede h1 { max-width: 22ch; font-size: clamp(31px, 3.2vw, 46px); line-height: 1.08; letter-spacing: -.045em; }
-.lede h1 span { color: #79828E; }
+.lede h1 span { color: #9BA3AE; }
 
 /* what we do */
 .about { max-width: var(--max); margin-inline: auto; padding: 64px var(--pad) 0; }
