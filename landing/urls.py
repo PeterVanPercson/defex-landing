@@ -1,11 +1,13 @@
 from django.urls import path
 
-from .views import contact, home, ping, robots, sitemap, where_it_started
+from .views import apply, careers, contact, home, ping, robots, sitemap, where_it_started
 from .review_views import quality_review, review_analyze, review_generate, review_sample
 
 urlpatterns = [
     path('', home, name='home'),
     path('where-it-started/', where_it_started, name='where_it_started'),
+    path('careers/', careers, name='careers'),
+    path('careers/apply/', apply, name='apply'),
     path('contact/', contact, name='contact'),
     path('ping/', ping, name='ping'),
     path('robots.txt', robots, name='robots'),

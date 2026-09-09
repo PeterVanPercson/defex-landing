@@ -44,7 +44,7 @@ class QualityReviewTests(SimpleTestCase):
                 summarize(",".join(FIELDS) + f"\n{stamp},A,PASS,,{confidence}")
 
     def test_pages_and_analyze(self):
-        for path in ("/", "/where-it-started/", "/quality-review/"):
+        for path in ("/", "/where-it-started/", "/quality-review/", "/careers/"):
             self.assertEqual(self.client.get(path).status_code, 200)
         home = self.client.get("/")
         # the headline and the three steps must match the deck, not the
@@ -58,8 +58,12 @@ class QualityReviewTests(SimpleTestCase):
         # the open role and the ending are load-bearing content, not decoration
         self.assertContains(home, 'id="careers"')
         self.assertContains(home, "Content Producer")
-        self.assertContains(home, "What to include")
-        self.assertContains(home, 'id="content-producer"')
+        self.assertContains(home, "/careers/")
+        # the careers page carries the posting and a working application form
+        careers = self.client.get("/careers/")
+        for chunk in ("Content Producer", "What to include", "Build with us",
+                      'id="content-producer"', 'id="application"', 'name="work"'):
+            self.assertContains(careers, chunk)
         self.assertNotContains(home, ">defex<")   # mark only in the topbar
         self.assertContains(home, 'id="film"')
         self.assertContains(home, "/where-it-started/")
@@ -113,7 +117,7 @@ class QualityReviewTests(SimpleTestCase):
         self.assertEqual(sitemap.status_code, 200)
         self.assertIn("xml", sitemap["Content-Type"])
         body = sitemap.content.decode()
-        for path in ("/", "/where-it-started/", "/quality-review/"):
+        for path in ("/", "/where-it-started/", "/quality-review/", "/careers/"):
             self.assertIn(f"<loc>http://testserver{path}</loc>", body)
 
         # the demo page was unreachable from the site for weeks; keep it linked

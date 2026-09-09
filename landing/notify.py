@@ -123,3 +123,37 @@ def submission_email(data: dict, request) -> tuple[str, str]:
         '</div>'
     )
     return subject, html
+
+
+_ROLE_LABELS = {"content-producer": "Content Producer"}
+
+
+def application_email(data: dict, request) -> tuple[str, str]:
+    """Build (subject, html) for a careers application."""
+    blank = "&mdash;"
+    name = data.get("name", "")
+    role = _ROLE_LABELS.get(data.get("role", ""), data.get("role", ""))
+    rows = [
+        ("Name", name),
+        ("Email", data.get("email", "")),
+        ("Role", role),
+        ("Work", data.get("work", "")),
+        ("Profile", data.get("profile", "")),
+        ("Note", data.get("note", "")),
+        ("IP", client_ip(request)),
+    ]
+    cells = []
+    for label, value in rows:
+        shown = escape(value) if value else blank
+        cells.append(
+            '<tr><td style="padding:6px 14px 6px 0;color:#888;font-size:12px;'
+            'vertical-align:top;white-space:nowrap">' + escape(label) + '</td>'
+            '<td style="padding:6px 0;font-size:14px;word-break:break-all">' + shown + '</td></tr>'
+        )
+    html = (
+        '<div style="font-family:ui-monospace,monospace;color:#111;max-width:600px">'
+        '<p style="margin:0 0 12px;font-size:15px"><b>Application: ' + escape(role) + '</b></p>'
+        '<table style="border-collapse:collapse">' + "".join(cells) + '</table>'
+        '</div>'
+    )
+    return "defex application: " + name + " (" + role + ")", html

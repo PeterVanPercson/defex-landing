@@ -126,6 +126,33 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 .rows dd { margin-top: 20px; max-width: 29ch; font-size: 15px; line-height: 1.55; color: var(--ink-soft); }
 
 .careers { max-width: var(--max); margin-inline: auto; padding: clamp(80px, 12vh, 130px) var(--pad) 0; }
+.careers__lead { margin-top: 18px; max-width: 56ch; font: 400 13px/1.8 var(--mono); color: var(--ink-soft); }
+.rolecard { margin-top: 34px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto; align-items: center; gap: clamp(18px, 3vw, 48px); padding: 28px 14px; margin-inline: -14px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); transition: background .18s ease; }
+.rolecard:hover { background: var(--surface); }
+.rolecard__id { display: block; min-width: 0; }
+.rolecard__title { display: block; font-family: var(--serif); font-size: clamp(22px, 2.6vw, 30px); font-weight: 400; line-height: 1.1; }
+.rolecard__meta { display: block; margin-top: 10px; font: 400 11px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+.rolecard__pitch { font: 400 13px/1.7 var(--mono); color: var(--ink-soft); }
+.rolecard__go { font: 500 10px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--mute); white-space: nowrap; }
+.rolecard:hover .rolecard__go { color: var(--ink); }
+.careers__alt { margin-top: 26px; font: 400 12px/1.6 var(--mono); color: var(--mute); }
+
+/* careers page */
+.page { max-width: var(--max); margin-inline: auto; padding-inline: var(--pad); }
+.masthead { padding: clamp(56px, 10vh, 108px) 0 clamp(48px, 8vh, 86px); }
+.eyebrow { font: 500 10px/1.4 var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--mute); }
+.masthead h1 { margin-top: 20px; max-width: 18ch; font-family: var(--serif); font-size: clamp(38px, 6vw, 68px); font-weight: 400; line-height: 1.04; letter-spacing: -.015em; }
+.masthead__lead { margin-top: 26px; max-width: 64ch; font: 400 13px/1.8 var(--mono); color: var(--ink-soft); }
+.group__head { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; padding-bottom: 18px; }
+.group__head h2 { font-family: var(--serif); font-size: clamp(24px, 3vw, 34px); font-weight: 400; letter-spacing: -.01em; }
+.group__meta { font: 400 11px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+.apply { padding: clamp(80px, 13vh, 150px) 0 clamp(64px, 10vh, 110px); }
+.apply h2 { margin-top: 18px; font-family: var(--serif); font-size: clamp(30px, 4.4vw, 48px); font-weight: 400; line-height: 1.06; letter-spacing: -.01em; }
+.apply__lead { margin-top: 16px; max-width: 52ch; font: 400 13px/1.8 var(--mono); color: var(--ink-soft); }
+.form--apply { max-width: 620px; margin-top: 36px; }
+.form--apply .cta { justify-self: start; margin-top: 12px; }
+.field select { width: 100%; height: 48px; padding: 0 14px; border: 1px solid var(--rule); border-radius: 0; background: var(--surface); font: 16px/1.5 var(--font); color: var(--ink); letter-spacing: 0; text-transform: none; }
+.apply__alt { margin-top: 24px; font: 400 12px/1.6 var(--mono); color: var(--mute); }
 
 /* One disclosure per role. <details> gives the open/close behaviour, the
    keyboard handling and the accessible name for free, so this needs no JS. */
@@ -254,6 +281,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
     .form__row { grid-template-columns: 1fr; }
     .field input { height: 48px; }
     .form .cta { width: 100%; }
+    .rolecard { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .group__head { flex-direction: column; align-items: flex-start; gap: 8px; }
     .role__head { grid-template-columns: minmax(0, 1fr) 22px; gap: 16px; padding: 24px 10px; }
     .role__pitch { grid-column: 1 / -1; }
     .role__toggle { grid-row: 1; grid-column: 2; }

@@ -10,14 +10,30 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from .forms import ContactForm
-from .notify import autoresponder_email, client_ip, send, send_to, submission_email
+from .forms import ApplicationForm, ContactForm
+from .notify import application_email, autoresponder_email, client_ip, send, send_to, submission_email
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def home(request):
     return render(request, "landing/home.html", {"form": ContactForm(), "asset_v": settings.DEFEX_ASSET_VERSION})
+
+
+def careers(request):
+    return render(request, "landing/careers.html", {"form": ApplicationForm()})
+
+
+@require_http_methods(["POST"])
+def apply(request):
+    form = ApplicationForm(request.POST)
+    if form.is_valid() and not form.is_spam():
+        subject, html = application_email(form.cleaned_data, request)
+        send(subject, html)
+        messages.success(request, "Got it. We read every one and reply to the ones we can move on.")
+    else:
+        messages.error(request, "Something was missing. Check the links and try again.")
+    return redirect(reverse("careers") + "#application")
 
 
 def where_it_started(request):
@@ -29,6 +45,7 @@ def where_it_started(request):
 SITEMAP_PAGES = (
     ("home", "1.0", "weekly"),
     ("where_it_started", "0.7", "monthly"),
+    ("careers", "0.8", "weekly"),
     ("quality_review", "0.8", "monthly"),
 )
 
