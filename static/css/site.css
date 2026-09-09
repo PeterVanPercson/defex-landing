@@ -1,13 +1,18 @@
 :root {
-    /* dark set. --bg is the film's own backdrop colour, so the hero film
-       carries no edge against the page. --ink is the robot's warm ceramic. */
-    --bg: #090F15;
-    --surface: #10171F;
-    --ink: #EAE8E3;
-    --ink-soft: rgba(234, 232, 227, .74);
-    --mute: rgba(234, 232, 227, .58);
-    --line: rgba(234, 232, 227, .14);
+    /* Warm paper set, sampled from origami-robotics.com's own custom
+       properties (--cream #f3efe8, --paper #f7f4ee, --dark #1a1815).
+       --mute is 62% and not 58%: on this ground 58% measures 4.18:1, under
+       the 4.5:1 body-text floor. 62% measures 4.71:1. */
+    --bg: #F3EFE8;
+    --surface: #F7F4EE;
+    --ink: #1A1815;
+    --ink-soft: rgba(26, 24, 21, .74);
+    --mute: rgba(26, 24, 21, .62);
+    --line: rgba(26, 24, 21, .14);
     --accent: #FF5A1F;
+    /* The orange is a fill, never a text colour here: #FF5A1F on paper is
+       2.72:1. Ink on the orange is 5.68:1, so the fill flips its own text. */
+    --on-accent: #1A1815;
     --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --pad: clamp(16px, 3vw, 32px);
@@ -21,6 +26,22 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* The film is baked on rgb(11,16,21) and cannot be made transparent, so the
+   hero keeps the dark set and reads as one deliberate cinematic band. Paper
+   behind it would put a hard black rectangle on cream. Origami gets a light
+   ground for free because their hero is a live <canvas>, not a movie. */
+.hero {
+    --bg: #090F15;
+    --surface: #10171F;
+    --ink: #EAE8E3;
+    --ink-soft: rgba(234, 232, 227, .74);
+    --mute: rgba(234, 232, 227, .58);
+    --line: rgba(234, 232, 227, .14);
+    --on-accent: #EAE8E3;
+    background: var(--bg);
+    color: var(--ink);
+}
 a { color: inherit; text-decoration: none; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 [hidden] { display: none !important; }
@@ -41,7 +62,7 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 .navlink:hover, .navlink[aria-current="page"] { color: var(--ink); }
 
 .pill { display: inline-flex; align-items: center; justify-content: center; height: 37px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--ink); color: var(--bg); font: 500 13px/1 var(--font); cursor: pointer; transition: background .2s, transform .2s; }
-.pill:hover { background: var(--accent); color: var(--bg); }
+.pill:hover { background: var(--accent); color: var(--on-accent); }
 .pill:active { transform: scale(.98); }
 .pill--wide { height: 45px; padding: 0 28px; font-size: 14px; }
 
