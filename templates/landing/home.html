@@ -39,11 +39,27 @@
         </dl>
     </section>
 
+    <section class="careers" id="careers" aria-labelledby="careers-title">
+        <h2 class="kicker" id="careers-title"><span class="kicker__dash" aria-hidden="true"></span>open roles</h2>
+        <article class="role">
+            <div>
+                <h3>Mechanical design and machine controls</h3>
+                <p class="role__meta">Full-time · San Francisco</p>
+            </div>
+            <div>
+                <p class="role__body">You own the cell: fixtures, tooling, and the force and displacement instrumentation that decides whether a joint actually seated.</p>
+                <ul class="role__list">
+                    <li>Has shipped hardware that ran outside a lab</li>
+                    <li>Owns the mechanical design and the controls, not one of them</li>
+                    <li>Wants a measured result on real parts</li>
+                </ul>
+            </div>
+        </article>
+    </section>
+
     <section class="contact" id="contact" aria-labelledby="contact-title">
-        <div class="contact__intro">
-            <h2 id="contact-title">Tell us what you make.</h2>
-            <p class="contact__alt">or email <a class="link" href="mailto:husan@defex.app">husan@defex.app</a></p>
-        </div>
+        <h2 id="contact-title">Let’s talk</h2>
+        <p class="contact__lead">Tell us what you make and we will follow up about the part.</p>
         <form class="form" action="{% url 'contact' %}" method="post">
             {% csrf_token %}
             {% if messages %}{% for message in messages %}<p class="form__flash form__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
@@ -54,18 +70,19 @@
             <label class="field"><span>Email or phone</span><input type="text" name="contact" autocomplete="email" maxlength="200" required></label>
             <label class="field"><span>What you make</span><textarea name="product" rows="3" maxlength="200"></textarea></label>
             <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
-            <button type="submit" class="pill pill--wide">Send</button>
+            <button type="submit" class="cta">Send</button>
         </form>
+        <p class="contact__alt">or email <a class="link" href="mailto:husan@defex.app">husan@defex.app</a></p>
     </section>
 </main>
 
 <footer class="footer">
-    <a href="#top" class="brand brand--small" aria-label="defex, back to top"><span>defex<span class="dot">.</span></span></a>
     <nav class="footer__links">
         <a class="navlink" href="{% url 'quality_review' %}">Quality review</a>
         <a class="navlink" href="{% url 'where_it_started' %}">Where it started</a>
     </nav>
-    <span class="footer__line">© {% now "Y" %} Defex · San Francisco</span>
+    <span class="footer__line">© {% now "Y" %} Defex</span>
+    <span class="footer__line">San Francisco, CA</span>
 </footer>
 {% endblock %}
 

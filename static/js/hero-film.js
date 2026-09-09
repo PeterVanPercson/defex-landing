@@ -47,10 +47,28 @@
     // Geometry is cached. Reading offsetHeight or getBoundingClientRect inside the
     // scroll and wheel handlers forces a synchronous layout on every event, and a
     // trackpad fires around a hundred a second. Measure on resize instead.
-    let heroTop = 0, scrubSpan = 0;
+    let heroTop = 0, scrubSpan = 0, navFlipAt = 0;
     function measureGeometry() {
         heroTop = hero.offsetTop;
         scrubSpan = hero.offsetHeight - sticky.offsetHeight;
+        // The nav is dark while it sits on the hero and paper once past it.
+        // Flip three quarters of the way down the dissolve band, where the
+        // ground behind the bar has already become paper. Read here, never in
+        // the scroll handler, so this costs no layout while scrolling.
+        // --hero-fade is a clamp() expression, and a custom property reports
+        // its raw text, not a resolved length. The dissolve band's own computed
+        // height is the resolved pixel value.
+        const nav = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav')) || 64;
+        const fade = parseFloat(getComputedStyle(hero, '::after').height) || 0;
+        navFlipAt = heroTop + hero.offsetHeight + fade * .75 - nav;
+    }
+
+    let navPast = null;
+    function syncNav() {
+        const past = scrollY > navFlipAt;
+        if (past === navPast) return;
+        navPast = past;
+        document.documentElement.classList.toggle('past-hero', past);
     }
 
     // Progress is the travel through .hero's extra height above the pinned box.
@@ -147,11 +165,13 @@
         measureGeometry();
         measureRefresh();
         addEventListener('scroll', onScroll, { passive: true });
-        addEventListener('resize', () => { measureGeometry(); onScroll(); }, { passive: true });
+        addEventListener('scroll', syncNav, { passive: true });
+        addEventListener('resize', () => { measureGeometry(); onScroll(); syncNav(); }, { passive: true });
         addEventListener('pageshow', onScroll);
         addEventListener('touchstart', unlock, { once: true, passive: true });
         addEventListener('pointerdown', unlock, { once: true });
         onScroll();
+        syncNav();
     }
     reduced.addEventListener('change', (event) => {
         if (!event.matches) return;

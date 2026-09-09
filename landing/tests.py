@@ -55,6 +55,10 @@ class QualityReviewTests(SimpleTestCase):
         # the A1 cell is unbuilt and the deck labels it PROPOSED on four
         # slides, so the page must not assert it as a shipping product
         self.assertContains(home, "building")
+        # the open role and the ending are load-bearing content, not decoration
+        self.assertContains(home, 'id="careers"')
+        self.assertContains(home, "Mechanical design and machine controls")
+        self.assertNotContains(home, ">defex<")   # mark only in the topbar
         self.assertContains(home, 'id="film"')
         self.assertContains(home, "/where-it-started/")
         self.assertNotContains(home, 'id="origin-video"')
