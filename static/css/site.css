@@ -3,7 +3,8 @@
        properties (--cream #f3efe8, --paper #f7f4ee, --dark #1a1815).
        --mute is 62% and not 58%: on this ground 58% measures 4.18:1, under
        the 4.5:1 body-text floor. 62% measures 4.71:1. */
-    --bg: #F3EFE8;
+    --page: #F3EFE8;
+    --bg: var(--page);
     --surface: #F7F4EE;
     --ink: #1A1815;
     --ink-soft: rgba(26, 24, 21, .74);
@@ -21,6 +22,8 @@
     --max: 1200px;
     --radius: 20px;
     --nav: 64px;
+    /* how far the dark hero dissolves into the paper at each end */
+    --hero-fade: clamp(200px, 38vh, 400px);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,16 +35,22 @@ body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font); -w
    behind it would put a hard black rectangle on cream. Origami gets a light
    ground for free because their hero is a live <canvas>, not a movie. */
 .hero {
-    --bg: #090F15;
-    --surface: #10171F;
+    --bg: #020506;
+    --surface: #0C1116;
     --ink: #EAE8E3;
     --ink-soft: rgba(234, 232, 227, .74);
     --mute: rgba(234, 232, 227, .58);
     --line: rgba(234, 232, 227, .14);
     --on-accent: #EAE8E3;
+    position: relative;
     background: var(--bg);
     color: var(--ink);
 }
+/* Starts 1px inside the hero: the hero height is a fractional svh value, so
+   abutting exactly leaves an anti-aliased hairline at the seam. Stops are
+   interpolated in linear light on a smoothstep, because a plain two-stop
+   sRGB ramp from near-black to paper goes muddy through the middle. */
+.hero::after { content: ""; position: absolute; left: 0; right: 0; top: calc(100% - 1px); height: calc(var(--hero-fade) + 1px); background: linear-gradient(to bottom, var(--bg) 0%, #070A0B 10%, #121415 20%, #212323 30%, #353636 40%, #4C4D4C 50%, #676765 60%, #858581 70%, #A7A5A1 80%, #CBC9C3 90%, var(--page) 100%); pointer-events: none; }
 a { color: inherit; text-decoration: none; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 [hidden] { display: none !important; }
@@ -54,6 +63,11 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 
 /* nav: aligned to the content column */
 .topbar { position: sticky; top: 0; z-index: 10; height: var(--nav); display: flex; align-items: center; justify-content: space-between; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); background: var(--bg); }
+/* Only the home page opens on the dark band, and it is the only page with a
+   .hero, so match on that rather than threading a template flag through the
+   shared partial. The nav then sits inside the dark instead of ruling a line
+   across the top of it. Without :has() the nav simply stays paper. */
+body:has(.hero) .topbar { --bg: #020506; --ink: #EAE8E3; --ink-soft: rgba(234, 232, 227, .74); --on-accent: #EAE8E3; background: var(--bg); color: var(--ink); }
 .brand { display: inline-flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
 .brand svg { width: 7px; height: 22px; display: block; }
 .brand--small { font-size: 16px; }
@@ -76,8 +90,8 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 .hero { position: relative; }
 .hero__sticky { position: relative; display: grid; place-items: center; align-content: center; gap: var(--hero-gap); }
 .hero__film { display: block; width: 100%; height: auto; margin-inline: auto; background: var(--bg);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 6%, #000 94%, transparent 100%);
-            mask-image: linear-gradient(to bottom, transparent 0, #000 6%, #000 94%, transparent 100%); }
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 26%, #000 76%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0, #000 26%, #000 76%, transparent 100%); }
 .scroll-cue { display: none; }
 
 .has-scroll-film .hero { height: 560svh; }
@@ -92,7 +106,7 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 .lede h1 span { color: #79828E; }
 
 /* what we do */
-.about { max-width: var(--max); margin-inline: auto; padding: 64px var(--pad) 0; }
+.about { max-width: var(--max); margin-inline: auto; padding: calc(28px + var(--hero-fade)) var(--pad) 0; }
 .kicker { display: flex; align-items: center; gap: 11px; font: 500 14px/1.4 var(--font); letter-spacing: -.015em; }
 .kicker__dash { width: 20px; height: 2px; background: var(--accent); }
 .rows { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; margin-top: 36px; }
