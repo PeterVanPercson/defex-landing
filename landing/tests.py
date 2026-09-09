@@ -57,7 +57,9 @@ class QualityReviewTests(SimpleTestCase):
         self.assertContains(home, "building")
         # the open role and the ending are load-bearing content, not decoration
         self.assertContains(home, 'id="careers"')
-        self.assertContains(home, "Mechanical design and machine controls")
+        self.assertContains(home, "Content Producer")
+        self.assertContains(home, "What to include")
+        self.assertContains(home, 'id="content-producer"')
         self.assertNotContains(home, ">defex<")   # mark only in the topbar
         self.assertContains(home, 'id="film"')
         self.assertContains(home, "/where-it-started/")

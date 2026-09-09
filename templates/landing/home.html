@@ -41,51 +41,107 @@
 
     <section class="careers" id="careers" aria-labelledby="careers-title">
         <h2 class="kicker" id="careers-title"><span class="kicker__dash" aria-hidden="true"></span>open roles</h2>
-        <article class="role">
-            <div>
-                <h3>Mechanical design and machine controls</h3>
-                <p class="role__meta">Full-time · San Francisco</p>
+        <details class="role" id="content-producer">
+            <summary class="role__head">
+                <div class="role__id">
+                    <p class="role__cat">Marketing &middot; Content</p>
+                    <h3 class="role__title">Content Producer</h3>
+                    <ul class="role__tags">
+                        <li>Full-time</li>
+                        <li>On-site</li>
+                        <li>San Francisco, CA</li>
+                    </ul>
+                </div>
+                <p class="role__pitch">Turn what happens on the bench and inside the cell into something people finish watching.</p>
+                <span class="role__toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="role__panel">
+                <div class="role__main">
+                    <h4 class="microlabel">Why Defex</h4>
+                    <p class="role__prose">We are a small team building a cell that assembles a part and then physically proves the joint held. You will sit with the bench data and the broken parts, decide which of it is worth showing, and shape how factories, candidates and investors first meet us.</p>
+                    <h4 class="microlabel">In this role you will</h4>
+                    <ul class="role__list">
+                        <li>Film the bench runs, the cell and the parts that failed, and cut them into something people finish.</li>
+                        <li>Sit with the engineering long enough to describe it accurately, including when the result is a no.</li>
+                        <li>Run the publishing calendar across LinkedIn, X, YouTube and Instagram.</li>
+                        <li>Build the launch around each milestone: first bench result, first install, first paid pilot.</li>
+                        <li>Get a written post, a short cut and stills out of every shoot day.</li>
+                        <li>Keep the footage organised so the second year is faster than the first.</li>
+                    </ul>
+                    <h4 class="microlabel">What we hope you&rsquo;ll bring</h4>
+                    <ul class="role__list">
+                        <li>Work you personally shot and cut, not work you commissioned.</li>
+                        <li>The whole pipeline solo: storyboard, light, shoot, edit, publish.</li>
+                        <li>Writing an engineer would not need to correct.</li>
+                        <li>Ease around machines, prototypes and people who are mid-problem.</li>
+                        <li>A read on which hardware demos look real and which look staged.</li>
+                    </ul>
+                    <h4 class="microlabel">Bonus points if you have</h4>
+                    <ul class="role__list">
+                        <li>Shot inside a factory, a lab or a machine shop.</li>
+                        <li>Resolve, Premiere, After Effects, Blender or motion graphics.</li>
+                        <li>Grown a channel and know how a format changes per platform.</li>
+                    </ul>
+                </div>
+                <aside class="role__aside">
+                    <h4 class="microlabel">What to include</h4>
+                    <ol class="role__include">
+                        <li>Two or three pieces you made yourself, with links.</li>
+                        <li>What you owned on each, and how you knew it worked.</li>
+                    </ol>
+                    <button type="button" class="cta cta--quiet" data-copy-link>Copy job link</button>
+                    <a class="cta" href="mailto:husan@defex.app?subject=Content%20Producer">Apply for this role</a>
+                </aside>
             </div>
-            <div>
-                <p class="role__body">You own the cell: fixtures, tooling, and the force and displacement instrumentation that decides whether a joint actually seated.</p>
-                <ul class="role__list">
-                    <li>Has shipped hardware that ran outside a lab</li>
-                    <li>Owns the mechanical design and the controls, not one of them</li>
-                    <li>Wants a measured result on real parts</li>
-                </ul>
-            </div>
-        </article>
+        </details>
     </section>
 
     <section class="contact" id="contact" aria-labelledby="contact-title">
         <h2 id="contact-title">Let’s talk</h2>
         <p class="contact__lead">Tell us what you make and we will follow up about the part.</p>
+        <details class="talk">
+            <summary class="cta">Contact us</summary>
         <form class="form" action="{% url 'contact' %}" method="post">
-            {% csrf_token %}
-            {% if messages %}{% for message in messages %}<p class="form__flash form__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
-            <div class="form__row">
-                <label class="field"><span>Name</span><input type="text" name="name" autocomplete="name" maxlength="120" required></label>
-                <label class="field"><span>Company</span><input type="text" name="factory" autocomplete="organization" maxlength="200" required></label>
-            </div>
-            <label class="field"><span>Email or phone</span><input type="text" name="contact" autocomplete="email" maxlength="200" required></label>
-            <label class="field"><span>What you make</span><textarea name="product" rows="3" maxlength="200"></textarea></label>
-            <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
-            <button type="submit" class="cta">Send</button>
-        </form>
-        <p class="contact__alt">or email <a class="link" href="mailto:husan@defex.app">husan@defex.app</a></p>
+                {% csrf_token %}
+                {% if messages %}{% for message in messages %}<p class="form__flash form__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
+                <div class="form__row">
+                    <label class="field"><span>Name</span><input type="text" name="name" autocomplete="name" maxlength="120" required></label>
+                    <label class="field"><span>Company</span><input type="text" name="factory" autocomplete="organization" maxlength="200" required></label>
+                </div>
+                <label class="field"><span>Email or phone</span><input type="text" name="contact" autocomplete="email" maxlength="200" required></label>
+                <label class="field"><span>What you make</span><textarea name="product" rows="3" maxlength="200"></textarea></label>
+                <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+                <button type="submit" class="cta">Send</button>
+            </form>
+            <p class="contact__alt">or email <a class="link" href="mailto:husan@defex.app">husan@defex.app</a></p>
+        </details>
+
     </section>
 </main>
 
 <footer class="footer">
-    <nav class="footer__links">
-        <a class="navlink" href="{% url 'quality_review' %}">Quality review</a>
-        <a class="navlink" href="{% url 'where_it_started' %}">Where it started</a>
-    </nav>
-    <span class="footer__line">© {% now "Y" %} Defex</span>
+    <a class="navlink" href="{% url 'quality_review' %}">Quality review</a>
+    <span class="footer__line">Defex</span>
     <span class="footer__line">San Francisco, CA</span>
+    <span class="footer__fine">&copy; {% now "Y" %} Defex. All rights reserved.</span>
 </footer>
 {% endblock %}
 
 {% block extra_scripts %}
+<script>
+// Copy job link. Writes the canonical role URL, not location.href, so a link
+// copied from a page carrying ?utm= or a cache-buster stays clean.
+document.querySelectorAll('[data-copy-link]').forEach((btn) => {
+    const role = btn.closest('details[id]');
+    if (!role) return;
+    btn.addEventListener('click', async () => {
+        const url = location.origin + location.pathname + '#' + role.id;
+        try { await navigator.clipboard.writeText(url); } catch (e) { return; }
+        const was = btn.textContent;
+        btn.textContent = 'Link copied';
+        setTimeout(() => { btn.textContent = was; }, 1600);
+    });
+});
+</script>
 <script src="{% static 'js/hero-film.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}

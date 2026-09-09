@@ -39,11 +39,10 @@
 </main>
 
 <footer class="footer">
-    <nav class="footer__links">
-        <a class="navlink" href="{% url 'quality_review' %}">Quality review</a>
-    </nav>
-    <span class="footer__line">© {% now "Y" %} Defex</span>
+    <a class="navlink" href="{% url 'quality_review' %}">Quality review</a>
+    <span class="footer__line">Defex</span>
     <span class="footer__line">San Francisco, CA</span>
+    <span class="footer__fine">&copy; {% now "Y" %} Defex. All rights reserved.</span>
 </footer>
 {% endblock %}
 
