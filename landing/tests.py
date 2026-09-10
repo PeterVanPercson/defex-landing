@@ -29,7 +29,11 @@ class SiteTests(SimpleTestCase):
         for chunk in ("Content Producer", "What to include", "Build with us",
                       'id="content-producer"', 'id="application"', 'name="work"'):
             self.assertContains(careers, chunk)
-        self.assertNotContains(home, ">defex<")   # mark only in the topbar
+        # the topbar carries the mark alone; the wordmark belongs to the
+        # footer, so this has to look at the header and not the whole page
+        header = home.content.decode().split("<header", 1)[1].split("</header>", 1)[0]
+        self.assertNotIn(">defex<", header)
+        self.assertIn(">defex<", home.content.decode())   # present in the footer
         self.assertContains(home, 'id="film"')
         self.assertContains(home, "/where-it-started/")
         self.assertNotContains(home, 'id="origin-video"')

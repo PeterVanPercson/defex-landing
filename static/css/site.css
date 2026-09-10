@@ -283,10 +283,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 .form__flash--error { border-color: var(--accent); }
 
 /* footer */
-.footer { max-width: var(--max); margin-inline: auto; padding: 0 var(--pad) 40px; display: grid; justify-items: center; text-align: center; }
-.footer .navlink { margin-bottom: clamp(56px, 9vh, 92px); }
-.footer__line { font: 400 12px/1.75 var(--mono); color: var(--mute); }
-.footer__fine { margin-top: clamp(56px, 9vh, 92px); padding-top: 26px; width: 100%; border-top: 1px solid var(--line); font: 400 11px/1.6 var(--mono); color: var(--mute); }
+.footer { max-width: var(--max); margin-inline: auto; margin-top: clamp(56px, 9vh, 92px); padding: 26px var(--pad) 40px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); }
+.footer__line { font: 400 12px/1.6 var(--mono); color: var(--mute); }
 
 /* Portrait keeps the pin. Letting the film sit in normal flow here was a bug:
    a 16:9 film is only ~265px tall on a phone, so it cleared the top of the
