@@ -57,10 +57,13 @@ body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font); -w
     --line: rgba(234, 232, 227, .14);
     --rule: rgba(234, 232, 227, .34);
     --on-accent: #EAE8E3;
-    --engrave-fill:
-        linear-gradient(100deg, rgba(255, 214, 182, 0) 8%, rgba(255, 214, 182, .30) 25%, rgba(255, 214, 182, 0) 46%),
-        linear-gradient(165deg, rgba(255, 150, 98, .97) 0%, rgba(252, 104, 44, .95) 54%, rgba(255, 132, 74, .96) 100%);
-    --engrave-lip: 0 -1px 1.5px rgba(10, 7, 5, .68), 0 .5px 1.5px rgba(255, 196, 158, .30);
+    --engrave-fill: linear-gradient(165deg, rgba(255, 138, 84, .97) 0%, rgba(255, 96, 38, .99) 52%, rgba(255, 124, 66, .98) 100%);
+    /* No text-shadow. It paints over the clipped fill, so a lip is a copy
+       of the glyph smeared across its own ink: measured, that took the
+       orange from 224 saturation down to 52. A press does the opposite,
+       the ink keeps its colour and the light sits on the rim of the
+       depression. drop-shadow paints behind, so it puts it there. */
+    --engrave-lip: none;
     position: relative;
     background: var(--bg);
     color: var(--ink);
@@ -152,14 +155,15 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 .lede { width: 100%; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
 .lede h1 { max-width: 22ch; font-size: clamp(31px, 3.2vw, 46px); line-height: 1.08; letter-spacing: -.045em; }
 .lede h1 span { color: #79828E; }
+.hero .engraved, .hero .engraved span {
+    filter: drop-shadow(0 1px .5px rgba(255, 214, 186, .6)) drop-shadow(0 -1px .5px rgba(0, 0, 0, .9));
+}
 /* The second line keeps its own colour, so it opts out of the parent's clip
    and stays flat while line one is carved. Give it a dimmer fill of its own. */
 @supports (background-clip: text) or (-webkit-background-clip: text) {
     .lede h1 span {
         color: transparent;
-        background-image:
-            linear-gradient(100deg, rgba(255, 214, 182, 0) 8%, rgba(255, 214, 182, .26) 25%, rgba(255, 214, 182, 0) 46%),
-            linear-gradient(165deg, rgba(240, 134, 86, .94) 0%, rgba(236, 94, 38, .92) 54%, rgba(240, 118, 64, .93) 100%);
+        background-image: linear-gradient(165deg, rgba(240, 134, 86, .96) 0%, rgba(236, 94, 38, .98) 52%, rgba(240, 118, 64, .97) 100%);
         -webkit-background-clip: text;
                 background-clip: text;
     }
