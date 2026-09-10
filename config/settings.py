@@ -1,30 +1,70 @@
 # config/settings.py
 
 import os
+import secrets
+import sys
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY
-SECRET_KEY = os.getenv(
-    "SECRET_KEY",
-    "django-insecure-change-this-in-production"
+DEBUG = os.getenv("DEBUG", "False") == "True"
+
+# No production fallback. The old code defaulted to a literal committed to a
+# public repo, so a deploy that forgot the variable would sign cookies with a
+# key anyone could read, and would do it silently. Fail loudly instead: a
+# missing key is a broken deploy, not a working one.
+#
+# Commands that never serve a request are exempt, because they legitimately run
+# without the key: `manage.py test`, and `collectstatic` in the Vercel build
+# step. They get a throwaway random key, prefixed django-insecure- so that
+# `check --deploy` still reports W009 if the real key is ever absent.
+_NON_SERVING_COMMANDS = {
+    "test", "check", "collectstatic", "makemigrations", "migrate",
+    "showmigrations", "diffsettings", "shell",
+}
+_is_non_serving = (
+    os.path.basename(sys.argv[0] or "") == "manage.py"
+    and len(sys.argv) > 1
+    and sys.argv[1] in _NON_SERVING_COMMANDS
 )
 
-DEBUG = os.getenv("DEBUG", "False") == "True"
+SECRET_KEY = os.getenv("SECRET_KEY", "")
+if not SECRET_KEY:
+    if DEBUG or _is_non_serving:
+        SECRET_KEY = "django-insecure-ephemeral-" + secrets.token_urlsafe(32)
+    else:
+        raise ImproperlyConfigured(
+            "SECRET_KEY is not set. Set it in the environment before deploying."
+        )
 
 ALLOWED_HOSTS = os.getenv(
     "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,.onrender.com,.vercel.app,defex.app,www.defex.app"
+    "localhost,127.0.0.1,.vercel.app,defex.app,www.defex.app"
 ).split(",")
 
 CSRF_TRUSTED_ORIGINS = os.getenv(
     "CSRF_TRUSTED_ORIGINS",
-    "https://*.onrender.com,https://*.vercel.app,https://defex.app,https://www.defex.app"
+    "https://*.vercel.app,https://defex.app,https://www.defex.app"
 ).split(",")
 
 # Render / Vercel terminate SSL at their proxy — trust X-Forwarded-Proto.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Everything below is production-only so plain-http local dev still works.
+# check --deploy flagged all four as missing.
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # The flash-message cookie is signed, not encrypted, so keep it off the
+    # wire in cleartext and away from document.cookie.
+    SESSION_COOKIE_HTTPONLY = True
+    SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # Serverless (Vercel) has a read-only filesystem — keep flash messages in a
 # signed cookie so a form submit never needs to write to the DB/session.
@@ -151,16 +191,13 @@ NOTIFY_TO = os.getenv("NOTIFY_TO", "husan@buildcored.com")
 # personal-site pings (telegram channel requests) land here, not in the defex inbox
 PING_TO = os.getenv("PING_TO", "husanmavlonov79@gmail.com")
 
-# Autoresponder emails an arbitrary address from the form (spam-amplification
-# surface). Set AUTORESPONDER=0 to kill it instantly with no redeploy if abuse
-# starts, until a captcha (Cloudflare Turnstile) is wired on the form.
-AUTORESPONDER = os.getenv("AUTORESPONDER", "1") != "0"
+# The autoresponder mails whatever address the visitor typed, from a Defex
+# domain. That is an open relay in miniature: anyone can make defex.app send
+# mail to a victim, repeatedly, and burn the sending domain's reputation doing
+# it. There is no captcha on the form yet, so it is OFF unless explicitly
+# enabled. Set AUTORESPONDER=1 once Turnstile is wired.
+AUTORESPONDER = os.getenv("AUTORESPONDER", "0") == "1"
 
-# Quality Review: credentials only live on the server. Choose a JSON-mode
-# text model from the current Token Factory catalog; no stale model default.
-NEBIUS_API_KEY = os.getenv("NEBIUS_API_KEY", "")
-NEBIUS_MODEL = os.getenv("NEBIUS_MODEL", "")
-# Custom CSV inference requires this separate demo access code. Public visitors
-# can run the bundled synthetic examples without seeing any credentials.
-REVIEW_ACCESS_CODE = os.getenv("REVIEW_ACCESS_CODE", "")
-REVIEW_ENABLED = os.getenv("REVIEW_ENABLED", "1") == "1"
+# Best-effort per-IP throttle on the endpoints that send mail.
+CONTACT_RATE_LIMIT = int(os.getenv("CONTACT_RATE_LIMIT", "5"))     # per window
+CONTACT_RATE_WINDOW = int(os.getenv("CONTACT_RATE_WINDOW", "3600"))

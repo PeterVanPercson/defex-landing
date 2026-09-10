@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 from datetime import date
 
@@ -12,6 +13,9 @@ from django.views.decorators.http import require_http_methods
 
 from .forms import ApplicationForm, ContactForm
 from .notify import application_email, autoresponder_email, client_ip, send, send_to, submission_email
+from .throttle import client_ident, rate_limited
+
+log = logging.getLogger(__name__)
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -26,6 +30,10 @@ def careers(request):
 
 @require_http_methods(["POST"])
 def apply(request):
+    if rate_limited("apply", client_ident(request),
+                    settings.CONTACT_RATE_LIMIT, settings.CONTACT_RATE_WINDOW):
+        messages.error(request, "That is a lot of applications. Try again a little later.")
+        return redirect(reverse("careers") + "#application")
     form = ApplicationForm(request.POST)
     if form.is_valid() and not form.is_spam():
         subject, html = application_email(form.cleaned_data, request)
@@ -85,6 +93,11 @@ def sitemap(request):
 
 @require_http_methods(["POST"])
 def contact(request):
+    if rate_limited("contact", client_ident(request),
+                    settings.CONTACT_RATE_LIMIT, settings.CONTACT_RATE_WINDOW):
+        messages.error(request, "That is a lot of messages. Try again a little later.")
+        referer = request.META.get("HTTP_REFERER", "/")
+        return redirect(referer.split("#")[0] + "#contact")
     form = ContactForm(request.POST)
     if form.is_valid() and not form.is_spam():
         data = form.cleaned_data
@@ -140,8 +153,15 @@ def ping(request):
     origin = request.META.get("HTTP_ORIGIN", "")
     if request.method == "OPTIONS":
         return _cors(HttpResponse(status=204), origin)
+    # Origin stops a *browser* on another site from posting here. It stops
+    # nothing else: curl sets any header it likes. The throttle below is what
+    # limits a direct script, and this endpoint only ever mails PING_TO, so the
+    # worst case is Husan's own inbox, not a third party's.
     if origin not in PING_ORIGINS:
         return _cors(JsonResponse({"ok": False, "error": "origin"}, status=403), origin)
+    if rate_limited("ping", client_ident(request),
+                    settings.CONTACT_RATE_LIMIT, settings.CONTACT_RATE_WINDOW):
+        return _cors(JsonResponse({"ok": False, "error": "rate"}, status=429), origin)
 
     try:
         payload = json.loads((request.body or b"")[:2000].decode("utf-8") or "{}")
@@ -169,6 +189,12 @@ def ping(request):
     from_addr = settings.EMAIL_FROM or "onboarding@resend.dev"
     to_addr = settings.PING_TO or settings.NOTIFY_TO
     ok, detail = send_to(to_addr, f"telegram request — {name}", html, from_addr=from_addr)
-    # The submitter only ever sees ok/false; `detail` is for the site owner
-    # debugging his own form, and carries no key material.
-    return _cors(JsonResponse({"ok": True, "sent": ok, "detail": detail}), origin)
+    # `detail` is the provider's raw error text. It carries no key material, but
+    # it is upstream infrastructure detail and there is no reason to hand it to
+    # an anonymous caller. Owner sees it in the logs; DEBUG sees it in the body.
+    if not ok:
+        log.warning("ping send failed: %s", detail)
+    body = {"ok": True, "sent": ok}
+    if settings.DEBUG:
+        body["detail"] = detail
+    return _cors(JsonResponse(body), origin)

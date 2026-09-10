@@ -1,8 +1,12 @@
 from pathlib import Path
 
 from django.conf import settings
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
+# The pages are fetched over plain http by the test client, and production now
+# 301s that to https, so the redirect is disabled for the content tests and
+# asserted on its own below.
+@override_settings(SECURE_SSL_REDIRECT=False)
 class SiteTests(SimpleTestCase):
     def test_pages_and_analyze(self):
         for path in ("/", "/where-it-started/", "/careers/"):
@@ -83,3 +87,51 @@ class SiteTests(SimpleTestCase):
         # the founder link must stay bidirectional with husanmavlonov.com
         self.assertIn("https://husanmavlonov.com/#person", home)
         self.assertIn("https://defex.app/#org", home)
+
+
+class SecurityTests(SimpleTestCase):
+    """Guards the hardening itself. Each of these was a finding once."""
+
+    @override_settings(SECURE_SSL_REDIRECT=True)
+    def test_django_honours_the_ssl_redirect(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 301)
+        self.assertTrue(response["Location"].startswith("https://"))
+
+    def test_production_actually_turns_the_hardening_on(self):
+        """The test above only proves Django obeys the flag. This proves the
+        flag is set, which is the part that can regress. Evaluated the way a
+        production process would: DEBUG off, key present."""
+        import os, runpy
+        env = dict(os.environ, DEBUG="False", SECRET_KEY="x" * 60)
+        old, os.environ = os.environ, env
+        try:
+            ns = runpy.run_path(str(Path(settings.BASE_DIR) / "config" / "settings.py"))
+        finally:
+            os.environ = old
+        self.assertFalse(ns["DEBUG"])
+        for flag in ("SECURE_SSL_REDIRECT", "SESSION_COOKIE_SECURE",
+                     "CSRF_COOKIE_SECURE", "SESSION_COOKIE_HTTPONLY",
+                     "SECURE_HSTS_INCLUDE_SUBDOMAINS"):
+            self.assertTrue(ns.get(flag), f"{flag} is not on in production")
+        self.assertGreaterEqual(ns.get("SECURE_HSTS_SECONDS", 0), 86400)
+        self.assertNotIn(".onrender.com", ns["ALLOWED_HOSTS"])
+
+    def test_secret_key_has_no_committed_fallback(self):
+        """The old default was a literal in a public repo. Serving without a
+        key must raise rather than quietly sign with something readable."""
+        source = (Path(settings.BASE_DIR) / "config" / "settings.py").read_text()
+        self.assertNotIn("django-insecure-change-this-in-production", source)
+        self.assertIn("ImproperlyConfigured", source)
+
+    def test_autoresponder_is_off_unless_explicitly_enabled(self):
+        """It mails an address the visitor supplies, from a Defex domain. It
+        stays off until a captcha is on the form."""
+        source = (Path(settings.BASE_DIR) / "config" / "settings.py").read_text()
+        self.assertIn('os.getenv("AUTORESPONDER", "0") == "1"', source)
+
+    def test_mail_endpoints_are_rate_limited(self):
+        from landing.throttle import rate_limited
+        ident = "203.0.113.7"
+        allowed = sum(0 if rate_limited("t", ident, 3, 60) else 1 for _ in range(5))
+        self.assertEqual(allowed, 3, "the 4th and 5th call should be limited")
