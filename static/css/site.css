@@ -57,12 +57,14 @@ body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font); -w
     --line: rgba(234, 232, 227, .14);
     --rule: rgba(234, 232, 227, .34);
     --on-accent: #EAE8E3;
-    --engrave-fill: linear-gradient(165deg, rgba(255, 124, 68, .98) 0%, rgba(255, 90, 31, .98) 52%, rgba(255, 112, 54, .98) 100%);
-    /* No blur, matching the paper variant. background-clip:text paints the
-       fill at the background layer and text-shadow paints over it, so a
-       blurred 85% black lip smeared across the glyph faces and desaturated
-       them. Invisible on grey, mud on orange. */
-    --engrave-lip: 0 -1px 0 rgba(0, 0, 0, .72), 0 1px 0 rgba(255, 255, 255, .14);
+    --engrave-fill: linear-gradient(172deg, rgba(255, 186, 140, 1) 0%, rgba(255, 132, 72, 1) 22%, rgba(248, 88, 28, 1) 52%, rgba(214, 66, 16, 1) 78%, rgba(182, 50, 10, 1) 100%);
+    /* No lip at all here, and the fill carries the bevel instead. With
+       background-clip:text the fill paints at the background layer and
+       text-shadow paints on top of it, so a 1px hard lip is a copy of the
+       glyph covering nearly its whole face. Grey survived that; orange went
+       to mud. Measured across eleven variants: every lip lowered both the
+       saturation and the bevel. The winner had none. */
+    --engrave-lip: none;
     position: relative;
     background: var(--bg);
     color: var(--ink);
@@ -153,17 +155,14 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
    Orange did not: it measured #613525 against a brand colour of #FF5A1F.
    Solid colour puts the shadow back behind the glyphs, which is where the
    letterpress effect comes from in the first place. The lips are unchanged. */
-.hero .engraved { color: #FF5A1F; background-image: none; }
-/* The second line sets its own clipped gradient inside the @supports
-   block below, so it needs the same treatment at higher specificity. */
-.hero .engraved span { color: #E0521C; background-image: none; }
+
 
 /* The second line keeps its own colour, so it opts out of the parent's clip
    and stays flat while line one is carved. Give it a dimmer fill of its own. */
 @supports (background-clip: text) or (-webkit-background-clip: text) {
     .lede h1 span {
         color: transparent;
-        background-image: linear-gradient(165deg, rgba(240, 112, 62, .90) 0%, rgba(232, 84, 30, .90) 52%, rgba(238, 104, 52, .90) 100%);
+        background-image: linear-gradient(172deg, rgba(240, 168, 126, 1) 0%, rgba(238, 122, 68, 1) 22%, rgba(230, 84, 30, 1) 52%, rgba(198, 58, 16, 1) 78%, rgba(172, 48, 12, 1) 100%);
         -webkit-background-clip: text;
                 background-clip: text;
     }
