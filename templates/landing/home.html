@@ -12,7 +12,10 @@
 
 <main>
     <!-- The film is pinned and advances with the scroll, so the whole fifteen
-         seconds is visible however fast you move. It never plays on its own. -->
+         seconds is visible however fast you move. It never plays on its own.
+         The subline and the button live in the space under the headline, which
+         used to be empty: the hero now says what the machine does and asks for
+         something, instead of only looking good. -->
     <section class="hero" id="top" aria-labelledby="hero-title">
         <div class="hero__sticky">
             <!-- Full 1920x1080 at 60fps, H.264 in MP4, which every browser
@@ -30,64 +33,50 @@
                    data-src-sm="{% static 'defex/assets/defex-intro-v4-sm.mp4' %}?v={{ asset_v }}"></video>
             <div class="lede">
                 <h1 class="engraved" id="hero-title">Self-teaching robots<br><span>for manufacturing.</span></h1>
+                <div class="lede__row">
+                    <p class="lede__sub">It assembles your part, physically tests the joint it just made, and learns from what the test says.</p>
+                    <a class="pill pill--wide" href="#contact">Send us your part</a>
+                </div>
             </div>
             <p class="scroll-cue" aria-hidden="true">Scroll <span>&#8595;</span></p>
         </div>
     </section>
 
-    <section class="about" id="problem" aria-labelledby="problem-title">
-        <h2 class="kicker" id="problem-title"><span class="kicker__dash" aria-hidden="true"></span>each new variant means more setup</h2>
-        <dl class="rows">
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>New variant</dt><dd>A related part arrives. Alignment, insertion and fixturing get tuned again from the start.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Setup effort</dt><dd>Engineering hours go into making parts seat and join reliably, on every one of them.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Unchecked joints</dt><dd>Appearance does not show a contact that never seated. That one leaves the line.</dd></div>
-        </dl>
+    <section class="statement" id="problem" aria-labelledby="problem-title">
+        <h2 class="engraved" id="problem-title">Every new variant means new setup.</h2>
+        <p class="statement__lead">A related connector arrives, and the alignment, the insertion and the fixture all get tuned again. A camera can tell you it looks right. It cannot tell you a contact never seated.</p>
     </section>
 
     <section class="band" id="loop" aria-labelledby="loop-title">
         <h2 class="kicker" id="loop-title"><span class="kicker__dash" aria-hidden="true"></span>the test becomes the teacher</h2>
-        <p class="band__lead">The robot attempts an assembly. A physical test scores what it just made. The recorded attempts train the next candidate skill, and a reset prepares another try. Practice runs in setup mode. Production runs a skill that was evaluated and approved on its own.</p>
         <dl class="rows">
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Attempt</dt><dd>The robot tries the alignment and the insertion, inside bounds it is allowed to move in.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Test</dt><dd>Continuity and mechanical engagement score the joint. Force and motion are recorded.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Reset</dt><dd>The fixture returns the part to the start, so the next attempt runs without a person.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Attempt</dt><dd>The robot tries the insertion.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Test</dt><dd>Probes check the joint it just made.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Reset</dt><dd>The fixture reloads, and it goes again.</dd></div>
         </dl>
+        <p class="band__note">Every attempt is recorded. The next one is better.</p>
     </section>
 
     <section class="band" id="first-station" aria-labelledby="station-title">
-        <h2 class="kicker" id="station-title"><span class="kicker__dash" aria-hidden="true"></span>the first workstation is connector assembly</h2>
-        <p class="band__lead">One robot. One fixtured connector family. Built for electronics and electromechanical assemblers who carry the setup cost every time a related variant arrives.</p>
-        <dl class="rows">
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Learns</dt><dd>Local alignment and insertion, on one qualified connector family.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Checks</dt><dd>Electrical connection and mechanical engagement, on every attempt.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Resets</dt><dd>The setup returns itself, ready for another practice attempt.</dd></div>
-        </dl>
+        <h2 class="kicker" id="station-title"><span class="kicker__dash" aria-hidden="true"></span>first workstation</h2>
+        <p class="band__lead">Connector assembly. One robot, one connector family, for electronics and electromechanical assemblers who pay the setup cost every time a variant arrives.</p>
     </section>
 
     <!-- The A1 cell is specified and not built. Saying so here is deliberate:
-         the deck carries the same caveat on every slide that mentions it. -->
+         the deck carries the same caveat on every slide that mentions it, and
+         a buyer trusts the rest of the page more for it, not less. -->
     <section class="band" id="today" aria-labelledby="today-title">
-        <h2 class="kicker" id="today-title"><span class="kicker__dash" aria-hidden="true"></span>what exists today</h2>
-        <p class="band__lead">We are early, and we would rather say so than imply otherwise.</p>
+        <h2 class="kicker" id="today-title"><span class="kicker__dash" aria-hidden="true"></span>where we are</h2>
         <dl class="rows">
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Built</dt><dd>An AI visual-inspection prototype, running. It is <a class="link" href="{% url 'where_it_started' %}">where we learned the camera is not enough</a>.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Specified</dt><dd>A1, the first assembly cell: hardware architecture and learning plan. Not built yet.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Next</dt><dd>An instrumented connector bench, then a qualified pilot on a customer&rsquo;s own parts.</dd></div>
-        </dl>
-    </section>
-
-    <section class="band" id="how-we-start" aria-labelledby="start-title">
-        <h2 class="kicker" id="start-title"><span class="kicker__dash" aria-hidden="true"></span>how a factory starts with us</h2>
-        <dl class="rows">
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Feasibility</dt><dd>A paid study on your parts. We define the application and say plainly if it is not one.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Station</dt><dd>An agreed assembly capability, delivered and commissioned against acceptance criteria.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Service</dt><dd>Diagnostics, maintenance support, and qualified recipe or software updates.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Built</dt><dd>An AI visual-inspection prototype. It is <a class="link" href="{% url 'where_it_started' %}">where we learned the camera is not enough</a>.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Specified</dt><dd>A1, the first assembly cell. Not built yet.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Next</dt><dd>An instrumented bench, then a paid pilot on your parts.</dd></div>
         </dl>
     </section>
 
     <section class="careers" id="careers" aria-labelledby="careers-title">
         <h2 class="kicker" id="careers-title"><span class="kicker__dash" aria-hidden="true"></span>build with us</h2>
-        <p class="careers__lead">A small team building a cell that assembles a connector and then physically tests the joint it just made. If this sounds like you, we would like to talk.</p>
+        <p class="careers__lead">A small team building a cell that assembles a connector and physically tests the joint it just made.</p>
         <a class="rolecard" href="{% url 'careers' %}#content-producer">
             <span class="rolecard__id">
                 <span class="rolecard__title">Content Producer</span>
@@ -99,12 +88,14 @@
         <p class="careers__alt"><a class="link" href="{% url 'careers' %}">See all roles and apply</a></p>
     </section>
 
-    <section class="contact" id="contact" aria-labelledby="contact-title">
-        <h2 class="engraved" id="contact-title">Let’s talk</h2>
-        <p class="contact__lead">Tell us the connector you keep re-tuning. We&rsquo;ll follow up.</p>
-        <details class="talk">
-            <summary class="cta">Contact us</summary>
-        <form class="form" action="{% url 'contact' %}" method="post">
+    <!-- The closing block returns to the dark the page opened on. The form is
+         open: it used to sit behind a "Contact us" disclosure, which put a
+         click between a visitor deciding to reach out and being able to. -->
+    <section class="contact dark" id="contact" aria-labelledby="contact-title">
+        <div class="contact__inner">
+            <h2 class="engraved" id="contact-title">Send us the part.</h2>
+            <p class="contact__lead">Tell us the connector you keep re-tuning. We&rsquo;ll tell you if it is a fit.</p>
+            <form class="form" action="{% url 'contact' %}" method="post">
                 {% csrf_token %}
                 {% if messages %}{% for message in messages %}<p class="form__flash form__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
                 <div class="form__row">
@@ -117,12 +108,11 @@
                 <button type="submit" class="cta">Send</button>
             </form>
             <p class="contact__alt">or email <a class="link" href="mailto:husan@defex.app">husan@defex.app</a></p>
-        </details>
-
+        </div>
     </section>
 </main>
 
-<footer class="footer">
+<footer class="footer dark">
     <a href="#top" class="brand brand--small" aria-label="defex, back to top">
         <svg viewBox="0 0 20 64" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="currentColor"/><circle cx="10" cy="32" r="7" fill="#FF5A1F"/><circle cx="10" cy="54" r="7" fill="currentColor"/></svg>
         <span>defex<span class="dot">.</span></span>

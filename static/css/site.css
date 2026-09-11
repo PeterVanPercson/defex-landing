@@ -22,12 +22,14 @@
     --serif: ui-serif, "Iowan Old Style", "Source Serif 4", Palatino, Georgia, serif;
     --pad: clamp(16px, 3vw, 32px);
     --hero-gap: clamp(18px, 3.5vh, 40px);
-    --lede-space: clamp(96px, 19vh, 180px);
+    --lede-space: clamp(150px, 26vh, 280px);
     --max: 1200px;
     --radius: 20px;
     --nav: 64px;
     /* how far the dark hero dissolves into the paper at each end */
     --hero-fade: clamp(200px, 38vh, 400px);
+    /* the closing block needs less ramp than the hero: no film to blend */
+    --close-fade: clamp(140px, 22vh, 240px);
 
     /* Engraved headings. The letterform is a gradient clipped to the glyphs,
        with a light lip below and a dark lip above, so the type reads as cut
@@ -47,8 +49,11 @@ body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font); -w
 /* The film is baked on rgb(11,16,21) and cannot be made transparent, so the
    hero keeps the dark set and reads as one deliberate cinematic band. Paper
    behind it would put a hard black rectangle on cream. Origami gets a light
-   ground for free because their hero is a live <canvas>, not a movie. */
-.hero {
+   ground for free because their hero is a live <canvas>, not a movie.
+   .dark carries the same set to the closing block, so the page opens and ends
+   on the dark the way the deck alternates its slides. Everything inside is
+   token-driven, so the form restyles itself with no extra rules. */
+.hero, .dark {
     --bg: #020506;
     --surface: #0C1116;
     --ink: #EAE8E3;
@@ -142,7 +147,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
             mask-image: linear-gradient(to bottom, transparent 0, #000 26%, #000 76%, transparent 100%); }
 .scroll-cue { display: none; }
 
-.has-scroll-film .hero { height: 560svh; }
+.has-scroll-film .hero { height: 380svh; }
 .has-scroll-film .hero__sticky { position: sticky; top: var(--nav); height: calc(100svh - var(--nav)); overflow: clip; }
 .has-scroll-film .hero__film { width: min(100%, calc((100svh - var(--nav) - var(--lede-space)) * 16 / 9)); }
 /* the headline now sits in the frame, so the cue moves out of its way */
@@ -164,6 +169,29 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
                 background-clip: text;
     }
 }
+
+/* Hero support: the one line that says what the machine does, and the ask.
+   These also fill the dead space under the headline on a phone, which is what
+   made that screen read as half empty. */
+.lede__row { margin-top: 20px; display: flex; align-items: center; gap: clamp(18px, 3vw, 40px); flex-wrap: wrap; }
+.lede__sub { max-width: 40ch; font: 400 15px/1.6 var(--font); color: var(--ink-soft); }
+
+/* One sentence, large, with air around it. The page needs a moment that is
+   not a three-column list. */
+.statement { max-width: var(--max); margin-inline: auto; padding: calc(28px + var(--hero-fade)) var(--pad) 0; }
+.statement h2 { max-width: 15ch; font-family: var(--serif); font-size: clamp(32px, 4.6vw, 56px); font-weight: 400; line-height: 1.06; letter-spacing: -.01em; }
+.statement__lead { margin-top: 26px; max-width: 50ch; font: 400 15px/1.75 var(--font); color: var(--ink-soft); }
+
+/* trailing note under a row band */
+.band__note { margin-top: 32px; font: 400 13px/1.7 var(--mono); color: var(--mute); }
+
+/* The closing block runs full bleed so the dark reaches both edges; the column
+   inside keeps the measure. The gradient is .hero::after mirrored, so the page
+   dissolves into the dark rather than cutting against it. */
+.contact.dark { max-width: none; padding-inline: 0; position: relative; }
+.contact__inner { max-width: 560px; margin-inline: auto; padding-inline: var(--pad); }
+.contact.dark::before { content: ""; position: absolute; left: 0; right: 0; bottom: calc(100% - 1px); height: calc(var(--close-fade) + 1px); background: linear-gradient(to top, var(--bg) 0%, #070A0B 10%, #121415 20%, #212323 30%, #353636 40%, #4C4D4C 50%, #676765 60%, #858581 70%, #A7A5A1 80%, #CBC9C3 90%, var(--page) 100%); pointer-events: none; }
+.footer.dark { margin-top: 0; }
 
 /* what we do */
 .about { max-width: var(--max); margin-inline: auto; padding: calc(28px + var(--hero-fade)) var(--pad) 0; }
@@ -194,6 +222,9 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 .rolecard__go { font: 500 10px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--mute); white-space: nowrap; }
 .rolecard:hover .rolecard__go { color: var(--ink); }
 .careers__alt { margin-top: 26px; font: 400 12px/1.6 var(--mono); color: var(--mute); }
+/* the last cream band has to clear the dissolve into the closing dark block.
+   Declared here, after the .careers padding shorthand above, or it is lost. */
+.careers { padding-bottom: var(--close-fade); }
 
 /* careers page */
 .page { max-width: var(--max); margin-inline: auto; padding-inline: var(--pad); }
@@ -302,7 +333,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
    frozen frame before it scrolled away, and the other six seconds ran off
    screen. Pinned, the film stays put for the whole eight seconds. */
 @media (max-aspect-ratio: 13/10) {
-    .has-scroll-film .hero { height: 400svh; }
+    .has-scroll-film .hero { height: 300svh; }
     /* A 16:9 film is a 221px strip on a phone. Cropping to 5:4 makes it 314px.
        Centred: the robot is centred in frame and the crop keeps it there. This
        was 63% for the previous film, which carried a baked "ultra inspection"
@@ -340,7 +371,11 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
     .rows dt { display: block; font-size: 21px; }
     .step-number { display: block; margin-bottom: 14px; }
     .rows dd { margin-top: 26px; font-size: 15px; }
-    .about { padding-top: 40px; }
+    /* 38vh of dissolve is 321px on a phone, and the section under it only
+       cleared 40px, so the first heading sat inside the dark end of the ramp
+       and was invisible. Shorter ramp here, and real clearance for it. */
+:root { --hero-fade: clamp(120px, 20vh, 200px); }
+    .about, .statement { padding-top: calc(24px + var(--hero-fade)); }
     .contact { padding-top: 80px; padding-bottom: 80px; }
     .contact h2 { font-size: clamp(32px, 9vw, 40px); }
     .form__row { grid-template-columns: 1fr; }

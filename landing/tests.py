@@ -19,6 +19,12 @@ class SiteTests(SimpleTestCase):
         for step in ("Attempt", "Test", "Reset"):
             self.assertContains(home, f">{step}</dt>")
         self.assertContains(home, "the test becomes the teacher")
+        # the hero has to say what the machine does and ask for something
+        self.assertContains(home, 'class="lede__sub"')
+        self.assertContains(home, 'href="#contact"')
+        # the contact form is open, never behind a disclosure again
+        self.assertNotContains(home, "<details")
+        self.assertContains(home, 'name="factory"')
         # the first application is named, not left abstract
         self.assertContains(home, "connector")
         # the A1 cell is unbuilt and the deck labels it PROPOSED on four
