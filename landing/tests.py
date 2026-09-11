@@ -25,6 +25,10 @@ class SiteTests(SimpleTestCase):
         # the contact form is open, never behind a disclosure again
         self.assertNotContains(home, "<details")
         self.assertContains(home, 'name="factory"')
+        # the loop is shown, not only described
+        for step in ("attempt", "test", "reset"):
+            self.assertContains(home, f"loop-{step}.webp")
+        self.assertNotContains(home, 'class="rows__media" src="" ')
         # the first application is named, not left abstract
         self.assertContains(home, "connector")
         # the A1 cell is unbuilt and the deck labels it PROPOSED on four
@@ -100,6 +104,9 @@ class SiteTests(SimpleTestCase):
             "defex-intro-v4-sm.mp4": 8 * 1024 * 1024,
             "defex-poster-v4.webp": 90 * 1024,
             "defex-poster-final-v4.webp": 90 * 1024,
+            "loop-attempt.webp": 200 * 1024,
+            "loop-test.webp": 200 * 1024,
+            "loop-reset.webp": 200 * 1024,
         }
         assets = Path(settings.BASE_DIR) / "static" / "defex" / "assets"
         for name, cap in budget.items():

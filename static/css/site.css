@@ -183,6 +183,11 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 .statement__lead { margin-top: 26px; max-width: 50ch; font: 400 15px/1.75 var(--font); color: var(--ink-soft); }
 
 /* trailing note under a row band */
+/* height:auto or the width/height attributes win and the picture renders at
+   its full 1117px intrinsic height. The attributes stay, for layout stability
+   before the file loads. */
+.rows__media { display: block; width: 100%; height: auto; aspect-ratio: 900 / 1117; object-fit: cover; margin-bottom: 24px; background: var(--surface); }
+
 .band__note { margin-top: 32px; font: 400 13px/1.7 var(--mono); color: var(--mute); }
 
 /* The closing block runs full bleed so the dark reaches both edges; the column
@@ -368,6 +373,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
     .lede h1 { font-size: clamp(30px, 8vw, 40px); max-width: 18ch; line-height: 1.12; letter-spacing: -.035em; }
     .rows { grid-template-columns: 1fr; gap: 26px; margin-top: 28px; }
     .rows__row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 24px; padding-top: 22px; }
+    /* the row is a two-column grid on a phone; the picture spans both */
+    .rows__media { grid-column: 1 / -1; margin-bottom: 4px; }
     .rows dt { display: block; font-size: 21px; }
     .step-number { display: block; margin-bottom: 14px; }
     .rows dd { margin-top: 26px; font-size: 15px; }

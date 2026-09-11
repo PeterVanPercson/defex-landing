@@ -50,9 +50,9 @@
     <section class="band" id="loop" aria-labelledby="loop-title">
         <h2 class="kicker" id="loop-title"><span class="kicker__dash" aria-hidden="true"></span>the test becomes the teacher</h2>
         <dl class="rows">
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Attempt</dt><dd>The robot tries the insertion.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Test</dt><dd>Probes check the joint it just made.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Reset</dt><dd>The fixture reloads, and it goes again.</dd></div>
+            <div class="rows__row"><img class="rows__media" src="{% static 'defex/assets/loop-attempt.webp' %}?v={{ asset_v }}" width="900" height="1117" loading="lazy" decoding="async" alt="A robot hand lowering a black connector toward its mating half, which sits pinned in a machined aluminium fixture."><dt><span class="step-number" aria-hidden="true">01</span>Attempt</dt><dd>The robot tries the insertion.</dd></div>
+            <div class="rows__row"><img class="rows__media" src="{% static 'defex/assets/loop-test.webp' %}?v={{ asset_v }}" width="900" height="1117" loading="lazy" decoding="async" alt="The connector seated, with two gold spring probes pressing onto its contacts and the electrical path lit through the joint."><dt><span class="step-number" aria-hidden="true">02</span>Test</dt><dd>Probes check the joint it just made.</dd></div>
+            <div class="rows__row"><img class="rows__media" src="{% static 'defex/assets/loop-reset.webp' %}?v={{ asset_v }}" width="900" height="1117" loading="lazy" decoding="async" alt="The fixture empty again and the robot hand lifting the connector clear, ready for another attempt."><dt><span class="step-number" aria-hidden="true">03</span>Reset</dt><dd>The fixture reloads, and it goes again.</dd></div>
         </dl>
         <p class="band__note">Every attempt is recorded. The next one is better.</p>
     </section>
