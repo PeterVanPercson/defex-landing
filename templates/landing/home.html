@@ -33,9 +33,9 @@
     <section class="about" id="about" aria-labelledby="about-title">
         <h2 class="kicker" id="about-title"><span class="kicker__dash" aria-hidden="true"></span>what we&rsquo;re building</h2>
         <dl class="rows">
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Assemble</dt><dd>Vision-guided placement and close.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Verify</dt><dd>Force and displacement, not just a photo.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Recover</dt><dd>One bounded reseat when the fault is recoverable.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Assemble</dt><dd>Align and insert.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Verify</dt><dd>Force and continuity — not a photo.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Recover</dt><dd>One reset. Another attempt.</dd></div>
         </dl>
     </section>
 
@@ -55,7 +55,7 @@
 
     <section class="contact" id="contact" aria-labelledby="contact-title">
         <h2 class="engraved" id="contact-title">Let’s talk</h2>
-        <p class="contact__lead">Tell us what you make and we will follow up about the part.</p>
+        <p class="contact__lead">Tell us the part. We&rsquo;ll follow up.</p>
         <details class="talk">
             <summary class="cta">Contact us</summary>
         <form class="form" action="{% url 'contact' %}" method="post">
@@ -65,8 +65,8 @@
                     <label class="field"><span>Name</span><input type="text" name="name" autocomplete="name" maxlength="120" required></label>
                     <label class="field"><span>Company</span><input type="text" name="factory" autocomplete="organization" maxlength="200" required></label>
                 </div>
-                <label class="field"><span>Email or phone</span><input type="text" name="contact" autocomplete="email" maxlength="200" required></label>
-                <label class="field"><span>What you make</span><textarea name="product" rows="3" maxlength="200"></textarea></label>
+                <label class="field"><span>Email, phone, or WeChat</span><input type="text" name="contact" autocomplete="email" maxlength="200" required></label>
+                <label class="field"><span>The part</span><textarea name="product" rows="3" maxlength="200"></textarea></label>
                 <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
                 <button type="submit" class="cta">Send</button>
             </form>
