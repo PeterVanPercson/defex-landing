@@ -43,13 +43,35 @@ class SiteTests(SimpleTestCase):
         self.assertContains(origin, 'id="playpause"')
         self.assertContains(origin, "started off helping factory lines")
         self.assertContains(origin, "how we learned the camera is not enough")
-        for asset in ("defex/assets/defex-intro-scroll.mp4", "defex/assets/defex-intro-scroll-1080.mp4",
-                      "defex/assets/defex-first-frame.webp"):
+        self.assertContains(home, 'data-fps="60"')
+        self.assertContains(home, "defex-intro-scroll-v2.webm")
+        self.assertContains(home, "defex-first-frame-v2.webp")
+        self.assertNotContains(home, "defex-intro-scroll.mp4")
+        self.assertNotContains(home, "defex-intro-scroll-1080.mp4")
+        for asset in ("defex/assets/defex-intro-scroll-v2.webm",
+                      "defex/assets/defex-first-frame-v2.webp",
+                      "defex/assets/defex-final-frame-v2.webp"):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
         for asset in ("js/hero-film.js", "js/origin.js", "video/origin.mp4", "video/origin-poster.jpg"):
             self.assertEqual(self.client.get(f"/static/{asset}").status_code, 200, asset)
+
+    def test_hero_supports_byte_ranges(self):
+        """Scroll seeking needs partial responses at both ends of the film."""
+        path = "defex/assets/defex-intro-scroll-v2.webm"
+        size = (Path(settings.BASE_DIR) / "static" / path).stat().st_size
+        for start in (0, size - 1024):
+            response = self.client.get(
+                f"/static/{path}", HTTP_RANGE=f"bytes={start}-{start + 1023}"
+            )
+            try:
+                self.assertEqual(response.status_code, 206)
+                self.assertEqual(response["Content-Type"], "video/webm")
+                self.assertEqual(response["Content-Range"], f"bytes {start}-{start + 1023}/{size}")
+                self.assertEqual(len(b"".join(response.streaming_content)), 1024)
+            finally:
+                response.close()
 
     def test_every_class_on_the_marketing_pages_is_styled(self):
         """A CSS edit that drops a rule block renders the section unstyled but

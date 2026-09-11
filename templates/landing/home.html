@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="preload" as="image" href="{% static 'defex/assets/defex-first-frame.webp' %}?v={{ asset_v }}">
+<link rel="preload" as="image" href="{% static 'defex/assets/defex-first-frame-v2.webp' %}?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
@@ -11,7 +11,7 @@
 {% include "landing/_topbar.html" %}
 
 <main>
-    <!-- The film is pinned and advances with the scroll, so the whole eight
+    <!-- The film is pinned and advances with the scroll, so the whole fifteen
          seconds is visible however fast you move. It never plays on its own. -->
     <section class="hero" id="top" aria-labelledby="hero-title">
         <div class="hero__sticky">
@@ -20,9 +20,10 @@
                  ending pose and the film looked like it had been skipped. -->
             <video class="hero__film" id="film" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"
                    width="1920" height="1080"
-                   poster="{% static 'defex/assets/defex-first-frame.webp' %}?v={{ asset_v }}"
-                   data-src="{% static 'defex/assets/defex-intro-scroll.mp4' %}?v={{ asset_v }}"
-                   data-src-sm="{% static 'defex/assets/defex-intro-scroll-1080.mp4' %}?v={{ asset_v }}"></video>
+                   poster="{% static 'defex/assets/defex-first-frame-v2.webp' %}?v={{ asset_v }}"
+                   data-poster-final="{% static 'defex/assets/defex-final-frame-v2.webp' %}?v={{ asset_v }}"
+                   data-fps="60" data-type='video/webm; codecs="vp9"'
+                   data-src="{% static 'defex/assets/defex-intro-scroll-v2.webm' %}?v={{ asset_v }}"></video>
             <div class="lede">
                 <h1 class="engraved" id="hero-title">Self-teaching robots<br><span>for manufacturing.</span></h1>
             </div>

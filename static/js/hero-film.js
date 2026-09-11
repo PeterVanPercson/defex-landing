@@ -3,10 +3,11 @@
     const film = document.getElementById('film');
     if (!hero || !film) return;
     const sticky = hero.querySelector('.hero__sticky');
+    if (!sticky) return;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
-    const FPS = 24;
+    const FPS = Number(film.dataset.fps) || 60;
     const FRAME = 1 / FPS;
     // The film finishes a little before the pin releases, so the last frame holds.
     const SCRUB_END = 0.9;
@@ -16,7 +17,7 @@
     // of the animation plays off screen. Measured at 2922px of scrub on a 893px
     // viewport, EASE 8 ran 3.8s behind a hard flick and lost 833ms off screen;
     // 28 lands under 450ms behind and loses nothing. It is still enough easing to
-    // hide the 24fps quantisation. Higher is more literal, lower is more floaty.
+    // soften scroll steps. Higher is more literal, lower is more floaty.
     const EASE = 28;
 
     // Safety clamp only, set far above anything scrolling asks for so it never
@@ -98,12 +99,21 @@
         seeking = true;
         clearTimeout(seekWatchdog);
         seekWatchdog = setTimeout(() => { seeking = false; lastFrame = -1; paint(); }, 400);
-        film.currentTime = frame * FRAME;
+        // Seek inside the frame: WebM timestamps round to milliseconds, so
+        // an exact n/60 boundary can otherwise land on the preceding frame.
+        film.currentTime = Math.min((frame + .5) * FRAME, film.duration - .001);
     }
     film.addEventListener('seeked', () => { releaseSeek(); paint(); });
-    film.addEventListener('error', releaseSeek);
+    film.addEventListener('error', () => {
+        releaseSeek();
+        ready = false;
+        document.documentElement.classList.remove('has-scroll-film');
+        measureGeometry();
+        syncNav();
+    });
 
     function tick(now) {
+        if (!ready) { running = false; lastTick = 0; return; }
         const dt = lastTick ? Math.min(.05, (now - lastTick) / 1000) : 1 / refresh;
         lastTick = now;
         const gap = target - shown;
@@ -154,11 +164,19 @@
         else film.pause();
     }
 
-    // Choose the source before load. A phone does not need the 1440-wide file,
-    // and 4.4MB over mobile data is most of why the film was not ready in time.
+    // Unsupported browsers get the new poster without a long, frozen pin.
+    // Reduced-motion visitors get the final still without downloading a film.
+    if (reduced.matches) {
+        if (film.dataset.posterFinal) film.poster = film.dataset.posterFinal;
+        return;
+    }
+    if (film.dataset.type && !film.canPlayType(film.dataset.type)) return;
+
+    // An optional smaller source must be the same film, duration and frame rate.
     const small = film.dataset.srcSm;
     const wide = film.dataset.src;
-    if (wide) film.src = (small && Math.min(innerWidth, innerHeight) <= 820) ? small : wide;
+    if (!wide) return;
+    film.src = (small && Math.min(innerWidth, innerHeight) <= 820) ? small : wide;
 
     if (!reduced.matches) {
         document.documentElement.classList.add('has-scroll-film');

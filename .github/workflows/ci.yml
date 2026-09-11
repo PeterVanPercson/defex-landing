@@ -26,12 +26,11 @@ jobs:
       - name: Django system check
         run: python manage.py check
 
-      - name: Quality Review regression tests
+      - name: Site regression tests
         run: python manage.py test
 
       - name: Front-end JavaScript syntax
         run: |
-          node --check static/js/quality-review.js
           node --check static/js/hero-film.js
           node --check static/js/origin.js
 
@@ -39,14 +38,21 @@ jobs:
         run: python manage.py collectstatic --no-input
 
       - name: Boot server + hit the real routes
+        env:
+          DEBUG: "False"
+          SECRET_KEY: "ci-smoke-only-not-a-production-secret-000000000000000000000000"
         run: |
-          python manage.py runserver 8000 >/tmp/srv.log 2>&1 &
+          gunicorn config.wsgi:application --bind 127.0.0.1:8000 >/tmp/srv.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
           for i in $(seq 1 20); do
-            curl -sf -o /dev/null http://127.0.0.1:8000/ && break
+            curl -sf -H "X-Forwarded-Proto: https" -o /dev/null http://127.0.0.1:8000/ && break
             sleep 1
           done
-          code_home=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/)
-          code_review=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/quality-review/)
-          echo "home=$code_home review=$code_review"
-          test "$code_home" = "200"
-          test "$code_review" = "200"
+          for route in / /careers/ /where-it-started/; do
+            curl --fail --silent --show-error -H "X-Forwarded-Proto: https" -o /dev/null "http://127.0.0.1:8000$route"
+          done
+          curl --fail --silent --show-error -H "X-Forwarded-Proto: https" -H "Range: bytes=0-1023" \
+            -D /tmp/hero-headers.txt -o /tmp/hero-range.bin \
+            http://127.0.0.1:8000/static/defex/assets/defex-intro-scroll-v2.webm
+          python -c "from pathlib import Path; assert '206 Partial Content' in Path('/tmp/hero-headers.txt').read_text(); assert len(Path('/tmp/hero-range.bin').read_bytes()) == 1024"
