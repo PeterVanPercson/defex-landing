@@ -196,7 +196,10 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 .contact.dark { max-width: none; padding-inline: 0; position: relative; }
 .contact__inner { max-width: 560px; margin-inline: auto; padding-inline: var(--pad); }
 .contact.dark::before { content: ""; position: absolute; left: 0; right: 0; bottom: calc(100% - 1px); height: calc(var(--close-fade) + 1px); background: linear-gradient(to top, var(--bg) 0%, #070A0B 10%, #121415 20%, #212323 30%, #353636 40%, #4C4D4C 50%, #676765 60%, #858581 70%, #A7A5A1 80%, #CBC9C3 90%, var(--page) 100%); pointer-events: none; }
-.footer.dark { margin-top: 0; }
+/* .footer is a 1200px centred column, so a dark background on it left the
+   cream page showing at both edges under the closing block. Full bleed, with
+   the content still aligned to the column the way .topbar does it. */
+.footer.dark { margin-top: 0; max-width: none; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
 
 /* what we do */
 .about { max-width: var(--max); margin-inline: auto; padding: calc(28px + var(--hero-fade)) var(--pad) 0; }
