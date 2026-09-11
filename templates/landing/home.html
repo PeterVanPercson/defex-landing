@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="preload" as="image" href="{% static 'defex/assets/defex-first-frame-v2.webp' %}?v={{ asset_v }}">
+<link rel="preload" as="image" href="{% static 'defex/assets/defex-poster-v3.webp' %}?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
@@ -15,15 +15,18 @@
          seconds is visible however fast you move. It never plays on its own. -->
     <section class="hero" id="top" aria-labelledby="hero-title">
         <div class="hero__sticky">
-            <!-- The poster is the film's FIRST frame, not its last. It used to be the
-                 final frame, so a slow connection showed the robot already in its
-                 ending pose and the film looked like it had been skipped. -->
+            <!-- H.264 in MP4, which every browser decodes, so there is no
+                 codec fallback path to keep. The poster is the film's FIRST
+                 frame, not its last: an earlier build used the final frame and
+                 a slow connection showed the robot already in its ending pose,
+                 so the film looked like it had been skipped. -->
             <video class="hero__film" id="film" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"
-                   width="1920" height="1080"
-                   poster="{% static 'defex/assets/defex-first-frame-v2.webp' %}?v={{ asset_v }}"
-                   data-poster-final="{% static 'defex/assets/defex-final-frame-v2.webp' %}?v={{ asset_v }}"
-                   data-fps="60" data-type='video/webm; codecs="vp9"'
-                   data-src="{% static 'defex/assets/defex-intro-scroll-v2.webm' %}?v={{ asset_v }}"></video>
+                   width="1280" height="720"
+                   poster="{% static 'defex/assets/defex-poster-v3.webp' %}?v={{ asset_v }}"
+                   data-poster-final="{% static 'defex/assets/defex-poster-final-v3.webp' %}?v={{ asset_v }}"
+                   data-fps="30" data-type="video/mp4"
+                   data-src="{% static 'defex/assets/defex-intro-v3.mp4' %}?v={{ asset_v }}"
+                   data-src-sm="{% static 'defex/assets/defex-intro-v3-sm.mp4' %}?v={{ asset_v }}"></video>
             <div class="lede">
                 <h1 class="engraved" id="hero-title">Self-teaching robots<br><span>for manufacturing.</span></h1>
             </div>
@@ -31,18 +34,59 @@
         </div>
     </section>
 
-    <section class="about" id="about" aria-labelledby="about-title">
-        <h2 class="kicker" id="about-title"><span class="kicker__dash" aria-hidden="true"></span>what we&rsquo;re building</h2>
+    <section class="about" id="problem" aria-labelledby="problem-title">
+        <h2 class="kicker" id="problem-title"><span class="kicker__dash" aria-hidden="true"></span>each new variant means more setup</h2>
         <dl class="rows">
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Assemble</dt><dd>Align and insert.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Verify</dt><dd>Force and continuity — not a photo.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Recover</dt><dd>One reset. Another attempt.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>New variant</dt><dd>A related part arrives. Alignment, insertion and fixturing get tuned again from the start.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Setup effort</dt><dd>Engineering hours go into making parts seat and join reliably, on every one of them.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Unchecked joints</dt><dd>Appearance does not show a contact that never seated. That one leaves the line.</dd></div>
+        </dl>
+    </section>
+
+    <section class="band" id="loop" aria-labelledby="loop-title">
+        <h2 class="kicker" id="loop-title"><span class="kicker__dash" aria-hidden="true"></span>the test becomes the teacher</h2>
+        <p class="band__lead">The robot attempts an assembly. A physical test scores what it just made. The recorded attempts train the next candidate skill, and a reset prepares another try. Practice runs in setup mode. Production runs a skill that was evaluated and approved on its own.</p>
+        <dl class="rows">
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Attempt</dt><dd>The robot tries the alignment and the insertion, inside bounds it is allowed to move in.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Test</dt><dd>Continuity and mechanical engagement score the joint. Force and motion are recorded.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Reset</dt><dd>The fixture returns the part to the start, so the next attempt runs without a person.</dd></div>
+        </dl>
+    </section>
+
+    <section class="band" id="first-station" aria-labelledby="station-title">
+        <h2 class="kicker" id="station-title"><span class="kicker__dash" aria-hidden="true"></span>the first workstation is connector assembly</h2>
+        <p class="band__lead">One robot. One fixtured connector family. Built for electronics and electromechanical assemblers who carry the setup cost every time a related variant arrives.</p>
+        <dl class="rows">
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Learns</dt><dd>Local alignment and insertion, on one qualified connector family.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Checks</dt><dd>Electrical connection and mechanical engagement, on every attempt.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Resets</dt><dd>The setup returns itself, ready for another practice attempt.</dd></div>
+        </dl>
+    </section>
+
+    <!-- The A1 cell is specified and not built. Saying so here is deliberate:
+         the deck carries the same caveat on every slide that mentions it. -->
+    <section class="band" id="today" aria-labelledby="today-title">
+        <h2 class="kicker" id="today-title"><span class="kicker__dash" aria-hidden="true"></span>what exists today</h2>
+        <p class="band__lead">We are early, and we would rather say so than imply otherwise.</p>
+        <dl class="rows">
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Built</dt><dd>An AI visual-inspection prototype, running. It is <a class="link" href="{% url 'where_it_started' %}">where we learned the camera is not enough</a>.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Specified</dt><dd>A1, the first assembly cell: hardware architecture and learning plan. Not built yet.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Next</dt><dd>An instrumented connector bench, then a qualified pilot on a customer&rsquo;s own parts.</dd></div>
+        </dl>
+    </section>
+
+    <section class="band" id="how-we-start" aria-labelledby="start-title">
+        <h2 class="kicker" id="start-title"><span class="kicker__dash" aria-hidden="true"></span>how a factory starts with us</h2>
+        <dl class="rows">
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Feasibility</dt><dd>A paid study on your parts. We define the application and say plainly if it is not one.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Station</dt><dd>An agreed assembly capability, delivered and commissioned against acceptance criteria.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Service</dt><dd>Diagnostics, maintenance support, and qualified recipe or software updates.</dd></div>
         </dl>
     </section>
 
     <section class="careers" id="careers" aria-labelledby="careers-title">
         <h2 class="kicker" id="careers-title"><span class="kicker__dash" aria-hidden="true"></span>build with us</h2>
-        <p class="careers__lead">A small team building a cell that assembles a part and then tests the joint it just made. If this sounds like you, we would like to talk.</p>
+        <p class="careers__lead">A small team building a cell that assembles a connector and then physically tests the joint it just made. If this sounds like you, we would like to talk.</p>
         <a class="rolecard" href="{% url 'careers' %}#content-producer">
             <span class="rolecard__id">
                 <span class="rolecard__title">Content Producer</span>
@@ -56,7 +100,7 @@
 
     <section class="contact" id="contact" aria-labelledby="contact-title">
         <h2 class="engraved" id="contact-title">Let’s talk</h2>
-        <p class="contact__lead">Tell us the part. We&rsquo;ll follow up.</p>
+        <p class="contact__lead">Tell us the connector you keep re-tuning. We&rsquo;ll follow up.</p>
         <details class="talk">
             <summary class="cta">Contact us</summary>
         <form class="form" action="{% url 'contact' %}" method="post">
@@ -67,7 +111,7 @@
                     <label class="field"><span>Company</span><input type="text" name="factory" autocomplete="organization" maxlength="200" required></label>
                 </div>
                 <label class="field"><span>Email, phone, or WeChat</span><input type="text" name="contact" autocomplete="email" maxlength="200" required></label>
-                <label class="field"><span>The part</span><textarea name="product" rows="3" maxlength="200"></textarea></label>
+                <label class="field"><span>The part and the joint</span><textarea name="product" rows="3" maxlength="200"></textarea></label>
                 <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
                 <button type="submit" class="cta">Send</button>
             </form>

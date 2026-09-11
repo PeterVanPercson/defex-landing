@@ -159,17 +159,22 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # WhiteNoise — serve from finders so it works even if collectstatic hasn't run
 WHITENOISE_USE_FINDERS = True
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-# the demo videos are already compressed — brotli/gzip on 30MB of H.264 just burns build minutes
+# the videos are already compressed; brotli/gzip on H.264 just burns build minutes
 WHITENOISE_SKIP_COMPRESS_EXTENSIONS = (
     'jpg', 'jpeg', 'png', 'gif', 'webp', 'zip', 'gz', 'tgz', 'bz2', 'tbz', 'xz', 'br',
     'swf', 'flv', 'woff', 'woff2', 'mp4', 'webm', 'm4v', 'glb',
 )
 WHITENOISE_MIMETYPES = {'.wasm': 'application/wasm'}
 
-# The hero film, poster and component under /static/defex/ are large and change
-# rarely. Cache them for a day in browsers and a year on Vercel's edge; the
-# templates append ?v=DEFEX_ASSET_VERSION, so bump it whenever a file changes.
-DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "59")
+# The templates append ?v=DEFEX_ASSET_VERSION to every asset URL, so bump this
+# whenever a file changes, AND any DEFEX_ASSET_VERSION override set in the Vercel
+# project, or the deploy silently keeps serving the old assets.
+#
+# _static_headers below no longer runs in production: vercel.json publishes
+# static/** through @vercel/static, so /static/ is answered at the edge and never
+# reaches Django. Production cache headers live in vercel.json. This hook still
+# runs under gunicorn and in the tests, and is what they assert against.
+DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "60")
 
 
 def _static_headers(headers, path, url):

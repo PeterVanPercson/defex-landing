@@ -15,8 +15,12 @@ class SiteTests(SimpleTestCase):
         # the headline and the three steps must match the deck, not the
         # superseded vision-inspection positioning they replaced
         self.assertContains(home, "Self-teaching robots")
-        for step in ("Assemble", "Verify", "Recover"):
+        # the loop is the pivot: attempt, test the joint, reset, try again
+        for step in ("Attempt", "Test", "Reset"):
             self.assertContains(home, f">{step}</dt>")
+        self.assertContains(home, "the test becomes the teacher")
+        # the first application is named, not left abstract
+        self.assertContains(home, "connector")
         # the A1 cell is unbuilt and the deck labels it PROPOSED on four
         # slides, so the page must not assert it as a shipping product
         self.assertContains(home, "building")
@@ -43,14 +47,19 @@ class SiteTests(SimpleTestCase):
         self.assertContains(origin, 'id="playpause"')
         self.assertContains(origin, "started off helping factory lines")
         self.assertContains(origin, "how we learned the camera is not enough")
-        self.assertContains(home, 'data-fps="60"')
-        self.assertContains(home, "defex-intro-scroll-v2.webm")
-        self.assertContains(home, "defex-first-frame-v2.webp")
-        self.assertNotContains(home, "defex-intro-scroll.mp4")
-        self.assertNotContains(home, "defex-intro-scroll-1080.mp4")
-        for asset in ("defex/assets/defex-intro-scroll-v2.webm",
-                      "defex/assets/defex-first-frame-v2.webp",
-                      "defex/assets/defex-final-frame-v2.webp"):
+        self.assertContains(home, 'data-fps="30"')
+        self.assertContains(home, "defex-intro-v3.mp4")
+        self.assertContains(home, "defex-poster-v3.webp")
+        # every superseded hero asset, so a revert to one of them is caught
+        for gone in ("defex-intro-scroll-v2.webm", "defex-intro-scroll.mp4",
+                     "defex-intro-scroll-1080.mp4", "defex-first-frame.webp",
+                     "defex-first-frame-v2.webp", "defex-final-frame.webp",
+                     "defex-final-frame-v2.webp"):
+            self.assertNotContains(home, gone)
+        for asset in ("defex/assets/defex-intro-v3.mp4",
+                      "defex/assets/defex-intro-v3-sm.mp4",
+                      "defex/assets/defex-poster-v3.webp",
+                      "defex/assets/defex-poster-final-v3.webp"):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
@@ -59,7 +68,7 @@ class SiteTests(SimpleTestCase):
 
     def test_hero_supports_byte_ranges(self):
         """Scroll seeking needs partial responses at both ends of the film."""
-        path = "defex/assets/defex-intro-scroll-v2.webm"
+        path = "defex/assets/defex-intro-v3.mp4"
         size = (Path(settings.BASE_DIR) / "static" / path).stat().st_size
         for start in (0, size - 1024):
             response = self.client.get(
@@ -67,11 +76,44 @@ class SiteTests(SimpleTestCase):
             )
             try:
                 self.assertEqual(response.status_code, 206)
-                self.assertEqual(response["Content-Type"], "video/webm")
+                self.assertEqual(response["Content-Type"], "video/mp4")
                 self.assertEqual(response["Content-Range"], f"bytes {start}-{start + 1023}/{size}")
                 self.assertEqual(len(b"".join(response.streaming_content)), 1024)
             finally:
                 response.close()
+
+    def test_hero_assets_stay_within_budget(self):
+        """The hero shipped at 34.5MB once, on every device, with no narrow
+        build and nothing in CI that noticed. A visitor on a phone pays for
+        this before they read a word, so it gets a number and a guard."""
+        budget = {
+            "defex-intro-v3.mp4": 9 * 1024 * 1024,
+            "defex-intro-v3-sm.mp4": 5 * 1024 * 1024,
+            "defex-poster-v3.webp": 80 * 1024,
+            "defex-poster-final-v3.webp": 80 * 1024,
+        }
+        assets = Path(settings.BASE_DIR) / "static" / "defex" / "assets"
+        for name, cap in budget.items():
+            size = (assets / name).stat().st_size
+            self.assertLessEqual(size, cap, f"{name} is {size / 1048576:.1f}MB")
+        # the phone build has to actually be smaller, or it is pointless
+        self.assertLess((assets / "defex-intro-v3-sm.mp4").stat().st_size,
+                        (assets / "defex-intro-v3.mp4").stat().st_size)
+        # nothing superseded is still sitting in the deployed tree
+        shipped = {p.name for p in assets.iterdir() if p.is_file()}
+        self.assertEqual(shipped, set(budget))
+
+    def test_share_card_is_current(self):
+        """Every page's og:image is the same file, it is what a link pastes
+        into Telegram or LinkedIn, and it stayed on the superseded 'ultra
+        inspection' positioning for months because nothing looked at it."""
+        card = Path(settings.BASE_DIR) / "static" / "img" / "og.jpg"
+        self.assertTrue(card.exists())
+        self.assertLessEqual(card.stat().st_size, 300 * 1024)
+        for path in ("/", "/where-it-started/", "/careers/"):
+            body = self.client.get(path).content.decode()
+            self.assertIn('property="og:image" content="https://defex.app/static/img/og.jpg?v=', body)
+            self.assertIn('name="twitter:image" content="https://defex.app/static/img/og.jpg?v=', body)
 
     def test_every_class_on_the_marketing_pages_is_styled(self):
         """A CSS edit that drops a rule block renders the section unstyled but

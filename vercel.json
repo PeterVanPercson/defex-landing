@@ -6,6 +6,13 @@
   ],
   "routes": [
     {
+      "src": "/static/(.*)",
+      "headers": {
+        "Cache-Control": "public, max-age=3600, s-maxage=31536000, stale-while-revalidate=86400"
+      },
+      "continue": true
+    },
+    {
       "src": "/static/defex/(.*)",
       "headers": {
         "Cache-Control": "public, max-age=86400, s-maxage=31536000, stale-while-revalidate=604800"

@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}defex — Self-teaching robots for manufacturing.{% endblock %}</title>
-    <meta name="keywords" content="{% block keywords %}self-teaching robots, robotic assembly, physical practice, force verification, factory assembly robot, connector assembly, manufacturing automation, defex{% endblock %}">
-    <meta name="description" content="{% block description %}Defex builds assembly robots that learn through physical practice — assemble, verify, recover.{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}self-teaching robots, robotic connector assembly, robot insertion, continuity testing, force verification, assembly setup reduction, factory workstation automation, manufacturing automation, defex{% endblock %}">
+    <meta name="description" content="{% block description %}Defex builds assembly robots that learn from physical tests. The robot attempts a connector assembly, a test scores the joint, and a reset starts the next try.{% endblock %}">
     <meta name="google-site-verification" content="dgatfCwRWASvUL2_glDXe0rc2x8Cnxlu_Sn27S1Y9ck">
     <link rel="canonical" href="{% block canonical %}https://defex.app/{% endblock %}">
     <meta name="theme-color" content="{% block theme_color %}#090F15{% endblock %}">
@@ -15,17 +15,17 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="defex">
     <meta property="og:title" content="{% block og_title %}defex — Self-teaching robots for manufacturing.{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}Defex builds assembly robots that learn through physical practice — assemble, verify, recover.{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Defex builds assembly robots that learn from physical tests. The robot attempts a connector assembly, a test scores the joint, and a reset starts the next try.{% endblock %}">
     <meta property="og:url" content="{% block og_url %}https://defex.app/{% endblock %}">
-    <meta property="og:image" content="https://defex.app{% static 'img/og.jpg' %}">
+    <meta property="og:image" content="https://defex.app{% static 'img/og.jpg' %}?v={{ asset_v }}">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="Defex — self-teaching robots for manufacturing">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% block twitter_title %}defex — Self-teaching robots for manufacturing.{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}Defex builds assembly robots that learn through physical practice — assemble, verify, recover.{% endblock %}">
-    <meta name="twitter:image" content="https://defex.app{% static 'img/og.jpg' %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Defex builds assembly robots that learn from physical tests. The robot attempts a connector assembly, a test scores the joint, and a reset starts the next try.{% endblock %}">
+    <meta name="twitter:image" content="https://defex.app{% static 'img/og.jpg' %}?v={{ asset_v }}">
 
     <link rel="icon" type="image/svg+xml" href="{% static 'img/defex-mark.svg' %}">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
@@ -49,7 +49,7 @@
           "url": "https://defex.app/",
           "logo": {"@type": "ImageObject", "url": "https://defex.app{% static 'img/og.jpg' %}", "width": 1200, "height": 630},
           "image": "https://defex.app{% static 'img/og.jpg' %}",
-          "description": "Defex builds self-teaching assembly robots for manufacturing. Practice, physical tests, and reliable resets in a supported factory workstation.",
+          "description": "Defex builds self-teaching assembly robots for manufacturing. The robot practises an assembly, a physical test scores the joint it just made, and a reset prepares the next attempt. First workstation: connector assembly.",
           "slogan": "Self-teaching robots for manufacturing.",
           "email": "husan@defex.app",
           "foundingDate": "2025",
@@ -64,13 +64,15 @@
           "areaServed": ["US", "UZ", "CN", "KG", "KZ"],
           "knowsAbout": [
             "self-teaching robots",
-            "robotic assembly",
+            "robotic connector assembly",
+            "robot insertion and alignment",
+            "electrical continuity testing",
+            "force and mechanical engagement testing",
             "physical practice learning",
-            "force and continuity testing",
-            "connector assembly",
+            "automated reset and retry",
+            "assembly setup reduction",
             "factory workstation automation",
             "industrial robotics",
-            "assembly verification",
             "manufacturing automation",
             "robot skill learning"
           ],

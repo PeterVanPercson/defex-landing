@@ -175,6 +175,14 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 .step-number { order: 1; font: 400 13px/1.4 var(--mono); color: var(--mute); letter-spacing: 0; }
 .rows dd { margin-top: 20px; max-width: 29ch; font-size: 15px; line-height: 1.55; color: var(--ink-soft); }
 
+/* A content band below the hero. Same container and rhythm as .careers, which
+   was the only generic band on the page when careers was the only thing under
+   the fold. Declared separately rather than by adding .careers to five more
+   sections, so the markup says what each section is. Identical values: this
+   introduces no new spacing, type or colour. */
+.band { max-width: var(--max); margin-inline: auto; padding: clamp(80px, 12vh, 130px) var(--pad) 0; }
+.band__lead { margin-top: 18px; max-width: 56ch; font: 400 13px/1.8 var(--mono); color: var(--ink-soft); }
+
 .careers { max-width: var(--max); margin-inline: auto; padding: clamp(80px, 12vh, 130px) var(--pad) 0; }
 .careers__lead { margin-top: 18px; max-width: 56ch; font: 400 13px/1.8 var(--mono); color: var(--ink-soft); }
 .rolecard { margin-top: 34px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto; align-items: center; gap: clamp(18px, 3vw, 48px); padding: 28px 14px; margin-inline: -14px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); transition: background .18s ease; }

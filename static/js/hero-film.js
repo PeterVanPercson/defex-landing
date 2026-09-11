@@ -164,12 +164,32 @@
         else film.pause();
     }
 
-    // Unsupported browsers get the new poster without a long, frozen pin.
+    // The topbar is dark while it sits on the hero and paper once past it. That
+    // is true for EVERY visitor, not only the ones who get the scrubbing film,
+    // so it is wired up here, above the early returns below. When this lived
+    // inside the film branch, a reduced-motion visitor or one whose browser
+    // could not play the file never got the .past-hero class and read the rest
+    // of the page through a dark bar sitting on the paper ground.
+    // onScroll returns immediately until the film is ready, so it is safe on
+    // the pathways that never load one.
+    // pageshow and load as well as resize: Chrome restores the scroll position
+    // on a reload and on back/forward without firing a scroll event, so a
+    // refresh partway down the page left the nav painted for the top.
+    const resync = () => { measureGeometry(); onScroll(); syncNav(); };
+    measureGeometry();
+    syncNav();
+    addEventListener('scroll', syncNav, { passive: true });
+    addEventListener('resize', resync, { passive: true });
+    addEventListener('pageshow', resync);
+    addEventListener('load', resync);
+
     // Reduced-motion visitors get the final still without downloading a film.
     if (reduced.matches) {
         if (film.dataset.posterFinal) film.poster = film.dataset.posterFinal;
         return;
     }
+    // The film is H.264 in MP4, which every current browser decodes, so this
+    // gate should never fire. It stays as the guard for whatever ships next.
     if (film.dataset.type && !film.canPlayType(film.dataset.type)) return;
 
     // An optional smaller source must be the same film, duration and frame rate.
@@ -178,23 +198,16 @@
     if (!wide) return;
     film.src = (small && Math.min(innerWidth, innerHeight) <= 820) ? small : wide;
 
-    if (!reduced.matches) {
-        document.documentElement.classList.add('has-scroll-film');
-        measureGeometry();
-        measureRefresh();
-        addEventListener('scroll', onScroll, { passive: true });
-        addEventListener('scroll', syncNav, { passive: true });
-        addEventListener('resize', () => { measureGeometry(); onScroll(); syncNav(); }, { passive: true });
-        // Also on pageshow and load: Chrome restores the scroll position on a
-        // reload and on back/forward without firing a scroll event, so a
-        // refresh partway down the page left the nav painted for the top.
-        addEventListener('pageshow', () => { measureGeometry(); onScroll(); syncNav(); });
-        addEventListener('load', () => { measureGeometry(); onScroll(); syncNav(); });
-        addEventListener('touchstart', unlock, { once: true, passive: true });
-        addEventListener('pointerdown', unlock, { once: true });
-        onScroll();
-        syncNav();
-    }
+    // .hero only becomes 560svh now, so every cached measurement is stale.
+    document.documentElement.classList.add('has-scroll-film');
+    measureGeometry();
+    measureRefresh();
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('touchstart', unlock, { once: true, passive: true });
+    addEventListener('pointerdown', unlock, { once: true });
+    onScroll();
+    syncNav();
+
     reduced.addEventListener('change', (event) => {
         if (!event.matches) return;
         document.documentElement.classList.remove('has-scroll-film');
