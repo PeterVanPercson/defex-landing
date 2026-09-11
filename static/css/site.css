@@ -22,7 +22,7 @@
     --serif: ui-serif, "Iowan Old Style", "Source Serif 4", Palatino, Georgia, serif;
     --pad: clamp(16px, 3vw, 32px);
     --hero-gap: clamp(18px, 3.5vh, 40px);
-    --lede-space: clamp(150px, 26vh, 280px);
+    --lede-space: clamp(96px, 19vh, 180px);
     --max: 1200px;
     --radius: 20px;
     --nav: 64px;
@@ -173,35 +173,13 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 /* Hero support: the one line that says what the machine does, and the ask.
    These also fill the dead space under the headline on a phone, which is what
    made that screen read as half empty. */
-.lede__note { margin-top: 14px; font: 400 12px/1.6 var(--mono); color: var(--mute); }
-.lede__row { margin-top: 20px; display: flex; align-items: center; gap: clamp(18px, 3vw, 40px); flex-wrap: wrap; }
-.lede__sub { max-width: 40ch; font: 400 15px/1.6 var(--font); color: var(--ink-soft); }
-
 /* One sentence, large, with air around it. The page needs a moment that is
    not a three-column list. */
 .statement { max-width: var(--max); margin-inline: auto; padding: calc(28px + var(--hero-fade)) var(--pad) 0; }
-.statement h2 { max-width: 15ch; font-family: var(--serif); font-size: clamp(32px, 4.6vw, 56px); font-weight: 400; line-height: 1.06; letter-spacing: -.01em; color: var(--ink); }
+.statement h2 { max-width: 15ch; font-family: var(--serif); font-size: clamp(32px, 4.6vw, 56px); font-weight: 400; line-height: 1.06; letter-spacing: -.01em; }
 .statement__lead { margin-top: 26px; max-width: 50ch; font: 400 15px/1.75 var(--font); color: var(--ink-soft); }
 
 /* trailing note under a row band */
-/* height:auto or the width/height attributes win and the picture renders at
-   its full 1117px intrinsic height. The attributes stay, for layout stability
-   before the file loads. */
-.rows__media { display: block; width: 100%; height: auto; aspect-ratio: 900 / 1117; object-fit: cover; margin-bottom: 24px; background: var(--surface); }
-
-/* One step per band, image on the alternate side. The renders are macro shots:
-   in a three-up grid each one was 355px wide and the connector inside it was
-   about 90px, which threw away the only detail that made them worth having. */
-.step { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: clamp(24px, 5vw, 80px); max-width: var(--max); margin-inline: auto; padding: clamp(22px, 4vh, 52px) var(--pad); }
-.step__fig { margin: 0; }
-.step__fig img { display: block; width: 100%; height: auto; }
-.step__n { font: 400 13px/1.4 var(--mono); color: var(--mute); }
-.step__t { margin-top: 10px; font-size: clamp(27px, 3.2vw, 42px); font-weight: 600; letter-spacing: -.035em; line-height: 1.05; }
-.step__d { margin-top: 16px; max-width: 34ch; font: 400 15px/1.7 var(--font); color: var(--ink-soft); }
-.step--flip .step__fig { grid-column: 1; grid-row: 1; }
-.step--flip .step__body { grid-column: 2; grid-row: 1; }
-/* the kicker sits on its own above the three bands */
-.band--head { padding-bottom: 0; }
 
 .band__note { margin-top: 32px; font: 400 13px/1.7 var(--mono); color: var(--mute); }
 
@@ -395,12 +373,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
     .rows { grid-template-columns: 1fr; gap: 26px; margin-top: 28px; }
     .rows__row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 24px; padding-top: 22px; }
     /* the row is a two-column grid on a phone; the picture spans both */
-    .rows__media { grid-column: 1 / -1; margin-bottom: 4px; }
-    /* picture first, words under it */
-    .step { grid-template-columns: 1fr; gap: 18px; padding-block: 24px; }
-    .step__fig, .step--flip .step__fig { grid-column: 1; grid-row: 1; }
-    .step__body, .step--flip .step__body { grid-column: 1; grid-row: 2; }
-    .step__d { max-width: none; }
     .rows dt { display: block; font-size: 21px; }
     .step-number { display: block; margin-bottom: 14px; }
     .rows dd { margin-top: 26px; font-size: 15px; }

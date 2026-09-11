@@ -17,25 +17,21 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, "Self-teaching robots")
         # the loop is the pivot: attempt, test the joint, reset, try again
         for step in ("Attempt", "Test", "Reset"):
-            self.assertContains(home, f'class="step__t">{step}</h3>')
+            self.assertContains(home, f">{step}</dt>")
         self.assertContains(home, "the test becomes the teacher")
         # the hero has to say what the machine does and ask for something
-        self.assertContains(home, 'class="lede__sub"')
         self.assertContains(home, 'href="#contact"')
         # the contact form is open, never behind a disclosure again
         self.assertNotContains(home, "<details")
         self.assertContains(home, 'name="factory"')
         # the offer is stated before the form asks for anything
         self.assertContains(home, "paid feasibility study")
-        self.assertContains(home, "Book a parts study")
+        # the hero is the headline and the film, nothing else competing with it
+        self.assertNotContains(home, "lede__sub")
         # practice and production are distinct, and nothing promises monotonic
         # improvement: "the next one is better" was a claim nothing supports
         self.assertContains(home, "practice and production stay separate")
         self.assertNotContains(home, "The next one is better")
-        # the loop is shown, not only described
-        for step in ("attempt", "test", "reset"):
-            self.assertContains(home, f"loop-{step}.webp")
-        self.assertNotContains(home, 'class="rows__media" src="" ')
         # the first application is named, not left abstract
         self.assertContains(home, "connector")
         # the A1 cell is unbuilt and the deck labels it PROPOSED on four
@@ -142,9 +138,6 @@ class SiteTests(SimpleTestCase):
             "defex-intro-v4-sm.mp4": 8 * 1024 * 1024,
             "defex-poster-v4.webp": 90 * 1024,
             "defex-poster-final-v4.webp": 90 * 1024,
-            "loop-attempt.webp": 200 * 1024,
-            "loop-test.webp": 200 * 1024,
-            "loop-reset.webp": 200 * 1024,
         }
         assets = Path(settings.BASE_DIR) / "static" / "defex" / "assets"
         for name, cap in budget.items():
