@@ -48,7 +48,7 @@
     // Geometry is cached. Reading offsetHeight or getBoundingClientRect inside the
     // scroll and wheel handlers forces a synchronous layout on every event, and a
     // trackpad fires around a hundred a second. Measure on resize instead.
-    let heroTop = 0, scrubSpan = 0, navFlipAt = 0;
+    let heroTop = 0, scrubSpan = 0, navFlipAt = 0, navDarkAgainAt = Infinity;
     function measureGeometry() {
         heroTop = hero.offsetTop;
         scrubSpan = hero.offsetHeight - sticky.offsetHeight;
@@ -62,11 +62,18 @@
         const nav = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav')) || 64;
         const fade = parseFloat(getComputedStyle(hero, '::after').height) || 0;
         navFlipAt = heroTop + hero.offsetHeight + fade * .75 - nav;
+        // The page ends on the dark again, so the bar has to flip back or a
+        // paper bar floats over the closing block. Same three-quarter rule,
+        // measured from the top of that block's own dissolve.
+        const close = document.querySelector('.contact.dark');
+        if (!close) { navDarkAgainAt = Infinity; return; }
+        const closeFade = parseFloat(getComputedStyle(close, '::before').height) || 0;
+        navDarkAgainAt = close.offsetTop - closeFade * .25 - nav;
     }
 
     let navPast = null;
     function syncNav() {
-        const past = scrollY > navFlipAt;
+        const past = scrollY > navFlipAt && scrollY < navDarkAgainAt;
         if (past === navPast) return;
         navPast = past;
         document.documentElement.classList.toggle('past-hero', past);
