@@ -11,43 +11,68 @@ a visitor had scrolled far enough to see it.
 
 | Path | What |
 |---|---|
-| `static/defex/assets/defex-intro-v3.mp4` | 1280×720, 30 fps, H.264 High in MP4, silent, 15 s, 450 frames, **every frame a keyframe**, 7.3 MB |
-| `static/defex/assets/defex-intro-v3-sm.mp4` | The same film at 854×480, 4.1 MB. Goes to anything whose short side is 820px or less |
-| `static/defex/assets/defex-poster-v3.webp` | Frame 0 of the film: the poster, and the fallback wherever the film cannot play |
-| `static/defex/assets/defex-poster-final-v3.webp` | The last frame. Swapped in as the poster for reduced-motion visitors, who download no film at all |
+| `static/defex/assets/defex-intro-v4.mp4` | 1920×1080, 60 fps, H.264 High in MP4, silent, 15 s, 900 frames, **GOP 12**, 12.4 MB |
+| `static/defex/assets/defex-intro-v4-sm.mp4` | The same film at 1440×810, 7.0 MB. Goes to anything whose short side is 820px or less |
+| `static/defex/assets/defex-poster-v4.webp` | Frame 0 of the film: the poster, and the fallback wherever the film cannot play |
+| `static/defex/assets/defex-poster-final-v4.webp` | The last frame. Swapped in as the poster for reduced-motion visitors, who download no film at all |
 | `static/js/hero-film.js` | Scroll-to-frame mapping |
 
-### Sizing
+Encode from the master at `~/Downloads/defex-intro.mp4` (1920×1080, 60 fps, sparse
+GOP, 9.5 MB), never from a shipped file. Everything under `static/` is a
+generation down from it.
 
-The predecessor was 1920×1080 60 fps VP9 in WebM at **34.5 MB**, with no narrow
-build, so a phone on mobile data paid 34.5 MB before reading a word. Three things
-came out of that:
+### Sizing, and why it is not all-intra any more
 
-- **Resolution.** `.has-scroll-film .hero__film` resolves to about 1180 CSS px
-  wide on a 900px-tall desktop viewport, so 1920 was never displayed. 1280 covers
-  it at 1× and is close enough at 2×.
-- **Frame rate.** The scrub is driven by scroll, not by time. 30 fps over the
-  560svh of travel is roughly 8px of scroll per frame, below what anyone resolves
-  while scrolling, and it halves the frame count.
-- **Codec.** Every frame is a keyframe, so the file is nothing but stills and the
-  codec's temporal compression never applies. That also means a near-static shot
-  costs full price per frame: seconds 7 to 12 of this film barely move and are the
-  most expensive part of it. If the film is ever re-cut, shortening that hold is
-  the cheapest megabyte available.
+The predecessor was 1920×1080 60 fps VP9, all-intra, at **34.5 MB**, with no
+narrow build. The reasoning recorded here was that the scrub is nothing but
+seeks, so every frame had to be a keyframe. That was tested against only one
+alternative: an encode with 8 keyframes in 900 frames, whose seeks took 244 ms.
+Nothing in between was ever measured, and the middle is where this lives.
 
-`landing/tests.py::test_hero_assets_stay_within_budget` fails the build if these
-grow past 9 MB and 5 MB.
+Measured on this footage, against the master, at a fixed CRF:
 
-### Why every frame is a keyframe
+| Encode | SSIM vs master | Size |
+|---|---|---|
+| VP9 1080p60 all-intra (what shipped) | 0.99557 | 32.9 MB |
+| H.264 1080p60 all-intra | 0.99484 | 31.6 MB |
+| H.264 1080p60 GOP 4 | 0.99566 | 16.1 MB |
+| **H.264 1080p60 GOP 12 (shipped)** | **0.99584** | **12.4 MB** |
+| H.264 720p30 all-intra | 0.99043 | 7.3 MB |
 
-The scrub is nothing but seeks. On a sparse-GOP file each seek decodes forward
-from the previous keyframe; on an all-intra file it decodes one frame. Measured
-on the previous encode of this footage, a GOP-1 seek took 29 ms and a sparse-GOP
-encode of the same film took 244 ms. The size is the price of that.
+A moderate GOP is not a quality compromise. It scores *higher* than all-intra at
+the same CRF, because the bits all-intra spends re-encoding a near-static shot
+buy nothing, and it is a third of the size. Dropping resolution or frame rate,
+by contrast, is a real and visible loss: the 720p30 row is the worst of the set
+and it is the one a Retina display exposes, because the film renders at about
+1180 CSS px, which is 2360 device px at 2×.
 
-`data-fps` on the video element must match the file (30). The scrub seeks to
+Seeking was then A/B tested on the real page in Chrome, sweeping the hero slowly
+and with a hard flick, comparing the shipped GOP 12 file against the same film
+all-intra:
+
+| | GOP 12 | all-intra |
+|---|---|---|
+| Median lag behind the scroll | 0.053 s | 0.053 s |
+| Worst lag | 0.093 s | 0.093 s |
+| Frames dropped | 0 | 0 |
+
+Identical. The residual lag is the `EASE` smoothing in `hero-film.js`, not the
+decoder. GOP 12 decodes more frames per seek (3447 against 1458 over the same
+sweep) and it costs nothing measurable.
+
+So: **hold 1920×1080 and 60 fps, and buy the size back from the GOP.** If the
+film ever needs to be smaller again, raise the GOP or re-cut the near-static
+hold at seconds 7 to 12. Do not drop the resolution or the frame rate.
+
+`landing/tests.py::test_hero_assets_stay_within_budget` caps these at 14 MB and
+8 MB.
+
+### Frame rate
+
+`data-fps` on the video element must match the file (60). The scrub seeks to
 multiples of `1/FPS`; a value below the file's real rate lands between frames and
-most of them never render. `hero-film.js` seeks to `(frame + .5) / FPS` because
+most of them never render. At 60 fps over the 560svh of travel the scrub advances
+a frame roughly every 4px of scroll, which is what keeps a slow drag smooth. `hero-film.js` seeks to `(frame + .5) / FPS` because
 container timestamps round, and an exact frame boundary can land on the frame
 before. The scrub ends at `duration - 1/FPS`, which is the final-frame hold, not
 a bug.
@@ -55,17 +80,18 @@ a bug.
 ### Re-encoding
 
 ```bash
-SRC=<the master>
-ffmpeg -i "$SRC" -vf "fps=30,scale=1280:720:flags=lanczos" \
-  -c:v libx264 -profile:v high -pix_fmt yuv420p -g 1 -bf 0 -crf 25 -preset slow \
-  -movflags +faststart -an static/defex/assets/defex-intro-v3.mp4
-ffmpeg -i "$SRC" -vf "fps=30,scale=854:480:flags=lanczos" \
-  -c:v libx264 -profile:v high -pix_fmt yuv420p -g 1 -bf 0 -crf 25 -preset slow \
-  -movflags +faststart -an static/defex/assets/defex-intro-v3-sm.mp4
+SRC=~/Downloads/defex-intro.mp4
+ffmpeg -i "$SRC" -c:v libx264 -profile:v high -pix_fmt yuv420p \
+  -x264-params "keyint=12:min-keyint=12:scenecut=0:bframes=0" -crf 19 -preset veryslow \
+  -movflags +faststart -an static/defex/assets/defex-intro-v4.mp4
+ffmpeg -i "$SRC" -vf "scale=1440:810:flags=lanczos" -c:v libx264 -profile:v high -pix_fmt yuv420p \
+  -x264-params "keyint=12:min-keyint=12:scenecut=0:bframes=0" -crf 20 -preset veryslow \
+  -movflags +faststart -an static/defex/assets/defex-intro-v4-sm.mp4
 ```
 
-`-g 1 -bf 0` is what makes every frame a keyframe. Drop either and the scrub
-stutters on seeks.
+`bframes=0` matters: B-frames are decoded out of order and a seek has to resolve
+them, which is exactly the cost the scrub cannot pay. `keyint` is the dial for
+size. `scenecut=0` keeps the interval fixed so the worst-case seek is bounded.
 
 ### Posters
 
@@ -75,10 +101,10 @@ the film had already finished. Regenerate both from the **shipped** file, not th
 master, so the poster and the first painted frame are the same pixels:
 
 ```bash
-ffmpeg -i static/defex/assets/defex-intro-v3.mp4 -vf "select=eq(n\,0)" -vframes 1 f0.png
-ffmpeg -sseof -0.1 -i static/defex/assets/defex-intro-v3.mp4 -update 1 -vframes 1 f1.png
-cwebp -q 86 f0.png -o static/defex/assets/defex-poster-v3.webp
-cwebp -q 86 f1.png -o static/defex/assets/defex-poster-final-v3.webp
+ffmpeg -i static/defex/assets/defex-intro-v4.mp4 -vf "select=eq(n\,0)" -vframes 1 f0.png
+ffmpeg -sseof -0.1 -i static/defex/assets/defex-intro-v4.mp4 -update 1 -vframes 1 f1.png
+cwebp -q 90 f0.png -o static/defex/assets/defex-poster-v4.webp
+cwebp -q 90 f1.png -o static/defex/assets/defex-poster-final-v4.webp
 ```
 
 (Homebrew's ffmpeg is built without a WebP encoder, hence the two steps.)

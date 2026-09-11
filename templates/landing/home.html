@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="preload" as="image" href="{% static 'defex/assets/defex-poster-v3.webp' %}?v={{ asset_v }}">
+<link rel="preload" as="image" href="{% static 'defex/assets/defex-poster-v4.webp' %}?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
@@ -15,18 +15,19 @@
          seconds is visible however fast you move. It never plays on its own. -->
     <section class="hero" id="top" aria-labelledby="hero-title">
         <div class="hero__sticky">
-            <!-- H.264 in MP4, which every browser decodes, so there is no
-                 codec fallback path to keep. The poster is the film's FIRST
-                 frame, not its last: an earlier build used the final frame and
-                 a slow connection showed the robot already in its ending pose,
-                 so the film looked like it had been skipped. -->
+            <!-- Full 1920x1080 at 60fps, H.264 in MP4, which every browser
+                 decodes, so there is no codec fallback path to keep. The poster
+                 is the film's FIRST frame, not its last: an earlier build used
+                 the final frame and a slow connection showed the robot already
+                 in its ending pose, so the film looked like it had been
+                 skipped. -->
             <video class="hero__film" id="film" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"
-                   width="1280" height="720"
-                   poster="{% static 'defex/assets/defex-poster-v3.webp' %}?v={{ asset_v }}"
-                   data-poster-final="{% static 'defex/assets/defex-poster-final-v3.webp' %}?v={{ asset_v }}"
-                   data-fps="30" data-type="video/mp4"
-                   data-src="{% static 'defex/assets/defex-intro-v3.mp4' %}?v={{ asset_v }}"
-                   data-src-sm="{% static 'defex/assets/defex-intro-v3-sm.mp4' %}?v={{ asset_v }}"></video>
+                   width="1920" height="1080"
+                   poster="{% static 'defex/assets/defex-poster-v4.webp' %}?v={{ asset_v }}"
+                   data-poster-final="{% static 'defex/assets/defex-poster-final-v4.webp' %}?v={{ asset_v }}"
+                   data-fps="60" data-type="video/mp4"
+                   data-src="{% static 'defex/assets/defex-intro-v4.mp4' %}?v={{ asset_v }}"
+                   data-src-sm="{% static 'defex/assets/defex-intro-v4-sm.mp4' %}?v={{ asset_v }}"></video>
             <div class="lede">
                 <h1 class="engraved" id="hero-title">Self-teaching robots<br><span>for manufacturing.</span></h1>
             </div>

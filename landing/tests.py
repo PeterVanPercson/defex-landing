@@ -47,19 +47,20 @@ class SiteTests(SimpleTestCase):
         self.assertContains(origin, 'id="playpause"')
         self.assertContains(origin, "started off helping factory lines")
         self.assertContains(origin, "how we learned the camera is not enough")
-        self.assertContains(home, 'data-fps="30"')
-        self.assertContains(home, "defex-intro-v3.mp4")
-        self.assertContains(home, "defex-poster-v3.webp")
+        self.assertContains(home, 'data-fps="60"')
+        self.assertContains(home, "defex-intro-v4.mp4")
+        self.assertContains(home, "defex-poster-v4.webp")
         # every superseded hero asset, so a revert to one of them is caught
         for gone in ("defex-intro-scroll-v2.webm", "defex-intro-scroll.mp4",
                      "defex-intro-scroll-1080.mp4", "defex-first-frame.webp",
                      "defex-first-frame-v2.webp", "defex-final-frame.webp",
-                     "defex-final-frame-v2.webp"):
+                     "defex-final-frame-v2.webp", "defex-intro-v3.mp4",
+                     "defex-poster-v3.webp"):
             self.assertNotContains(home, gone)
-        for asset in ("defex/assets/defex-intro-v3.mp4",
-                      "defex/assets/defex-intro-v3-sm.mp4",
-                      "defex/assets/defex-poster-v3.webp",
-                      "defex/assets/defex-poster-final-v3.webp"):
+        for asset in ("defex/assets/defex-intro-v4.mp4",
+                      "defex/assets/defex-intro-v4-sm.mp4",
+                      "defex/assets/defex-poster-v4.webp",
+                      "defex/assets/defex-poster-final-v4.webp"):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
@@ -68,7 +69,7 @@ class SiteTests(SimpleTestCase):
 
     def test_hero_supports_byte_ranges(self):
         """Scroll seeking needs partial responses at both ends of the film."""
-        path = "defex/assets/defex-intro-v3.mp4"
+        path = "defex/assets/defex-intro-v4.mp4"
         size = (Path(settings.BASE_DIR) / "static" / path).stat().st_size
         for start in (0, size - 1024):
             response = self.client.get(
@@ -85,20 +86,22 @@ class SiteTests(SimpleTestCase):
     def test_hero_assets_stay_within_budget(self):
         """The hero shipped at 34.5MB once, on every device, with no narrow
         build and nothing in CI that noticed. A visitor on a phone pays for
-        this before they read a word, so it gets a number and a guard."""
+        this before they read a word, so it gets a number and a guard. The cap
+        is generous on purpose: the film stays 1920x1080 at 60fps, and the way
+        to stay under it is the GOP, not the resolution or the frame rate."""
         budget = {
-            "defex-intro-v3.mp4": 9 * 1024 * 1024,
-            "defex-intro-v3-sm.mp4": 5 * 1024 * 1024,
-            "defex-poster-v3.webp": 80 * 1024,
-            "defex-poster-final-v3.webp": 80 * 1024,
+            "defex-intro-v4.mp4": 14 * 1024 * 1024,
+            "defex-intro-v4-sm.mp4": 8 * 1024 * 1024,
+            "defex-poster-v4.webp": 90 * 1024,
+            "defex-poster-final-v4.webp": 90 * 1024,
         }
         assets = Path(settings.BASE_DIR) / "static" / "defex" / "assets"
         for name, cap in budget.items():
             size = (assets / name).stat().st_size
             self.assertLessEqual(size, cap, f"{name} is {size / 1048576:.1f}MB")
         # the phone build has to actually be smaller, or it is pointless
-        self.assertLess((assets / "defex-intro-v3-sm.mp4").stat().st_size,
-                        (assets / "defex-intro-v3.mp4").stat().st_size)
+        self.assertLess((assets / "defex-intro-v4-sm.mp4").stat().st_size,
+                        (assets / "defex-intro-v4.mp4").stat().st_size)
         # nothing superseded is still sitting in the deployed tree
         shipped = {p.name for p in assets.iterdir() if p.is_file()}
         self.assertEqual(shipped, set(budget))
