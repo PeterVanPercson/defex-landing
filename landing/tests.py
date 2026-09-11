@@ -14,7 +14,7 @@ class SiteTests(SimpleTestCase):
         home = self.client.get("/")
         # the headline and the three steps must match the deck, not the
         # superseded vision-inspection positioning they replaced
-        self.assertContains(home, "Robots that assemble parts")
+        self.assertContains(home, "Self-teaching robots")
         for step in ("Assemble", "Verify", "Recover"):
             self.assertContains(home, f">{step}</dt>")
         # the A1 cell is unbuilt and the deck labels it PROPOSED on four
