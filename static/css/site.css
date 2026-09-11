@@ -310,7 +310,12 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
        title is gone, and 63% pushed the robot visibly left of centre on the
        opening and closing shots, which are the two most-seen frames. */
     .has-scroll-film .hero__film { width: 100%; margin-left: 0; aspect-ratio: 5 / 4; object-fit: cover; object-position: 50% center; }
-    .has-scroll-film .hero__sticky { align-content: start; padding-top: 4vh; }
+    /* Centred, not top-aligned. A 16:9 film is only 312px tall on a 390x844
+       phone, so film plus headline is about 500px of an 788px box. Pinned to
+       the top, the remaining 343px all pooled into one black void under the
+       headline and the screen read as half-empty. Centred it splits into
+       154px above and 188px below and the composition reads as framed. */
+    .has-scroll-film .hero__sticky { align-content: center; }
 }
 
 @media (max-width: 900px) {
