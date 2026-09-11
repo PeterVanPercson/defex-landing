@@ -102,12 +102,12 @@ def submission_email(data: dict, request) -> tuple[str, str]:
     product = data.get("product", "")
     ip = client_ip(request)
 
-    subject = f"defex · pilot request — {name} ({factory})"
+    subject = f"defex · parts study request — {name} ({factory})"
     rows = [
         ("Name", name),
-        ("Factory", factory),
-        ("Email / WeChat", contact),
-        ("Makes", product),
+        ("Company", factory),
+        ("Contact", contact),
+        ("Part / joint", product),
         ("IP", ip or "—"),
     ]
     body = "".join(

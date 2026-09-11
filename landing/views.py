@@ -19,6 +19,34 @@ log = logging.getLogger(__name__)
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
+# This deployment has no database: sqlite is not writable on Vercel and nothing
+# else is wired up. So a notification that fails is an enquiry that is gone.
+# Until there is somewhere durable to put it, the submission goes to the log at
+# ERROR, where Vercel keeps it and it can be read back by hand. What must never
+# happen is the visitor being told it worked.
+LOST_MESSAGE = ("That did not send. Please email husan@defex.app directly "
+                "and we will pick it up from there.")
+
+CONTACT_LABELS = {"name": "name", "factory": "company",
+                  "contact": "email, phone or WeChat", "product": "the part"}
+APPLICATION_LABELS = {"name": "name", "email": "email", "role": "role",
+                      "work": "work link", "profile": "profile link", "note": "note"}
+
+
+def _log_lost(kind: str, data: dict, detail: str) -> None:
+    log.error("%s notification FAILED (%s). Submission was: %s",
+              kind, detail, json.dumps(data, default=str, ensure_ascii=False))
+
+
+def _what_to_fix(form, labels: dict) -> str:
+    """Name the fields that failed. A generic 'something looked off' makes the
+    visitor re-read the whole form to find the one field they missed."""
+    if form.is_bound and form.errors:
+        named = [labels.get(f, f) for f in form.errors if f != "website"]
+        if named:
+            return "Check " + ", ".join(named) + ", then send it again."
+    return "Something looked off. Try again, or email husan@defex.app directly."
+
 
 def home(request):
     return render(request, "landing/home.html", {"form": ContactForm(), "asset_v": settings.DEFEX_ASSET_VERSION})
@@ -37,10 +65,14 @@ def apply(request):
     form = ApplicationForm(request.POST)
     if form.is_valid() and not form.is_spam():
         subject, html = application_email(form.cleaned_data, request)
-        send(subject, html)
-        messages.success(request, "Got it. We read every one and reply to the ones we can move on.")
+        ok, detail = send(subject, html)
+        if ok:
+            messages.success(request, "Got it. We read every one and reply to the ones we can move on.")
+        else:
+            _log_lost("application", form.cleaned_data, detail)
+            messages.error(request, LOST_MESSAGE)
     else:
-        messages.error(request, "Something was missing. Check the links and try again.")
+        messages.error(request, _what_to_fix(form, APPLICATION_LABELS))
     return redirect(reverse("careers") + "#application")
 
 
@@ -103,23 +135,22 @@ def contact(request):
         data = form.cleaned_data
         # Admin notification → NOTIFY_TO (safe: only ever emails the owner).
         subject, html = submission_email(data, request)
-        send(subject, html)
+        ok, detail = send(subject, html)
         # Autoresponder → the address the visitor typed. This emails an
         # arbitrary third party, so it's the spam-amplification surface.
         # AUTORESPONDER=0 in the env kills it instantly with no redeploy —
         # flip it the moment abuse shows up, until a captcha is wired.
-        contact_field = (data.get("contact") or "").strip()
-        if settings.AUTORESPONDER and EMAIL_RE.match(contact_field):
-            a_subject, a_html = autoresponder_email(data.get("name", ""), data.get("factory", ""))
-            send_to(
-                contact_field,
-                a_subject,
-                a_html,
-                from_addr="Husan Mavlonov <husan@buildcored.com>",
-            )
-        messages.success(request, "Got it — we'll reply within one working day.")
+        if not ok:
+            _log_lost("contact", data, detail)
+            messages.error(request, LOST_MESSAGE)
+        else:
+            contact_field = (data.get("contact") or "").strip()
+            if settings.AUTORESPONDER and EMAIL_RE.match(contact_field):
+                a_subject, a_html = autoresponder_email(data.get("name", ""), data.get("factory", ""))
+                send_to(contact_field, a_subject, a_html, from_addr=settings.AUTORESPONDER_FROM)
+            messages.success(request, "Got it. We reply within one working day.")
     else:
-        messages.error(request, "Something looked off. Try again, or email us directly.")
+        messages.error(request, _what_to_fix(form, CONTACT_LABELS))
     referer = request.META.get("HTTP_REFERER", "/")
     return redirect(referer.split("#")[0] + "#contact")
 

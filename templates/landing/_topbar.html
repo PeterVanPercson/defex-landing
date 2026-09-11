@@ -6,6 +6,7 @@
     <nav class="topbar__end">
         <a href="{% url 'where_it_started' %}" class="navlink"{% if page == 'origin' %} aria-current="page"{% endif %}>Where it started</a>
         <a href="{% url 'careers' %}" class="navlink"{% if page == 'careers' %} aria-current="page"{% endif %}>Careers</a>
-        <a href="{% if page == 'origin' %}/#contact{% else %}#contact{% endif %}" class="pill">Get in touch</a>
+        {# only the home page has a #contact section; every other page has to go home for it #}
+        <a href="{% if page %}/#contact{% else %}#contact{% endif %}" class="pill">Get in touch</a>
     </nav>
 </header>

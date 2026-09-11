@@ -17,7 +17,7 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, "Self-teaching robots")
         # the loop is the pivot: attempt, test the joint, reset, try again
         for step in ("Attempt", "Test", "Reset"):
-            self.assertContains(home, f">{step}</dt>")
+            self.assertContains(home, f'class="step__t">{step}</h3>')
         self.assertContains(home, "the test becomes the teacher")
         # the hero has to say what the machine does and ask for something
         self.assertContains(home, 'class="lede__sub"')
@@ -25,6 +25,13 @@ class SiteTests(SimpleTestCase):
         # the contact form is open, never behind a disclosure again
         self.assertNotContains(home, "<details")
         self.assertContains(home, 'name="factory"')
+        # the offer is stated before the form asks for anything
+        self.assertContains(home, "paid feasibility study")
+        self.assertContains(home, "Book a parts study")
+        # practice and production are distinct, and nothing promises monotonic
+        # improvement: "the next one is better" was a claim nothing supports
+        self.assertContains(home, "practice and production stay separate")
+        self.assertNotContains(home, "The next one is better")
         # the loop is shown, not only described
         for step in ("attempt", "test", "reset"):
             self.assertContains(home, f"loop-{step}.webp")
@@ -92,6 +99,37 @@ class SiteTests(SimpleTestCase):
                 self.assertEqual(len(b"".join(response.streaming_content)), 1024)
             finally:
                 response.close()
+
+    def test_contact_never_reports_success_when_the_email_failed(self):
+        """There is no database here, so a dropped notification is a lost
+        enquiry. Telling the visitor it worked is the worst possible outcome:
+        they stop chasing and nobody ever sees it."""
+        from unittest.mock import patch
+        payload = {"name": "A Buyer", "factory": "A Factory",
+                   "contact": "buyer@example.com", "product": "12-pin connector"}
+        with patch("landing.views.send", return_value=(False, "resend 500")) as sent:
+            with self.assertLogs("landing.views", level="ERROR") as logged:
+                response = self.client.post("/contact/", payload, follow=True)
+            self.assertTrue(sent.called)
+        body = response.content.decode()
+        self.assertNotIn("We reply within one working day", body)
+        self.assertIn("did not send", body)
+        # and the submission itself is in the log, so it is recoverable by hand
+        self.assertIn("A Factory", "".join(logged.output))
+
+        with patch("landing.views.send", return_value=(True, "sent")):
+            response = self.client.post("/contact/", payload, follow=True)
+        self.assertIn("We reply within one working day", response.content.decode())
+
+    def test_every_page_can_reach_the_contact_form(self):
+        """The nav button rendered #contact on /careers/, where there is no
+        contact section, so it went nowhere."""
+        for path in ("/careers/", "/where-it-started/"):
+            body = self.client.get(path).content.decode()
+            header = body.split("<header", 1)[1].split("</header>", 1)[0]
+            self.assertIn('href="/#contact"', header, path)
+        home_header = self.client.get("/").content.decode().split("<header", 1)[1].split("</header>", 1)[0]
+        self.assertIn('href="#contact"', home_header)
 
     def test_hero_assets_stay_within_budget(self):
         """The hero shipped at 34.5MB once, on every device, with no narrow

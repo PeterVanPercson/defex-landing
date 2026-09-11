@@ -11,19 +11,9 @@
 {% include "landing/_topbar.html" %}
 
 <main>
-    <!-- The film is pinned and advances with the scroll, so the whole fifteen
-         seconds is visible however fast you move. It never plays on its own.
-         The subline and the button live in the space under the headline, which
-         used to be empty: the hero now says what the machine does and asks for
-         something, instead of only looking good. -->
+    <!-- The film is pinned and advances with the scroll. It never plays on its own. -->
     <section class="hero" id="top" aria-labelledby="hero-title">
         <div class="hero__sticky">
-            <!-- Full 1920x1080 at 60fps, H.264 in MP4, which every browser
-                 decodes, so there is no codec fallback path to keep. The poster
-                 is the film's FIRST frame, not its last: an earlier build used
-                 the final frame and a slow connection showed the robot already
-                 in its ending pose, so the film looked like it had been
-                 skipped. -->
             <video class="hero__film" id="film" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"
                    width="1920" height="1080"
                    poster="{% static 'defex/assets/defex-poster-v4.webp' %}?v={{ asset_v }}"
@@ -34,43 +24,76 @@
             <div class="lede">
                 <h1 class="engraved" id="hero-title">Self-teaching robots<br><span>for manufacturing.</span></h1>
                 <div class="lede__row">
-                    <p class="lede__sub">It assembles your part, physically tests the joint it just made, and learns from what the test says.</p>
-                    <a class="pill pill--wide" href="#contact">Send us your part</a>
+                    <p class="lede__sub">It assembles your connector, tests the joint it just made, and learns from the result. First workstation: connector assembly.</p>
+                    <a class="pill pill--wide" href="#contact">Book a parts study</a>
                 </div>
+                <p class="lede__note">A paid study on your parts. We tell you plainly if it is not a fit.</p>
             </div>
             <p class="scroll-cue" aria-hidden="true">Scroll <span>&#8595;</span></p>
         </div>
     </section>
 
     <section class="statement" id="problem" aria-labelledby="problem-title">
-        <h2 class="engraved" id="problem-title">Every new variant means new setup.</h2>
+        <h2 id="problem-title">Every new variant means new setup.</h2>
         <p class="statement__lead">A related connector arrives, and the alignment, the insertion and the fixture all get tuned again. A camera can tell you it looks right. It cannot tell you a contact never seated.</p>
     </section>
 
-    <section class="band" id="loop" aria-labelledby="loop-title">
+    <section class="band band--head" id="loop" aria-labelledby="loop-title">
         <h2 class="kicker" id="loop-title"><span class="kicker__dash" aria-hidden="true"></span>the test becomes the teacher</h2>
-        <dl class="rows">
-            <div class="rows__row"><img class="rows__media" src="{% static 'defex/assets/loop-attempt.webp' %}?v={{ asset_v }}" width="900" height="1117" loading="lazy" decoding="async" alt="A robot hand lowering a black connector toward its mating half, which sits pinned in a machined aluminium fixture."><dt><span class="step-number" aria-hidden="true">01</span>Attempt</dt><dd>The robot tries the insertion.</dd></div>
-            <div class="rows__row"><img class="rows__media" src="{% static 'defex/assets/loop-test.webp' %}?v={{ asset_v }}" width="900" height="1117" loading="lazy" decoding="async" alt="The connector seated, with two gold spring probes pressing onto its contacts and the electrical path lit through the joint."><dt><span class="step-number" aria-hidden="true">02</span>Test</dt><dd>Probes check the joint it just made.</dd></div>
-            <div class="rows__row"><img class="rows__media" src="{% static 'defex/assets/loop-reset.webp' %}?v={{ asset_v }}" width="900" height="1117" loading="lazy" decoding="async" alt="The fixture empty again and the robot hand lifting the connector clear, ready for another attempt."><dt><span class="step-number" aria-hidden="true">03</span>Reset</dt><dd>The fixture reloads, and it goes again.</dd></div>
-        </dl>
-        <p class="band__note">Every attempt is recorded. The next one is better.</p>
     </section>
 
-    <section class="band" id="first-station" aria-labelledby="station-title">
-        <h2 class="kicker" id="station-title"><span class="kicker__dash" aria-hidden="true"></span>first workstation</h2>
-        <p class="band__lead">Connector assembly. One robot, one connector family, for electronics and electromechanical assemblers who pay the setup cost every time a variant arrives.</p>
+    <div class="step">
+        <div class="step__body">
+            <p class="step__n">01</p>
+            <h3 class="step__t">Attempt</h3>
+            <p class="step__d">The robot brings the connector to its mating half and tries the insertion, inside the bounds it is allowed to move in.</p>
+        </div>
+        <figure class="step__fig">
+            <img src="{% static 'defex/assets/loop-attempt.webp' %}?v={{ asset_v }}" width="1200" height="1490"
+                 loading="lazy" decoding="async"
+                 alt="A robot hand lowering a black connector toward its mating half, which sits pinned in a machined aluminium fixture.">
+        </figure>
+    </div>
+
+    <div class="step step--flip">
+        <div class="step__body">
+            <p class="step__n">02</p>
+            <h3 class="step__t">Test</h3>
+            <p class="step__d">Probes press onto the contacts and check the joint it just made. Continuity and mechanical engagement, not a photograph.</p>
+        </div>
+        <figure class="step__fig">
+            <img src="{% static 'defex/assets/loop-test.webp' %}?v={{ asset_v }}" width="1200" height="1490"
+                 loading="lazy" decoding="async"
+                 alt="The connector seated, with two gold spring probes pressing onto its contacts and the electrical path lit through the joint.">
+        </figure>
+    </div>
+
+    <div class="step">
+        <div class="step__body">
+            <p class="step__n">03</p>
+            <h3 class="step__t">Reset</h3>
+            <p class="step__d">The fixture releases and reloads, so the next attempt runs without a person standing there.</p>
+        </div>
+        <figure class="step__fig">
+            <img src="{% static 'defex/assets/loop-reset.webp' %}?v={{ asset_v }}" width="1200" height="1490"
+                 loading="lazy" decoding="async"
+                 alt="The fixture with its jaws open and the robot hand lifting the connector clear, ready for another attempt.">
+        </figure>
+    </div>
+
+    <!-- Practice and production are separate, and the deck is explicit about it.
+         Saying so keeps the page off the claim that every attempt beats the last,
+         which nothing has established. -->
+    <section class="band" aria-label="How the learning is used">
+        <p class="band__note">Attempts are recorded and used to train candidate skills. A skill is evaluated on its own before it runs in production, so practice and production stay separate.</p>
     </section>
 
-    <!-- The A1 cell is specified and not built. Saying so here is deliberate:
-         the deck carries the same caveat on every slide that mentions it, and
-         a buyer trusts the rest of the page more for it, not less. -->
     <section class="band" id="today" aria-labelledby="today-title">
         <h2 class="kicker" id="today-title"><span class="kicker__dash" aria-hidden="true"></span>where we are</h2>
         <dl class="rows">
             <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Built</dt><dd>An AI visual-inspection prototype. It is <a class="link" href="{% url 'where_it_started' %}">where we learned the camera is not enough</a>.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Specified</dt><dd>A1, the first assembly cell. Not built yet.</dd></div>
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Next</dt><dd>An instrumented bench, then a paid pilot on your parts.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Specified</dt><dd>A1, the first cell: industrial arm, gripper, instrumented fixture, electrical and mechanical tests, reset hardware. Not built yet.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Next</dt><dd>An instrumented connector bench, then a paid pilot on a customer&rsquo;s own parts.</dd></div>
         </dl>
     </section>
 
@@ -88,13 +111,10 @@
         <p class="careers__alt"><a class="link" href="{% url 'careers' %}">See all roles and apply</a></p>
     </section>
 
-    <!-- The closing block returns to the dark the page opened on. The form is
-         open: it used to sit behind a "Contact us" disclosure, which put a
-         click between a visitor deciding to reach out and being able to. -->
     <section class="contact dark" id="contact" aria-labelledby="contact-title">
         <div class="contact__inner">
             <h2 class="engraved" id="contact-title">Send us the part.</h2>
-            <p class="contact__lead">Tell us the connector you keep re-tuning. We&rsquo;ll tell you if it is a fit.</p>
+            <p class="contact__lead">Tell us the connector you keep re-tuning, and how the joint is checked today.</p>
             <form class="form" action="{% url 'contact' %}" method="post">
                 {% csrf_token %}
                 {% if messages %}{% for message in messages %}<p class="form__flash form__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
@@ -103,10 +123,11 @@
                     <label class="field"><span>Company</span><input type="text" name="factory" autocomplete="organization" maxlength="200" required></label>
                 </div>
                 <label class="field"><span>Email, phone, or WeChat</span><input type="text" name="contact" autocomplete="email" maxlength="200" required></label>
-                <label class="field"><span>The part and the joint</span><textarea name="product" rows="3" maxlength="200"></textarea></label>
+                <label class="field"><span>The part and the joint</span><textarea name="product" rows="4" maxlength="1200" placeholder="e.g. 12-pin board-to-wire connector, a new variant most quarters, seated by hand and checked by eye."></textarea></label>
                 <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
                 <button type="submit" class="cta">Send</button>
             </form>
+            <p class="contact__next">What happens next: a paid feasibility study on your parts, then a pilot against acceptance criteria you agree up front.</p>
             <p class="contact__alt">or email <a class="link" href="mailto:husan@defex.app">husan@defex.app</a></p>
         </div>
     </section>

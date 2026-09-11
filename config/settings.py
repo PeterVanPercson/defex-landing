@@ -174,7 +174,7 @@ WHITENOISE_MIMETYPES = {'.wasm': 'application/wasm'}
 # static/** through @vercel/static, so /static/ is answered at the edge and never
 # reaches Django. Production cache headers live in vercel.json. This hook still
 # runs under gunicorn and in the tests, and is what they assert against.
-DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "60")
+DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "61")
 
 
 def _static_headers(headers, path, url):
@@ -202,6 +202,9 @@ PING_TO = os.getenv("PING_TO", "husanmavlonov79@gmail.com")
 # it. There is no captcha on the form yet, so it is OFF unless explicitly
 # enabled. Set AUTORESPONDER=1 once Turnstile is wired.
 AUTORESPONDER = os.getenv("AUTORESPONDER", "0") == "1"
+# It used to send from husan@buildcored.com, a different company, on a Defex
+# enquiry. Defaults to the Defex sender; override once the domain is verified.
+AUTORESPONDER_FROM = os.getenv("AUTORESPONDER_FROM", EMAIL_FROM)
 
 # Best-effort per-IP throttle on the endpoints that send mail.
 CONTACT_RATE_LIMIT = int(os.getenv("CONTACT_RATE_LIMIT", "5"))     # per window
