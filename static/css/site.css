@@ -304,9 +304,12 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 @media (max-aspect-ratio: 13/10) {
     .has-scroll-film .hero { height: 400svh; }
     /* A 16:9 film is a 221px strip on a phone. Cropping to 5:4 makes it 314px.
-       object-position 63% is the only window that keeps both the robot, which
-       spans 19-77% of frame width, and the baked title, which runs to 89%. */
-    .has-scroll-film .hero__film { width: 100%; margin-left: 0; aspect-ratio: 5 / 4; object-fit: cover; object-position: 63% center; }
+       Centred: the robot is centred in frame and the crop keeps it there. This
+       was 63% for the previous film, which carried a baked "ultra inspection"
+       title out to 89% of frame width and had to be framed around it. That
+       title is gone, and 63% pushed the robot visibly left of centre on the
+       opening and closing shots, which are the two most-seen frames. */
+    .has-scroll-film .hero__film { width: 100%; margin-left: 0; aspect-ratio: 5 / 4; object-fit: cover; object-position: 50% center; }
     .has-scroll-film .hero__sticky { align-content: start; padding-top: 4vh; }
 }
 
@@ -318,8 +321,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 
 @media (max-width: 720px) {
     :root { --radius: 12px; --nav: 56px; --pad: 22px; }
-    /* the baked "ultra inspection" title ends at 89% of frame width, so 10% a
-       side is the whole safe crop budget. It buys ~20% more film height. */
+    /* the headline sits under the film on a phone rather than over it, so the
+       film gets the space back and runs ~20% taller. */
     :root { --lede-space: 0px; }
     .brand { font-size: 17px; }
     /* mark + 3 items needs 361px at the previous spacing, which overflows a
