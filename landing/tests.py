@@ -53,7 +53,10 @@ class SiteTests(SimpleTestCase):
         self.assertIn(">defex<", home.content.decode())   # present in the footer
         self.assertContains(home, 'id="film"')
         self.assertContains(home, "/where-it-started/")
-        self.assertNotContains(home, 'id="origin-video"')
+        # the origin clip now runs on the home page too, under the hero
+        self.assertContains(home, 'id="origin-video"')
+        self.assertContains(home, "js/origin.js")
+        self.assertContains(home, "That is how we learned the camera is not enough")
         origin = self.client.get("/where-it-started/")
         self.assertEqual(origin.status_code, 200)
         self.assertContains(origin, 'id="origin-video"')
