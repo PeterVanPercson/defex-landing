@@ -27,6 +27,8 @@
     --radius: 20px;
     --nav: 64px;
     /* how far the dark hero dissolves into the paper at each end */
+    /* the one size both statements under the hero are set at */
+    --say: clamp(26px, 3.6vw, 44px);
     --hero-fade: clamp(200px, 38vh, 400px);
     /* the closing block needs less ramp than the hero: no film to blend */
     --close-fade: clamp(140px, 22vh, 240px);
@@ -176,7 +178,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 /* One sentence, large, with air around it. The page needs a moment that is
    not a three-column list. */
 .statement { max-width: var(--max); margin-inline: auto; padding: clamp(88px, 13vh, 144px) var(--pad) 0; }
-.statement h2 { max-width: 15ch; font-family: var(--serif); font-size: clamp(32px, 4.6vw, 56px); font-weight: 400; line-height: 1.06; letter-spacing: -.01em; }
+.statement h2 { max-width: 19ch; font-family: var(--serif); font-size: var(--say); font-weight: 400; line-height: 1.12; letter-spacing: -.01em; }
 .statement__lead { margin-top: 26px; max-width: 50ch; font: 400 15px/1.75 var(--font); color: var(--ink-soft); }
 
 /* trailing note under a row band */
@@ -287,6 +289,9 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 /* the same block on the home page, where it is the first thing under the hero
    and has to clear the dissolve */
 .origin--home { padding-top: calc(28px + var(--hero-fade)); align-items: start; }
+/* .engraved, not p: .origin__note is also a p in here and ties on specificity,
+   so a bare p selector declared later swallows the small line too. */
+.origin--home .origin__copy p.engraved { font-size: var(--say); line-height: 1.12; }
 /* the origin page centres this against a full-height viewport; on the home page
    the clip is 676px tall next to three lines, so centring left a hole above the
    copy. Top-aligned, it starts where every other section on the page starts. */
