@@ -31,9 +31,20 @@
         </div>
     </section>
 
+    <!-- First thing under the hero. The camera lesson is the reason the rest of
+         the page exists, so it is told before the problem and the loop, not
+         buried behind a nav link. It is also the only part of this page that
+         already happened. -->
+    <section class="band band--first" id="origin" aria-labelledby="origin-title">
+        <h2 class="kicker" id="origin-title"><span class="kicker__dash" aria-hidden="true"></span>where it started</h2>
+        <p class="band__say engraved">We started off helping factory lines detect defects with vision.</p>
+        <p class="band__after">We learned that vision alone is not always enough. A camera can tell you a part looks right. It cannot tell you the thing it just built actually works.</p>
+        <p class="careers__alt"><a class="link" href="{% url 'where_it_started' %}">See where it started</a></p>
+    </section>
+
     <section class="statement" id="problem" aria-labelledby="problem-title">
         <h2 class="engraved" id="problem-title">Every new variant means new setup.</h2>
-        <p class="statement__lead">A related part arrives, and the alignment, the insertion and the fixture all get tuned again. A camera can tell you it looks right. It cannot tell you the thing it just built actually works.</p>
+        <p class="statement__lead">A related part arrives, and the alignment, the insertion and the fixture all get tuned again. Skilled engineering hours, on every variant.</p>
     </section>
 
     <section class="band" id="loop" aria-labelledby="loop-title">
@@ -51,7 +62,7 @@
     <section class="band" id="today" aria-labelledby="today-title">
         <h2 class="kicker" id="today-title"><span class="kicker__dash" aria-hidden="true"></span>where we are</h2>
         <dl class="rows">
-            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Built</dt><dd>An AI visual-inspection prototype. It is <a class="link" href="{% url 'where_it_started' %}">where we learned the camera is not enough</a>.</dd></div>
+            <div class="rows__row"><dt><span class="step-number" aria-hidden="true">01</span>Built</dt><dd>An AI visual-inspection prototype, running today.</dd></div>
             <div class="rows__row"><dt><span class="step-number" aria-hidden="true">02</span>Specified</dt><dd>A1, the first cell: industrial arm, gripper, instrumented fixture, electrical and mechanical tests, reset hardware. Not built yet.</dd></div>
             <div class="rows__row"><dt><span class="step-number" aria-hidden="true">03</span>Next</dt><dd>An instrumented bench for the first connector family, then a paid pilot on a customer&rsquo;s own parts.</dd></div>
         </dl>

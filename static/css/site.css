@@ -175,7 +175,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
    made that screen read as half empty. */
 /* One sentence, large, with air around it. The page needs a moment that is
    not a three-column list. */
-.statement { max-width: var(--max); margin-inline: auto; padding: calc(28px + var(--hero-fade)) var(--pad) 0; }
+.statement { max-width: var(--max); margin-inline: auto; padding: clamp(88px, 13vh, 144px) var(--pad) 0; }
 .statement h2 { max-width: 15ch; font-family: var(--serif); font-size: clamp(32px, 4.6vw, 56px); font-weight: 400; line-height: 1.06; letter-spacing: -.01em; }
 .statement__lead { margin-top: 26px; max-width: 50ch; font: 400 15px/1.75 var(--font); color: var(--ink-soft); }
 
@@ -210,6 +210,11 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
    sections, so the markup says what each section is. Identical values: this
    introduces no new spacing, type or colour. */
 .band { max-width: var(--max); margin-inline: auto; padding: clamp(80px, 12vh, 130px) var(--pad) 0; }
+/* whatever comes first under the hero has to clear the dissolve */
+.band--first { padding-top: calc(28px + var(--hero-fade)); }
+/* one line, said plainly, at the scale the origin page says it */
+.band__say { margin-top: 26px; max-width: 24ch; font-size: clamp(23px, 3.2vw, 38px); font-weight: 600; line-height: 1.17; letter-spacing: -.035em; }
+.band__after { margin-top: 22px; max-width: 46ch; font: 400 15px/1.7 var(--font); color: var(--ink-soft); }
 .band__lead { margin-top: 18px; max-width: 56ch; font: 400 13px/1.8 var(--mono); color: var(--ink-soft); }
 
 .careers { max-width: var(--max); margin-inline: auto; padding: clamp(80px, 12vh, 130px) var(--pad) 0; }
@@ -380,7 +385,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
        cleared 40px, so the first heading sat inside the dark end of the ramp
        and was invisible. Shorter ramp here, and real clearance for it. */
 :root { --hero-fade: clamp(120px, 20vh, 200px); }
-    .about, .statement { padding-top: calc(24px + var(--hero-fade)); }
+    .about, .band--first { padding-top: calc(24px + var(--hero-fade)); }
     .contact { padding-top: 80px; padding-bottom: 80px; }
     .contact h2 { font-size: clamp(32px, 9vw, 40px); }
     .form__row { grid-template-columns: 1fr; }
