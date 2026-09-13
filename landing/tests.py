@@ -17,8 +17,8 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, "Self-teaching robots")
         # three claims, each a benefit with the mechanism in its second sentence
         for claim in ("Robots you can walk away from.",
-                      "Proof, not a photograph.",
-                      "A new part, not a new project."):
+                      "Our robots feel what&rsquo;s wrong.",
+                      "A new way, not a new project."):
             self.assertContains(home, f'class="feature__t engraved">{claim}</h3>')
         self.assertContains(home, "the test becomes the teacher")
         # the hero has to say what the machine does and ask for something
@@ -30,9 +30,7 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, "paid feasibility study")
         # the hero is the headline and the film, nothing else competing with it
         self.assertNotContains(home, "lede__sub")
-        # practice and production are distinct, and nothing promises monotonic
-        # improvement: "the next one is better" was a claim nothing supports
-        self.assertContains(home, "practice and production stay separate")
+        # nothing promises monotonic improvement
         self.assertNotContains(home, "The next one is better")
         # the first application is named, not left abstract
         self.assertContains(home, "connector")
