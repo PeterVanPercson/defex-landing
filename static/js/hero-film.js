@@ -52,18 +52,16 @@
     function measureGeometry() {
         heroTop = hero.offsetTop;
         scrubSpan = hero.offsetHeight - sticky.offsetHeight;
-        // The nav is dark while it sits on the hero and paper once past it. The
-        // frame ends on the headline's paper, so flip when the top of that
-        // paper reaches the bar, which only happens once the frame unpins.
-        // Read here, never in the scroll handler, so this costs no layout while
-        // scrolling.
+        // The nav is dark while it sits on the hero and paper once past it.
+        // Flip three quarters of the way down the dissolve band, where the
+        // ground behind the bar has already become paper. Read here, never in
+        // the scroll handler, so this costs no layout while scrolling.
+        // --hero-fade is a clamp() expression, and a custom property reports
+        // its raw text, not a resolved length. The dissolve band's own computed
+        // height is the resolved pixel value.
         const nav = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav')) || 64;
-        const lede = sticky.querySelector('.lede');
-        // Three quarters of the way down the fade into that paper.
-        const ramp = lede ? parseFloat(getComputedStyle(lede, '::before').height) || 0 : 0;
-        navFlipAt = lede
-            ? heroTop + hero.offsetHeight - sticky.offsetHeight + lede.offsetTop - ramp * .25 - nav
-            : heroTop + hero.offsetHeight - nav;
+        const fade = parseFloat(getComputedStyle(hero, '::after').height) || 0;
+        navFlipAt = heroTop + hero.offsetHeight + fade * .75 - nav;
         // The page ends on the dark again, so the bar has to flip back or a
         // paper bar floats over the closing block. Same three-quarter rule,
         // measured from the top of that block's own dissolve.
