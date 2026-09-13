@@ -327,14 +327,10 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 .origin__video { display: block; width: 100%; height: auto; }
 /* the same block on the home page, where it is the first thing under the hero
    and has to clear the dissolve */
-.origin--home { padding-top: calc(28px + var(--hero-fade)); align-items: start; }
+.origin--home { padding-top: calc(28px + var(--hero-fade)); }
 /* .engraved, not p: .origin__note is also a p in here and ties on specificity,
    so a bare p selector declared later swallows the small line too. */
 .origin--home .origin__copy p.engraved { font-size: var(--say); line-height: 1.12; }
-/* the origin page centres this against a full-height viewport; on the home page
-   the clip is 676px tall next to three lines, so centring left a hole above the
-   copy. Top-aligned, it starts where every other section on the page starts. */
-.origin--home .origin__copy { padding-top: clamp(8px, 3vh, 34px); }
 
 /* the whole frame is the play control; the sound chip sits above it */
 .playpause { position: absolute; inset: 0; z-index: 1; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; -webkit-appearance: none; appearance: none; }
