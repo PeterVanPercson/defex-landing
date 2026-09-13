@@ -130,32 +130,35 @@ class SiteTests(SimpleTestCase):
         home_header = self.client.get("/").content.decode().split("<header", 1)[1].split("</header>", 1)[0]
         self.assertIn('href="#contact"', home_header)
 
-    def test_booking_page(self):
-        """The button lands on our own page with the calendar embedded, not on
-        cal.com directly, and that page still works if the embed never mounts."""
-        home = self.client.get("/").content.decode()
-        self.assertIn('id="test"', home)
-        self.assertIn('href="/book/">Book a slot', home)
-
-        page = self.client.get("/book/")
-        self.assertEqual(page.status_code, 200)
-        body = page.content.decode()
-        # the embed mounts against this, and the link it needs is data, not code
+    def test_booker_is_on_the_home_page(self):
+        """It lives at #contact, not on a page of its own: that is where someone
+        has finished reading, and a second page is one more click before a slot."""
+        body = self.client.get("/").content.decode()
         self.assertIn('id="cal-inline"', body)
         self.assertIn('data-cal="husan-mavlonov-qxqy1a/30min"', body)
         self.assertIn("js/book.js", body)
-        # and a plain link out, for when the embed is blocked
+        self.assertIn("test our product", body)
+        # a plain link out, for when the embed is blocked
         self.assertIn("cal.com/husan-mavlonov-qxqy1a/30min", body)
         self.assertIn('rel="noopener"', body)
 
-        # both are env-overridable so the event can be renamed without a deploy
+        # env-overridable, so the event can be renamed without a deploy
         with override_settings(CAL_LINK="defex/intro", BOOKING_URL="https://cal.com/defex/intro"):
-            body = self.client.get("/book/").content.decode()
+            body = self.client.get("/").content.decode()
         self.assertIn('data-cal="defex/intro"', body)
         self.assertIn('href="https://cal.com/defex/intro"', body)
 
-        # and it is crawlable
-        self.assertIn("<loc>http://testserver/book/</loc>", self.client.get("/sitemap.xml").content.decode())
+        # cal.com injects `.cal-embed { color-scheme: unset !important }`; without
+        # an !important override the frame inherits our dark scheme and Chrome
+        # paints it opaque white under their branding. Do not "clean this up".
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertRegex(css, r"\.booker__frame iframe \{[^}]*color-scheme:\s*light !important")
+
+        # /book/ was live and indexed, so it redirects rather than 404s
+        moved = self.client.get("/book/")
+        self.assertEqual(moved.status_code, 301)
+        self.assertEqual(moved["Location"], "/#contact")
+        self.assertNotIn("/book/", self.client.get("/sitemap.xml").content.decode())
 
     def test_hero_assets_stay_within_budget(self):
         """The hero shipped at 34.5MB once, on every device, with no narrow

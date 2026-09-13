@@ -174,7 +174,7 @@ WHITENOISE_MIMETYPES = {'.wasm': 'application/wasm'}
 # static/** through @vercel/static, so /static/ is answered at the edge and never
 # reaches Django. Production cache headers live in vercel.json. This hook still
 # runs under gunicorn and in the tests, and is what they assert against.
-DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "70")
+DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "73")
 
 # /book/ embeds cal.com. CAL_LINK is the bare event path the embed mounts;
 # BOOKING_URL is the same booking page as a plain URL, used as the fallback link

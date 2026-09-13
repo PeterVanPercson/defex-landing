@@ -77,7 +77,9 @@ def apply(request):
 
 
 def book(request):
-    return render(request, "landing/book.html")
+    """The booker moved onto the home page. This was live and indexed, so it
+    redirects rather than 404s."""
+    return redirect("/#contact", permanent=True)
 
 
 def where_it_started(request):
@@ -90,7 +92,6 @@ SITEMAP_PAGES = (
     ("home", "1.0", "weekly"),
     ("where_it_started", "0.7", "monthly"),
     ("careers", "0.8", "weekly"),
-    ("book", "0.9", "monthly"),
 )
 
 

@@ -114,7 +114,7 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
    .hero, so match on that rather than threading a template flag through the
    shared partial. The nav then sits inside the dark instead of ruling a line
    across the top of it. Without :has() the nav simply stays paper. */
-body:has(.hero) .topbar, body:has(.book) .topbar { transition: background .25s ease, color .25s ease; --bg: #020506; --ink: #EAE8E3; --ink-soft: rgba(234, 232, 227, .74); --on-accent: #EAE8E3; background: var(--bg); color: var(--ink); }
+body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --bg: #020506; --ink: #EAE8E3; --ink-soft: rgba(234, 232, 227, .74); --on-accent: #EAE8E3; background: var(--bg); color: var(--ink); }
 /* Restates background and color as well as the tokens. Not strictly needed,
    the token change alone repaints, but it keeps the flip readable next to
    the rule it overrides. */
@@ -196,6 +196,30 @@ body:has(.hero) .topbar, body:has(.book) .topbar { transition: background .25s e
    inside keeps the measure. The gradient is .hero::after mirrored, so the page
    dissolves into the dark rather than cutting against it. */
 .contact.dark { max-width: none; padding-inline: 0; position: relative; }
+
+/* cal.com's booker in a panel of our own: a hairline, the page radius, and a
+   small label in the corner. The booker draws its own card inside this, so the
+   panel is only a frame around it and its branding. */
+.booker { max-width: var(--max); margin-inline: auto; padding-inline: var(--pad); text-align: left; }
+.booker__panel { border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(12px, 1.6vh, 18px); }
+.booker__label { padding: 6px 8px 12px; font: 500 10px/1.4 var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--mute); }
+/* No fixed height, and a width close to the card's own. cal.com's card has a
+   max width and its iframe document is WHITE behind it, so any box wider or
+   taller than the card shows white around it. The embed resizes the iframe to
+   its content, so left alone it fits exactly. min-height only stops the page
+   jumping before it mounts. */
+.booker__frame { width: 100%; max-width: 1000px; margin-inline: auto; min-height: 560px; }
+/* The white band under cal.com's branding. base.html declares color-scheme:
+   dark; cal.com's document declares none, so it is light. When a frame's used
+   colour scheme differs from its document's, Chrome paints the frame opaque with
+   that document's canvas, which is white. Their embed injects
+   `.cal-embed { color-scheme: unset !important }`, which makes the frame inherit
+   our dark scheme and guarantees the mismatch, so this must be !important to
+   win. Scoped to this iframe on purpose: dropping the meta also fixes it, but
+   turns native form controls light across the whole site. */
+.booker__frame iframe { color-scheme: light !important; background: transparent !important; border-radius: 12px; }
+.booker__alt { margin-top: 18px; font: 400 12px/1.7 var(--mono); color: var(--mute); transition: opacity .3s ease; }
+.booker__alt.is-quiet { opacity: .45; }
 .contact__inner { max-width: 560px; margin-inline: auto; padding-inline: var(--pad); }
 .contact.dark::before { content: ""; position: absolute; left: 0; right: 0; bottom: calc(100% - 1px); height: calc(var(--close-fade) + 1px); background: linear-gradient(to top, var(--bg) 0%, #070A0B 10%, #121415 20%, #212323 30%, #353636 40%, #4C4D4C 50%, #676765 60%, #858581 70%, #A7A5A1 80%, #CBC9C3 90%, var(--page) 100%); pointer-events: none; }
 /* .footer is a 1200px centred column, so a dark background on it left the
@@ -285,22 +309,6 @@ body:has(.hero) .topbar, body:has(.book) .topbar { transition: background .25s e
 .role__include { margin-top: 16px; display: grid; gap: 12px; padding-left: 18px; }
 .role__include li { font: 400 13px/1.7 var(--mono); color: var(--ink-soft); }
 .role__aside .cta { width: 100%; margin-top: 14px; }
-
-/* /book/ — the cal.com embed on our own page rather than a jump off-site */
-body:has(.book) { background: #020506; }
-.book { max-width: 1000px; margin-inline: auto; padding: clamp(40px, 7vh, 88px) var(--pad) clamp(56px, 9vh, 110px); min-height: calc(100svh - var(--nav)); }
-.book__say { margin-top: 22px; max-width: 20ch; font-size: var(--say); font-weight: 600; line-height: 1.12; letter-spacing: -.035em; }
-.book__lead { margin-top: 18px; max-width: 54ch; font: 400 15px/1.7 var(--font); color: var(--ink-soft); }
-/* the embed sizes itself; this is the floor before it mounts, so the page does
-   not collapse and then jump */
-/* Bare on purpose. The booker draws its own bordered card and its branding sits
-   below it; a border or background of ours put a second box around both. Tall
-   enough that the month view and the slot list fit without it scrolling. */
-/* The booker centres itself in whatever box it is given, so an over-tall one
-   leaves a hole above the card. Sized close to its natural height instead. */
-.book__frame { width: 100%; height: 660px; margin-top: clamp(18px, 2.5vh, 32px); }
-.book__alt { margin-top: 22px; font: 400 12px/1.7 var(--mono); color: var(--mute); transition: opacity .3s ease; }
-.book__alt.is-quiet { opacity: .5; }
 
 /* where it started: its own page, one line and the original clip */
 .origin-page { min-height: calc(100svh - var(--nav) - 92px); display: grid; align-items: center; }
@@ -419,8 +427,8 @@ body:has(.book) { background: #020506; }
        and was invisible. Shorter ramp here, and real clearance for it. */
 :root { --hero-fade: clamp(120px, 20vh, 200px); }
     .about, .band--first, .origin--home { padding-top: calc(24px + var(--hero-fade)); }
-    /* stacked on a phone, so it needs the room */
-    .book__frame { height: 1180px; }
+    /* stacked on a phone, so it needs more room before it mounts */
+    .booker__frame { min-height: 1080px; }
     .contact { padding-top: 80px; padding-bottom: 80px; }
     .contact h2 { font-size: clamp(32px, 9vw, 40px); }
     .form__row { grid-template-columns: 1fr; }

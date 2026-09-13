@@ -36,15 +36,10 @@
 
     Cal('init', 'defex', { origin: 'https://app.cal.com' });
 
-    // ui BEFORE inline, and it matters. Called after, the booker mounts on the
-    // default theme first and cal.com's own page paints a white strip under the
-    // card that no CSS of ours can reach, because it is inside their iframe.
-    Cal.ns.defex('ui', {
-        theme: 'dark',
-        layout: 'month_view',
-        hideEventTypeDetails: false,
-        cssVarsPerTheme: { dark: { 'cal-bg': '#0C1116', 'cal-bg-emphasis': '#141A20' } },
-    });
+    // No ui() call. The inline config below already puts theme=dark in the
+    // iframe URL, and that URL renders fully dark on its own. Sending a ui
+    // message on top of it re-themed the booker but left cal.com's own document
+    // white, which showed as a band under their branding.
     Cal.ns.defex('inline', {
         elementOrSelector: '#cal-inline',
         calLink: calLink,

@@ -75,18 +75,6 @@
         </div>
     </section>
 
-    <!-- The conversion moment, straight after the three claims. The button goes
-         to BOOKING_URL (cal.com) and falls back to the form below until that is
-         set, so it always lands somewhere. -->
-    <section class="band" id="test" aria-labelledby="test-title">
-        <h2 class="kicker" id="test-title"><span class="kicker__dash" aria-hidden="true"></span>test our product</h2>
-        <div class="feature">
-            <h3 class="feature__t engraved">Bring us the part you keep re-tuning.</h3>
-            <p class="feature__d">We put it on the bench, run it, and tell you plainly whether it is a fit. Thirty minutes, no deck.</p>
-            <a class="pill pill--wide feature__cta" href="{% url 'book' %}">Book a slot</a>
-        </div>
-    </section>
-
     <section class="careers" id="careers" aria-labelledby="careers-title">
         <h2 class="kicker" id="careers-title"><span class="kicker__dash" aria-hidden="true"></span>build with us</h2>
         <p class="careers__lead">A small team building a cell that assembles a part and then physically tests what it just made.</p>
@@ -102,9 +90,20 @@
     </section>
 
     <section class="contact dark" id="contact" aria-labelledby="contact-title">
+        <!-- cal.com's booker, mounted by static/js/book.js. It lives here rather
+             than on a page of its own: this is where someone has finished
+             reading and is deciding, and a second page is one more click
+             between them and a slot. -->
+        <div class="booker">
+            <div class="booker__panel">
+                <p class="booker__label" id="contact-title">test our product</p>
+                <div class="booker__frame" id="cal-inline" data-cal="{{ cal_link }}" role="region" aria-label="Choose a time"></div>
+            </div>
+            <p class="booker__alt" id="book-alt">Calendar not loading?
+                <a class="link" href="{{ booking_url }}" target="_blank" rel="noopener">Open it on cal.com</a>.</p>
+        </div>
+
         <div class="contact__inner">
-            <h2 class="engraved" id="contact-title">Send us the part.</h2>
-            <p class="contact__lead">Tell us the part you keep re-tuning, and how it is checked today.</p>
             <form class="form" action="{% url 'contact' %}" method="post">
                 {% csrf_token %}
                 {% if messages %}{% for message in messages %}<p class="form__flash form__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
@@ -137,4 +136,5 @@
 
 <script src="{% static 'js/hero-film.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/origin.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/book.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}
