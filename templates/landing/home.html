@@ -111,7 +111,11 @@
         <h2 class="backers__label" id="backed-title">Backed by</h2>
         <ul class="backers__logos" data-reveal>
             <li><img class="backers__logo" src="{% static 'img/backers/nvidia-inception.png' %}?v={{ asset_v }}" alt="NVIDIA Inception Program" width="402" height="143" loading="lazy" decoding="async"></li>
-            <li><img class="backers__logo" src="{% static 'img/backers/zfellows.png' %}?v={{ asset_v }}" alt="Z Fellows" width="713" height="126" loading="lazy" decoding="async"></li>
+            <li><img class="backers__logo backers__logo--wide" src="{% static 'img/backers/google-for-startups.png' %}?v={{ asset_v }}" alt="Google for Startups" width="900" height="111" loading="lazy" decoding="async"></li>
+            <li class="backers__swap">
+                <img class="backers__logo" src="{% static 'img/backers/zfellows.png' %}?v={{ asset_v }}" alt="Z Fellows" width="713" height="126" loading="lazy" decoding="async">
+                <img class="backers__logo backers__logo--reveal" src="{% static 'img/backers/zfellows-collage.png' %}?v={{ asset_v }}" alt="" aria-hidden="true" width="713" height="126" loading="lazy" decoding="async">
+            </li>
         </ul>
     </section>
 

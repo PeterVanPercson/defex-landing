@@ -303,6 +303,14 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .backers__logos { margin-top: clamp(22px, 3.5vh, 36px); display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: clamp(28px, 5vw, 72px); list-style: none; }
 .backers__logo { display: block; width: clamp(180px, 17vw, 236px); height: auto; filter: grayscale(1) contrast(.92); opacity: .62; transition: filter .35s ease, opacity .35s ease; }
 .backers__logos li:hover .backers__logo { filter: none; opacity: 1; }
+/* Z Fellows has no colour to come into. What it has is its own artwork, the
+   wordmark filled with a photo collage, so that is what the hover reveals,
+   laid exactly over the solid mark cut from the same letterforms. */
+.backers__swap { position: relative; }
+.backers__logo--reveal { position: absolute; inset: 0; opacity: 0; }
+/* A long, short wordmark needs more width to carry the same weight as the
+   badge, and its type is already grey, so it rests a little less faded. */
+.backers__logo--wide { width: clamp(230px, 21vw, 300px); opacity: .78; }
 
 /* Scroll reveal, the way origami's sections arrive. Keyed on html.reveal,
    which only static/js/reveal.js sets, so without JS nothing is hidden. A
