@@ -64,7 +64,7 @@
     <section class="origin origin--home" id="origin" aria-labelledby="origin-title">
         <div class="origin__copy">
             <h2 class="kicker" id="origin-title"><span class="kicker__dash" aria-hidden="true"></span>where it started</h2>
-            <p class="engraved">We started off helping factory lines detect defects with vision.</p>
+            <p class="engraved" data-reveal>We started off helping factory lines detect defects with <em>vision</em>.</p>
             <p class="origin__note">That is how we learned the camera is not enough.</p>
         </div>
         <figure class="origin__film">
@@ -78,32 +78,37 @@
         </figure>
     </section>
 
-    <!-- Three claims, each one a benefit with the mechanism in its second
-         sentence. This replaces both the old problem statement and the
-         attempt/test/reset list, which were saying the same things twice: once
-         as a complaint and once as a diagram. -->
-    <section class="band" id="loop" aria-labelledby="loop-title">
-        <h2 class="kicker" id="loop-title"><span class="kicker__dash" aria-hidden="true"></span>the test becomes the teacher</h2>
-
-        <div class="feature">
-            <h3 class="feature__t engraved">Robots you can walk away from.</h3>
-            <p class="feature__d">Ours resets and teaches itself, so a failed attempt comes back as a lesson.</p>
+    <!-- Why us. The three claims as ruled rows, each a benefit with the reason
+         behind it. The section is a sheet laid over the page: see .sheet. -->
+    <section class="sheet" id="why" aria-labelledby="why-title">
+        <div class="sechead">
+            <h2 class="sechead__t engraved" id="why-title" data-reveal>Why <em>us</em></h2>
         </div>
 
-        <div class="feature">
-            <h3 class="feature__t engraved">Our robots feel what&rsquo;s wrong.</h3>
-            <p class="feature__d">A camera can tell you a part looks right. Ours physically tests what it just built, so a defect is caught right away, with vision and touch.</p>
-        </div>
-
-        <div class="feature">
-            <h3 class="feature__t engraved">A new way, not a new project.</h3>
-            <p class="feature__d">Robots are harder to fixture than you think. Ours practises by itself.</p>
-        </div>
+        <ol class="features">
+            <li class="feature" data-reveal>
+                <span class="feature__n" aria-hidden="true">01</span>
+                <h3 class="feature__t engraved">Robots you can walk away from.</h3>
+                <p class="feature__d">Ours resets and teaches itself, so a failed attempt comes back as a lesson.</p>
+            </li>
+            <li class="feature" data-reveal>
+                <span class="feature__n" aria-hidden="true">02</span>
+                <h3 class="feature__t engraved">Our robots feel what&rsquo;s wrong.</h3>
+                <p class="feature__d">A camera can tell you a part looks right. Ours physically tests what it just built, so a defect is caught right away, with vision and touch.</p>
+            </li>
+            <li class="feature" data-reveal>
+                <span class="feature__n" aria-hidden="true">03</span>
+                <h3 class="feature__t engraved">A new way, not a new project.</h3>
+                <p class="feature__d">Robots are harder to fixture than you think. Ours practises by itself.</p>
+            </li>
+        </ol>
     </section>
 
-    <section class="careers" id="careers" aria-labelledby="careers-title">
-        <h2 class="kicker" id="careers-title"><span class="kicker__dash" aria-hidden="true"></span>build with us</h2>
-        <p class="careers__lead">A small team building a cell that assembles a part and then physically tests what it just made.</p>
+    <section class="careers sheet" id="careers" aria-labelledby="careers-title">
+        <div class="sechead">
+            <h2 class="sechead__t engraved" id="careers-title" data-reveal>Build with <em>us</em></h2>
+            <p class="sechead__sub">A small team building a cell that assembles a part and then physically tests what it just made.</p>
+        </div>
         <a class="rolecard" href="{% url 'careers' %}#content-producer">
             <span class="rolecard__id">
                 <span class="rolecard__title">Content Producer</span>
@@ -121,8 +126,10 @@
              reading and is deciding, and a second page is one more click
              between them and a slot. -->
         <div class="booker">
+            <div class="sechead">
+                <h2 class="sechead__t engraved" id="contact-title" data-reveal>Test our <em>product</em></h2>
+            </div>
             <div class="booker__panel">
-                <p class="booker__label" id="contact-title">test our product</p>
                 <div class="booker__frame" id="cal-inline" data-cal="{{ cal_link }}" role="region" aria-label="Choose a time"></div>
             </div>
         </div>
@@ -165,5 +172,6 @@
 <script src="{% static 'js/intro.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/hero-film.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/origin.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/book.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}

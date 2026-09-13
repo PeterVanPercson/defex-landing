@@ -20,7 +20,9 @@ class SiteTests(SimpleTestCase):
                       "Our robots feel what&rsquo;s wrong.",
                       "A new way, not a new project."):
             self.assertContains(home, f'class="feature__t engraved">{claim}</h3>')
-        self.assertContains(home, "the test becomes the teacher")
+        # the section is "Why us", not the old slogan
+        self.assertContains(home, 'id="why-title" data-reveal>Why <em>us</em></h2>')
+        self.assertNotContains(home, "the test becomes the teacher")
         # the hero has to say what the machine does and ask for something
         self.assertContains(home, 'href="#contact"')
         # the calendar is the action; the form is the fallback, one line under it
@@ -87,7 +89,7 @@ class SiteTests(SimpleTestCase):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
-        for asset in ("js/hero-film.js", "js/intro.js", "js/origin.js", "video/origin.mp4", "video/origin-poster.jpg"):
+        for asset in ("js/hero-film.js", "js/intro.js", "js/origin.js", "js/reveal.js", "video/origin.mp4", "video/origin-poster.jpg"):
             self.assertEqual(self.client.get(f"/static/{asset}").status_code, 200, asset)
 
     def test_hero_supports_byte_ranges(self):
@@ -147,7 +149,7 @@ class SiteTests(SimpleTestCase):
         self.assertIn('id="cal-inline"', body)
         self.assertIn('data-cal="husan-mavlonov-qxqy1a/30min"', body)
         self.assertIn("js/book.js", body)
-        self.assertIn("test our product", body)
+        self.assertIn("Test our <em>product</em>", body)
         # nothing competing with the calendar underneath it
         self.assertNotIn("Calendar not loading", body)
         self.assertNotIn("What happens next", body)

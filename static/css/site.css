@@ -15,11 +15,13 @@
     /* The orange is a fill, never a text colour here: #FF5A1F on paper is
        2.72:1. Ink on the orange is 5.68:1, so the fill flips its own text. */
     --on-accent: #1A1815;
-    --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    /* Their role titles and closing heading are set in a serif. A system
-       stack gets the same editorial weight with no webfont request. */
-    --serif: ui-serif, "Iowan Old Style", "Source Serif 4", Palatino, Georgia, serif;
+    /* origami-robotics.com's pair: Source Serif 4 for anything that is a
+       heading, IBM Plex Mono for everything else. Inter is kept for the
+       wordmark only, so the brand does not change shape. */
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --font: var(--mono);
+    --serif: "Source Serif 4", ui-serif, "Iowan Old Style", Palatino, Georgia, serif;
+    --brand: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     --pad: clamp(16px, 3vw, 32px);
     --hero-gap: clamp(18px, 3.5vh, 40px);
     --lede-space: clamp(96px, 19vh, 180px);
@@ -37,16 +39,29 @@
        with a light lip below and a dark lip above, so the type reads as cut
        into the paper rather than printed on it. Lit from above, which is why
        the highlight sits at +1px and the shadow at -1px. */
-    --engrave-fill: linear-gradient(165deg, rgba(26, 24, 21, .58) 0%, rgba(26, 24, 21, .74) 52%, rgba(26, 24, 21, .62) 100%);
-    /* The lip has to sit just above the paper, not near white. At .95 of
-       rgb(255,252,246) it glowed under every stroke and the type read as
-       outlined rather than cut. */
-    --engrave-lip: 0 1px 0 rgba(255, 253, 249, .62), 0 -1px 0 rgba(40, 30, 15, .3);
+    --engrave-fill: linear-gradient(165deg, rgba(70, 62, 48, .85) 0%, rgba(35, 28, 15, .95) 50%, rgba(55, 47, 33, .8) 100%);
+    /* origami-robotics.com's own cut. The soft 2px highlight covers most of
+       the face, so the letters read as pale stone with a dark upper edge
+       rather than as ink. It needs a serif at 400: on a bold sans the same lip
+       glowed under every stroke and read as outlined. */
+    --engrave-lip: 0 1px 2px rgba(255, 250, 242, .9), 0 -1px 1px rgba(40, 30, 15, .35), 0 0 4px rgba(60, 50, 35, .15);
+
+    /* Sections below the hero are sheets laid over the page, a shade lighter,
+       each casting a soft shadow up onto the one before. */
+    --sheet: #F7F4EE;
+    --sheet-shadow: 0 -6px 30px rgba(26, 24, 21, .05);
+    /* Paper grain: a tile of dark noise at low alpha, laid under the content
+       as a background layer. Not origami's fixed multiply overlay, which
+       would be composited over the scroll-scrubbed film on every frame. */
+    /* The tile is 512 device pixels either way: 256 CSS px on a 2x screen, 512
+       on a 1x one. Squeezed to 256 device pixels it reads as speckle. */
+    --grain-tile: 256px;
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .09 0 0 0 0 .07 .4 0 0 0 -.15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / var(--grain-tile) var(--grain-tile);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
-body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { background: var(--grain), var(--bg); color: var(--ink); font: 15px/1.55 var(--font); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
 /* The film is baked on rgb(11,16,21) and cannot be made transparent, so the
    hero keeps the dark set and reads as one deliberate cinematic band. Paper
@@ -67,7 +82,9 @@ body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font); -w
     --engrave-fill:
         linear-gradient(100deg, rgba(255, 214, 182, 0) 8%, rgba(255, 214, 182, .30) 25%, rgba(255, 214, 182, 0) 46%),
         linear-gradient(165deg, rgba(255, 150, 98, .97) 0%, rgba(252, 104, 44, .95) 54%, rgba(255, 132, 74, .96) 100%);
-    --engrave-lip: 0 -1px 1.5px rgba(10, 7, 5, .68), 0 .5px 1.5px rgba(255, 196, 158, .30);
+    /* Mostly the warm lower lip. The dark upper edge that suited a bold sans
+       covers most of a serif stroke and turned the orange brown. */
+    --engrave-lip: 0 -.5px .5px rgba(10, 7, 5, .3), 0 1px 1px rgba(255, 196, 158, .2);
     position: relative;
     background: var(--bg);
     color: var(--ink);
@@ -76,11 +93,11 @@ body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font); -w
    abutting exactly leaves an anti-aliased hairline at the seam. Stops are
    interpolated in linear light on a smoothstep, because a plain two-stop
    sRGB ramp from near-black to paper goes muddy through the middle. */
-.hero::after { content: ""; position: absolute; left: 0; right: 0; top: calc(100% - 1px); height: calc(var(--hero-fade) + 1px); background: linear-gradient(to bottom, var(--bg) 0%, #070A0B 10%, #121415 20%, #212323 30%, #353636 40%, #4C4D4C 50%, #676765 60%, #858581 70%, #A7A5A1 80%, #CBC9C3 90%, var(--page) 100%); pointer-events: none; }
+.hero::after { content: ""; position: absolute; left: 0; right: 0; top: calc(100% - 1px); height: calc(var(--hero-fade) + 1px); background: var(--grain), linear-gradient(to bottom, var(--bg) 0%, #070A0B 10%, #121415 20%, #212323 30%, #353636 40%, #4C4D4C 50%, #676765 60%, #858581 70%, #A7A5A1 80%, #CBC9C3 90%, var(--page) 100%); pointer-events: none; }
 a { color: inherit; text-decoration: none; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 [hidden] { display: none !important; }
-h1, h2 { font-weight: 600; letter-spacing: -.03em; text-wrap: balance; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em; text-wrap: balance; }
 section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 .dot { color: var(--accent); }
 
@@ -109,25 +126,25 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
 .skip:focus { top: 12px; }
 
 /* nav: aligned to the content column */
-.topbar { position: sticky; top: 0; z-index: 10; height: var(--nav); display: flex; align-items: center; justify-content: space-between; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); background: var(--bg); }
+.topbar { position: sticky; top: 0; z-index: 10; height: var(--nav); display: flex; align-items: center; justify-content: space-between; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); background: var(--grain), var(--bg); box-shadow: inset 0 -1px 0 var(--line); }
 /* Only the home page opens on the dark band, and it is the only page with a
    .hero, so match on that rather than threading a template flag through the
    shared partial. The nav then sits inside the dark instead of ruling a line
    across the top of it. Without :has() the nav simply stays paper. */
-body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --bg: #020506; --ink: #EAE8E3; --ink-soft: rgba(234, 232, 227, .74); --on-accent: #EAE8E3; background: var(--bg); color: var(--ink); }
+body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box-shadow .25s ease; --bg: #020506; --ink: #EAE8E3; --ink-soft: rgba(234, 232, 227, .74); --on-accent: #EAE8E3; --rule: rgba(234, 232, 227, .34); background: var(--bg); color: var(--ink); box-shadow: none; }
 /* Restates background and color as well as the tokens. Not strictly needed,
    the token change alone repaints, but it keeps the flip readable next to
    the rule it overrides. */
-.past-hero body:has(.hero) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: rgba(26, 24, 21, .74); --on-accent: #1A1815; background: var(--page); color: #1A1815; }
-.brand { display: inline-flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
+.past-hero body:has(.hero) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: rgba(26, 24, 21, .74); --on-accent: #1A1815; --rule: rgba(26, 24, 21, .32); background: var(--grain), var(--page); color: #1A1815; box-shadow: inset 0 -1px 0 rgba(26, 24, 21, .14); }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--brand); font-size: 19px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
 .brand svg { width: 9px; height: 29px; display: block; }
 .brand--small { font-size: 16px; }
 .topbar__end { display: flex; align-items: center; gap: clamp(14px, 2vw, 26px); }
-.navlink { font: 500 13px/1 var(--font); color: var(--ink-soft); transition: color .2s ease; }
+.navlink { font: 400 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); transition: color .2s ease; }
 .navlink:hover, .navlink[aria-current="page"] { color: var(--ink); }
 
-.pill { display: inline-flex; align-items: center; justify-content: center; height: 37px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--ink); color: var(--bg); font: 500 13px/1 var(--font); cursor: pointer; transition: background .2s, transform .2s; }
-.pill:hover { background: var(--accent); color: var(--on-accent); }
+.pill { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 18px; border: 1px solid var(--rule); border-radius: 0; background: none; color: var(--ink); font: 500 10.5px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; cursor: pointer; transition: background .2s, border-color .2s, color .2s, transform .2s; }
+.pill:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .pill:active { transform: scale(.98); }
 .pill--wide { height: 45px; padding: 0 28px; font-size: 14px; }
 .cta--quiet { min-height: 38px; padding: 0 18px; font-size: 10px; }
@@ -157,8 +174,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 .scroll-cue span { display: inline-block; margin-left: 9px; }
 
 .lede { width: 100%; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
-.lede h1 { max-width: 22ch; font-size: clamp(31px, 3.2vw, 46px); line-height: 1.08; letter-spacing: -.045em; }
-.lede h1 span { color: #79828E; }
+.lede h1 { max-width: 22ch; font-size: clamp(34px, 3.8vw, 56px); line-height: 1.06; letter-spacing: -.012em; }
+.lede h1 span { color: #79828E; font-style: italic; }
 /* The second line keeps its own colour, so it opts out of the parent's clip
    and stays flat while line one is carved. Give it a dimmer fill of its own. */
 @supports (background-clip: text) or (-webkit-background-clip: text) {
@@ -183,11 +200,13 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 
 /* trailing note under a row band */
 
-/* A claim and its explanation. Same scale as the statement above them, so the
-   page speaks at one size rather than three. */
-.feature { margin-top: clamp(40px, 7vh, 84px); }
-.feature__t { max-width: 20ch; font-size: var(--say); font-weight: 600; line-height: 1.12; letter-spacing: -.035em; }
-.feature__d { margin-top: 18px; max-width: 52ch; font: 400 15px/1.7 var(--font); color: var(--ink-soft); }
+/* Why us: three claims as ruled rows, the way origami lists its roles. A
+   number, the claim cut into the page, and the one sentence behind it. */
+.features { margin-top: clamp(36px, 6vh, 64px); list-style: none; border-top: 1px solid var(--line); }
+.feature { display: grid; grid-template-columns: 56px minmax(0, 1.05fr) minmax(0, 1fr); align-items: baseline; gap: clamp(18px, 3vw, 48px); padding: clamp(34px, 5.5vh, 56px) 8px; border-bottom: 1px solid var(--line); }
+.feature__n { font: 400 11px/1 var(--mono); letter-spacing: .22em; color: var(--mute); }
+.feature__t { max-width: 17ch; font-size: clamp(27px, 2.7vw, 38px); line-height: 1.12; }
+.feature__d { max-width: 44ch; font: 400 13px/1.85 var(--mono); color: var(--ink-soft); }
 .feature__cta { margin-top: 26px; }
 
 .band__note { margin-top: 32px; font: 400 13px/1.7 var(--mono); color: var(--mute); }
@@ -195,14 +214,15 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 /* The closing block runs full bleed so the dark reaches both edges; the column
    inside keeps the measure. The gradient is .hero::after mirrored, so the page
    dissolves into the dark rather than cutting against it. */
-.contact.dark { max-width: none; padding-inline: 0; position: relative; }
+/* above the sheets, or the careers sheet would paint over the dissolve */
+.contact.dark { max-width: none; padding-inline: 0; position: relative; z-index: 2; }
 
 /* cal.com's booker in a panel of our own: a hairline, the page radius, and a
    small label in the corner. The booker draws its own card inside this, so the
    panel is only a frame around it and its branding. */
 .booker { max-width: var(--max); margin-inline: auto; padding-inline: var(--pad); text-align: left; }
 .booker__panel { border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(12px, 1.6vh, 18px); }
-.booker__label { padding: 6px 8px 12px; font: 500 10px/1.4 var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--mute); }
+.booker > .sechead { margin-bottom: clamp(28px, 4.5vh, 48px); }
 /* No fixed height, and a width close to the card's own. cal.com's card has a
    max width and its iframe document is WHITE behind it, so any box wider or
    taller than the card shows white around it. The embed resizes the iframe to
@@ -229,7 +249,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 .note__open:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .note .form { margin-top: 30px; }
 .contact__inner { max-width: 560px; margin-inline: auto; padding-inline: var(--pad); }
-.contact.dark::before { content: ""; position: absolute; left: 0; right: 0; bottom: calc(100% - 1px); height: calc(var(--close-fade) + 1px); background: linear-gradient(to top, var(--bg) 0%, #070A0B 10%, #121415 20%, #212323 30%, #353636 40%, #4C4D4C 50%, #676765 60%, #858581 70%, #A7A5A1 80%, #CBC9C3 90%, var(--page) 100%); pointer-events: none; }
+.contact.dark::before { content: ""; position: absolute; left: 0; right: 0; bottom: calc(100% - 1px); height: calc(var(--close-fade) + 1px); background: var(--grain), linear-gradient(to top, var(--bg) 0%, #070A0B 10%, #121415 20%, #212323 30%, #353636 40%, #4C4D4C 50%, #676765 60%, #858581 70%, #A7A5A1 80%, #CBC9C3 90%, var(--sheet) 100%); pointer-events: none; }
 /* .footer is a 1200px centred column, so a dark background on it left the
    cream page showing at both edges under the closing block. Full bleed, with
    the content still aligned to the column the way .topbar does it. */
@@ -237,7 +257,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 
 /* what we do */
 .about { max-width: var(--max); margin-inline: auto; padding: calc(28px + var(--hero-fade)) var(--pad) 0; }
-.kicker { display: flex; align-items: center; gap: 11px; font: 500 14px/1.4 var(--font); letter-spacing: -.015em; }
+.kicker { display: flex; align-items: center; gap: 12px; font: 500 11px/1.4 var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--mute); }
 .kicker__dash { width: 20px; height: 2px; background: var(--accent); }
 .rows { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; margin-top: 36px; }
 .rows__row { padding-top: 22px; border-top: 1px solid var(--line); }
@@ -258,18 +278,40 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 
 .careers { max-width: var(--max); margin-inline: auto; padding: clamp(80px, 12vh, 130px) var(--pad) 0; }
 .careers__lead { margin-top: 18px; max-width: 56ch; font: 400 13px/1.8 var(--mono); color: var(--ink-soft); }
-.rolecard { margin-top: 34px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto; align-items: center; gap: clamp(18px, 3vw, 48px); padding: 28px 14px; margin-inline: -14px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); transition: background .18s ease; }
-.rolecard:hover { background: var(--surface); }
+.rolecard { margin-top: clamp(36px, 6vh, 64px); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto; align-items: center; gap: clamp(18px, 3vw, 48px); padding: 28px 8px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); transition: background .35s ease, padding .35s ease; }
+.rolecard:hover { background: rgba(255, 252, 245, .55); padding-inline: 20px; }
 .rolecard__id { display: block; min-width: 0; }
 .rolecard__title { display: block; font-family: var(--serif); font-size: clamp(22px, 2.6vw, 30px); font-weight: 400; line-height: 1.1; }
 .rolecard__meta { display: block; margin-top: 10px; font: 400 11px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
 .rolecard__pitch { font: 400 13px/1.7 var(--mono); color: var(--ink-soft); }
-.rolecard__go { font: 500 10px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--mute); white-space: nowrap; }
-.rolecard:hover .rolecard__go { color: var(--ink); }
+.rolecard__go { font: 500 10px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--mute); white-space: nowrap; transition: color .3s ease, transform .35s ease; }
+.rolecard:hover .rolecard__go { color: var(--ink); transform: translateX(5px); }
 .careers__alt { margin-top: 26px; font: 400 12px/1.6 var(--mono); color: var(--mute); }
 /* the last cream band has to clear the dissolve into the closing dark block.
    Declared here, after the .careers padding shorthand above, or it is lost. */
 .careers { padding-bottom: var(--close-fade); }
+
+/* A section's title, cut into the page, with its one line of context set
+   against the far edge. */
+.sechead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 14px clamp(24px, 5vw, 64px); }
+.sechead__t { font-size: clamp(36px, 3.7vw, 54px); line-height: 1.06; }
+.sechead__sub { max-width: 44ch; text-align: right; font: 400 12.5px/1.8 var(--mono); color: var(--mute); }
+
+/* The split between sections, from origami-robotics.com: each section is a
+   sheet laid over the page, a shade lighter, casting a soft shadow up onto
+   the one before it. Full bleed, with the content kept on the column. */
+.sheet { position: relative; z-index: 1; max-width: none; padding-block: clamp(96px, 14vh, 150px); padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); background: var(--grain), var(--sheet); box-shadow: var(--sheet-shadow); }
+/* the last sheet has to clear the dissolve into the closing dark block */
+.careers.sheet { padding-bottom: var(--close-fade); }
+
+/* Scroll reveal, the way origami's sections arrive. Keyed on html.reveal,
+   which only static/js/reveal.js sets, so without JS nothing is hidden. A
+   heading sharpens out of a blur as it rises, as if it were being cut. */
+.reveal [data-reveal] { opacity: 0; transform: translateY(22px); transition: opacity .9s cubic-bezier(.22, .61, .36, 1), transform .9s cubic-bezier(.22, .61, .36, 1), filter .9s ease; }
+.reveal .engraved[data-reveal] { filter: blur(3px); }
+.reveal [data-reveal].is-in { opacity: 1; transform: none; filter: none; }
+.reveal .feature:nth-child(2) { transition-delay: .08s; }
+.reveal .feature:nth-child(3) { transition-delay: .16s; }
 
 /* careers page */
 .page { max-width: var(--max); margin-inline: auto; padding-inline: var(--pad); }
@@ -321,8 +363,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 /* where it started: its own page, one line and the original clip */
 .origin-page { min-height: calc(100svh - var(--nav) - 92px); display: grid; align-items: center; }
 .origin { max-width: var(--max); margin-inline: auto; width: 100%; padding: clamp(48px, 8vh, 104px) var(--pad); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: clamp(28px, 5vw, 80px); align-items: center; }
-.origin__copy p { margin-top: 20px; max-width: 26ch; font-size: clamp(20px, 2.6vw, 31px); line-height: 1.28; letter-spacing: -.03em; font-weight: 600; }
-.origin__copy p.origin__note { max-width: 44ch; margin-top: 24px; font-size: 15px; line-height: 1.55; letter-spacing: 0; font-weight: 400; color: var(--ink-soft); }
+.origin__copy p { margin-top: 22px; max-width: 26ch; font-family: var(--serif); font-size: clamp(24px, 2.9vw, 36px); line-height: 1.18; letter-spacing: -.01em; font-weight: 400; }
+.origin__copy p.origin__note { max-width: 52ch; margin-top: 24px; font-family: var(--mono); font-size: 13px; line-height: 1.85; letter-spacing: 0; font-weight: 400; color: var(--ink-soft); }
 .origin__film { position: relative; margin: 0; border-radius: var(--radius); overflow: hidden; background: var(--surface); }
 .origin__video { display: block; width: 100%; height: auto; }
 /* the same block on the home page, where it is the first thing under the hero
@@ -364,7 +406,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 .talk > summary::-webkit-details-marker { display: none; }
 .form { display: grid; gap: 16px; margin-top: 40px; text-align: left; }
 .form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.field { display: grid; gap: 8px; font: 500 12px/1.4 var(--font); letter-spacing: .02em; text-transform: uppercase; color: var(--mute); }
+.field { display: grid; gap: 8px; font: 500 10.5px/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
 .field input, .field textarea { width: 100%; padding: 0 14px; border: 1px solid var(--rule); border-radius: 0; background: var(--surface); font: 16px/1.5 var(--font); color: var(--ink); letter-spacing: 0; text-transform: none; transition: border-color .15s; }
 .field input { height: 48px; }
 .field textarea { padding: 12px 14px; resize: vertical; min-height: 96px; }
@@ -495,8 +537,9 @@ html.is-intro .intro { display: flex; }
     /* mark + 3 items needs 361px at the previous spacing, which overflows a
        360px Android by a pixel. This buys it back. */
     .topbar__end { gap: 12px; }
-    .pill { min-height: 44px; padding: 0 14px; }
-    .lede h1 { font-size: clamp(30px, 8vw, 40px); max-width: 18ch; line-height: 1.12; letter-spacing: -.035em; }
+    .pill { min-height: 44px; padding: 0 12px; letter-spacing: .1em; }
+    .navlink { font-size: 10px; letter-spacing: .06em; }
+    .lede h1 { font-size: clamp(32px, 8.6vw, 42px); max-width: 18ch; line-height: 1.1; letter-spacing: -.01em; }
     .rows { grid-template-columns: 1fr; gap: 26px; margin-top: 28px; }
     .rows__row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 24px; padding-top: 22px; }
     /* the row is a two-column grid on a phone; the picture spans both */
@@ -516,6 +559,9 @@ html.is-intro .intro { display: flex; }
     .field input { height: 48px; }
     .form .cta { width: 100%; }
     .rolecard { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .rolecard:hover { padding-inline: 14px; }
+    .feature { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 30px 0; }
+    .sechead__sub { text-align: left; }
     .group__head { flex-direction: column; align-items: flex-start; gap: 8px; }
     .footer { flex-direction: column; align-items: flex-start; gap: 12px; }
     .role__head { grid-template-columns: minmax(0, 1fr) 22px; gap: 16px; padding: 24px 10px; }
@@ -523,8 +569,11 @@ html.is-intro .intro { display: flex; }
     .role__toggle { grid-row: 1; grid-column: 2; }
     .role__panel { grid-template-columns: 1fr; gap: 32px; padding-bottom: 40px; }
 }
+@media (max-resolution: 1.5dppx) {
+    :root { --grain-tile: 512px; }
+}
 @media (max-height: 540px) and (min-width: 721px) {
-    .lede h1 { font-size: 26px; }
+    .lede h1 { font-size: 28px; }
     .lede h1 br { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -532,6 +581,7 @@ html.is-intro .intro { display: flex; }
     .intro { display: none !important; }
     .hero__film { -webkit-mask-image: none; mask-image: none; }
     .pill, .link, .field input, .field textarea, .sound, .navlink { transition: none; }
+    .reveal [data-reveal] { opacity: 1; transform: none; filter: none; transition: none; }
     .flash.is-on { animation-duration: .5s; }
 }
 @media (forced-colors: active) {
