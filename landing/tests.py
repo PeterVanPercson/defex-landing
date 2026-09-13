@@ -23,11 +23,9 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, "the test becomes the teacher")
         # the hero has to say what the machine does and ask for something
         self.assertContains(home, 'href="#contact"')
-        # the contact form is open, never behind a disclosure again
-        self.assertNotContains(home, "<details")
+        # the calendar is the action; the form is the fallback, one line under it
+        self.assertContains(home, '<details class="note contact__inner">')
         self.assertContains(home, 'name="factory"')
-        # the offer is stated before the form asks for anything
-        self.assertContains(home, "paid feasibility study")
         # the hero is the headline and the film, nothing else competing with it
         self.assertNotContains(home, "lede__sub")
         # nothing promises monotonic improvement
@@ -113,6 +111,9 @@ class SiteTests(SimpleTestCase):
         body = response.content.decode()
         self.assertNotIn("We reply within one working day", body)
         self.assertIn("did not send", body)
+        # the form lives behind a disclosure, so it has to open on its own when
+        # a submission comes back, or the visitor never sees the message
+        self.assertIn('<details class="note contact__inner" open>', body)
         # and the submission itself is in the log, so it is recoverable by hand
         self.assertIn("A Factory", "".join(logged.output))
 
@@ -138,15 +139,14 @@ class SiteTests(SimpleTestCase):
         self.assertIn('data-cal="husan-mavlonov-qxqy1a/30min"', body)
         self.assertIn("js/book.js", body)
         self.assertIn("test our product", body)
-        # a plain link out, for when the embed is blocked
-        self.assertIn("cal.com/husan-mavlonov-qxqy1a/30min", body)
-        self.assertIn('rel="noopener"', body)
+        # nothing competing with the calendar underneath it
+        self.assertNotIn("Calendar not loading", body)
+        self.assertNotIn("What happens next", body)
 
-        # env-overridable, so the event can be renamed without a deploy
-        with override_settings(CAL_LINK="defex/intro", BOOKING_URL="https://cal.com/defex/intro"):
+        # the event is env-overridable, so it can be renamed without a deploy
+        with override_settings(CAL_LINK="defex/product-test"):
             body = self.client.get("/").content.decode()
-        self.assertIn('data-cal="defex/intro"', body)
-        self.assertIn('href="https://cal.com/defex/intro"', body)
+        self.assertIn('data-cal="defex/product-test"', body)
 
         # cal.com injects `.cal-embed { color-scheme: unset !important }`; without
         # an !important override the frame inherits our dark scheme and Chrome

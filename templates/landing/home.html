@@ -99,11 +99,14 @@
                 <p class="booker__label" id="contact-title">test our product</p>
                 <div class="booker__frame" id="cal-inline" data-cal="{{ cal_link }}" role="region" aria-label="Choose a time"></div>
             </div>
-            <p class="booker__alt" id="book-alt">Calendar not loading?
-                <a class="link" href="{{ booking_url }}" target="_blank" rel="noopener">Open it on cal.com</a>.</p>
         </div>
 
-        <div class="contact__inner">
+        <!-- The calendar is the thing to do. The form is for people who will not
+             book a slot, so it sits one quiet line under it, closed. It opens by
+             itself when a submission comes back with a message, otherwise the
+             visitor would never see whether it sent. -->
+        <details class="note contact__inner"{% if messages %} open{% endif %}>
+            <summary class="note__open">Rather send a note instead</summary>
             <form class="form" action="{% url 'contact' %}" method="post">
                 {% csrf_token %}
                 {% if messages %}{% for message in messages %}<p class="form__flash form__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
@@ -116,9 +119,8 @@
                 <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
                 <button type="submit" class="cta">Send</button>
             </form>
-            <p class="contact__next">What happens next: a paid feasibility study on your parts, then a pilot against acceptance criteria you agree up front.</p>
             <p class="contact__alt">or email <a class="link" href="mailto:husan@defex.app">husan@defex.app</a></p>
-        </div>
+        </details>
     </section>
 </main>
 

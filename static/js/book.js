@@ -46,13 +46,4 @@
         config: { layout: 'month_view', theme: 'dark' },
     });
 
-    // The direct link is in the markup so the page still works with the embed
-    // blocked or cal.com down. Once the booker mounts it is redundant, so it
-    // steps back rather than sitting there as a second call to action.
-    const alt = document.getElementById('book-alt');
-    if (alt) {
-        new MutationObserver((_, obs) => {
-            if (mount.querySelector('iframe')) { alt.classList.add('is-quiet'); obs.disconnect(); }
-        }).observe(mount, { childList: true, subtree: true });
-    }
 })();
