@@ -104,6 +104,16 @@
         </ol>
     </section>
 
+    <!-- Backed by. One quiet row under the claims, so the proof sits next to
+         them. The mark is muted until pointed at, the way origami shows its
+         backers. -->
+    <section class="sheet backers" id="backed" aria-labelledby="backed-title">
+        <h2 class="backers__label" id="backed-title">Backed by</h2>
+        <ul class="backers__logos" data-reveal>
+            <li><img class="backers__logo" src="{% static 'img/backers/nvidia-inception.png' %}?v={{ asset_v }}" alt="NVIDIA Inception Program" width="402" height="143" loading="lazy" decoding="async"></li>
+        </ul>
+    </section>
+
     <section class="careers sheet" id="careers" aria-labelledby="careers-title">
         <div class="sechead">
             <h2 class="sechead__t engraved" id="careers-title" data-reveal>Build with <em>us</em></h2>
