@@ -174,12 +174,20 @@ WHITENOISE_MIMETYPES = {'.wasm': 'application/wasm'}
 # static/** through @vercel/static, so /static/ is answered at the edge and never
 # reaches Django. Production cache headers live in vercel.json. This hook still
 # runs under gunicorn and in the tests, and is what they assert against.
-DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "68")
+DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "70")
 
-# The cal.com link behind "Test our product". Set BOOKING_URL in the Vercel
-# project and it takes effect without a deploy. Until it is set the button falls
-# back to the contact form, so it is never a dead end.
-BOOKING_URL = os.getenv("BOOKING_URL", "") or "#contact"
+# /book/ embeds cal.com. CAL_LINK is the bare event path the embed mounts;
+# BOOKING_URL is the same booking page as a plain URL, used as the fallback link
+# when the embed is blocked. Both are env-overridable, so the event can be
+# renamed in the Vercel project without a deploy.
+CAL_LINK = os.getenv("CAL_LINK", "husan-mavlonov-qxqy1a/30min")
+BOOKING_URL = os.getenv(
+    "BOOKING_URL",
+    "https://cal.com/husan-mavlonov-qxqy1a/30min?user=husan-mavlonov-qxqy1a&overlayCalendar=true",
+)
+# The same page, told to render dark so it sits inside our own dark page instead
+# of flashing a white card in the middle of it.
+BOOKING_EMBED_URL = BOOKING_URL + ("&" if "?" in BOOKING_URL else "?") + "theme=dark"
 
 
 def _static_headers(headers, path, url):

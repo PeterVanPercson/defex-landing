@@ -33,6 +33,7 @@ jobs:
         run: |
           node --check static/js/hero-film.js
           node --check static/js/origin.js
+          node --check static/js/book.js
 
       - name: collectstatic
         run: python manage.py collectstatic --no-input

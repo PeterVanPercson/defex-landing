@@ -83,7 +83,7 @@
         <div class="feature">
             <h3 class="feature__t engraved">Bring us the part you keep re-tuning.</h3>
             <p class="feature__d">We put it on the bench, run it, and tell you plainly whether it is a fit. Thirty minutes, no deck.</p>
-            <a class="pill pill--wide feature__cta" href="{{ booking_url }}"{% if booking_url|slice:":4" == "http" %} target="_blank" rel="noopener"{% endif %}>Book a slot</a>
+            <a class="pill pill--wide feature__cta" href="{% url 'book' %}">Book a slot</a>
         </div>
     </section>
 

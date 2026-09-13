@@ -130,20 +130,32 @@ class SiteTests(SimpleTestCase):
         home_header = self.client.get("/").content.decode().split("<header", 1)[1].split("</header>", 1)[0]
         self.assertIn('href="#contact"', home_header)
 
-    def test_booking_link_is_swappable_and_never_dead(self):
-        """The cal.com URL arrives later and is set as an env var, so this
-        checks both states: the fallback today, and the real link once it is in."""
-        body = self.client.get("/").content.decode()
-        self.assertIn('id="test"', body)
-        self.assertIn("Book a slot", body)
-        # unset: the button goes to the form rather than nowhere
-        self.assertIn('href="#contact"', body)
+    def test_booking_page(self):
+        """The button lands on our own page with the calendar embedded, not on
+        cal.com directly, and that page still works if the embed never mounts."""
+        home = self.client.get("/").content.decode()
+        self.assertIn('id="test"', home)
+        self.assertIn('href="/book/">Book a slot', home)
 
-        with override_settings(BOOKING_URL="https://cal.com/defex/30min"):
-            body = self.client.get("/").content.decode()
-        self.assertIn('href="https://cal.com/defex/30min"', body)
-        # an off-site booking page opens in its own tab, safely
-        self.assertIn('target="_blank" rel="noopener"', body)
+        page = self.client.get("/book/")
+        self.assertEqual(page.status_code, 200)
+        body = page.content.decode()
+        # the embed mounts against this, and the link it needs is data, not code
+        self.assertIn('id="cal-inline"', body)
+        self.assertIn('data-cal="husan-mavlonov-qxqy1a/30min"', body)
+        self.assertIn("js/book.js", body)
+        # and a plain link out, for when the embed is blocked
+        self.assertIn("cal.com/husan-mavlonov-qxqy1a/30min", body)
+        self.assertIn('rel="noopener"', body)
+
+        # both are env-overridable so the event can be renamed without a deploy
+        with override_settings(CAL_LINK="defex/intro", BOOKING_URL="https://cal.com/defex/intro"):
+            body = self.client.get("/book/").content.decode()
+        self.assertIn('data-cal="defex/intro"', body)
+        self.assertIn('href="https://cal.com/defex/intro"', body)
+
+        # and it is crawlable
+        self.assertIn("<loc>http://testserver/book/</loc>", self.client.get("/sitemap.xml").content.decode())
 
     def test_hero_assets_stay_within_budget(self):
         """The hero shipped at 34.5MB once, on every device, with no narrow

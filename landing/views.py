@@ -76,6 +76,10 @@ def apply(request):
     return redirect(reverse("careers") + "#application")
 
 
+def book(request):
+    return render(request, "landing/book.html")
+
+
 def where_it_started(request):
     return render(request, "landing/origin.html", {"asset_v": settings.DEFEX_ASSET_VERSION})
 
@@ -86,6 +90,7 @@ SITEMAP_PAGES = (
     ("home", "1.0", "weekly"),
     ("where_it_started", "0.7", "monthly"),
     ("careers", "0.8", "weekly"),
+    ("book", "0.9", "monthly"),
 )
 
 
