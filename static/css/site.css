@@ -79,12 +79,13 @@ body { background: var(--grain), var(--bg); color: var(--ink); font: 15px/1.55 v
     --line: rgba(234, 232, 227, .14);
     --rule: rgba(234, 232, 227, .34);
     --on-accent: #EAE8E3;
-    --engrave-fill:
-        linear-gradient(100deg, rgba(255, 214, 182, 0) 8%, rgba(255, 214, 182, .30) 25%, rgba(255, 214, 182, 0) 46%),
-        linear-gradient(165deg, rgba(255, 150, 98, .97) 0%, rgba(252, 104, 44, .95) 54%, rgba(255, 132, 74, .96) 100%);
-    /* Mostly the warm lower lip. The dark upper edge that suited a bold sans
-       covers most of a serif stroke and turned the orange brown. */
-    --engrave-lip: 0 -.5px .5px rgba(10, 7, 5, .3), 0 1px 1px rgba(255, 196, 158, .2);
+    /* The same stone as the section titles on paper, cut for a dark ground.
+       The paper cut makes its face with a pale highlight, which on black only
+       glows. Here the face is its own shadow, laid half a pixel down over a
+       dark fill, so the top rim of every stroke stays in shadow; a pale line a
+       pixel lower is the lit bottom wall of the cut. */
+    --engrave-fill: linear-gradient(165deg, rgb(58, 52, 44) 0%, rgb(38, 33, 26) 50%, rgb(52, 46, 38) 100%);
+    --engrave-lip: 0 .5px 0 rgb(178, 171, 159), 0 1.5px 0 rgba(236, 231, 222, .55), 0 -.5px .5px rgba(0, 0, 0, .9);
     position: relative;
     background: var(--bg);
     color: var(--ink);
@@ -119,7 +120,9 @@ section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
    against the ground and the type is legible mainly by its lit edge. Anyone
    who has asked their OS for more contrast should get the fill instead. */
 @media (prefers-contrast: more) {
-    .engraved, .lede h1 span { text-shadow: none; }
+    .engraved { text-shadow: none; }
+    /* on the dark set the face is the shadow, so without it give the fill the face colour */
+    .hero, .dark { --engrave-fill: linear-gradient(#EAE8E3, #EAE8E3); }
 }
 
 .skip { position: absolute; left: 16px; top: -60px; z-index: 20; padding: 10px 14px; background: var(--ink); color: var(--bg); border-radius: 6px; }
@@ -174,20 +177,9 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .scroll-cue span { display: inline-block; margin-left: 9px; }
 
 .lede { width: 100%; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
-.lede h1 { max-width: 22ch; font-size: clamp(34px, 3.8vw, 56px); line-height: 1.06; letter-spacing: -.012em; }
-.lede h1 span { color: #79828E; font-style: italic; }
-/* The second line keeps its own colour, so it opts out of the parent's clip
-   and stays flat while line one is carved. Give it a dimmer fill of its own. */
-@supports (background-clip: text) or (-webkit-background-clip: text) {
-    .lede h1 span {
-        color: transparent;
-        background-image:
-            linear-gradient(100deg, rgba(255, 214, 182, 0) 8%, rgba(255, 214, 182, .26) 25%, rgba(255, 214, 182, 0) 46%),
-            linear-gradient(165deg, rgba(240, 134, 86, .94) 0%, rgba(236, 94, 38, .92) 54%, rgba(240, 118, 64, .93) 100%);
-        -webkit-background-clip: text;
-                background-clip: text;
-    }
-}
+/* Set like the section titles below (.sechead__t): one face, one italic
+   word, the same size and the same stone cut. */
+.lede h1 { max-width: 22ch; font-size: clamp(36px, 3.7vw, 54px); line-height: 1.06; letter-spacing: -.01em; }
 
 /* Hero support: the one line that says what the machine does, and the ask.
    These also fill the dead space under the headline on a phone, which is what
