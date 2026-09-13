@@ -15,9 +15,11 @@ class SiteTests(SimpleTestCase):
         # the headline and the three steps must match the deck, not the
         # superseded vision-inspection positioning they replaced
         self.assertContains(home, "Self-teaching robots")
-        # the loop is the pivot: attempt, test the joint, reset, try again
-        for step in ("Attempt", "Test", "Reset"):
-            self.assertContains(home, f">{step}</dt>")
+        # three claims, each a benefit with the mechanism in its second sentence
+        for claim in ("Robots you can walk away from.",
+                      "Proof, not a photograph.",
+                      "A new part, not a new project."):
+            self.assertContains(home, f'class="feature__t engraved">{claim}</h3>')
         self.assertContains(home, "the test becomes the teacher")
         # the hero has to say what the machine does and ask for something
         self.assertContains(home, 'href="#contact"')
