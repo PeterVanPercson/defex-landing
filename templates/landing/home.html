@@ -89,17 +89,17 @@
             <li class="feature" data-reveal>
                 <span class="feature__n" aria-hidden="true">01</span>
                 <h3 class="feature__t engraved">Robots you can walk away from.</h3>
-                <p class="feature__d">Ours resets and teaches itself, so a failed attempt comes back as a lesson.</p>
+                <p class="feature__d">Ours reset and teach themselves, so a failed attempt comes back as a lesson. Not yours to fix.</p>
             </li>
             <li class="feature" data-reveal>
                 <span class="feature__n" aria-hidden="true">02</span>
                 <h3 class="feature__t engraved">Our robots feel what&rsquo;s wrong.</h3>
-                <p class="feature__d">A camera can tell you a part looks right. Ours physically tests what it just built, so a defect is caught right away, with vision and touch.</p>
+                <p class="feature__d">A camera can tell you a part looks right. Ours physically test what they just built, so a defect is caught right away, with vision and touch.</p>
             </li>
             <li class="feature" data-reveal>
                 <span class="feature__n" aria-hidden="true">03</span>
                 <h3 class="feature__t engraved">A new way, not a new project.</h3>
-                <p class="feature__d">Robots are harder to fixture than you think. Ours practises by itself.</p>
+                <p class="feature__d">Robots are harder to fixture than you think. Ours practice by themselves.</p>
             </li>
         </ol>
     </section>
@@ -154,7 +154,7 @@
              itself when a submission comes back with a message, otherwise the
              visitor would never see whether it sent. -->
         <details class="note contact__inner"{% if messages %} open{% endif %}>
-            <summary class="note__open">Rather send a note instead</summary>
+            <summary class="note__open">Or send a note instead</summary>
             <form class="form" action="{% url 'contact' %}" method="post">
                 {% csrf_token %}
                 {% if messages %}{% for message in messages %}<p class="form__flash form__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
