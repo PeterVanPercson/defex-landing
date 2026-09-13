@@ -130,6 +130,21 @@ class SiteTests(SimpleTestCase):
         home_header = self.client.get("/").content.decode().split("<header", 1)[1].split("</header>", 1)[0]
         self.assertIn('href="#contact"', home_header)
 
+    def test_booking_link_is_swappable_and_never_dead(self):
+        """The cal.com URL arrives later and is set as an env var, so this
+        checks both states: the fallback today, and the real link once it is in."""
+        body = self.client.get("/").content.decode()
+        self.assertIn('id="test"', body)
+        self.assertIn("Book a slot", body)
+        # unset: the button goes to the form rather than nowhere
+        self.assertIn('href="#contact"', body)
+
+        with override_settings(BOOKING_URL="https://cal.com/defex/30min"):
+            body = self.client.get("/").content.decode()
+        self.assertIn('href="https://cal.com/defex/30min"', body)
+        # an off-site booking page opens in its own tab, safely
+        self.assertIn('target="_blank" rel="noopener"', body)
+
     def test_hero_assets_stay_within_budget(self):
         """The hero shipped at 34.5MB once, on every device, with no narrow
         build and nothing in CI that noticed. A visitor on a phone pays for

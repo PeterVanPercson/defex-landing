@@ -188,6 +188,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 .feature { margin-top: clamp(40px, 7vh, 84px); }
 .feature__t { max-width: 20ch; font-size: var(--say); font-weight: 600; line-height: 1.12; letter-spacing: -.035em; }
 .feature__d { margin-top: 18px; max-width: 52ch; font: 400 15px/1.7 var(--font); color: var(--ink-soft); }
+.feature__cta { margin-top: 26px; }
 
 .band__note { margin-top: 32px; font: 400 13px/1.7 var(--mono); color: var(--mute); }
 

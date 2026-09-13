@@ -174,7 +174,12 @@ WHITENOISE_MIMETYPES = {'.wasm': 'application/wasm'}
 # static/** through @vercel/static, so /static/ is answered at the edge and never
 # reaches Django. Production cache headers live in vercel.json. This hook still
 # runs under gunicorn and in the tests, and is what they assert against.
-DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "67")
+DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "68")
+
+# The cal.com link behind "Test our product". Set BOOKING_URL in the Vercel
+# project and it takes effect without a deploy. Until it is set the button falls
+# back to the contact form, so it is never a dead end.
+BOOKING_URL = os.getenv("BOOKING_URL", "") or "#contact"
 
 
 def _static_headers(headers, path, url):
