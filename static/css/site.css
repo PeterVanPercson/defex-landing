@@ -180,9 +180,11 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    heavy. So the frame ends on paper. The fade is laid OVER the film, over its
    masked lower 24% (hence the .24 and 13.5vw): paper at the alphas that
    reproduce the page's linear-light ramp over black. Laid under the film, the
-   film's dark edges showed as a box against the ramp at its sides. The paper
-   then runs on to the bottom of the frame. */
-.lede::before { content: ""; position: absolute; z-index: 2; left: 0; right: 0; bottom: calc(100% - 1px); height: calc(var(--hero-gap) + 13.5vw + 1px); background: var(--grain), linear-gradient(to bottom, rgba(243, 239, 232, 0) 0%, rgba(243, 239, 232, 0.021) 10%, rgba(243, 239, 232, 0.064) 20%, rgba(243, 239, 232, 0.128) 30%, rgba(243, 239, 232, 0.209) 40%, rgba(243, 239, 232, 0.308) 50%, rgba(243, 239, 232, 0.419) 60%, rgba(243, 239, 232, 0.547) 70%, rgba(243, 239, 232, 0.684) 80%, rgba(243, 239, 232, 0.838) 90%, rgba(243, 239, 232, 1) 100%); pointer-events: none; }
+   film's dark edges showed as a box against the ramp at its sides. No grain
+   on it: the grain is a dark tint, and over black and over the film it drew
+   a hard line where the fade begins. The paper then runs on to the bottom of
+   the frame. */
+.lede::before { content: ""; position: absolute; z-index: 2; left: 0; right: 0; bottom: calc(100% - 1px); height: calc(var(--hero-gap) + 13.5vw + 1px); background: linear-gradient(to bottom, rgba(243, 239, 232, 0) 0%, rgba(243, 239, 232, 0.021) 10%, rgba(243, 239, 232, 0.064) 20%, rgba(243, 239, 232, 0.128) 30%, rgba(243, 239, 232, 0.209) 40%, rgba(243, 239, 232, 0.308) 50%, rgba(243, 239, 232, 0.419) 60%, rgba(243, 239, 232, 0.547) 70%, rgba(243, 239, 232, 0.684) 80%, rgba(243, 239, 232, 0.838) 90%, rgba(243, 239, 232, 1) 100%); pointer-events: none; }
 .lede::after { content: ""; position: absolute; left: 0; right: 0; top: calc(100% - 1px); height: 100vh; background: var(--grain), var(--page); pointer-events: none; }
 .has-scroll-film .lede::before { height: calc(var(--hero-gap) + .24 * min(56.25vw, 100svh - var(--nav) - var(--lede-space)) + 1px); }
 /* Set like the section titles below (.sechead__t): one face, one italic
