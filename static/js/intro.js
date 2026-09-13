@@ -8,9 +8,10 @@
     // JS owns the exit from here. The CSS failsafe is for when it never runs.
     intro.style.animation = 'none';
 
-    // Hold on black for one left-to-right sweep of the fast orbit, then
-    // dissolve into the hero, which sits on the same black.
-    const HOLD = 2300;
+    // Hold on black just long enough to register the orbits, then dissolve
+    // into the hero, which sits on the same black. The dissolve is what makes
+    // the hand-off feel smooth, so shorten the hold, never the fade.
+    const HOLD = 1300;
     const FADE = 900;   // must match .intro.is-leaving in site.css
 
     let leaving = false;
