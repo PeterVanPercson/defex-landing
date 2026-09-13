@@ -50,6 +50,11 @@ class SiteTests(SimpleTestCase):
         self.assertNotIn(">defex<", header)
         self.assertIn(">defex<", home.content.decode())   # present in the footer
         self.assertContains(home, 'id="film"')
+        # the starting page: overlay markup, its head gate and its script
+        self.assertContains(home, 'id="intro"')
+        self.assertContains(home, "intro__particle--core")
+        self.assertContains(home, "classList.add('is-intro')")
+        self.assertContains(home, 'src="/static/js/intro.js')
         self.assertContains(home, "/where-it-started/")
         # the origin clip now runs on the home page too, under the hero
         self.assertContains(home, 'id="origin-video"')
@@ -78,7 +83,7 @@ class SiteTests(SimpleTestCase):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
-        for asset in ("js/hero-film.js", "js/origin.js", "video/origin.mp4", "video/origin-poster.jpg"):
+        for asset in ("js/hero-film.js", "js/intro.js", "js/origin.js", "video/origin.mp4", "video/origin-poster.jpg"):
             self.assertEqual(self.client.get(f"/static/{asset}").status_code, 200, asset)
 
     def test_hero_supports_byte_ranges(self):
@@ -203,6 +208,11 @@ class SiteTests(SimpleTestCase):
         css = (root / "static/css/site.css").read_text()
         # rules inside a media query do not style the default (desktop) case
         top = re.sub(r"@media[^{]*\{(?:[^{}]|\{[^{}]*\})*\}", "", css, flags=re.S)
+        # the intro is a fixed overlay: it must stay hidden until JS opts in,
+        # and stay hidden for reduced-motion visitors whatever JS does
+        self.assertRegex(top, r"\.intro \{[^}]*display: none;", ".intro must be hidden until JS opts in")
+        self.assertIn(".intro { display: none !important; }", css.split("prefers-reduced-motion", 1)[1],
+                      "reduced motion must hide the intro")
         used = set()
         for name in ("home.html", "origin.html", "_topbar.html"):
             markup = (root / "templates/landing" / name).read_text()

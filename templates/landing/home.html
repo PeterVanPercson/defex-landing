@@ -3,9 +3,35 @@
 
 {% block extra_head %}
 <link rel="preload" as="image" href="{% static 'defex/assets/defex-poster-v4.webp' %}?v={{ asset_v }}">
+<!-- Decides before first paint whether this visit opens on the intro, so
+     the page never flashes under it. Once per tab; ?intro replays it. -->
+<script>
+(function () {
+    try {
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches || matchMedia('(forced-colors: active)').matches) return;
+        if (!/[?&]intro\b/.test(location.search) && sessionStorage.getItem('defex-intro')) return;
+        document.documentElement.classList.add('is-intro');
+    } catch (e) {}
+})();
+</script>
 {% endblock %}
 
 {% block content %}
+<!-- The starting page: the mark, alive, on black. Shown by JS only and
+     dismissed by static/js/intro.js; see .intro in site.css. -->
+<div class="intro" id="intro" aria-hidden="true">
+    <div class="intro__stage">
+        <div class="intro__cloud">
+            <div class="intro__orbits">
+                <div class="intro__particle intro__particle--fast"><span></span></div>
+                <div class="intro__particle intro__particle--wide"><span></span></div>
+                <div class="intro__particle intro__particle--core"><span></span></div>
+                <div class="intro__particle intro__particle--drift"><span></span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <a class="skip" href="#contact">Skip to contact</a>
 
 {% include "landing/_topbar.html" %}
@@ -136,6 +162,7 @@
 
 {% block extra_scripts %}
 
+<script src="{% static 'js/intro.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/hero-film.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/origin.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/book.js' %}?v={{ asset_v }}" defer></script>

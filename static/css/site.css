@@ -384,6 +384,80 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 .footer__line { font: 400 12px/1.6 var(--mono); color: var(--mute); }
 .footer__fine { font: 400 11px/1.6 var(--mono); color: var(--mute); }
 
+/* Intro. The mark, alive: four dots on the orbits of a "quantum cloud"
+   loader, in the brand's three colours, on the hero's own black. The four
+   durations and the single easing curve, cubic-bezier(.37, 0, .63, 1), are
+   what make it smooth: every orbit is one long curve with no reversal, so
+   the keyframes are copied verbatim and must not be tuned by eye.
+   Charcoal cannot glow on black, so the third colour takes the frontmost,
+   central orbit and carries a dark halo. It is seen as an eclipse: it dims
+   the orange and the cream as it crosses in front of them.
+   Only JS shows it (html.is-intro, set in home.html's head before first
+   paint), so a visitor without JS never meets a fixed overlay, and a
+   reduced-motion visitor never sees it at all. */
+.intro { --intro-scale: 1; position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; background: #020506; color: #EAE8E3; overscroll-behavior: contain; touch-action: none; user-select: none;
+    /* If intro.js never runs, the overlay still leaves on its own. */
+    animation: intro-failsafe .9s cubic-bezier(.37, 0, .63, 1) 5s forwards; }
+html.is-intro .intro { display: flex; }
+.intro.is-leaving { opacity: 0; transition: opacity .9s cubic-bezier(.37, 0, .63, 1); }
+/* One composited layer for the overlay's whole life, so the leave settles
+   on an existing layer instead of creating one in its first frame. */
+.intro__stage { display: grid; justify-items: center; will-change: transform; transition: transform .9s cubic-bezier(.37, 0, .63, 1); }
+.is-leaving .intro__stage { transform: scale(.965); }
+/* The cloud's layout box scales with the page; the orbits inside stay at
+   the loader's native 176x96 and are scaled as one transform, so the
+   pixel keyframes below never change. */
+.intro__cloud { position: relative; width: calc(176px * var(--intro-scale)); height: calc(96px * var(--intro-scale)); }
+.intro__orbits { position: absolute; left: 50%; top: 50%; width: 176px; height: 96px; margin: -48px 0 0 -88px; display: flex; align-items: center; justify-content: center; isolation: isolate; transform: scale(var(--intro-scale)); }
+.intro__particle { position: absolute; will-change: transform, opacity; }
+.intro__particle span { display: block; width: 100%; height: 100%; border-radius: 50%; }
+/* fast inner orbit: orange */
+.intro__particle--fast { z-index: 30; width: 16px; height: 16px; animation: intro-fast 3.8s cubic-bezier(.37, 0, .63, 1) infinite; }
+.intro__particle--fast span { background: #FF5A1F; box-shadow: 0 0 12px rgba(255, 90, 31, .75), 0 0 24px rgba(255, 90, 31, .3); }
+/* large, slow, heavy orbit behind: cream */
+.intro__particle--wide { z-index: 10; width: 24px; height: 24px; animation: intro-wide 5.6s cubic-bezier(.37, 0, .63, 1) infinite; }
+.intro__particle--wide span { background: #EAE8E3; box-shadow: 0 0 16px rgba(234, 232, 227, .6), 0 0 30px rgba(234, 232, 227, .22); }
+/* central oscillator, frontmost: charcoal, the eclipse. The fill is 1.08:1
+   against the ground, so the rim light is what makes it a sphere between
+   eclipses; the dark collar is what makes the eclipse. */
+.intro__particle--core { z-index: 40; width: 20px; height: 20px; animation: intro-core 3.1s cubic-bezier(.37, 0, .63, 1) infinite; }
+.intro__particle--core span { background: #0F1115; box-shadow: inset 0 0 0 1.5px rgba(234, 232, 227, .32), inset 0 1px 0 rgba(234, 232, 227, .12), 0 0 14px 5px rgba(2, 5, 6, .92); }
+/* slow wide sweep at the very back: a second orange, softer, an ember */
+.intro__particle--drift { z-index: 0; width: 14px; height: 14px; animation: intro-drift 6.4s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
+.intro__particle--drift span { background: #FF5A1F; box-shadow: 0 0 10px rgba(255, 90, 31, .55), 0 0 20px rgba(255, 90, 31, .2); }
+
+@keyframes intro-fast {
+      0% { transform: translate3d(-46px, 7px, 0) scale(.72); opacity: .45; }
+     25% { transform: translate3d(-23px, -7px, 0) scale(.95); opacity: .78; }
+     50% { transform: translate3d(46px, 0, 0) scale(1.18); opacity: 1; }
+     75% { transform: translate3d(23px, 7px, 0) scale(.95); opacity: .78; }
+    100% { transform: translate3d(-46px, 7px, 0) scale(.72); opacity: .45; }
+}
+@keyframes intro-wide {
+      0% { transform: translate3d(38px, -4px, 0) scale(1); opacity: .95; }
+     25% { transform: translate3d(19px, 7px, 0) scale(.88); opacity: .72; }
+     50% { transform: translate3d(-38px, 3px, 0) scale(.68); opacity: .42; }
+     75% { transform: translate3d(-19px, -7px, 0) scale(.88); opacity: .72; }
+    100% { transform: translate3d(38px, -4px, 0) scale(1); opacity: .95; }
+}
+@keyframes intro-core {
+      0% { transform: translate3d(-27px, 2px, 0) scale(.82); opacity: .65; }
+     20% { transform: translate3d(-17px, -5px, 0) scale(.94); opacity: .82; }
+     50% { transform: translate3d(27px, 0, 0) scale(1.08); opacity: 1; }
+     80% { transform: translate3d(17px, 5px, 0) scale(.94); opacity: .82; }
+    100% { transform: translate3d(-27px, 2px, 0) scale(.82); opacity: .65; }
+}
+@keyframes intro-drift {
+      0% { transform: translate3d(64px, 6px, 0) scale(.52); opacity: .25; }
+     20% { transform: translate3d(43px, -5px, 0) scale(.68); opacity: .45; }
+     50% { transform: translate3d(0, 3px, 0) scale(1); opacity: .9; }
+     80% { transform: translate3d(-43px, -5px, 0) scale(.68); opacity: .45; }
+    100% { transform: translate3d(-64px, 6px, 0) scale(.52); opacity: .25; }
+}
+@keyframes intro-failsafe {
+    to { opacity: 0; visibility: hidden; }
+}
+
 /* Portrait keeps the pin. Letting the film sit in normal flow here was a bug:
    a 16:9 film is only ~265px tall on a phone, so it cleared the top of the
    screen after ~320px of scroll, which is 27% of the way through the scrub.
@@ -413,6 +487,9 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
     .origin-page { min-height: 0; }
 }
 
+@media (min-width: 721px) {
+    .intro { --intro-scale: 1.75; }
+}
 @media (max-width: 720px) {
     :root { --radius: 12px; --nav: 56px; --pad: 22px; }
     /* the headline sits under the film on a phone rather than over it, so the
@@ -456,7 +533,12 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease; --b
 }
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
+    .intro { display: none !important; }
     .hero__film { -webkit-mask-image: none; mask-image: none; }
     .pill, .link, .field input, .field textarea, .sound, .navlink { transition: none; }
     .flash.is-on { animation-duration: .5s; }
+}
+@media (forced-colors: active) {
+    /* box-shadows are dropped and the dots take the Canvas colour: nothing left to show */
+    .intro { display: none !important; }
 }
