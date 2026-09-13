@@ -53,6 +53,10 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, "/where-it-started/")
         # the origin clip now runs on the home page too, under the hero
         self.assertContains(home, 'id="origin-video"')
+        # the clip loops rather than freezing on its last frame
+        self.assertContains(home, 'id="origin-video" muted loop')
+        # no example text in the part field
+        self.assertNotContains(home, 'placeholder="e.g.')
         self.assertContains(home, "js/origin.js")
         self.assertContains(home, "That is how we learned the camera is not enough")
         origin = self.client.get("/where-it-started/")

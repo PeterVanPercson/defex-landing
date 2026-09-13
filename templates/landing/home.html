@@ -42,7 +42,7 @@
             <p class="origin__note">That is how we learned the camera is not enough.</p>
         </div>
         <figure class="origin__film">
-            <video class="origin__video" id="origin-video" muted playsinline preload="metadata" disablepictureinpicture
+            <video class="origin__video" id="origin-video" muted loop playsinline preload="metadata" disablepictureinpicture
                    width="720" height="1280"
                    poster="{% static 'video/origin-poster.jpg' %}?v={{ asset_v }}"
                    src="{% static 'video/origin.mp4' %}?v={{ asset_v }}"></video>
@@ -115,7 +115,7 @@
                     <label class="field"><span>Company</span><input type="text" name="factory" autocomplete="organization" maxlength="200" required></label>
                 </div>
                 <label class="field"><span>Email, phone, or WeChat</span><input type="text" name="contact" autocomplete="email" maxlength="200" required></label>
-                <label class="field"><span>The part and how it is checked</span><textarea name="product" rows="4" maxlength="1200" placeholder="e.g. 12-pin board-to-wire connector, a new variant most quarters, seated by hand and checked by eye."></textarea></label>
+                <label class="field"><span>The part and how it is checked</span><textarea name="product" rows="4" maxlength="1200"></textarea></label>
                 <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
                 <button type="submit" class="cta">Send</button>
             </form>
