@@ -39,12 +39,14 @@
        with a light lip below and a dark lip above, so the type reads as cut
        into the paper rather than printed on it. Lit from above, which is why
        the highlight sits at +1px and the shadow at -1px. */
-    --engrave-fill: linear-gradient(165deg, rgba(70, 62, 48, .85) 0%, rgba(35, 28, 15, .95) 50%, rgba(55, 47, 33, .8) 100%);
+    --engrave-fill-paper: linear-gradient(165deg, rgba(70, 62, 48, .85) 0%, rgba(35, 28, 15, .95) 50%, rgba(55, 47, 33, .8) 100%);
+    --engrave-fill: var(--engrave-fill-paper);
     /* origami-robotics.com's own cut. The soft 2px highlight covers most of
        the face, so the letters read as pale stone with a dark upper edge
        rather than as ink. It needs a serif at 400: on a bold sans the same lip
        glowed under every stroke and read as outlined. */
-    --engrave-lip: 0 1px 2px rgba(255, 250, 242, .9), 0 -1px 1px rgba(40, 30, 15, .35), 0 0 4px rgba(60, 50, 35, .15);
+    --engrave-lip-paper: 0 1px 2px rgba(255, 250, 242, .9), 0 -1px 1px rgba(40, 30, 15, .35), 0 0 4px rgba(60, 50, 35, .15);
+    --engrave-lip: var(--engrave-lip-paper);
 
     /* Sections below the hero are sheets laid over the page, a shade lighter,
        each casting a soft shadow up onto the one before. */
@@ -90,11 +92,6 @@ body { background: var(--grain), var(--bg); color: var(--ink); font: 15px/1.55 v
     background: var(--bg);
     color: var(--ink);
 }
-/* Starts 1px inside the hero: the hero height is a fractional svh value, so
-   abutting exactly leaves an anti-aliased hairline at the seam. Stops are
-   interpolated in linear light on a smoothstep, because a plain two-stop
-   sRGB ramp from near-black to paper goes muddy through the middle. */
-.hero::after { content: ""; position: absolute; left: 0; right: 0; top: calc(100% - 1px); height: calc(var(--hero-fade) + 1px); background: var(--grain), linear-gradient(to bottom, var(--bg) 0%, #070A0B 10%, #121415 20%, #212323 30%, #353636 40%, #4C4D4C 50%, #676765 60%, #858581 70%, #A7A5A1 80%, #CBC9C3 90%, var(--page) 100%); pointer-events: none; }
 a { color: inherit; text-decoration: none; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 [hidden] { display: none !important; }
@@ -163,8 +160,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    Both get a masked top and bottom edge so the film dissolves into the page
    rather than cutting against it, whatever frame is on screen. */
 .hero { position: relative; }
-.hero__sticky { position: relative; display: grid; place-items: center; align-content: center; gap: var(--hero-gap); }
-.hero__film { display: block; width: 100%; height: auto; margin-inline: auto; background: var(--bg);
+.hero__sticky { position: relative; display: grid; place-items: center; align-content: center; gap: var(--hero-gap); overflow: clip; }
+.hero__film { position: relative; z-index: 1; display: block; width: 100%; height: auto; margin-inline: auto; background: var(--bg);
     -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 26%, #000 76%, transparent 100%);
             mask-image: linear-gradient(to bottom, transparent 0, #000 26%, #000 76%, transparent 100%); }
 .scroll-cue { display: none; }
@@ -173,10 +170,21 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .has-scroll-film .hero__sticky { position: sticky; top: var(--nav); height: calc(100svh - var(--nav)); overflow: clip; }
 .has-scroll-film .hero__film { width: min(100%, calc((100svh - var(--nav) - var(--lede-space)) * 16 / 9)); }
 /* the headline now sits in the frame, so the cue moves out of its way */
-.has-scroll-film .scroll-cue { display: block; position: absolute; right: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); bottom: 16px; margin: 0; font-size: 12px; color: var(--mute); opacity: var(--cue-opacity, 1); pointer-events: none; }
+.has-scroll-film .scroll-cue { display: block; position: absolute; right: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); bottom: 16px; margin: 0; font-size: 12px; color: rgba(26, 24, 21, .62); opacity: var(--cue-opacity, 1); pointer-events: none; }
 .scroll-cue span { display: inline-block; margin-left: 9px; }
 
-.lede { width: 100%; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
+.lede { position: relative; width: 100%; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); background: var(--grain), var(--page);
+    --ink: #1A1815; --engrave-fill: var(--engrave-fill-paper); --engrave-lip: var(--engrave-lip-paper); }
+/* The headline is cut into paper exactly like the section titles below it.
+   That engraving only reads on a light ground; on black it glowed or turned
+   heavy. So the frame ends on paper. The fade is laid OVER the film, over its
+   masked lower 24% (hence the .24 and 13.5vw): paper at the alphas that
+   reproduce the page's linear-light ramp over black. Laid under the film, the
+   film's dark edges showed as a box against the ramp at its sides. The paper
+   then runs on to the bottom of the frame. */
+.lede::before { content: ""; position: absolute; z-index: 2; left: 0; right: 0; bottom: calc(100% - 1px); height: calc(var(--hero-gap) + 13.5vw + 1px); background: var(--grain), linear-gradient(to bottom, rgba(243, 239, 232, 0) 0%, rgba(243, 239, 232, 0.021) 10%, rgba(243, 239, 232, 0.064) 20%, rgba(243, 239, 232, 0.128) 30%, rgba(243, 239, 232, 0.209) 40%, rgba(243, 239, 232, 0.308) 50%, rgba(243, 239, 232, 0.419) 60%, rgba(243, 239, 232, 0.547) 70%, rgba(243, 239, 232, 0.684) 80%, rgba(243, 239, 232, 0.838) 90%, rgba(243, 239, 232, 1) 100%); pointer-events: none; }
+.lede::after { content: ""; position: absolute; left: 0; right: 0; top: calc(100% - 1px); height: 100vh; background: var(--grain), var(--page); pointer-events: none; }
+.has-scroll-film .lede::before { height: calc(var(--hero-gap) + .24 * min(56.25vw, 100svh - var(--nav) - var(--lede-space)) + 1px); }
 /* Set like the section titles below (.sechead__t): one face, one italic
    word, the same size and the same stone cut. */
 .lede h1 { max-width: 22ch; font-size: clamp(36px, 3.7vw, 54px); line-height: 1.06; letter-spacing: -.01em; }
@@ -206,15 +214,14 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* The closing block runs full bleed so the dark reaches both edges; the column
    inside keeps the measure. The gradient is .hero::after mirrored, so the page
    dissolves into the dark rather than cutting against it. */
-/* above the sheets, or the careers sheet would paint over the dissolve */
-.contact.dark { max-width: none; padding-inline: 0; position: relative; z-index: 2; }
+/* above the sheets, or the heading's sheet would paint over the dissolve */
+.contact.dark { max-width: none; padding-inline: 0; padding-top: clamp(40px, 7vh, 72px); position: relative; z-index: 2; }
 
 /* cal.com's booker in a panel of our own: a hairline, the page radius, and a
    small label in the corner. The booker draws its own card inside this, so the
    panel is only a frame around it and its branding. */
 .booker { max-width: var(--max); margin-inline: auto; padding-inline: var(--pad); text-align: left; }
 .booker__panel { border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(12px, 1.6vh, 18px); }
-.booker > .sechead { margin-bottom: clamp(28px, 4.5vh, 48px); }
 /* No fixed height, and a width close to the card's own. cal.com's card has a
    max width and its iframe document is WHITE behind it, so any box wider or
    taller than the card shows white around it. The embed resizes the iframe to
@@ -293,8 +300,9 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    sheet laid over the page, a shade lighter, casting a soft shadow up onto
    the one before it. Full bleed, with the content kept on the column. */
 .sheet { position: relative; z-index: 1; max-width: none; padding-block: clamp(96px, 14vh, 150px); padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); background: var(--grain), var(--sheet); box-shadow: var(--sheet-shadow); }
-/* the last sheet has to clear the dissolve into the closing dark block */
-.careers.sheet { padding-bottom: var(--close-fade); }
+/* "Test our product" is cut into paper like every other title, so its sheet
+   is the one that clears the dissolve into the closing dark block */
+.contact__head.sheet { padding-bottom: var(--close-fade); }
 
 /* Backed by: one quiet row, the way origami shows its backers. A small
    label, and the marks muted until they are pointed at. */
@@ -375,9 +383,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .origin__copy p.origin__note { max-width: 52ch; margin-top: 24px; font-family: var(--mono); font-size: 13px; line-height: 1.85; letter-spacing: 0; font-weight: 400; color: var(--ink-soft); }
 .origin__film { position: relative; margin: 0; border-radius: var(--radius); overflow: hidden; background: var(--surface); }
 .origin__video { display: block; width: 100%; height: auto; }
-/* the same block on the home page, where it is the first thing under the hero
-   and has to clear the dissolve */
-.origin--home { padding-top: calc(28px + var(--hero-fade)); }
+/* the same block on the home page, straight under the hero's paper */
+.origin--home { padding-top: clamp(56px, 9vh, 110px); }
 /* .engraved, not p: .origin__note is also a p in here and ties on specificity,
    so a bare p selector declared later swallows the small line too. */
 .origin--home .origin__copy p.engraved { font-size: var(--say); line-height: 1.12; }
@@ -525,6 +532,8 @@ html.is-intro .intro { display: flex; }
        headline and the screen read as half-empty. Centred it splits into
        154px above and 188px below and the composition reads as framed. */
     .has-scroll-film .hero__sticky { align-content: center; }
+    /* the film is 5:4 at full width here, so its masked lower 24% is 19.2vw */
+    .has-scroll-film .lede::before { height: calc(var(--hero-gap) + 19.2vw + 1px); }
 }
 
 @media (max-width: 900px) {
@@ -558,7 +567,7 @@ html.is-intro .intro { display: flex; }
        cleared 40px, so the first heading sat inside the dark end of the ramp
        and was invisible. Shorter ramp here, and real clearance for it. */
 :root { --hero-fade: clamp(120px, 20vh, 200px); }
-    .about, .band--first, .origin--home { padding-top: calc(24px + var(--hero-fade)); }
+    .about, .band--first { padding-top: calc(24px + var(--hero-fade)); }
     /* stacked on a phone, so it needs more room before it mounts */
     .booker__frame { min-height: 1080px; }
     .contact { padding-top: 80px; padding-bottom: 80px; }

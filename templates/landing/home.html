@@ -135,15 +135,18 @@
         <p class="careers__alt"><a class="link" href="{% url 'careers' %}">See all roles and apply</a></p>
     </section>
 
-    <section class="contact dark" id="contact" aria-labelledby="contact-title">
+    <section id="contact" aria-labelledby="contact-title">
+    <div class="sheet contact__head">
+        <div class="sechead">
+            <h2 class="sechead__t engraved" id="contact-title" data-reveal>Test our <em>product</em></h2>
+        </div>
+    </div>
+    <div class="contact dark">
         <!-- cal.com's booker, mounted by static/js/book.js. It lives here rather
              than on a page of its own: this is where someone has finished
              reading and is deciding, and a second page is one more click
              between them and a slot. -->
         <div class="booker">
-            <div class="sechead">
-                <h2 class="sechead__t engraved" id="contact-title" data-reveal>Test our <em>product</em></h2>
-            </div>
             <div class="booker__panel">
                 <div class="booker__frame" id="cal-inline" data-cal="{{ cal_link }}" role="region" aria-label="Choose a time"></div>
             </div>
@@ -169,6 +172,7 @@
             </form>
             <p class="contact__alt">or email <a class="link" href="mailto:husan@defex.app">husan@defex.app</a></p>
         </details>
+    </div>
     </section>
 </main>
 
