@@ -7,23 +7,32 @@
     // or the network fails, the figure is simply paper.
     const host = document.querySelector('[data-spline]');
     if (!host) return;
-    // Resolves once the object has held its position for eight rendered
-    // frames. Sampled per frame, not per millisecond: the camera only moves
-    // when a frame renders, so on a slow machine a timer would call it still
+    // Resolves in the tail of the camera's move: once it has travelled and
+    // its per-frame step has fallen under half a percent of that travel for
+    // three frames (the ease-out's last stretch, where the framing is already
+    // right), or once it has held still for eight frames. Sampled per
+    // rendered frame, not per millisecond: the camera only moves when a
+    // frame renders, so on a slow machine a timer would call it still
     // between two frames. Capped at five seconds.
     const settled = (obj) => new Promise((done) => {
         if (!obj || !obj.position) { setTimeout(done, 300); return; }
         const t0 = performance.now();
-        let last = '';
+        const p0 = { x: obj.position.x, y: obj.position.y, z: obj.position.z };
+        let prev = p0;
+        let far = 0;
+        let slow = 0;
         let still = 0;
         let frames = 0;
+        const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
         const tick = () => {
-            const p = obj.position;
-            const key = `${p.x.toFixed(1)},${p.y.toFixed(1)},${p.z.toFixed(1)}`;
-            still = key === last ? still + 1 : 0;
-            last = key;
+            const p = { x: obj.position.x, y: obj.position.y, z: obj.position.z };
+            const step = dist(p, prev);
+            far = Math.max(far, dist(p, p0));
+            still = step < 0.05 ? still + 1 : 0;
+            slow = far > 1 && step < far * 0.005 ? slow + 1 : 0;
+            prev = p;
             frames++;
-            if ((still >= 8 && frames >= 14) || performance.now() - t0 > 5000) done();
+            if ((frames >= 10 && (slow >= 3 || still >= 8)) || performance.now() - t0 > 5000) done();
             else requestAnimationFrame(tick);
         };
         requestAnimationFrame(tick);

@@ -16,6 +16,15 @@
 {% block twitter_title %}Blog · defex{% endblock %}
 {% block twitter_description %}Notes from Defex on teaching robots physical work: assembly, testing, reset, and what the next attempt costs.{% endblock %}
 
+{% block extra_head %}
+<!-- The robot's runtime and scene start downloading with the page rather
+     than after the script has run: the runtime is a module on our host, the
+     scene is a fetch from Spline's. -->
+<link rel="preconnect" href="https://prod.spline.design" crossorigin>
+<link rel="modulepreload" href="{% static 'vendor/spline-2.0.46/runtime.standalone.webgl.js' %}?v={{ asset_v }}">
+<link rel="preload" as="fetch" href="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode" crossorigin>
+{% endblock %}
+
 {% block content %}
 <a class="skip" href="#posts">Skip to the posts</a>
 
@@ -30,7 +39,7 @@
         <div class="bloghero__copy">
             <p class="eyebrow eyebrow--scan" data-reveal data-scan>{% include "landing/_scan.html" %}Defex</p>
             <h1 class="bloghero__t engraved" id="blog-title" data-reveal>Blog.</h1>
-            <p class="masthead__lead">What we are learning while building robots that practice, test their own work and reset for the next attempt.</p>
+            <p class="masthead__lead">What we are learning while building robots that no one can.</p>
         </div>
         <figure class="spline" data-spline="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode" data-runtime="{% static 'vendor/spline-2.0.46/runtime.standalone.webgl.js' %}?v={{ asset_v }}" aria-label="A robot, in 3D, that looks toward the cursor.">
             <span class="spline__loader" aria-hidden="true"><i></i><i></i><i></i></span>
