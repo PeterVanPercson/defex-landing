@@ -383,7 +383,10 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 
 /* where it started: its own page, one line and the original clip */
 .origin-page { min-height: calc(100svh - var(--nav) - 92px); display: grid; align-items: center; }
-.origin { max-width: var(--max); margin-inline: auto; width: 100%; padding: clamp(48px, 8vh, 104px) var(--pad); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: clamp(28px, 5vw, 80px); align-items: center; }
+/* The copy sits at the top of the clip, not centred on it: the clip is a
+   portrait, and centring left 230px of empty paper above the kicker. */
+.origin { max-width: var(--max); margin-inline: auto; width: 100%; padding: clamp(48px, 8vh, 104px) var(--pad); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: clamp(28px, 5vw, 80px); align-items: start; }
+.origin__copy { padding-top: clamp(12px, 3vh, 40px); }
 .origin__copy p { margin-top: 22px; max-width: 26ch; font-family: var(--serif); font-size: clamp(24px, 2.9vw, 36px); line-height: 1.18; letter-spacing: -.01em; font-weight: 400; }
 .origin__copy p.origin__note { max-width: 52ch; margin-top: 24px; font-family: var(--mono); font-size: 13px; line-height: 1.85; letter-spacing: 0; font-weight: 400; color: var(--ink-soft); }
 .origin__film { position: relative; margin: 0; border-radius: var(--radius); overflow: hidden; background: var(--surface); }
@@ -638,7 +641,8 @@ html.is-intro .intro { display: flex; }
    with a hairline of light along its top edge, the label in the site's CTA
    type with an arrow. On hover the ring gives way to a beam, a conic
    gradient spinning behind the face, and the arrow moves on a little. */
-.beam { position: relative; display: inline-flex; align-items: center; justify-content: center; margin-top: clamp(18px, 3vh, 28px); padding: 1px; border-radius: 999px; overflow: hidden; transition: transform .3s ease, box-shadow .3s ease; }
+.lede__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: clamp(18px, 3vh, 28px); }
+.beam { position: relative; display: inline-flex; align-items: center; justify-content: center; padding: 1px; border-radius: 999px; overflow: hidden; transition: transform .3s ease, box-shadow .3s ease; }
 .beam:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(255, 255, 255, .1); }
 .beam__spin { position: absolute; inset: -100%; background: conic-gradient(from 90deg at 50% 50%, transparent 0%, transparent 75%, #fff 100%); opacity: 0; transition: opacity .3s ease; animation: beam-spin 3s linear infinite; animation-play-state: paused; }
 .beam:hover .beam__spin { opacity: 1; animation-play-state: running; }
@@ -650,6 +654,12 @@ html.is-intro .intro { display: flex; }
 .beam__text { position: relative; }
 .beam__arrow { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .3s ease; }
 .beam:hover .beam__arrow { transform: translateX(2px); }
+/* the product button is the primary: paper face, ink type, and the beam in
+   the brand orange, which is a fill here, never text */
+.beam--primary .beam__face { background: linear-gradient(to bottom, #F7F4EE, #D6D1C8); color: #1A1815; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7); }
+.beam--primary:hover .beam__face { color: #1A1815; }
+.beam--primary .beam__ring { background: rgba(234, 232, 227, .5); }
+.beam--primary .beam__spin { background: conic-gradient(from 90deg at 50% 50%, transparent 0%, transparent 75%, var(--accent) 100%); }
 .footer__blog { font: 400 12px/1.6 var(--mono); color: var(--mute); }
 
 /* Reading progress: a hairline of the accent along the top edge, above the
@@ -821,8 +831,10 @@ html.is-intro .intro { display: flex; }
 .bench__seg--check { background: var(--ink); }
 .bench__seg--reset { background: var(--reset); }
 .bench__seg--recovery { background: repeating-linear-gradient(135deg, var(--rule) 0 3px, transparent 3px 8px); }
-.bench__head { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--page); box-shadow: 0 0 0 1px var(--ink); animation: bench-sweep var(--lap) linear infinite; }
-@keyframes bench-sweep { to { left: 100%; } }
+/* a full-width element whose right edge is the head, moved with transform
+   so it never touches layout */
+.bench__head { position: absolute; inset: 0; border-right: 2px solid var(--page); box-shadow: 1px 0 0 var(--ink); transform: translateX(-100%); animation: bench-sweep var(--lap) linear infinite; }
+@keyframes bench-sweep { to { transform: translateX(0); } }
 
 /* the table from the text, as ruled rows: the question in the serif, the
    evidence in the mono */
@@ -838,6 +850,10 @@ html.is-intro .intro { display: flex; }
 .share__lead { font: 400 12px/1.7 var(--mono); color: var(--mute); }
 .share__row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .share__row [data-copy-link] { min-width: 112px; }
+/* who wrote it: a name and two lines, above the way out */
+.author { margin-top: clamp(32px, 5vh, 48px); padding-top: 22px; border-top: 1px solid var(--line); }
+.author__name { font: 500 11px/1.6 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.author__bio { margin-top: 6px; max-width: 56ch; font: 400 12.5px/1.75 var(--mono); color: var(--ink-soft); }
 .discuss { margin-top: clamp(40px, 6vh, 64px); }
 .discuss__t { font-size: clamp(26px, 3vw, 36px); line-height: 1.1; }
 .discuss__p { margin-top: 14px; font: 400 13px/1.8 var(--mono); color: var(--ink-soft); }
@@ -881,7 +897,7 @@ html.is-intro .intro { display: flex; }
    unit-free: "1 1" is the whole line, "0 1" is none of it. */
 .scan { display: inline-block; flex: none; width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -.12em; }
 .scan__line { stroke-dasharray: 1 1; }
-.is-scanning .scan__line, .navlink--blog:hover .scan__line, .postrow:hover .scan__line, .eyebrow--scan:hover .scan__line { animation: scan-line .8s cubic-bezier(.4, 0, .2, 1) both; animation-delay: calc(var(--i) * .1s); }
+.is-scanning .scan__line, .postrow:hover .scan__line, .eyebrow--scan:hover .scan__line { animation: scan-line .8s cubic-bezier(.4, 0, .2, 1) both; animation-delay: calc(var(--i) * .1s); }
 /* erase for .3 s, hold, redraw for .3 s: the original awaits all three
    erasures before any line redraws, which is what the hold reproduces */
 @keyframes scan-line {
@@ -890,40 +906,14 @@ html.is-intro .intro { display: flex; }
     62.5% { stroke-dasharray: 0 1; opacity: 0; }
     100% { stroke-dasharray: 1 1; opacity: 1; }
 }
-.navlink--blog { display: inline-flex; align-items: center; gap: 7px; }
-.navlink--blog .scan { font-size: 13px; }
 .eyebrow--scan { display: inline-flex; align-items: center; gap: 9px; }
 .eyebrow--scan .scan { font-size: 15px; }
 .postrow__go { display: inline-flex; align-items: center; gap: 8px; }
 .postrow__go .scan { font-size: 14px; }
 
-/* The ribbons, after the "Background Paths" component: 36 bezier ribbons a
-   side, drawn by static/js/paths.js. Ink on paper, never the component's
-   dark mode: the strokes are the page's own ink at 8-96% stroke-opacity,
-   and each ribbon breathes between 30% and 60% on its own 20-30 s clock
-   while a dash slides along it. The dash pattern always sums to one path
-   length, so an offset of two is an offset of zero and the loop is
-   seamless. The mask fades them out before the text starts. */
-/* The ribbons are mirrored in paths.js so they enter from the right and fall
-   away down-left: the engraved titles are semi-transparent and cannot sit
-   over lines at all, so the copy has to be on clean paper. */
-/* No mask on the container, on purpose: a masked layer whose children
-   animate is repainted every frame and it flickered. The fade is a gradient
-   on the stroke, built in paths.js; the stroke colour is currentColor, so
-   it is the page's ink. */
-/* Its own compositor layer, clipped to its box. Without this the ribbons
-   shared a layer with the copy, and every frame of their animation
-   re-rasterised the engraved title with them: traced at 114 paints in 2 s,
-   all of them over the title, half the frames past 20 ms. */
-.paths { position: absolute; inset: 0; pointer-events: none; will-change: transform; contain: paint; }
-.paths__svg { display: block; width: 100%; height: 100%; color: var(--ink); }
-/* the dash, offset and opacity are written by paths.js at 25 fps; this is
-   the still frame it starts from */
-.paths__line { fill: none; stroke-dasharray: .3 .7; opacity: .3; }
-
 /* The blog hero: full bleed like the sheets, the copy on the left of the
-   column, the ribbons falling in from the right. Replaces the careers
-   masthead on this page only. */
+   column, the robot on the right. Replaces the careers masthead on this
+   page only. */
 .bloghero { position: relative; overflow: hidden; box-shadow: inset 0 -1px 0 var(--line); min-height: clamp(380px, 54svh, 560px); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); align-items: center; gap: clamp(24px, 4vw, 72px); padding: clamp(64px, 10vh, 120px) max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
 .bloghero__copy { position: relative; z-index: 1; }
 /* the robot as ink dots: a square canvas on the right of the copy, drawn by
@@ -932,21 +922,24 @@ html.is-intro .intro { display: flex; }
 .cloud__canvas { display: block; width: 100%; aspect-ratio: 1; cursor: grab; touch-action: pan-y; opacity: 0; transition: opacity .9s ease; }
 .cloud__canvas.is-ready { opacity: 1; }
 .cloud__canvas.is-dragging { cursor: grabbing; }
+/* on the article head, small, in the lane right of the 600px column: the
+   width is whatever the lane has, up to 260px */
+.cloud--post { position: absolute; top: 40px; right: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); width: clamp(150px, calc((100% - 600px) / 2 - 64px), 260px); }
+/* on the careers masthead, in the half that was paper */
+.masthead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); align-items: center; gap: clamp(24px, 4vw, 72px); }
+.masthead__copy { min-width: 0; }
+.cloud--mast { justify-self: end; width: min(100%, 340px); }
 .bloghero__t { margin-top: 20px; max-width: 18ch; font-size: clamp(38px, 6vw, 68px); line-height: 1.04; letter-spacing: -.015em; }
 .bloghero .masthead__lead { max-width: 56ch; }
-/* On the article the ribbons sit behind the head only. .post goes full bleed
-   for them, with the text kept on the column by the same padding the nav and
-   the sheets use, and everything on top of them is lifted a layer. */
+/* .post is full bleed, with the text kept on the column by the same padding
+   the nav and the sheets use, so the robot can sit in the lane beside it;
+   everything on top of it is lifted a layer. */
 .post { max-width: none; margin: 0; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); position: relative; }
-/* The article's ribbons sit in the head's top-right, shallow enough to be
-   faded out above the TL;DR and offset so their tails clear the title; gone
-   below 900px, where there is no room beside the column. The box is wider
-   than the ribbons ever reach, so no line is cut by an edge. */
-.paths--post { inset: 0 0 auto 30%; height: 320px; }
 .post__head, .prose, .post__end { position: relative; z-index: 1; }
 
 @media (max-width: 899px) {
-    .paths--post { display: none; }
+    .cloud--post, .cloud--mast { display: none; }
+    .masthead { grid-template-columns: minmax(0, 1fr); }
     .bloghero { grid-template-columns: minmax(0, 1fr); }
     .cloud { justify-self: center; width: min(100%, 360px); }
     .sections__track--fade { margin-inline: -28px; padding-inline: 28px; scroll-padding-inline: 28px; -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
@@ -961,7 +954,7 @@ html.is-intro .intro { display: flex; }
 @media (prefers-reduced-motion: reduce) {
     .beam__spin { animation: none; }
     .beam, .beam__face, .beam__arrow { transition: none; }
-    .is-scanning .scan__line, .navlink--blog:hover .scan__line, .postrow:hover .scan__line, .eyebrow--scan:hover .scan__line { animation: none; }
+    .is-scanning .scan__line, .postrow:hover .scan__line, .eyebrow--scan:hover .scan__line { animation: none; }
 }
 
 /* Set by post.js on a figure that has left the screen. Last in the file on

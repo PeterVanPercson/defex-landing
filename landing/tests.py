@@ -257,16 +257,29 @@ class SiteTests(SimpleTestCase):
                       "Evidence to collect", "/where-it-started/",
                       'property="og:type" content="article"', '"@type": "BlogPosting"',
                       'rel="canonical" href="https://defex.app/blog/the-cost-of-the-next-attempt/"',
-                      "js/post.js", "js/reveal.js", "js/paths.js", "data-copy-link",
-                      # the ribbons behind the head, and the scan mark on the way back to the index
-                      'class="paths paths--post" data-paths', 'class="scan"'):
+                      "js/post.js", "js/reveal.js", "js/cloud.js", "data-copy-link",
+                      # the robot beside the head, the scan mark on the way back, the byline
+                      'class="cloud cloud--post"', 'class="scan"',
+                      "By <a class=\"link\" href=\"https://husanmavlonov.com/\">Husan Mavlonov</a>",
+                      '"@type": "Person", "@id": "https://husanmavlonov.com/#person"', 'class="author__bio"'):
             self.assertContains(post, chunk)
+        # the feed: same registry, so the post is in it
+        feed = self.client.get("/blog/feed.xml")
+        self.assertEqual(feed.status_code, 200)
+        self.assertIn("xml", feed["Content-Type"])
+        self.assertIn("http://testserver/blog/the-cost-of-the-next-attempt/", feed.content.decode())
+        self.assertIn("Husan Mavlonov", feed.content.decode())
+        self.assertContains(post, 'type="application/rss+xml"')
+        # analytics only when switched on, so the tag never 404s on every page
+        self.assertNotIn("_vercel/insights", self.client.get("/").content.decode())
+        with override_settings(WEB_ANALYTICS=True):
+            self.assertIn("_vercel/insights/script.js", self.client.get("/").content.decode())
         # the index hero: the robot as dots, the title, the mark on the eyebrow
         for chunk in ('class="cloud__canvas" data-cloud', 'data-reveal>Blog.', "js/cloud.js",
                       'class="eyebrow eyebrow--scan" data-reveal data-scan'):
             self.assertContains(index, chunk)
         self.assertEqual(self.client.get("/static/models/robot-cloud.bin").status_code, 200)
-        self.assertEqual(self.client.get("/static/js/paths.js").status_code, 200)
+        self.assertEqual(self.client.get("/static/js/cloud.js").status_code, 200)
         # every label in the section strip points at a heading that exists
         hrefs = re.findall(r'class="sections__link" href="#([^"]+)"', body)
         self.assertGreaterEqual(len(hrefs), 5)
@@ -283,6 +296,9 @@ class SiteTests(SimpleTestCase):
             self.assertIn('class="footer__blog link" href="/blog/"', page, path)
         home = self.client.get("/").content.decode()
         self.assertIn('class="beam" href="/blog/"', home)
+        # the product first, the blog second
+        self.assertIn('class="beam beam--primary" href="#contact"', home)
+        self.assertLess(home.index('class="beam beam--primary" href="#contact"'), home.index('class="beam" href="/blog/"'))
         header = body.split("<header", 1)[1].split("</header>", 1)[0]
         self.assertIn('href="/#contact"', header)
         sitemap = self.client.get("/sitemap.xml").content.decode()

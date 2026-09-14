@@ -9,6 +9,7 @@
     <meta name="description" content="{% block description %}Defex builds assembly robots that learn from physical tests. The robot attempts a connector assembly, a test scores the joint, and a reset starts the next try.{% endblock %}">
     <meta name="google-site-verification" content="dgatfCwRWASvUL2_glDXe0rc2x8Cnxlu_Sn27S1Y9ck">
     <link rel="canonical" href="{% block canonical %}https://defex.app/{% endblock %}">
+    <link rel="alternate" type="application/rss+xml" title="Defex blog" href="https://defex.app/blog/feed.xml">
     <meta name="theme-color" content="{% block theme_color %}#090F15{% endblock %}">
     <meta name="color-scheme" content="{% block color_scheme %}dark{% endblock %}">
 
@@ -113,5 +114,6 @@
 <body>
     {% block content %}{% endblock %}
     {% block extra_scripts %}{% endblock %}
+    {% if web_analytics %}<script defer src="/_vercel/insights/script.js"></script>{% endif %}
 </body>
 </html>

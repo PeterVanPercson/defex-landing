@@ -37,7 +37,6 @@ jobs:
           node --check static/js/reveal.js
           node --check static/js/book.js
           node --check static/js/post.js
-          node --check static/js/paths.js
           node --check static/js/cloud.js
 
       - name: collectstatic

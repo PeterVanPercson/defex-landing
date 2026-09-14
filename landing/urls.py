@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .feeds import BlogFeed
 from .views import apply, blog, blog_post, book, careers, contact, home, ping, robots, sitemap, where_it_started
 
 urlpatterns = [
@@ -8,6 +9,7 @@ urlpatterns = [
     path('book/', book, name='book'),
     path('careers/', careers, name='careers'),
     path('blog/', blog, name='blog'),
+    path('blog/feed.xml', BlogFeed(), name='blog_feed'),
     path('blog/<slug:slug>/', blog_post, name='blog_post'),
     path('careers/apply/', apply, name='apply'),
     path('contact/', contact, name='contact'),

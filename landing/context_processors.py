@@ -3,4 +3,5 @@ from django.conf import settings
 
 def asset_version(request):
     return {"asset_v": settings.DEFEX_ASSET_VERSION,
-            "cal_link": settings.CAL_LINK}
+            "cal_link": settings.CAL_LINK,
+            "web_analytics": settings.WEB_ANALYTICS}

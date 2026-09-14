@@ -174,7 +174,12 @@ WHITENOISE_MIMETYPES = {'.wasm': 'application/wasm'}
 # static/** through @vercel/static, so /static/ is answered at the edge and never
 # reaches Django. Production cache headers live in vercel.json. This hook still
 # runs under gunicorn and in the tests, and is what they assert against.
-DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "91")
+DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "92")
+
+# Vercel Web Analytics: cookie-free page views. The script is served by
+# Vercel only once Web Analytics is switched on for the project, so the tag is
+# behind this flag until then, rather than 404ing on every page.
+WEB_ANALYTICS = os.getenv("WEB_ANALYTICS", "0") == "1"
 
 # The cal.com event the booker on the home page mounts. Env-overridable, so
 # the event can be renamed in the Vercel project without a deploy.

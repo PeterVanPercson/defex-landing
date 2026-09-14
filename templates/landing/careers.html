@@ -23,9 +23,13 @@
 
 <main class="page">
     <header class="masthead">
-        <p class="eyebrow">Join us</p>
-        <h1 class="engraved">Build the machine that proves it worked.</h1>
-        <p class="masthead__lead">We are a small team building a cell that assembles a connector and then physically tests the joint it just made. We are looking for people who want to work on real hardware, in a real factory, on a question that has not been answered yet.</p>
+        <div class="masthead__copy">
+            <p class="eyebrow">Join us</p>
+            <h1 class="engraved">Build the machine that proves it worked.</h1>
+            <p class="masthead__lead">We are a small team building a cell that assembles a connector and then physically tests the joint it just made. We are looking for people who want to work on real hardware, in a real factory, on a question that has not been answered yet.</p>
+        </div>
+        <!-- the robot as dots, the blog's motif, in the half that was paper -->
+        <figure class="cloud cloud--mast"><canvas class="cloud__canvas" data-cloud="{% static 'models/robot-cloud.bin' %}?v={{ asset_v }}" data-yaw="0.9" aria-label="The Defex robot, drawn as a cloud of ink dots. Drag to turn it."></canvas></figure>
     </header>
 
     <section class="group" id="roles" aria-labelledby="fulltime-title">
@@ -127,6 +131,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="{% static 'js/cloud.js' %}?v={{ asset_v }}" defer></script>
 <script>
 // Copy job link. Writes the canonical role URL, not location.href, so a link
 // copied from a page carrying ?utm= or a cache-buster stays clean.

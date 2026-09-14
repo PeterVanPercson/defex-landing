@@ -41,7 +41,7 @@
     <section class="page posts" id="posts" aria-label="Posts">
         {% for post in posts %}
         <a class="postrow" href="{% url 'blog_post' post.slug %}" data-reveal>
-            <span class="postrow__meta"><time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time> &middot; {{ post.minutes }} min read</span>
+            <span class="postrow__meta">{{ post.author.name }} &middot; <time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time> &middot; {{ post.minutes }} min read</span>
             <span class="postrow__title">{{ post.title }}</span>
             <span class="postrow__dek">{{ post.dek }}</span>
             <span class="postrow__go">{% include "landing/_scan.html" %}Read</span>

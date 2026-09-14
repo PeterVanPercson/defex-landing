@@ -99,6 +99,8 @@ POSTS = (
                 "workcell around that cycle."),
         "date": date(2026, 9, 13),
         "minutes": 9,
+        "author": {"name": "Husan Mavlonov", "url": "https://husanmavlonov.com/", "site": "husanmavlonov.com",
+                   "bio": "Founder of Defex, building assembly robots that test their own work, in San Francisco."},
         "keywords": ("robot learning, connector assembly, robot reset, acceptance test, "
                      "trials per hour, self-teaching robots, manufacturing robotics, defex"),
     },

@@ -21,7 +21,7 @@
 
 {% block extra_head %}
 <meta property="article:published_time" content="{{ post.date|date:'c' }}">
-<meta property="article:author" content="https://defex.app/#org">
+<meta property="article:author" content="{{ post.author.url }}">
 <!-- The post as a node of the same graph base.html declares: the author and
      publisher are the organisation, so the article links back to it. -->
 <script type="application/ld+json">
@@ -34,7 +34,7 @@
   "description": "{{ post.dek|escapejs }}",
   "datePublished": "{{ post.date|date:'c' }}",
   "dateModified": "{{ post.date|date:'c' }}",
-  "author": {"@id": "https://defex.app/#org"},
+  "author": {"@type": "Person", "@id": "{{ post.author.url }}#person", "name": "{{ post.author.name|escapejs }}", "url": "{{ post.author.url }}"},
   "publisher": {"@id": "https://defex.app/#org"},
   "image": "https://defex.app{% static 'img/og.jpg' %}?v={{ asset_v }}",
   "isPartOf": {"@id": "https://defex.app/#website"},
@@ -60,13 +60,14 @@
 </nav>
 
 <main class="post" id="article">
-    <!-- The same ribbons as the blog hero, behind the head only; they fade
-         out before the text starts. Drawn by static/js/paths.js. -->
-    <div class="paths paths--post" data-paths aria-hidden="true"></div>
+    <!-- The robot, small, in the lane right of the column: the same dots as
+         the blog index, drawn by static/js/cloud.js. Gone under 900px, where
+         there is no lane. -->
+    <figure class="cloud cloud--post"><canvas class="cloud__canvas" data-cloud="{% static 'models/robot-cloud.bin' %}?v={{ asset_v }}" data-yaw="-0.9" aria-label="The Defex robot, drawn as a cloud of ink dots. Drag to turn it."></canvas></figure>
     <header class="post__head">
         <p class="eyebrow"><a class="eyebrow__link eyebrow--scan" href="{% url 'blog' %}" data-reveal data-scan>{% include "landing/_scan.html" %}<span class="eyebrow__text">Blog</span></a></p>
         <h1 class="post__title engraved">{{ post.title }}</h1>
-        <p class="post__meta">Defex &middot; <time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time> &middot; {{ post.minutes }} min read</p>
+        <p class="post__meta">By <a class="link" href="{{ post.author.url }}">{{ post.author.name }}</a> &middot; <time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time> &middot; {{ post.minutes }} min read</p>
     </header>
 
     <article class="prose">
@@ -81,6 +82,10 @@
                 <a class="chip" href="https://www.linkedin.com/sharing/share-offsite/?url={{ post.url|urlencode:'' }}" target="_blank" rel="noopener">Share on LinkedIn</a>
                 <button type="button" class="chip" data-copy-link>Copy link</button>
             </div>
+        </div>
+        <div class="author">
+            <p class="author__name">{{ post.author.name }}</p>
+            <p class="author__bio">{{ post.author.bio }} <a class="link" href="{{ post.author.url }}">{{ post.author.site }}</a></p>
         </div>
         <div class="discuss">
             <h2 class="discuss__t engraved">Tell us where we are wrong.</h2>
@@ -101,7 +106,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{% static 'js/paths.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/cloud.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/post.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}
