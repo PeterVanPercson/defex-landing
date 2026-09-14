@@ -5,7 +5,7 @@ from datetime import date
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -86,12 +86,47 @@ def where_it_started(request):
     return render(request, "landing/origin.html", {"asset_v": settings.DEFEX_ASSET_VERSION})
 
 
+# Blog. One registry, so the index, the sitemap and the article page cannot
+# disagree about what is published. Each post's body is its own template under
+# templates/landing/blog/, named by slug; the shell around it is _article.html.
+POSTS = (
+    {
+        "slug": "the-cost-of-the-next-attempt",
+        "title": "The Cost of the Next Attempt",
+        "dek": ("Robots need a practical way to learn from physical work: knowing whether "
+                "an attempt succeeded, understanding what happened during contact, and "
+                "preparing the world for another try. We are designing a manufacturing "
+                "workcell around that cycle."),
+        "date": date(2026, 9, 13),
+        "minutes": 9,
+        "keywords": ("robot learning, connector assembly, robot reset, acceptance test, "
+                     "trials per hour, self-teaching robots, manufacturing robotics, defex"),
+    },
+)
+
+
+def _post(slug):
+    for post in POSTS:
+        if post["slug"] == slug:
+            return dict(post, url="https://defex.app" + reverse("blog_post", kwargs={"slug": slug}))
+    raise Http404
+
+
+def blog(request):
+    return render(request, "landing/blog/index.html", {"posts": POSTS})
+
+
+def blog_post(request, slug):
+    return render(request, f"landing/blog/{slug}.html", {"post": _post(slug)})
+
+
 # Crawl surface. Both are views rather than static files so they cannot drift
 # out of sync with urls.py, and so Vercel serves them from the same function.
 SITEMAP_PAGES = (
     ("home", "1.0", "weekly"),
     ("where_it_started", "0.7", "monthly"),
     ("careers", "0.8", "weekly"),
+    ("blog", "0.8", "weekly"),
 )
 
 
@@ -115,11 +150,14 @@ def robots(request):
 
 def sitemap(request):
     today = date.today().isoformat()
+    pages = [(reverse(name), today, freq, prio) for name, prio, freq in SITEMAP_PAGES]
+    pages += [(reverse("blog_post", kwargs={"slug": post["slug"]}), post["date"].isoformat(), "monthly", "0.7")
+              for post in POSTS]
     urls = "".join(
-        f"<url><loc>{request.build_absolute_uri(reverse(name))}</loc>"
-        f"<lastmod>{today}</lastmod><changefreq>{freq}</changefreq>"
+        f"<url><loc>{request.build_absolute_uri(path)}</loc>"
+        f"<lastmod>{lastmod}</lastmod><changefreq>{freq}</changefreq>"
         f"<priority>{prio}</priority></url>"
-        for name, prio, freq in SITEMAP_PAGES
+        for path, lastmod, freq, prio in pages
     )
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>'

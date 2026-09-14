@@ -36,6 +36,7 @@ jobs:
           node --check static/js/origin.js
           node --check static/js/reveal.js
           node --check static/js/book.js
+          node --check static/js/post.js
 
       - name: collectstatic
         run: python manage.py collectstatic --no-input
@@ -52,7 +53,7 @@ jobs:
             curl -sf -H "X-Forwarded-Proto: https" -o /dev/null http://127.0.0.1:8000/ && break
             sleep 1
           done
-          for route in / /careers/ /where-it-started/; do
+          for route in / /careers/ /where-it-started/ /blog/ /blog/the-cost-of-the-next-attempt/; do
             curl --fail --silent --show-error -H "X-Forwarded-Proto: https" -o /dev/null "http://127.0.0.1:8000$route"
           done
           curl --fail --silent --show-error -H "X-Forwarded-Proto: https" -H "Range: bytes=0-1023" \

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static %}
+{# The shell around every post: metadata, the section strip, the head, the
+   share row and the way out. A post template fills `sections` and `article`. #}
+
+{% block title %}{{ post.title }} · defex{% endblock %}
+{% block description %}{{ post.dek }}{% endblock %}
+{% block keywords %}{{ post.keywords }}{% endblock %}
+{% block canonical %}{{ post.url }}{% endblock %}
+{% block page_id %}{{ post.url }}{% endblock %}
+{% block page_url %}{{ post.url }}{% endblock %}
+{% block page_name %}{{ post.title }} · defex{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_title %}{{ post.title }}{% endblock %}
+{% block og_description %}{{ post.dek }}{% endblock %}
+{% block og_url %}{{ post.url }}{% endblock %}
+{% block twitter_title %}{{ post.title }}{% endblock %}
+{% block twitter_description %}{{ post.dek }}{% endblock %}
+
+{% block extra_head %}
+<meta property="article:published_time" content="{{ post.date|date:'c' }}">
+<meta property="article:author" content="https://defex.app/#org">
+<!-- The post as a node of the same graph base.html declares: the author and
+     publisher are the organisation, so the article links back to it. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "@id": "{{ post.url }}#post",
+  "mainEntityOfPage": {"@id": "{{ post.url }}#webpage"},
+  "headline": "{{ post.title|escapejs }}",
+  "description": "{{ post.dek|escapejs }}",
+  "datePublished": "{{ post.date|date:'c' }}",
+  "dateModified": "{{ post.date|date:'c' }}",
+  "author": {"@id": "https://defex.app/#org"},
+  "publisher": {"@id": "https://defex.app/#org"},
+  "image": "https://defex.app{% static 'img/og.jpg' %}?v={{ asset_v }}",
+  "isPartOf": {"@id": "https://defex.app/#website"},
+  "inLanguage": "en"
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<a class="skip" href="#article">Skip to the article</a>
+
+{% include "landing/_topbar.html" with page='blog' %}
+
+<!-- Reading progress: a hairline of the accent along the top edge. Filled by
+     static/js/post.js; without JS it is simply not there. -->
+<div class="progress" aria-hidden="true"><span class="progress__bar"></span></div>
+
+<!-- The section strip, sticky under the nav for the length of the post, the
+     way origami-robotics.com runs one along the top of theirs. Rendered here
+     so it works without JS; post.js only marks the section on screen. -->
+<nav class="sections" aria-label="Sections">
+    <div class="sections__track">{% block sections %}{% endblock %}</div>
+</nav>
+
+<main class="post" id="article">
+    <header class="post__head">
+        <p class="eyebrow"><a class="eyebrow__link" href="{% url 'blog' %}">Blog</a></p>
+        <h1 class="post__title engraved">{{ post.title }}</h1>
+        <p class="post__meta">Defex &middot; <time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time> &middot; {{ post.minutes }} min read</p>
+    </header>
+
+    <article class="prose">
+        {% block article %}{% endblock %}
+    </article>
+
+    <footer class="post__end">
+        <div class="share">
+            <p class="share__lead">If this was useful, pass it on.</p>
+            <div class="share__row">
+                <a class="chip" href="https://twitter.com/intent/tweet?url={{ post.url|urlencode:'' }}&amp;text={{ post.title|urlencode:'' }}" target="_blank" rel="noopener">Share on X</a>
+                <a class="chip" href="https://www.linkedin.com/sharing/share-offsite/?url={{ post.url|urlencode:'' }}" target="_blank" rel="noopener">Share on LinkedIn</a>
+                <button type="button" class="chip" data-copy-link>Copy link</button>
+            </div>
+        </div>
+        <div class="discuss">
+            <h2 class="discuss__t engraved">Tell us where we are wrong.</h2>
+            <p class="discuss__p">Questions, or a place where we have it wrong: <a class="link" href="/#contact">get in touch</a>, or email <a class="link" href="mailto:husan@defex.app">husan@defex.app</a>.</p>
+        </div>
+    </footer>
+</main>
+
+<footer class="footer">
+    <a href="/" class="brand brand--small" aria-label="defex home">
+        <svg viewBox="0 0 20 64" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="currentColor"/><circle cx="10" cy="32" r="7" fill="#FF5A1F"/><circle cx="10" cy="54" r="7" fill="currentColor"/></svg>
+        <span>defex<span class="dot">.</span></span>
+    </a>
+    <span class="footer__fine">&copy; {% now "Y" %} Defex. All rights reserved.</span>
+    <span class="footer__line">San Francisco, CA</span>
+</footer>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/post.js' %}?v={{ asset_v }}" defer></script>
+{% endblock %}

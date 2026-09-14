@@ -225,7 +225,8 @@ class SiteTests(SimpleTestCase):
         self.assertIn(".intro { display: none !important; }", css.split("prefers-reduced-motion", 1)[1],
                       "reduced motion must hide the intro")
         used = set()
-        for name in ("home.html", "origin.html", "_topbar.html"):
+        for name in ("home.html", "origin.html", "_topbar.html", "blog/index.html",
+                     "blog/_article.html", "blog/the-cost-of-the-next-attempt.html"):
             markup = (root / "templates/landing" / name).read_text()
             for attr in re.findall(r'class="([^"]*)"', markup):
                 used |= {c for c in attr.split() if re.fullmatch(r"[a-z][a-z0-9_-]*", c)}
@@ -236,6 +237,45 @@ class SiteTests(SimpleTestCase):
             token = re.compile(rf"\.{re.escape(name)}(?![\w-])")
             self.assertRegex(css, token, f".{name} has no rule at all")
             self.assertRegex(top, token, f".{name} is only styled inside a media query")
+
+    def test_blog(self):
+        """The article is the first thing on the site meant to be read rather
+        than skimmed. The page has to carry the whole text, the instruments
+        the text leans on, and the honesty line under the numbers."""
+        import re
+        index = self.client.get("/blog/")
+        self.assertEqual(index.status_code, 200)
+        self.assertContains(index, "The Cost of the Next Attempt")
+        self.assertContains(index, 'href="/blog/the-cost-of-the-next-attempt/"')
+        post = self.client.get("/blog/the-cost-of-the-next-attempt/")
+        self.assertEqual(post.status_code, 200)
+        body = post.content.decode()
+        for chunk in ("TL;DR", "Trials per hour", 'id="bench"',
+                      # the three worked examples from the text, as presets
+                      'data-preset="20,10,90,0"', 'data-preset="10,10,90,0"', 'data-preset="20,10,10,0"',
+                      "not Defex measurements",
+                      "Evidence to collect", "/where-it-started/",
+                      'property="og:type" content="article"', '"@type": "BlogPosting"',
+                      'rel="canonical" href="https://defex.app/blog/the-cost-of-the-next-attempt/"',
+                      "js/post.js", "js/reveal.js", "data-copy-link"):
+            self.assertContains(post, chunk)
+        # every label in the section strip points at a heading that exists
+        hrefs = re.findall(r'class="sections__link" href="#([^"]+)"', body)
+        self.assertGreaterEqual(len(hrefs), 5)
+        for anchor in hrefs:
+            self.assertIn(f'id="{anchor}"', body)
+        # an unpublished slug is a 404, not a template error
+        self.assertEqual(self.client.get("/blog/not-a-post/").status_code, 404)
+        # the nav reaches the blog from every page, and the blog reaches contact
+        for path in ("/", "/careers/", "/where-it-started/", "/blog/"):
+            header = self.client.get(path).content.decode().split("<header", 1)[1].split("</header>", 1)[0]
+            self.assertIn('href="/blog/"', header, path)
+        header = body.split("<header", 1)[1].split("</header>", 1)[0]
+        self.assertIn('href="/#contact"', header)
+        sitemap = self.client.get("/sitemap.xml").content.decode()
+        self.assertIn("<loc>http://testserver/blog/</loc>", sitemap)
+        self.assertIn("<loc>http://testserver/blog/the-cost-of-the-next-attempt/</loc>", sitemap)
+        self.assertEqual(self.client.get("/static/js/post.js").status_code, 200)
 
     def test_crawl_surface(self):
         robots = self.client.get("/robots.txt")

@@ -12,7 +12,7 @@
     <meta name="theme-color" content="{% block theme_color %}#090F15{% endblock %}">
     <meta name="color-scheme" content="{% block color_scheme %}dark{% endblock %}">
 
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:site_name" content="defex">
     <meta property="og:title" content="{% block og_title %}defex — Self-teaching robots for manufacturing.{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Defex builds assembly robots that learn from physical tests. The robot attempts a connector assembly, a test scores the joint, and a reset starts the next try.{% endblock %}">
