@@ -93,6 +93,8 @@ POSTS = (
     {
         "slug": "the-cost-of-the-next-attempt",
         "title": "The Cost of the Next Attempt",
+        # the title as set on the page: one phrase in italic, the way the site's headings carry one
+        "display": "The Cost of the <em>Next Attempt</em>",
         "dek": ("Robots need a practical way to learn from physical work: knowing whether "
                 "an attempt succeeded, understanding what happened during contact, and "
                 "preparing the world for another try. We are designing a manufacturing "

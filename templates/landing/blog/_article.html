@@ -62,8 +62,9 @@
 <main class="post" id="article">
     <header class="post__head">
         <p class="eyebrow"><a class="eyebrow__link eyebrow--scan" href="{% url 'blog' %}" data-reveal data-scan>{% include "landing/_scan.html" %}<span class="eyebrow__text">Blog</span></a></p>
-        <h1 class="post__title engraved">{{ post.title }}</h1>
-        <p class="post__meta">By <a class="link" href="{{ post.author.url }}">{{ post.author.name }}</a> &middot; <time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time> &middot; {{ post.minutes }} min read</p>
+        <h1 class="post__title">{% if post.display %}{{ post.display|safe }}{% else %}{{ post.title }}{% endif %}</h1>
+        {% block standfirst %}{% endblock %}
+        <p class="post__meta">By <a class="link" href="{{ post.author.url }}">{{ post.author.name }}</a> &middot; <time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time></p>
     </header>
 
     <article class="prose">
@@ -84,7 +85,7 @@
             <p class="author__bio">{{ post.author.bio }} <a class="link" href="{{ post.author.url }}">{{ post.author.site }}</a></p>
         </div>
         <div class="discuss">
-            <h2 class="discuss__t engraved">Tell us where we are wrong.</h2>
+            <h2 class="discuss__t">Tell us where we are wrong.</h2>
             <p class="discuss__p">Questions, or a place where we have it wrong: <a class="link" href="/#contact">get in touch</a>, or email <a class="link" href="mailto:husan@defex.app">husan@defex.app</a>.</p>
         </div>
     </footer>

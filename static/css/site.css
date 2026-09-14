@@ -610,7 +610,14 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .eyebrow__text { padding-bottom: 2px; border-bottom: 1px solid var(--line); transition: border-color .2s ease; }
 .eyebrow__link:hover { color: var(--ink); }
 .eyebrow__link:hover .eyebrow__text { border-color: var(--rule); }
-.post__title { margin-top: 20px; font-size: clamp(38px, 5.6vw, 66px); line-height: 1.04; letter-spacing: -.015em; }
+/* The title in plain ink, not cut into the paper: at this size and length
+   the emboss read as an effect. One phrase in italic, as the site's headings
+   carry one. */
+.post__title { margin-top: 18px; max-width: 14ch; font-size: clamp(40px, 5.4vw, 64px); line-height: 1.02; letter-spacing: -.02em; color: var(--ink); }
+.post__title em { font-style: italic; }
+/* the summary as a standfirst under the title: the serif, larger and
+   softer than the body, no label and no bar */
+.standfirst { margin-top: clamp(18px, 3vh, 28px); max-width: 32em; font-family: var(--serif); font-size: clamp(18px, 1.6vw, 21px); line-height: 1.5; color: var(--ink-soft); }
 .post__meta { margin-top: 22px; font: 400 11px/1.6 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
 
 /* One measure for the text, with lanes either side for figures to grow into.
@@ -621,9 +628,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .prose > .figure--wide { grid-column: 1 / -1; width: min(100%, 940px); justify-self: center; }
 .prose > p { margin-top: 18px; }
 .prose > h2 { margin-top: clamp(56px, 8vh, 88px); font-size: clamp(28px, 3.2vw, 40px); line-height: 1.1; }
-/* at 28-40px the 4px glow in the lip reads as blur, not light; the cut keeps
-   its two edges and loses the glow. The h1s, at 66px+, keep the full lip. */
-.prose > h2, .discuss__t { --engrave-lip: 0 1px 1px rgba(255, 250, 242, .9), 0 -1px 1px rgba(40, 30, 15, .4); }
 /* the nav and the strip together cover about 104px of the top of the screen */
 .prose > h2[id] { scroll-margin-top: calc(var(--nav) + 56px); }
 .prose > h2 + p { margin-top: 22px; }
@@ -631,46 +635,21 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .prose__list li { position: relative; padding-left: 20px; }
 .prose__list li::before { content: "\2022"; position: absolute; left: 2px; color: var(--mute); }
 
-.tldr { padding: 4px 0 4px 22px; border-left: 2px solid var(--accent); }
-.tldr__label { font: 500 10px/1.4 var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--mute); }
-.tldr__p { margin-top: 10px; font: 400 13.5px/1.8 var(--mono); color: var(--ink-soft); }
 
-/* Figures sit on a sheet, the way the sections under the hero do. */
+/* Figures sit on the paper itself, between two hairlines, like the site's
+   ruled rows: no box, no shadow. */
 .figure { margin: clamp(36px, 5vh, 52px) 0 0; }
 .figure__cap { margin-top: 14px; max-width: 68ch; font: 400 11.5px/1.7 var(--mono); color: var(--mute); }
 /* under a wide figure the caption starts where the text does, not at the panel's edge */
 .figure--wide .figure__cap { margin-left: max(0px, calc((100% - 600px) / 2)); }
-.panel { position: relative; padding: clamp(18px, 3vw, 32px); border: 1px solid var(--line); background: var(--grain), var(--sheet); box-shadow: var(--sheet-shadow); }
+.panel { position: relative; padding: clamp(24px, 3vw, 40px) 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 
-/* Figure 1: one trial as a ring. The arcs are dash lengths on a circle of
-   radius 132, so each is an exact fraction of 829.38; the bead is a group
-   rotated about the centre, once per trial at 20x, so a lap is 6 s. */
-.loop__panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: clamp(20px, 4vw, 56px); }
-.loop__stage { position: relative; width: min(100%, 300px); margin-inline: auto; }
-.loop__svg { display: block; width: 100%; height: auto; }
-.loop__track { fill: none; stroke: var(--line); stroke-width: 2; }
-.loop__arc { fill: none; stroke-width: 14; }
-.loop__arc--action { stroke: var(--accent); }
-.loop__arc--check { stroke: var(--ink); }
-.loop__arc--reset { stroke: var(--reset); }
-.loop__hand { transform-origin: 180px 180px; animation: loop-lap 6s linear infinite; }
-.loop__dot { fill: var(--ink); stroke: var(--sheet); stroke-width: 3; }
-.loop__centre { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
-.loop__big { font-family: var(--serif); font-size: clamp(48px, 6vw, 72px); line-height: 1; letter-spacing: -.02em; }
-.loop__unit { margin-top: 8px; font: 400 10px/1.4 var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--mute); }
-.loop__legend { margin: 0; }
-.loop__row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-.loop__row:first-child { border-top: 1px solid var(--line); }
-.loop__row dt { display: flex; align-items: center; gap: 10px; font: 400 11px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
-.loop__row dd { font-family: var(--serif); font-size: 20px; line-height: 1; font-variant-numeric: tabular-nums; }
-.loop__row--mute { color: var(--mute); }
-.loop__note { margin-top: 18px; font: 400 12px/1.75 var(--mono); color: var(--ink-soft); }
+/* the swatches: shared by the bench's controls and its bar */
 .swatch { display: inline-block; flex: none; width: 12px; height: 12px; border-radius: 2px; background: var(--ink); }
 .swatch--action { background: var(--accent); }
 .swatch--check { background: var(--ink); }
 .swatch--reset { background: var(--reset); }
 .swatch--recovery { background: repeating-linear-gradient(135deg, var(--rule) 0 2px, transparent 2px 5px); }
-@keyframes loop-lap { to { transform: rotate(360deg); } }
 
 /* Figure 2: the insertion. The plug approaches, adjusts, pushes home; the
    lamps for contact, force and position come on in the push; the latch
@@ -683,7 +662,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .latch__catch { fill: var(--ink); }
 .latch__pad { fill: var(--mute); }
 .latch__plug { transform: translate(140px, 0); animation: latch-plug var(--latch) infinite; }
-.latch__body { fill: var(--sheet); stroke: var(--ink); stroke-width: 2; }
+.latch__body { fill: var(--page); stroke: var(--ink); stroke-width: 2; }
 .latch__tab { fill: var(--accent); animation: latch-tab var(--latch) infinite; }
 .latch__pin { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
 .latch__cable { fill: none; stroke: var(--rule); stroke-width: 3; stroke-linecap: round; }
@@ -775,11 +754,11 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .author__name { font: 500 11px/1.6 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
 .author__bio { margin-top: 6px; max-width: 56ch; font: 400 12.5px/1.75 var(--mono); color: var(--ink-soft); }
 .discuss { margin-top: clamp(40px, 6vh, 64px); }
-.discuss__t { font-size: clamp(26px, 3vw, 36px); line-height: 1.1; }
+.discuss__t { font-size: clamp(26px, 3vw, 36px); line-height: 1.1; color: var(--ink); }
 .discuss__p { margin-top: 14px; font: 400 13px/1.8 var(--mono); color: var(--ink-soft); }
 
 @media (max-width: 900px) {
-    .loop__panel, .bench__grid { grid-template-columns: minmax(0, 1fr); }
+    .bench__grid { grid-template-columns: minmax(0, 1fr); }
     .postrow { grid-template-columns: minmax(0, 1fr); gap: 12px; }
 }
 @media (max-width: 720px) {
@@ -800,7 +779,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
     .evidence__table td:last-child { padding: 8px 0 18px; border-bottom: 1px solid var(--line); }
 }
 @media (prefers-reduced-motion: reduce) {
-    .loop__hand, .latch__plug, .latch__tab, .lamps__i::after, .spline__loader i { animation: none; }
+    .latch__plug, .latch__tab, .lamps__i::after, .spline__loader i { animation: none; }
     .bench__head { display: none; }
     .bench__seg, .sections__link, .sections__link::after, .chip, .postrow, .postrow__go, .eyebrow__link { transition: none; }
 }

@@ -40,7 +40,7 @@
     // pause while their figure is off screen. Left to CSS they run for the
     // whole read, repainting three figures on every frame of a nine-minute
     // article the reader is nowhere near.
-    const figs = document.querySelectorAll('#loop, #latch, #bench');
+    const figs = document.querySelectorAll('#latch, #bench');
     if (figs.length && 'IntersectionObserver' in window) {
         const io = new IntersectionObserver((entries) => {
             for (const e of entries) e.target.classList.toggle('is-off', !e.isIntersecting);
