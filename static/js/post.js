@@ -1,13 +1,10 @@
 (() => {
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Reading progress and the section strip. The strip is rendered by the
-    // template; this only fills the line, marks the section on screen and
-    // keeps its label in view when the strip is scrolling sideways.
+    // Reading progress and the server-rendered, expandable contents list.
     const bar = document.querySelector('.progress__bar');
     const links = Array.from(document.querySelectorAll('.sections__link'));
     const heads = links.map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1))));
-    const track = links.length ? links[0].parentElement : null;
     let queued = false;
     let active = -1;
 
@@ -26,31 +23,14 @@
             if (i === now) a.setAttribute('aria-current', 'true');
             else a.removeAttribute('aria-current');
         });
-        if (now >= 0 && track && track.scrollWidth > track.clientWidth) {
-            const a = links[now];
-            track.scrollTo({ left: a.offsetLeft - (track.clientWidth - a.offsetWidth) / 2, behavior: reduce ? 'auto' : 'smooth' });
-        }
     }
     function ask() { if (!queued) { queued = true; requestAnimationFrame(paint); } }
     addEventListener('scroll', ask, { passive: true });
     addEventListener('resize', ask);
     paint();
 
-    // The figures' CSS animations (the ring's bead, the plug, the playhead)
-    // pause while their figure is off screen. Left to CSS they run for the
-    // whole read, repainting three figures on every frame of a nine-minute
-    // article the reader is nowhere near.
-    const figs = document.querySelectorAll('#loop, #latch, #bench');
-    if (figs.length && 'IntersectionObserver' in window) {
-        const io = new IntersectionObserver((entries) => {
-            for (const e of entries) e.target.classList.toggle('is-off', !e.isIntersecting);
-        }, { rootMargin: '120px 0px' });
-        figs.forEach((f) => io.observe(f));
-    }
-
     // The bench: trials per hour = 3600 / (action + check + reset + recovery).
-    // The bar is one trial with each term to scale, and the playhead crosses
-    // it once per trial at 20x, the speed the ring at the top runs at.
+    // The static bar shows each term's share of the complete cycle.
     const bench = document.getElementById('bench');
     if (bench) {
         const ORDER = ['action', 'check', 'reset', 'recovery'];
@@ -60,7 +40,6 @@
         bench.querySelectorAll('[data-out]').forEach((o) => { outs[o.dataset.out] = o; });
         const segs = {};
         bench.querySelectorAll('.bench__seg').forEach((s) => { segs[s.dataset.phase] = s; });
-        const panel = bench.querySelector('.bench__panel');
         const presets = Array.from(bench.querySelectorAll('[data-preset]'));
         let shown = Number(outs.rate.textContent) || 0;
         let raf = 0;
@@ -92,10 +71,12 @@
             });
             outs.share.textContent = `${Math.round((100 * v[0]) / cycle)}%`;
             outs.cycle.textContent = `${cycle} s`;
-            // one lap per trial at 20x, kept between 1.6 s and 14 s so it stays watchable
-            panel.style.setProperty('--lap', `${Math.min(14, Math.max(1.6, cycle / 20))}s`);
             const key = v.join(',');
-            presets.forEach((b) => b.classList.toggle('is-on', b.dataset.preset === key));
+            presets.forEach((b) => {
+                const selected = b.dataset.preset === key;
+                b.classList.toggle('is-on', selected);
+                b.setAttribute('aria-pressed', String(selected));
+            });
             settle(3600 / cycle);
         }
 
@@ -111,11 +92,15 @@
     // page carrying ?utm= or a cache-buster stays clean.
     document.querySelectorAll('[data-copy-link]').forEach((btn) => {
         btn.addEventListener('click', async () => {
-            const url = location.origin + location.pathname;
-            try { await navigator.clipboard.writeText(url); } catch (e) { return; }
+            const url = document.querySelector('link[rel="canonical"]')?.href || location.origin + location.pathname;
             const was = btn.textContent;
-            btn.textContent = 'Link copied';
-            setTimeout(() => { btn.textContent = was; }, 1600);
+            try {
+                await navigator.clipboard.writeText(url);
+                btn.textContent = 'Link copied';
+            } catch (e) {
+                btn.textContent = 'Copy unavailable';
+            }
+            setTimeout(() => { btn.textContent = was; }, 2200);
         });
     });
 })();

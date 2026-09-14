@@ -20,6 +20,17 @@ jobs:
         with:
           python-version: "3.12"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Build blog React component
+        run: |
+          npm ci
+          npm run build
+          git diff --exit-code -- static/blog-ui
+
       - name: Install deps
         run: pip install -r requirements.txt
 

@@ -7,8 +7,14 @@
 {% block page_id %}https://defex.app/blog/{% endblock %}
 {% block page_url %}https://defex.app/blog/{% endblock %}
 {% block page_name %}Blog · defex{% endblock %}
-{% block theme_color %}#F3EFE8{% endblock %}
+{% block theme_color %}#FFFFFF{% endblock %}
 {% block color_scheme %}light{% endblock %}
+{% block body_class %}blog-page blog-index{% endblock %}
+{% block fonts %}{% include "landing/blog/_fonts.html" %}{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/blog.css' %}?v=1">
+<link rel="stylesheet" href="{% static 'blog-ui/background-paths.css' %}?v=1">
+{% endblock %}
 {% block keywords %}defex blog, robot learning, connector assembly, self-teaching robots, manufacturing robotics{% endblock %}
 {% block og_title %}Blog · defex{% endblock %}
 {% block og_description %}Notes from Defex on teaching robots physical work: assembly, testing, reset, and what the next attempt costs.{% endblock %}
@@ -22,26 +28,23 @@
 {% include "landing/_topbar.html" with page='blog' %}
 
 <main>
-    <!-- The hero: the title over the ribbons, ink on paper. The ribbons are
-         drawn by static/js/paths.js into .paths; without JS this is paper.
-         -->
     <section class="bloghero" aria-labelledby="blog-title">
-        <div class="paths" data-paths aria-hidden="true"></div>
+        <div data-background-paths></div>
         <div class="bloghero__copy">
-            <p class="eyebrow eyebrow--scan" data-reveal data-scan>{% include "landing/_scan.html" %}Blog</p>
-            <h1 class="bloghero__t engraved" id="blog-title" data-reveal>Notes from the bench.</h1>
-            <p class="masthead__lead">What we are learning while building robots that practice, test their own work and reset for the next attempt.</p>
+            <p class="eyebrow">Defex / Blog</p>
+            <h1 class="bloghero__t" id="blog-title">Notes from<br>the bench.</h1>
+            <p class="bloghero__lead">On robot learning and the work around it.</p>
         </div>
     </section>
 
     <!-- One ruled row per post, the way the home page lists its open role. -->
     <section class="page posts" id="posts" aria-label="Posts">
         {% for post in posts %}
-        <a class="postrow" href="{% url 'blog_post' post.slug %}" data-reveal>
+        <a class="postrow" href="{% url 'blog_post' post.slug %}">
             <span class="postrow__meta"><time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time> &middot; {{ post.minutes }} min read</span>
             <span class="postrow__title">{{ post.title }}</span>
             <span class="postrow__dek">{{ post.dek }}</span>
-            <span class="postrow__go">{% include "landing/_scan.html" %}Read</span>
+            <span class="postrow__go">Read article <span aria-hidden="true">&rarr;</span></span>
         </a>
         {% endfor %}
     </section>
@@ -58,6 +61,5 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{% static 'js/paths.js' %}?v={{ asset_v }}" defer></script>
-<script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
+<script type="module" src="{% static 'blog-ui/background-paths.js' %}?v=1"></script>
 {% endblock %}

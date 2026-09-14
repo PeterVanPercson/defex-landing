@@ -216,7 +216,7 @@ class SiteTests(SimpleTestCase):
         still returns 200, so nothing else here catches it. This does."""
         import re
         root = Path(settings.BASE_DIR)
-        css = (root / "static/css/site.css").read_text()
+        css = "\n".join((root / path).read_text() for path in ("static/css/site.css", "static/css/blog.css"))
         # rules inside a media query do not style the default (desktop) case
         top = re.sub(r"@media[^{]*\{(?:[^{}]|\{[^{}]*\})*\}", "", css, flags=re.S)
         # the intro is a fixed overlay: it must stay hidden until JS opts in,
@@ -250,23 +250,26 @@ class SiteTests(SimpleTestCase):
         post = self.client.get("/blog/the-cost-of-the-next-attempt/")
         self.assertEqual(post.status_code, 200)
         body = post.content.decode()
-        for chunk in ("TL;DR", "Trials per hour", 'id="bench"',
+        for chunk in ("Trials per hour", 'id="bench"',
                       # the three worked examples from the text, as presets
                       'data-preset="20,10,90,0"', 'data-preset="10,10,90,0"', 'data-preset="20,10,10,0"',
                       "not Defex measurements",
                       "Evidence to collect", "/where-it-started/",
                       'property="og:type" content="article"', '"@type": "BlogPosting"',
                       'rel="canonical" href="https://defex.app/blog/the-cost-of-the-next-attempt/"',
-                      "js/post.js", "js/reveal.js", "js/paths.js", "data-copy-link",
-                      # the ribbons behind the head, and the scan mark on the way back to the index
-                      'class="paths paths--post" data-paths', 'class="scan"'):
+                      "js/post.js", "data-copy-link", "css/blog.css",
+                      '<details class="post__contents">'):
             self.assertContains(post, chunk)
-        # the index hero: ribbons, the rising title, the mark on the eyebrow
-        for chunk in ('class="paths" data-paths', 'data-reveal>Notes from the bench.', "js/paths.js",
-                      'class="eyebrow eyebrow--scan" data-reveal data-scan'):
+        # The actual React bundle is attached to the index; article text does
+        # not depend on animation or client-side rendering.
+        for chunk in ('data-background-paths', 'id="blog-title"', "blog-ui/background-paths.js",
+                      'type="module"', 'css/blog.css'):
             self.assertContains(index, chunk)
-        self.assertEqual(self.client.get("/static/js/paths.js").status_code, 200)
-        # every label in the section strip points at a heading that exists
+        for asset in ("/static/blog-ui/background-paths.js", "/static/blog-ui/background-paths.css", "/static/css/blog.css"):
+            self.assertEqual(self.client.get(asset).status_code, 200)
+        self.assertNotContains(post, 'id="loop"')
+        self.assertNotContains(post, "blog-ui/background-paths.js")
+        # every contents link points at a heading that exists
         hrefs = re.findall(r'class="sections__link" href="#([^"]+)"', body)
         self.assertGreaterEqual(len(hrefs), 5)
         for anchor in hrefs:

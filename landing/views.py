@@ -93,10 +93,8 @@ POSTS = (
     {
         "slug": "the-cost-of-the-next-attempt",
         "title": "The Cost of the Next Attempt",
-        "dek": ("Robots need a practical way to learn from physical work: knowing whether "
-                "an attempt succeeded, understanding what happened during contact, and "
-                "preparing the world for another try. We are designing a manufacturing "
-                "workcell around that cycle."),
+        "dek": ("A robot can act in seconds, then wait minutes for another try. "
+                "Why checking the result and resetting the task matter as much as the motion."),
         "date": date(2026, 9, 13),
         "minutes": 9,
         "keywords": ("robot learning, connector assembly, robot reset, acceptance test, "

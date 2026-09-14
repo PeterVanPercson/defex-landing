@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{# The shell around every post: metadata, the section strip, the head, the
-   share row and the way out. A post template fills `sections` and `article`. #}
+{# Server-rendered article shell; headings and contents work without JS. #}
 
 {% block title %}{{ post.title }} · defex{% endblock %}
 {% block description %}{{ post.dek }}{% endblock %}
@@ -11,8 +10,10 @@
 {% block page_url %}{{ post.url }}{% endblock %}
 {% block page_name %}{{ post.title }} · defex{% endblock %}
 {% block og_type %}article{% endblock %}
-{% block theme_color %}#F3EFE8{% endblock %}
+{% block theme_color %}#FFFFFF{% endblock %}
 {% block color_scheme %}light{% endblock %}
+{% block body_class %}blog-page blog-article{% endblock %}
+{% block fonts %}{% include "landing/blog/_fonts.html" %}{% endblock %}
 {% block og_title %}{{ post.title }}{% endblock %}
 {% block og_description %}{{ post.dek }}{% endblock %}
 {% block og_url %}{{ post.url }}{% endblock %}
@@ -20,6 +21,7 @@
 {% block twitter_description %}{{ post.dek }}{% endblock %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/blog.css' %}?v=1">
 <meta property="article:published_time" content="{{ post.date|date:'c' }}">
 <meta property="article:author" content="https://defex.app/#org">
 <!-- The post as a node of the same graph base.html declares: the author and
@@ -52,22 +54,18 @@
      static/js/post.js; without JS it is simply not there. -->
 <div class="progress" aria-hidden="true"><span class="progress__bar"></span></div>
 
-<!-- The section strip, sticky under the nav for the length of the post, the
-     way origami-robotics.com runs one along the top of theirs. Rendered here
-     so it works without JS; post.js only marks the section on screen. -->
-<nav class="sections" aria-label="Sections">
-    <div class="sections__track sections__track--fade">{% block sections %}{% endblock %}</div>
-</nav>
-
-<main class="post" id="article">
-    <!-- The same ribbons as the blog hero, behind the head only; they fade
-         out before the text starts. Drawn by static/js/paths.js. -->
-    <div class="paths paths--post" data-paths aria-hidden="true"></div>
+<main class="post" id="article" tabindex="-1">
     <header class="post__head">
-        <p class="eyebrow"><a class="eyebrow__link eyebrow--scan" href="{% url 'blog' %}" data-reveal data-scan>{% include "landing/_scan.html" %}<span class="eyebrow__text">Blog</span></a></p>
-        <h1 class="post__title engraved">{{ post.title }}</h1>
-        <p class="post__meta">Defex &middot; <time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time> &middot; {{ post.minutes }} min read</p>
+        <a class="post__back" href="{% url 'blog' %}"><span aria-hidden="true">&larr;</span> All articles</a>
+        <h1 class="post__title">{{ post.title }}</h1>
+        <p class="post__dek">{{ post.dek }}</p>
+        <p class="post__meta"><span class="post__author">Defex</span><time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time><span>{{ post.minutes }} min read</span></p>
     </header>
+
+    <details class="post__contents">
+        <summary>In this article <span class="post__contents-icon" aria-hidden="true">+</span></summary>
+        <nav aria-label="Sections" class="post__contents-links">{% block sections %}{% endblock %}</nav>
+    </details>
 
     <article class="prose">
         {% block article %}{% endblock %}
@@ -75,16 +73,15 @@
 
     <footer class="post__end">
         <div class="share">
-            <p class="share__lead">If this was useful, pass it on.</p>
-            <div class="share__row">
+            <p class="share__lead">Share this article</p>
+            <div class="share__row" aria-label="Share this article">
                 <a class="chip" href="https://twitter.com/intent/tweet?url={{ post.url|urlencode:'' }}&amp;text={{ post.title|urlencode:'' }}" target="_blank" rel="noopener">Share on X</a>
                 <a class="chip" href="https://www.linkedin.com/sharing/share-offsite/?url={{ post.url|urlencode:'' }}" target="_blank" rel="noopener">Share on LinkedIn</a>
-                <button type="button" class="chip" data-copy-link>Copy link</button>
+                <button type="button" class="chip" data-copy-link aria-live="polite">Copy link</button>
             </div>
         </div>
         <div class="discuss">
-            <h2 class="discuss__t engraved">Tell us where we are wrong.</h2>
-            <p class="discuss__p">Questions, or a place where we have it wrong: <a class="link" href="/#contact">get in touch</a>, or email <a class="link" href="mailto:husan@defex.app">husan@defex.app</a>.</p>
+            <p class="discuss__p">Working on a similar problem? <a class="link" href="mailto:husan@defex.app">husan@defex.app</a></p>
         </div>
     </footer>
 </main>
@@ -100,7 +97,5 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{% static 'js/paths.js' %}?v={{ asset_v }}" defer></script>
-<script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
-<script src="{% static 'js/post.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/post.js' %}?v=90" defer></script>
 {% endblock %}
