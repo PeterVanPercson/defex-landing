@@ -11,6 +11,8 @@
 {% block page_url %}{{ post.url }}{% endblock %}
 {% block page_name %}{{ post.title }} · defex{% endblock %}
 {% block og_type %}article{% endblock %}
+{% block theme_color %}#F3EFE8{% endblock %}
+{% block color_scheme %}light{% endblock %}
 {% block og_title %}{{ post.title }}{% endblock %}
 {% block og_description %}{{ post.dek }}{% endblock %}
 {% block og_url %}{{ post.url }}{% endblock %}
@@ -54,7 +56,7 @@
      way origami-robotics.com runs one along the top of theirs. Rendered here
      so it works without JS; post.js only marks the section on screen. -->
 <nav class="sections" aria-label="Sections">
-    <div class="sections__track">{% block sections %}{% endblock %}</div>
+    <div class="sections__track sections__track--fade">{% block sections %}{% endblock %}</div>
 </nav>
 
 <main class="post" id="article">
@@ -62,7 +64,7 @@
          out before the text starts. Drawn by static/js/paths.js. -->
     <div class="paths paths--post" data-paths aria-hidden="true"></div>
     <header class="post__head">
-        <p class="eyebrow"><a class="eyebrow__link eyebrow--scan" href="{% url 'blog' %}" data-reveal data-scan>{% include "landing/_scan.html" %}Blog</a></p>
+        <p class="eyebrow"><a class="eyebrow__link eyebrow--scan" href="{% url 'blog' %}" data-reveal data-scan>{% include "landing/_scan.html" %}<span class="eyebrow__text">Blog</span></a></p>
         <h1 class="post__title engraved">{{ post.title }}</h1>
         <p class="post__meta">Defex &middot; <time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time> &middot; {{ post.minutes }} min read</p>
     </header>

@@ -23,7 +23,7 @@
 <figure class="figure figure--wide" id="loop" aria-labelledby="loop-cap" data-reveal>
     <div class="panel loop__panel">
         <div class="loop__stage">
-            <svg class="loop__svg" viewBox="0 0 360 360" aria-hidden="true">
+            <svg class="loop__svg" viewBox="32 32 296 296" aria-hidden="true">
                 <circle class="loop__track" cx="180" cy="180" r="132"/>
                 <g transform="rotate(-90 180 180)">
                     <circle class="loop__arc loop__arc--action" cx="180" cy="180" r="132" stroke-dasharray="135.23 829.38" stroke-dashoffset="-1.5"/>
@@ -78,7 +78,7 @@
      and the latch open, which is the point. -->
 <figure class="figure figure--wide" id="latch" aria-labelledby="latch-cap" data-reveal>
     <div class="panel">
-        <svg class="latch__svg" viewBox="0 0 600 236" aria-hidden="true">
+        <svg class="latch__svg" viewBox="0 44 600 132" aria-hidden="true">
             <path class="latch__housing" d="M330 60 H540 V160 H330"/>
             <rect class="latch__catch" x="338" y="60" width="14" height="10"/>
             <rect class="latch__pad" x="356" y="96" width="14" height="6"/>
@@ -90,23 +90,15 @@
                 <line class="latch__pin" x1="210" y1="99" x2="262" y2="99"/>
                 <line class="latch__pin" x1="210" y1="121" x2="262" y2="121"/>
             </g>
-            <g class="lamp" transform="translate(70 206)">
-                <circle class="lamp__ring" r="6"/><text class="lamp__label" x="16" y="4">POSITION</text>
-                <g class="lamp__on lamp__on--position"><circle r="6"/><text class="lamp__label" x="16" y="4">POSITION</text></g>
-            </g>
-            <g class="lamp" transform="translate(200 206)">
-                <circle class="lamp__ring" r="6"/><text class="lamp__label" x="16" y="4">FORCE</text>
-                <g class="lamp__on lamp__on--force"><circle r="6"/><text class="lamp__label" x="16" y="4">FORCE</text></g>
-            </g>
-            <g class="lamp" transform="translate(310 206)">
-                <circle class="lamp__ring" r="6"/><text class="lamp__label" x="16" y="4">CONTACT</text>
-                <g class="lamp__on lamp__on--contact"><circle r="6"/><text class="lamp__label" x="16" y="4">CONTACT</text></g>
-            </g>
-            <g class="lamp" transform="translate(440 206)">
-                <circle class="lamp__ring" r="6"/><text class="lamp__label" x="16" y="4">LATCHED</text>
-                <g class="lamp__on lamp__on--latched"><circle r="6"/><text class="lamp__label" x="16" y="4">LATCHED</text></g>
-            </g>
         </svg>
+        <!-- The lamps are HTML, not SVG text, so they are typeset in CSS pixels
+             on every screen; they share the plug's clock through --latch. -->
+        <ol class="lamps" aria-hidden="true">
+            <li class="lamps__i lamps__i--position">Position</li>
+            <li class="lamps__i lamps__i--force">Force</li>
+            <li class="lamps__i lamps__i--contact">Contact</li>
+            <li class="lamps__i lamps__i--latched">Latched</li>
+        </ol>
     </div>
     <figcaption class="figure__cap" id="latch-cap">Position, force and contact can each read as success before the latch has engaged. A check that asks only one of those questions can reward an incomplete operation.</figcaption>
 </figure>
@@ -166,12 +158,6 @@
             <span class="bench__seg bench__seg--recovery" data-phase="recovery" hidden></span>
             <span class="bench__head"></span>
         </div>
-        <ul class="bench__legend" aria-hidden="true">
-            <li><i class="swatch swatch--action"></i>Action</li>
-            <li><i class="swatch swatch--check"></i>Check</li>
-            <li><i class="swatch swatch--reset"></i>Reset</li>
-            <li><i class="swatch swatch--recovery"></i>Recovery</li>
-        </ul>
     </div>
     <figcaption class="figure__cap" id="bench-cap">The trial rate with each term as a handle. The three chips are the worked examples in the text. Hypothetical numbers, not Defex measurements.</figcaption>
 </figure>

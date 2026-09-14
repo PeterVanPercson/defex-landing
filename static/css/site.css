@@ -15,6 +15,10 @@
     /* The orange is a fill, never a text colour here: #FF5A1F on paper is
        2.72:1. Ink on the orange is 5.68:1, so the fill flips its own text. */
     --on-accent: #1A1815;
+    /* the ring's reset arc, the bar's reset segment and their swatches: ink at
+       32% over the sheet, pre-mixed and opaque, so the track under the arc
+       does not show through as a second line */
+    --reset: #B0AEA9;
     /* origami-robotics.com's pair: Source Serif 4 for anything that is a
        heading, IBM Plex Mono for everything else. Inter is kept for the
        wordmark only, so the brand does not change shape. */
@@ -616,9 +620,9 @@ html.is-intro .intro { display: flex; }
    numbers or sentences that are already in the text. */
 
 /* the index: the careers masthead, then one ruled row per post */
-.posts { margin-bottom: clamp(64px, 10vh, 110px); border-top: 1px solid var(--line); }
-.postrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) auto; align-items: baseline; gap: 14px clamp(18px, 3vw, 48px); padding: 30px 8px; border-bottom: 1px solid var(--line); transition: background .35s ease, padding .35s ease; }
-.postrow:hover { background: rgba(255, 252, 245, .55); padding-inline: 20px; }
+.posts { margin-bottom: clamp(64px, 10vh, 110px); }
+.postrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) auto; align-items: baseline; gap: 14px clamp(18px, 3vw, 48px); padding: 30px 0; border-bottom: 1px solid var(--line); transition: background .35s ease; }
+.postrow:hover { background: rgba(255, 252, 245, .55); }
 .postrow__meta { grid-column: 1 / -1; font: 400 11px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
 .postrow__title { font-family: var(--serif); font-size: clamp(24px, 2.8vw, 34px); line-height: 1.1; letter-spacing: -.01em; }
 .postrow__dek { font: 400 13px/1.75 var(--mono); color: var(--ink-soft); }
@@ -639,16 +643,23 @@ html.is-intro .intro { display: flex; }
    sideways and the active one is kept in view. */
 .sections { position: sticky; top: var(--nav); z-index: 9; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); background: var(--grain), var(--bg); box-shadow: inset 0 -1px 0 var(--line); }
 .sections__track { display: flex; gap: clamp(16px, 2.4vw, 32px); overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+/* where the strip scrolls sideways (under 900px) labels leaving the edge
+   dissolve rather than being chopped mid-word: the track is padded by the
+   fade width and pulled out by the same, so at rest the first label sits
+   clear of the fade and only what slides under the edge dissolves */
+.sections__track--fade { scroll-behavior: smooth; }
 .sections__track::-webkit-scrollbar { display: none; }
 .sections__link { position: relative; flex: none; padding: 15px 0 14px; font: 400 10px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--mute); white-space: nowrap; transition: color .2s ease; }
 .sections__link:hover, .sections__link[aria-current="true"] { color: var(--ink); }
 .sections__link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--ink); transform: scaleX(0); transform-origin: left; transition: transform .35s cubic-bezier(.22, .61, .36, 1); }
 .sections__link[aria-current="true"]::after { transform: none; }
 
-.post { max-width: var(--max); margin-inline: auto; padding: 0 var(--pad) clamp(64px, 10vh, 110px); }
+.post { max-width: var(--max); margin-inline: auto; padding: 0 var(--pad) 0; }
 .post__head { max-width: 600px; margin-inline: auto; padding-top: clamp(48px, 8vh, 96px); }
-.eyebrow__link { padding-bottom: 2px; border-bottom: 1px solid var(--line); transition: color .2s ease, border-color .2s ease; }
-.eyebrow__link:hover { color: var(--ink); border-color: var(--rule); }
+.eyebrow__link { transition: color .2s ease; }
+.eyebrow__text { padding-bottom: 2px; border-bottom: 1px solid var(--line); transition: border-color .2s ease; }
+.eyebrow__link:hover { color: var(--ink); }
+.eyebrow__link:hover .eyebrow__text { border-color: var(--rule); }
 .post__title { margin-top: 20px; font-size: clamp(38px, 5.6vw, 66px); line-height: 1.04; letter-spacing: -.015em; }
 .post__meta { margin-top: 22px; font: 400 11px/1.6 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
 
@@ -660,6 +671,9 @@ html.is-intro .intro { display: flex; }
 .prose > .figure--wide { grid-column: 1 / -1; width: min(100%, 940px); justify-self: center; }
 .prose > p { margin-top: 18px; }
 .prose > h2 { margin-top: clamp(56px, 8vh, 88px); font-size: clamp(28px, 3.2vw, 40px); line-height: 1.1; }
+/* at 28-40px the 4px glow in the lip reads as blur, not light; the cut keeps
+   its two edges and loses the glow. The h1s, at 66px+, keep the full lip. */
+.prose > h2, .discuss__t { --engrave-lip: 0 1px 1px rgba(255, 250, 242, .9), 0 -1px 1px rgba(40, 30, 15, .4); }
 /* the nav and the strip together cover about 104px of the top of the screen */
 .prose > h2[id] { scroll-margin-top: calc(var(--nav) + 56px); }
 .prose > h2 + p { margin-top: 22px; }
@@ -674,19 +688,21 @@ html.is-intro .intro { display: flex; }
 /* Figures sit on a sheet, the way the sections under the hero do. */
 .figure { margin: clamp(36px, 5vh, 52px) 0 0; }
 .figure__cap { margin-top: 14px; max-width: 68ch; font: 400 11.5px/1.7 var(--mono); color: var(--mute); }
+/* under a wide figure the caption starts where the text does, not at the panel's edge */
+.figure--wide .figure__cap { margin-left: max(0px, calc((100% - 600px) / 2)); }
 .panel { position: relative; padding: clamp(18px, 3vw, 32px); border: 1px solid var(--line); background: var(--grain), var(--sheet); box-shadow: var(--sheet-shadow); }
 
 /* Figure 1: one trial as a ring. The arcs are dash lengths on a circle of
    radius 132, so each is an exact fraction of 829.38; the bead is a group
    rotated about the centre, once per trial at 20x, so a lap is 6 s. */
 .loop__panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: clamp(20px, 4vw, 56px); }
-.loop__stage { position: relative; width: min(100%, 340px); margin-inline: auto; }
+.loop__stage { position: relative; width: min(100%, 300px); margin-inline: auto; }
 .loop__svg { display: block; width: 100%; height: auto; }
 .loop__track { fill: none; stroke: var(--line); stroke-width: 2; }
 .loop__arc { fill: none; stroke-width: 14; }
 .loop__arc--action { stroke: var(--accent); }
 .loop__arc--check { stroke: var(--ink); }
-.loop__arc--reset { stroke: var(--rule); }
+.loop__arc--reset { stroke: var(--reset); }
 .loop__hand { transform-origin: 180px 180px; animation: loop-lap 6s linear infinite; }
 .loop__dot { fill: var(--ink); stroke: var(--sheet); stroke-width: 3; }
 .loop__centre { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
@@ -695,14 +711,14 @@ html.is-intro .intro { display: flex; }
 .loop__legend { margin: 0; }
 .loop__row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .loop__row:first-child { border-top: 1px solid var(--line); }
-.loop__row dt { display: flex; align-items: center; gap: 10px; font: 400 12px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.loop__row dt { display: flex; align-items: center; gap: 10px; font: 400 11px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
 .loop__row dd { font-family: var(--serif); font-size: 20px; line-height: 1; font-variant-numeric: tabular-nums; }
 .loop__row--mute { color: var(--mute); }
 .loop__note { margin-top: 18px; font: 400 12px/1.75 var(--mono); color: var(--ink-soft); }
 .swatch { display: inline-block; flex: none; width: 12px; height: 12px; border-radius: 2px; background: var(--ink); }
 .swatch--action { background: var(--accent); }
 .swatch--check { background: var(--ink); }
-.swatch--reset { background: var(--rule); }
+.swatch--reset { background: var(--reset); }
 .swatch--recovery { background: repeating-linear-gradient(135deg, var(--rule) 0 2px, transparent 2px 5px); }
 @keyframes loop-lap { to { transform: rotate(360deg); } }
 
@@ -711,7 +727,8 @@ html.is-intro .intro { display: flex; }
    clicks last, then the carrier withdraws and it starts again. The resting
    styles are the frame with three lamps lit and the latch open, which is
    what a reduced-motion visitor sees, and it is the point of the figure. */
-.latch__svg { --latch: 11s; display: block; width: 100%; height: auto; }
+#latch { --latch: 11s; }
+.latch__svg { display: block; width: 100%; height: auto; }
 .latch__housing { fill: none; stroke: var(--ink); stroke-width: 2; }
 .latch__catch { fill: var(--ink); }
 .latch__pad { fill: var(--mute); }
@@ -720,16 +737,17 @@ html.is-intro .intro { display: flex; }
 .latch__tab { fill: var(--accent); animation: latch-tab var(--latch) infinite; }
 .latch__pin { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
 .latch__cable { fill: none; stroke: var(--rule); stroke-width: 3; stroke-linecap: round; }
-.lamp { font: 500 10px var(--mono); letter-spacing: .14em; }
-.lamp__ring { fill: none; stroke: var(--rule); stroke-width: 1.5; }
-.lamp__label { fill: var(--mute); }
-.lamp__on { opacity: 0; }
-.lamp__on circle { fill: var(--accent); }
-.lamp__on .lamp__label { fill: var(--ink); }
-.lamp__on--contact { opacity: 1; animation: latch-on-47 var(--latch) infinite; }
-.lamp__on--force { opacity: 1; animation: latch-on-50 var(--latch) infinite; }
-.lamp__on--position { opacity: 1; animation: latch-on-54 var(--latch) infinite; }
-.lamp__on--latched { animation: latch-on-76 var(--latch) infinite; }
+/* the lamps: a ring each, and an orange fill that comes on with the plug's
+   own keyframes. Resting state = contact, force and position lit, latch
+   open, which is what Reduce Motion shows. */
+.lamps { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px clamp(20px, 4vw, 48px); margin-top: clamp(16px, 2.5vw, 26px); list-style: none; }
+.lamps__i { position: relative; padding-left: 22px; font: 400 11px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+.lamps__i::before { content: ""; position: absolute; left: 0; top: 50%; width: 10px; height: 10px; margin-top: -6.5px; border: 1.5px solid var(--rule); border-radius: 50%; }
+.lamps__i::after { content: ""; position: absolute; left: 0; top: 50%; width: 13px; height: 13px; margin-top: -6.5px; border-radius: 50%; background: var(--accent); opacity: 0; }
+.lamps__i--contact::after { opacity: 1; animation: latch-on-47 var(--latch) infinite; }
+.lamps__i--force::after { opacity: 1; animation: latch-on-50 var(--latch) infinite; }
+.lamps__i--position::after { opacity: 1; animation: latch-on-54 var(--latch) infinite; }
+.lamps__i--latched::after { animation: latch-on-76 var(--latch) infinite; }
 @keyframes latch-plug {
     0%, 8% { transform: translate(0, 0); animation-timing-function: cubic-bezier(.22, .61, .36, 1); }
     36% { transform: translate(90px, 0); animation-timing-function: ease-in-out; }
@@ -767,7 +785,7 @@ html.is-intro .intro { display: flex; }
 .bench__controls { display: grid; gap: 16px; }
 .bench__ctl { display: grid; grid-template-columns: 112px minmax(0, 1fr) 48px; align-items: center; gap: 14px; }
 .bench__name { display: flex; align-items: center; gap: 10px; font: 400 11px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
-.bench__ctl output { font: 400 12px/1 var(--mono); text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
+.bench__ctl output { font: 400 15px/1 var(--serif); text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
 .bench__ctl input[type="range"] { width: 100%; height: 2px; margin: 0; -webkit-appearance: none; appearance: none; background: var(--rule); outline: none; }
 .bench__ctl input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border: 0; border-radius: 50%; background: var(--ink); cursor: pointer; }
 .bench__ctl input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: var(--ink); cursor: pointer; }
@@ -781,17 +799,16 @@ html.is-intro .intro { display: flex; }
 .bench__seg { flex: 1 1 0px; min-width: 0; height: 100%; transition: flex-grow .5s cubic-bezier(.22, .61, .36, 1); }
 .bench__seg--action { background: var(--accent); }
 .bench__seg--check { background: var(--ink); }
-.bench__seg--reset { background: var(--rule); }
+.bench__seg--reset { background: var(--reset); }
 .bench__seg--recovery { background: repeating-linear-gradient(135deg, var(--rule) 0 3px, transparent 3px 8px); }
 .bench__head { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--page); box-shadow: 0 0 0 1px var(--ink); animation: bench-sweep var(--lap) linear infinite; }
-.bench__legend { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 14px; list-style: none; }
-.bench__legend li { display: flex; align-items: center; gap: 8px; font: 400 10.5px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
 @keyframes bench-sweep { to { left: 100%; } }
 
 /* the table from the text, as ruled rows: the question in the serif, the
    evidence in the mono */
-.evidence__table { width: 100%; margin-top: 8px; border-collapse: collapse; }
-.evidence__table th { padding: 12px 14px 12px 0; text-align: left; font: 500 10px/1.4 var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--mute); border-bottom: 1px solid var(--rule); }
+#measurements { margin-top: 24px; }
+.evidence__table { width: 100%; margin-top: 0; border-collapse: collapse; }
+.evidence__table th { padding: 0 14px 12px 0; text-align: left; font: 500 10px/1.4 var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--mute); border-bottom: 1px solid var(--rule); }
 .evidence__table td { padding: 16px 14px 16px 0; vertical-align: top; border-bottom: 1px solid var(--line); font: 400 13px/1.75 var(--mono); color: var(--ink-soft); }
 .evidence__table td:first-child { width: 42%; font-family: var(--serif); font-size: 18px; line-height: 1.3; color: var(--ink); }
 
@@ -800,6 +817,7 @@ html.is-intro .intro { display: flex; }
 .share { max-width: 60ch; }
 .share__lead { font: 400 12px/1.7 var(--mono); color: var(--mute); }
 .share__row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.share__row [data-copy-link] { min-width: 112px; }
 .discuss { margin-top: clamp(40px, 6vh, 64px); }
 .discuss__t { font-size: clamp(26px, 3vw, 36px); line-height: 1.1; }
 .discuss__p { margin-top: 14px; font: 400 13px/1.8 var(--mono); color: var(--ink-soft); }
@@ -807,7 +825,6 @@ html.is-intro .intro { display: flex; }
 @media (max-width: 900px) {
     .loop__panel, .bench__grid { grid-template-columns: minmax(0, 1fr); }
     .postrow { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-    .postrow:hover { padding-inline: 14px; }
 }
 @media (max-width: 720px) {
     /* The mark, four links and the pill need about 380px at this spacing and
@@ -815,15 +832,23 @@ html.is-intro .intro { display: flex; }
        hero on the home page, so its nav entry is the one a phone can lose. */
     .navlink--origin { display: none; }
     .sections__link { font-size: 9px; letter-spacing: .1em; }
+    .lamps { display: grid; grid-template-columns: repeat(2, max-content); gap: 10px 32px; }
     .post__title { font-size: clamp(32px, 9vw, 42px); }
     .prose > h2 { font-size: clamp(24px, 7vw, 30px); }
-    .formula { font-size: 15px; padding-inline: 0; }
+    .formula { font-size: 15px; padding-inline: 0; flex-direction: column; gap: 8px; }
     .formula__den { white-space: normal; }
     .bench__ctl { grid-template-columns: 96px minmax(0, 1fr) 44px; gap: 10px; }
-    .evidence__table td:first-child { width: auto; font-size: 16px; }
+    .bench__presets .chip { flex: 1 1 auto; }
+    /* the two columns squeeze to 24 characters here: stack the question over its evidence */
+    .evidence__table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .evidence__table tr, .evidence__table td { display: block; }
+    .evidence__table td { padding: 0; border: 0; }
+    .evidence__table td:first-child { width: auto; padding-top: 18px; font-size: 18px; }
+    .evidence__table tr:first-child td:first-child { border-top: 1px solid var(--rule); }
+    .evidence__table td:last-child { padding: 8px 0 18px; border-bottom: 1px solid var(--line); }
 }
 @media (prefers-reduced-motion: reduce) {
-    .loop__hand, .latch__plug, .latch__tab, .lamp__on { animation: none; }
+    .loop__hand, .latch__plug, .latch__tab, .lamps__i::after { animation: none; }
     .bench__head { display: none; }
     .bench__seg, .sections__link, .sections__link::after, .chip, .postrow, .postrow__go, .eyebrow__link { transition: none; }
 }
@@ -882,7 +907,7 @@ html.is-intro .intro { display: flex; }
 /* The blog hero: full bleed like the sheets, the copy on the left of the
    column, the ribbons falling in from the right. Replaces the careers
    masthead on this page only. */
-.bloghero { position: relative; overflow: hidden; min-height: clamp(380px, 54svh, 560px); display: grid; align-content: center; padding: clamp(64px, 10vh, 120px) max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
+.bloghero { position: relative; overflow: hidden; box-shadow: inset 0 -1px 0 var(--line); min-height: clamp(380px, 54svh, 560px); display: grid; align-content: center; padding: clamp(64px, 10vh, 120px) max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
 .bloghero__copy { position: relative; z-index: 1; }
 .bloghero__t { margin-top: 20px; max-width: 18ch; font-size: clamp(38px, 6vw, 68px); line-height: 1.04; letter-spacing: -.015em; }
 .bloghero .masthead__lead { max-width: 56ch; }
@@ -899,6 +924,7 @@ html.is-intro .intro { display: flex; }
 
 @media (max-width: 899px) {
     .paths--post { display: none; }
+    .sections__track--fade { margin-inline: -28px; padding-inline: 28px; scroll-padding-inline: 28px; -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
 }
 @media (max-width: 720px) {
     /* the copy sits at the top and the ribbons take a band under it, where

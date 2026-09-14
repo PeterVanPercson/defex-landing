@@ -26,7 +26,6 @@
         svg.setAttribute('viewBox', `0 0 ${VB_W} ${VB_H}`);
         // a short band (the phone layout) is filled edge to edge instead, so
         // the lines run its full height and the fade has room to work
-        svg.setAttribute('preserveAspectRatio', host.clientHeight && host.clientHeight < 320 ? 'xMidYMid slice' : 'xMidYMid meet');
         svg.setAttribute('shape-rendering', 'geometricPrecision');
 
         const id = `paths-fade-${n}`;
@@ -36,6 +35,9 @@
         fade.setAttribute('gradientUnits', 'userSpaceOnUse');
         fade.setAttribute('x1', '0'); fade.setAttribute('y1', '0');
         fade.setAttribute('x2', '0'); fade.setAttribute('y2', String(VB_H));
+        // behind the article head the strands run at about 35 degrees, so the
+        // fade runs along them; top to bottom would end them all on one line
+        if (host.classList.contains('paths--post')) { fade.setAttribute('x1', String(VB_W)); fade.setAttribute('x2', String(Math.round(VB_W * 0.4))); }
         const stops = [[0, 1], [0.7, 1], [1, 0]].map(([offset, alpha]) => {
             const stop = document.createElementNS(NS, 'stop');
             stop.setAttribute('offset', String(offset));
@@ -77,17 +79,22 @@
         }
         host.appendChild(svg);
 
-        // Widths follow the render scale; in a short band (the phone layout,
-        // no copy under it) the fade starts later.
+        // Widths follow the render scale. A short band (the phone layout, with
+        // nothing written under it) is filled edge to edge, panned so the bundle
+        // spans it, and fades IN from its top edge and runs full into the rule
+        // below; a tall box fades OUT before the copy under it.
         const size = () => {
             const w = host.clientWidth;
             const h = host.clientHeight;
             if (!w || !h) return;
             const short = h < 320;
+            svg.setAttribute('viewBox', short ? `120 0 ${VB_W} ${VB_H}` : `0 0 ${VB_W} ${VB_H}`);
             svg.setAttribute('preserveAspectRatio', short ? 'xMidYMid slice' : 'xMidYMid meet');
+            stops[0].setAttribute('stop-opacity', short ? '0' : '1');
+            stops[1].setAttribute('offset', short ? '0.3' : '0.55');
+            stops[2].setAttribute('stop-opacity', short ? '1' : '0');
             const scale = short ? Math.max(w / VB_W, h / VB_H) : Math.min(w / VB_W, h / VB_H);
             for (const { path, px } of lines) path.setAttribute('stroke-width', (px / scale).toFixed(3));
-            stops[1].setAttribute('offset', short ? '0.55' : '0.7');
         };
         size();
         if ('ResizeObserver' in window) new ResizeObserver(size).observe(host);
