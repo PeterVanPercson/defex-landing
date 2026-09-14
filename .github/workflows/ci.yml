@@ -38,6 +38,8 @@ jobs:
           node --check static/js/book.js
           node --check static/js/post.js
           node --check static/js/paths.js
+          node --check static/js/starbtn.js
+          node --check static/js/cloud.js
 
       - name: collectstatic
         run: python manage.py collectstatic --no-input

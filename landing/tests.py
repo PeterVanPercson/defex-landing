@@ -225,7 +225,7 @@ class SiteTests(SimpleTestCase):
         self.assertIn(".intro { display: none !important; }", css.split("prefers-reduced-motion", 1)[1],
                       "reduced motion must hide the intro")
         used = set()
-        for name in ("home.html", "origin.html", "_topbar.html", "_scan.html", "blog/index.html",
+        for name in ("home.html", "origin.html", "_topbar.html", "_scan.html", "_stars.html", "blog/index.html",
                      "blog/_article.html", "blog/the-cost-of-the-next-attempt.html"):
             markup = (root / "templates/landing" / name).read_text()
             for attr in re.findall(r'class="([^"]*)"', markup):
@@ -273,13 +273,16 @@ class SiteTests(SimpleTestCase):
             self.assertIn(f'id="{anchor}"', body)
         # an unpublished slug is a 404, not a template error
         self.assertEqual(self.client.get("/blog/not-a-post/").status_code, 404)
-        # the nav reaches the blog from every page, and the blog reaches contact
+        # the blog's way in is the button under the hero headline and a footer
+        # link on every page; the nav stays as it was
         for path in ("/", "/careers/", "/where-it-started/", "/blog/"):
-            header = self.client.get(path).content.decode().split("<header", 1)[1].split("</header>", 1)[0]
-            self.assertIn('href="/blog/"', header, path)
-            # the nav's blog link carries the scan mark on every page
-            self.assertIn('class="navlink navlink--blog"', header, path)
-            self.assertIn('class="scan"', header, path)
+            page = self.client.get(path).content.decode()
+            header = page.split("<header", 1)[1].split("</header>", 1)[0]
+            self.assertNotIn('href="/blog/"', header, path)
+            self.assertIn('class="footer__blog link" href="/blog/"', page, path)
+        home = self.client.get("/").content.decode()
+        self.assertIn('class="starbtn" href="/blog/" data-starbtn', home)
+        self.assertIn("js/starbtn.js", home)
         header = body.split("<header", 1)[1].split("</header>", 1)[0]
         self.assertIn('href="/#contact"', header)
         sitemap = self.client.get("/sitemap.xml").content.decode()
