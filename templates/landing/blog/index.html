@@ -22,16 +22,20 @@
 {% include "landing/_topbar.html" with page='blog' %}
 
 <main>
-    <!-- The hero: the title over the ribbons, ink on paper. The ribbons are
-         drawn by static/js/paths.js into .paths; without JS this is paper.
-         -->
+    <!-- The hero: the copy on the left and the robot on the right as ink
+         dots: 30,000 points sampled over the Defex robot model, drawn by
+         static/js/cloud.js. Drag turns it, the wheel zooms, and it turns by
+         itself when left alone. Without JS the right half is paper. -->
     <section class="bloghero" aria-labelledby="blog-title">
-        <div class="paths" data-paths aria-hidden="true"></div>
         <div class="bloghero__copy">
             <p class="eyebrow eyebrow--scan" data-reveal data-scan>{% include "landing/_scan.html" %}Blog</p>
             <h1 class="bloghero__t engraved" id="blog-title" data-reveal>Notes from the bench.</h1>
             <p class="masthead__lead">What we are learning while building robots that practice, test their own work and reset for the next attempt.</p>
         </div>
+        <figure class="cloud">
+            <canvas class="cloud__canvas" data-cloud="{% static 'models/robot-cloud.bin' %}?v={{ asset_v }}" aria-label="The Defex robot, drawn as a cloud of ink dots. Drag to turn it."></canvas>
+            <figcaption class="cloud__hint">drag to rotate &middot; scroll to zoom</figcaption>
+        </figure>
     </section>
 
     <!-- One ruled row per post, the way the home page lists its open role. -->
@@ -59,6 +63,6 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{% static 'js/paths.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/cloud.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}

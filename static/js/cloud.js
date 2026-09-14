@@ -19,7 +19,7 @@
     let H = 0;
     let img = null;
     let buf = null;
-    let yaw = -0.7;
+    let yaw = 0.55;      // the front, three-quarter
     let pitch = 0.16;
     let zoom = 1;
     let dirty = true;
@@ -30,6 +30,7 @@
     let seen = true;
     let raf = 0;
     let lastFrame = 0;
+    let DPR = 1;
 
     fetch(canvas.dataset.cloud).then((r) => r.arrayBuffer()).then((ab) => {
         const dv = new DataView(ab);
@@ -43,9 +44,9 @@
 
     const size = () => {
         const r = canvas.getBoundingClientRect();
-        const dpr = Math.min(2, devicePixelRatio || 1);
-        W = Math.max(1, Math.round(r.width * dpr));
-        H = Math.max(1, Math.round(r.height * dpr));
+        DPR = Math.min(2, devicePixelRatio || 1);
+        W = Math.max(1, Math.round(r.width * DPR));
+        H = Math.max(1, Math.round(r.height * DPR));
         if (canvas.width !== W || canvas.height !== H) {
             canvas.width = W;
             canvas.height = H;
@@ -63,7 +64,7 @@
         const scale = (Math.min(W, H) * 0.44 * zoom) / 32000;
         const ox = W / 2, oy = H / 2;
         const lx = -0.45, ly = 0.75, lz = 0.5;   // lit from the upper left, in front
-        const dot = W > 700 ? 2 : 1;             // one CSS pixel on a 2x screen
+        const dot = DPR >= 2 ? 2 : 1;            // one CSS pixel on a 2x screen
         const lim = W - dot, limy = H - dot;
         for (let i = 0; i < n; i++) {
             const j = i * 3;
@@ -77,11 +78,13 @@
             const py = (oy - y2 * scale) | 0;
             if (px < 0 || py < 0 || px >= lim || py >= limy) continue;
             let a;
+            // one-pixel dots on a 1x screen carry less ink than the 2x2 blocks
+            // a 2x screen gets, so they are drawn darker to match
             if (nz2 > 0) {
                 const lit = Math.max(0, nx1 * lx + ny2 * ly + nz2 * lz);
-                a = 0.22 + 0.62 * (1 - lit);
+                a = (DPR >= 2 ? 0.24 : 0.34) + 0.6 * (1 - lit);
             } else {
-                a = 0.14;                        // the far side, seen through
+                a = DPR >= 2 ? 0.14 : 0.2;      // the far side, seen through
             }
             const v = (((a * 255) | 0) << 24) | (INK[2] << 16) | (INK[1] << 8) | INK[0];
             const k = py * W + px;

@@ -261,10 +261,11 @@ class SiteTests(SimpleTestCase):
                       # the ribbons behind the head, and the scan mark on the way back to the index
                       'class="paths paths--post" data-paths', 'class="scan"'):
             self.assertContains(post, chunk)
-        # the index hero: ribbons, the rising title, the mark on the eyebrow
-        for chunk in ('class="paths" data-paths', 'data-reveal>Notes from the bench.', "js/paths.js",
+        # the index hero: the robot as dots, the title, the mark on the eyebrow
+        for chunk in ('class="cloud__canvas" data-cloud', 'data-reveal>Notes from the bench.', "js/cloud.js",
                       'class="eyebrow eyebrow--scan" data-reveal data-scan'):
             self.assertContains(index, chunk)
+        self.assertEqual(self.client.get("/static/models/robot-cloud.bin").status_code, 200)
         self.assertEqual(self.client.get("/static/js/paths.js").status_code, 200)
         # every label in the section strip points at a heading that exists
         hrefs = re.findall(r'class="sections__link" href="#([^"]+)"', body)
