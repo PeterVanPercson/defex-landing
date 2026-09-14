@@ -225,7 +225,7 @@ class SiteTests(SimpleTestCase):
         self.assertIn(".intro { display: none !important; }", css.split("prefers-reduced-motion", 1)[1],
                       "reduced motion must hide the intro")
         used = set()
-        for name in ("home.html", "origin.html", "_topbar.html", "blog/index.html",
+        for name in ("home.html", "origin.html", "_topbar.html", "_scan.html", "blog/index.html",
                      "blog/_article.html", "blog/the-cost-of-the-next-attempt.html"):
             markup = (root / "templates/landing" / name).read_text()
             for attr in re.findall(r'class="([^"]*)"', markup):
@@ -257,8 +257,15 @@ class SiteTests(SimpleTestCase):
                       "Evidence to collect", "/where-it-started/",
                       'property="og:type" content="article"', '"@type": "BlogPosting"',
                       'rel="canonical" href="https://defex.app/blog/the-cost-of-the-next-attempt/"',
-                      "js/post.js", "js/reveal.js", "data-copy-link"):
+                      "js/post.js", "js/reveal.js", "js/paths.js", "data-copy-link",
+                      # the ribbons behind the head, and the scan mark on the way back to the index
+                      'class="paths paths--post" data-paths', 'class="scan"'):
             self.assertContains(post, chunk)
+        # the index hero: ribbons, the rising title, the mark on the eyebrow
+        for chunk in ('class="paths" data-paths', 'data-rise>Notes from the bench.', "js/paths.js",
+                      'class="eyebrow eyebrow--scan" data-reveal data-scan'):
+            self.assertContains(index, chunk)
+        self.assertEqual(self.client.get("/static/js/paths.js").status_code, 200)
         # every label in the section strip points at a heading that exists
         hrefs = re.findall(r'class="sections__link" href="#([^"]+)"', body)
         self.assertGreaterEqual(len(hrefs), 5)
@@ -270,6 +277,9 @@ class SiteTests(SimpleTestCase):
         for path in ("/", "/careers/", "/where-it-started/", "/blog/"):
             header = self.client.get(path).content.decode().split("<header", 1)[1].split("</header>", 1)[0]
             self.assertIn('href="/blog/"', header, path)
+            # the nav's blog link carries the scan mark on every page
+            self.assertIn('class="navlink navlink--blog"', header, path)
+            self.assertIn('class="scan"', header, path)
         header = body.split("<header", 1)[1].split("</header>", 1)[0]
         self.assertIn('href="/#contact"', header)
         sitemap = self.client.get("/sitemap.xml").content.decode()

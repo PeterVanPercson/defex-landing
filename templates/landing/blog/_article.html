@@ -58,8 +58,11 @@
 </nav>
 
 <main class="post" id="article">
+    <!-- The same ribbons as the blog hero, behind the head only; they fade
+         out before the text starts. Drawn by static/js/paths.js. -->
+    <div class="paths paths--post" data-paths aria-hidden="true"></div>
     <header class="post__head">
-        <p class="eyebrow"><a class="eyebrow__link" href="{% url 'blog' %}">Blog</a></p>
+        <p class="eyebrow"><a class="eyebrow__link eyebrow--scan" href="{% url 'blog' %}" data-reveal data-scan>{% include "landing/_scan.html" %}Blog</a></p>
         <h1 class="post__title engraved">{{ post.title }}</h1>
         <p class="post__meta">Defex &middot; <time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time> &middot; {{ post.minutes }} min read</p>
     </header>
@@ -95,6 +98,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="{% static 'js/paths.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/post.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}

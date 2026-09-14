@@ -12,6 +12,12 @@
         for (const entry of entries) {
             if (!entry.isIntersecting) continue;
             entry.target.classList.add('is-in');
+            // the scan-text mark plays once as its carrier arrives; the class
+            // comes off after the last line has redrawn (.8s + .2s stagger)
+            if (entry.target.hasAttribute('data-scan')) {
+                entry.target.classList.add('is-scanning');
+                setTimeout(() => entry.target.classList.remove('is-scanning'), 1200);
+            }
             io.unobserve(entry.target);
         }
     }, { rootMargin: '0px 0px -12% 0px' });

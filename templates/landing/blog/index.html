@@ -19,21 +19,27 @@
 
 {% include "landing/_topbar.html" with page='blog' %}
 
-<main class="page">
-    <header class="masthead">
-        <p class="eyebrow">Blog</p>
-        <h1 class="engraved">Notes from the bench.</h1>
-        <p class="masthead__lead">What we are learning while building robots that practice, test their own work and reset for the next attempt.</p>
-    </header>
+<main>
+    <!-- The hero: the title over the ribbons, ink on paper. The ribbons are
+         drawn by static/js/paths.js into .paths; without JS this is paper.
+         The title rises a letter at a time, also from paths.js. -->
+    <section class="bloghero" aria-labelledby="blog-title">
+        <div class="paths" data-paths aria-hidden="true"></div>
+        <div class="bloghero__copy">
+            <p class="eyebrow eyebrow--scan" data-reveal data-scan>{% include "landing/_scan.html" %}Blog</p>
+            <h1 class="bloghero__t engraved" id="blog-title" data-rise>Notes from the bench.</h1>
+            <p class="masthead__lead">What we are learning while building robots that practice, test their own work and reset for the next attempt.</p>
+        </div>
+    </section>
 
     <!-- One ruled row per post, the way the home page lists its open role. -->
-    <section class="posts" id="posts" aria-label="Posts">
+    <section class="page posts" id="posts" aria-label="Posts">
         {% for post in posts %}
         <a class="postrow" href="{% url 'blog_post' post.slug %}" data-reveal>
             <span class="postrow__meta"><time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time> &middot; {{ post.minutes }} min read</span>
             <span class="postrow__title">{{ post.title }}</span>
             <span class="postrow__dek">{{ post.dek }}</span>
-            <span class="postrow__go">Read &rarr;</span>
+            <span class="postrow__go">{% include "landing/_scan.html" %}Read</span>
         </a>
         {% endfor %}
     </section>
@@ -50,5 +56,6 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="{% static 'js/paths.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}
