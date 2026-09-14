@@ -5,8 +5,8 @@
 
     // Background ribbons, after the "Background Paths" component (kokonutd on
     // 21st.dev): 36 bezier ribbons a side, thin to thick and faint to darker,
-    // the component's own curve. Drawn once here as plain SVG; the motion is
-    // one CSS keyframe per ribbon (see .paths__line) on its own clock.
+    // the component's own curve. Drawn once here as plain SVG and moved by
+    // the clock at the bottom of this file.
     //
     // Four things are deliberately not the component's way, each for a
     // reason that showed on screen:
@@ -71,9 +71,7 @@
                 // neighbours are never in step and the whole cycle is covered
                 const dur = 22 + (k % 5) * 2;
                 const phase = ((i * 7) % 36) / 36 + (side < 0 ? 0.5 / 36 : 0);
-                path.style.setProperty('--dur', `${dur}s`);
-                path.style.setProperty('--delay', `${(-phase * dur).toFixed(2)}s`);
-                lines.push({ path, px: 0.6 + i * 0.037 });
+                lines.push({ path, px: 0.6 + i * 0.037, dur, phase });
                 svg.appendChild(path);
             }
         }
@@ -99,5 +97,46 @@
         size();
         if ('ResizeObserver' in window) new ResizeObserver(size).observe(host);
         else addEventListener('resize', size);
+
+        // The motion. One frame writes every ribbon's dash, offset and
+        // opacity: the dash grows from .3 of the path to all of it and back
+        // while it slides two path-lengths along, and the ribbon breathes
+        // between .3 and .6. The pattern always sums to one path length, so
+        // the loop is seamless. Driven from here rather than CSS for two
+        // reasons that both showed in a trace: CSS animations repaint at the
+        // display's rate, 120 times a second on a ProMotion Mac, and ribbons
+        // this slow look the same at 25; and CSS keeps animating, and
+        // repainting, while the hero is scrolled off the top of a long read.
+        // Reduce Motion gets a single still frame.
+        const STEP = 40;   // ms between frames, 25 fps
+        let last = 0;
+        let raf = 0;
+        let seen = true;
+        const draw = (now) => {
+            for (const l of lines) {
+                const p = ((now / 1000) / l.dur + l.phase) % 1;
+                const tri = p < 0.5 ? p * 2 : (1 - p) * 2;
+                const dash = 0.3 + 0.7 * tri;
+                l.path.setAttribute('stroke-dasharray', `${dash.toFixed(4)} ${(1 - dash).toFixed(4)}`);
+                l.path.setAttribute('stroke-dashoffset', (-2 * p).toFixed(4));
+                l.path.style.opacity = (0.3 + 0.3 * tri).toFixed(3);
+            }
+        };
+        const frame = (now) => {
+            raf = 0;
+            if (!seen || document.hidden) return;
+            if (now - last >= STEP) { last = now; draw(now); }
+            raf = requestAnimationFrame(frame);
+        };
+        const run = () => { if (!raf && seen && !document.hidden) raf = requestAnimationFrame(frame); };
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            draw(0);
+        } else {
+            if ('IntersectionObserver' in window) {
+                new IntersectionObserver((entries) => { seen = entries[0].isIntersecting; run(); }).observe(host);
+            }
+            document.addEventListener('visibilitychange', run);
+            run();
+        }
     });
 })();

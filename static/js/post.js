@@ -13,12 +13,13 @@
 
     function paint() {
         queued = false;
+        // all reads first, then the writes: a style write followed by a
+        // getBoundingClientRect forces a layout on every scroll frame
         const room = document.documentElement.scrollHeight - innerHeight;
-        if (bar) bar.style.setProperty('--progress', room > 0 ? Math.min(1, scrollY / room) : 0);
-        // the section whose heading has passed the top third of the screen
         const line = innerHeight * 0.34;
         let now = -1;
         heads.forEach((h, i) => { if (h && h.getBoundingClientRect().top <= line) now = i; });
+        if (bar) bar.style.setProperty('--progress', room > 0 ? Math.min(1, scrollY / room) : 0);
         if (now === active) return;
         active = now;
         links.forEach((a, i) => {
@@ -34,6 +35,18 @@
     addEventListener('scroll', ask, { passive: true });
     addEventListener('resize', ask);
     paint();
+
+    // The figures' CSS animations (the ring's bead, the plug, the playhead)
+    // pause while their figure is off screen. Left to CSS they run for the
+    // whole read, repainting three figures on every frame of a nine-minute
+    // article the reader is nowhere near.
+    const figs = document.querySelectorAll('#loop, #latch, #bench');
+    if (figs.length && 'IntersectionObserver' in window) {
+        const io = new IntersectionObserver((entries) => {
+            for (const e of entries) e.target.classList.toggle('is-off', !e.isIntersecting);
+        }, { rootMargin: '120px 0px' });
+        figs.forEach((f) => io.observe(f));
+    }
 
     // The bench: trials per hour = 3600 / (action + check + reset + recovery).
     // The bar is one trial with each term to scale, and the playhead crosses
