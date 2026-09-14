@@ -257,9 +257,9 @@ class SiteTests(SimpleTestCase):
                       "Evidence to collect", "/where-it-started/",
                       'property="og:type" content="article"', '"@type": "BlogPosting"',
                       'rel="canonical" href="https://defex.app/blog/the-cost-of-the-next-attempt/"',
-                      "js/post.js", "js/reveal.js", "js/cloud.js", "data-copy-link",
-                      # the robot beside the head, the scan mark on the way back, the byline
-                      'class="cloud cloud--post"', 'class="scan"',
+                      "js/post.js", "js/reveal.js", "data-copy-link",
+                      # the scan mark on the way back, the byline
+                      'class="scan"',
                       "By <a class=\"link\" href=\"https://husanmavlonov.com/\">Husan Mavlonov</a>",
                       '"@type": "Person", "@id": "https://husanmavlonov.com/#person"', 'class="author__bio"'):
             self.assertContains(post, chunk)
@@ -274,12 +274,15 @@ class SiteTests(SimpleTestCase):
         self.assertNotIn("_vercel/insights", self.client.get("/").content.decode())
         with override_settings(WEB_ANALYTICS=True):
             self.assertIn("_vercel/insights/script.js", self.client.get("/").content.decode())
-        # the index hero: the robot as dots, the title, the mark on the eyebrow
-        for chunk in ('class="cloud__canvas" data-cloud', 'data-reveal>Blog.', "js/cloud.js",
+        # the index hero: the Spline robot on its vendored runtime, the title,
+        # the mark on the eyebrow
+        for chunk in ('class="spline" data-spline="https://prod.spline.design/', 'data-reveal>Blog.', "js/spline.js",
+                      'data-runtime="/static/vendor/spline-2.0.46/runtime.standalone.webgl.js',
                       'class="eyebrow eyebrow--scan" data-reveal data-scan'):
             self.assertContains(index, chunk)
-        self.assertEqual(self.client.get("/static/models/robot-cloud.bin").status_code, 200)
-        self.assertEqual(self.client.get("/static/js/cloud.js").status_code, 200)
+        for asset in ("/static/vendor/spline-2.0.46/runtime.standalone.webgl.js", "/static/vendor/spline-2.0.46/process.js"):
+            self.assertEqual(self.client.get(asset).status_code, 200, asset)
+        self.assertEqual(self.client.get("/static/js/spline.js").status_code, 200)
         # every label in the section strip points at a heading that exists
         hrefs = re.findall(r'class="sections__link" href="#([^"]+)"', body)
         self.assertGreaterEqual(len(hrefs), 5)

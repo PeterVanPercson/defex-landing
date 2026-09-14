@@ -60,10 +60,6 @@
 </nav>
 
 <main class="post" id="article">
-    <!-- The robot, small, in the lane right of the column: the same dots as
-         the blog index, drawn by static/js/cloud.js. Gone under 900px, where
-         there is no lane. -->
-    <figure class="cloud cloud--post"><canvas class="cloud__canvas" data-cloud="{% static 'models/robot-cloud.bin' %}?v={{ asset_v }}" data-yaw="-0.9" aria-label="The Defex robot, drawn as a cloud of ink dots. Drag to turn it."></canvas></figure>
     <header class="post__head">
         <p class="eyebrow"><a class="eyebrow__link eyebrow--scan" href="{% url 'blog' %}" data-reveal data-scan>{% include "landing/_scan.html" %}<span class="eyebrow__text">Blog</span></a></p>
         <h1 class="post__title engraved">{{ post.title }}</h1>
@@ -106,7 +102,6 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{% static 'js/cloud.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/post.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}

@@ -37,7 +37,7 @@ jobs:
           node --check static/js/reveal.js
           node --check static/js/book.js
           node --check static/js/post.js
-          node --check static/js/cloud.js
+          node --check static/js/spline.js
 
       - name: collectstatic
         run: python manage.py collectstatic --no-input
