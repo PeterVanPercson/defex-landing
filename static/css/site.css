@@ -645,6 +645,7 @@ html.is-intro .intro { display: flex; }
 .beam { position: relative; display: inline-flex; align-items: center; justify-content: center; padding: 1px; border-radius: 999px; overflow: hidden; transition: transform .3s ease, box-shadow .3s ease; }
 .beam:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(255, 255, 255, .1); }
 .beam__spin { position: absolute; inset: -100%; background: conic-gradient(from 90deg at 50% 50%, transparent 0%, transparent 75%, #fff 100%); opacity: 0; transition: opacity .3s ease; animation: beam-spin 3s linear infinite; animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .beam__spin { animation: none; } }
 .beam:hover .beam__spin { opacity: 1; animation-play-state: running; }
 @keyframes beam-spin { to { transform: rotate(360deg); } }
 .beam__ring { position: absolute; inset: 0; border-radius: 999px; background: rgba(234, 232, 227, .18); transition: opacity .3s ease; }
