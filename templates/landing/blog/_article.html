@@ -62,7 +62,7 @@
 <main class="post" id="article">
     <header class="post__head">
         <p class="eyebrow"><a class="eyebrow__link eyebrow--scan" href="{% url 'blog' %}" data-reveal data-scan>{% include "landing/_scan.html" %}<span class="eyebrow__text">Blog</span></a></p>
-        <h1 class="post__title">{% if post.display %}{{ post.display|safe }}{% else %}{{ post.title }}{% endif %}</h1>
+        <h1 class="post__title engraved">{{ post.title }}</h1>
         {% block standfirst %}{% endblock %}
         <p class="post__meta">By <a class="link" href="{{ post.author.url }}">{{ post.author.name }}</a> &middot; <time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time></p>
     </header>

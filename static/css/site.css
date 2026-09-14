@@ -610,14 +610,12 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .eyebrow__text { padding-bottom: 2px; border-bottom: 1px solid var(--line); transition: border-color .2s ease; }
 .eyebrow__link:hover { color: var(--ink); }
 .eyebrow__link:hover .eyebrow__text { border-color: var(--rule); }
-/* The title in plain ink, not cut into the paper: at this size and length
-   the emboss read as an effect. One phrase in italic, as the site's headings
-   carry one. */
-.post__title { margin-top: 18px; max-width: 14ch; font-size: clamp(40px, 5.4vw, 64px); line-height: 1.02; letter-spacing: -.02em; color: var(--ink); }
-.post__title em { font-style: italic; }
-/* the summary as a standfirst under the title: the serif, larger and
-   softer than the body, no label and no bar */
-.standfirst { margin-top: clamp(18px, 3vh, 28px); max-width: 32em; font-family: var(--serif); font-size: clamp(18px, 1.6vw, 21px); line-height: 1.5; color: var(--ink-soft); }
+/* The title cut into the paper like every other title on the site; no
+   italic phrase, which read as literary rather than technical. */
+.post__title { margin-top: 18px; max-width: 14ch; font-size: clamp(38px, 5.4vw, 64px); line-height: 1.04; letter-spacing: -.015em; }
+/* the summary as a standfirst under the title, in the mono like an abstract:
+   a size up from the body, softer, no label and no bar */
+.standfirst { margin-top: clamp(18px, 3vh, 26px); max-width: 66ch; font: 400 15px/1.75 var(--mono); color: var(--ink-soft); }
 .post__meta { margin-top: 22px; font: 400 11px/1.6 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
 
 /* One measure for the text, with lanes either side for figures to grow into.
@@ -628,6 +626,9 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .prose > .figure--wide { grid-column: 1 / -1; width: min(100%, 940px); justify-self: center; }
 .prose > p { margin-top: 18px; }
 .prose > h2 { margin-top: clamp(56px, 8vh, 88px); font-size: clamp(28px, 3.2vw, 40px); line-height: 1.1; }
+/* at 28-40px the 4px glow in the lip reads as blur, not light; the cut keeps
+   its two edges and loses the glow. The h1s, at 60px+, keep the full lip. */
+.prose > h2 { --engrave-lip: 0 1px 1px rgba(255, 250, 242, .9), 0 -1px 1px rgba(40, 30, 15, .4); }
 /* the nav and the strip together cover about 104px of the top of the screen */
 .prose > h2[id] { scroll-margin-top: calc(var(--nav) + 56px); }
 .prose > h2 + p { margin-top: 22px; }

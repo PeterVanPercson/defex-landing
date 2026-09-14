@@ -22,7 +22,7 @@
 <p>For a system intended to learn through practice, the cost of this surrounding work matters enormously. A robot can spend seconds attempting a task and minutes waiting for a person to make the next attempt possible.</p>
 <p>At Defex, we think this is an important part of making robot learning useful: engineering the conditions in which a machine can acquire experience repeatedly, judge it reliably, and improve from it.</p>
 
-<h2 id="seeing-to-doing" data-reveal>From seeing a problem to doing the work</h2>
+<h2 class="engraved" id="seeing-to-doing" data-reveal>From seeing a problem to doing the work</h2>
 <p>We started with <a class="link" href="/where-it-started/">visual inspection on factory lines</a>. A camera could help identify a defect. The next question was how a robot could perform the physical work itself.</p>
 <p>That adds a different kind of difficulty.</p>
 <p>A connector can look aligned and still resist insertion. A cable can pull a part away from its expected position. Two pieces can appear joined while the latch has not fully engaged. The robot needs information about what happens as it acts, and a way to establish whether the finished result is acceptable.</p>
@@ -30,7 +30,7 @@
 <p>That interaction contains information a picture taken before the movement cannot provide.</p>
 <p>For a robot, turning that information into a useful skill requires several things to work together: sensing, control, a meaningful outcome check, and a repeatable source of practice. Improving any one of them helps. The complete cycle determines whether the machine can keep learning without constant attention.</p>
 
-<h2 id="trustworthy-ending" data-reveal>An attempt needs a trustworthy ending</h2>
+<h2 class="engraved" id="trustworthy-ending" data-reveal>An attempt needs a trustworthy ending</h2>
 <p>A learning system needs to know what counts as success.</p>
 <p>For assembly, &ldquo;the robot reached its target position&rdquo; is an incomplete answer. The tool could reach the expected position while the part slips in its grip. A force increase could indicate successful seating, an obstruction, or a misaligned component. A camera could show the expected outline while missing an internal problem.</p>
 <p>Each measurement answers a particular question. None should silently stand in for every other question.</p>
@@ -74,7 +74,7 @@
 <p>The same principle extends beyond connectors. Closing a lid requires more than reaching a final wrist angle. Placing an object requires knowing that it stayed where it belongs. Different jobs need different checks, but the learning problem always includes the question of how success becomes observable.</p>
 <p>Designing that check is part of designing the robot&rsquo;s education.</p>
 
-<h2 id="ready-again" data-reveal>The world has to be ready again</h2>
+<h2 class="engraved" id="ready-again" data-reveal>The world has to be ready again</h2>
 <p>Returning the arm to its starting pose does not reset a physical task.</p>
 <p>The object has changed. Two parts may now be joined. A failed attempt may have moved a fixture or damaged a component. Consumables may be depleted. The next trial may begin under different conditions even when the robot&rsquo;s joint positions are identical.</p>
 <p>For a practice system, reset means returning the whole operation to a verified ready condition.</p>
@@ -133,7 +133,7 @@
 <p>That is a finite batch of prepared work. Loading it still takes effort, and eventually it needs replenishing. We want to measure those costs explicitly.</p>
 <p>This approach also avoids making automatic separation and endless reuse of the same connector pair prerequisites for the first experiment. Repeated use can change a component&rsquo;s condition. The system needs to know what material it is practicing on and when that material should leave the experiment.</p>
 
-<h2 id="evidence" data-reveal>Repetition has to produce evidence</h2>
+<h2 class="engraved" id="evidence" data-reveal>Repetition has to produce evidence</h2>
 <p>A high trial count is useful only if we can understand what those trials mean.</p>
 <p>An unsuccessful insertion can reveal a lot. The robot may have approached from the wrong angle, contacted the edge of the housing, or encountered an unexpected cable load. But the final label &ldquo;failed&rdquo; does not identify which of those happened.</p>
 <p>We want each attempt to connect the starting conditions, commanded motion, contact measurements, physical result, and any human intervention. That makes it possible to distinguish a behavior that needs improvement from a displaced fixture, an unsuitable specimen, or a faulty check.</p>
@@ -142,7 +142,7 @@
 <p>For a first connector task, this means establishing an operating range and recording the variation within it. It also means reserving evaluation trials so that a candidate behavior is judged on more than the attempts used to develop it.</p>
 <p>The objective is experience that supports a decision: what should change, whether the change helped, and where the resulting skill can be trusted.</p>
 
-<h2 id="building-first" data-reveal>What we are building first</h2>
+<h2 class="engraved" id="building-first" data-reveal>What we are building first</h2>
 <p>Our first assembly workcell, A1, is intended to make this cycle concrete.</p>
 <p>We have developed an inspection prototype. For A1, the assembly architecture and learning plan are specified; the next milestone is an instrumented connector bench. The practice and adaptation capabilities described here are what that program is intended to test.</p>
 <p>We are starting with one fixtured connector family, then a related variant. It gives us a bounded physical operation, a result we can test, and a meaningful next task on which to measure reuse.</p>
@@ -153,7 +153,7 @@
 <p>We also separate practice from production. During practice, candidate behaviors can be developed and evaluated. Production should run a specific qualified version with known operating limits and a fixed acceptance procedure. A new candidate earns deployment through evaluation.</p>
 <p>That separation lets us investigate improvement while keeping the meaning of an accepted part consistent.</p>
 
-<h2 id="second-task" data-reveal>The second task is the important test</h2>
+<h2 class="engraved" id="second-task" data-reveal>The second task is the important test</h2>
 <p>Getting the first task to work is necessary. It does not, by itself, establish that experience makes the next task easier.</p>
 <p>A team can invest substantial effort in fixtures, programming, demonstrations, debugging, and testing to produce one successful installation. The next installation may require much of that work again.</p>
 <p>Our larger ambition depends on changing that relationship.</p>
@@ -185,7 +185,7 @@
 <p>There is a useful consequence of measuring this way: reuse can come from several places. A motion skill may transfer. So may a fixture concept, a test method, or an understanding of a recurring failure. We should identify those contributions honestly rather than attributing every improvement to the learning algorithm.</p>
 <p>The customer experiences the combined result: how much work it takes to get the next operation running reliably.</p>
 
-<h2 id="accumulate" data-reveal>Making experience accumulate</h2>
+<h2 class="engraved" id="accumulate" data-reveal>Making experience accumulate</h2>
 <p>Connector assembly gives us a place to start. The wider goal is robots whose useful capabilities become easier to extend as they gain experience.</p>
 <p>That requires an entire process around the motion: material ready to work on, feedback during contact, a trustworthy result, another attempt, and an evaluation that shows whether anything improved.</p>
 <p>There are difficult questions ahead. How much variation can a learned skill handle? How often will recovery still require a person? Which parts of the setup will transfer to the next job? The first workcell needs to produce evidence that answers them.</p>

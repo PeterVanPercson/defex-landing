@@ -244,7 +244,7 @@ class SiteTests(SimpleTestCase):
         post = self.client.get("/blog/the-cost-of-the-next-attempt/")
         self.assertEqual(post.status_code, 200)
         body = post.content.decode()
-        for chunk in ('class="standfirst"', "Trials per hour", 'id="bench"', "The Cost of the <em>Next Attempt</em>",
+        for chunk in ('class="standfirst"', "Trials per hour", 'id="bench"', '<h1 class="post__title engraved">The Cost of the Next Attempt</h1>',
                       # the three worked examples from the text, as presets
                       'data-preset="20,10,90,0"', 'data-preset="10,10,90,0"', 'data-preset="20,10,10,0"',
                       "not Defex measurements",
@@ -266,7 +266,7 @@ class SiteTests(SimpleTestCase):
         self.assertContains(post, 'type="application/rss+xml"')
         # no chart before the first sentence, and no embossed headings in the article
         self.assertNotContains(post, 'id="loop"')
-        self.assertNotContains(post, '<h2 class="engraved"')
+        self.assertContains(post, '<h2 class="engraved" id="ready-again"')
         self.assertNotContains(post, "min read")
         self.assertNotContains(post, "Tell us where we are wrong")
         self.assertContains(post, "August 30, 2026")
