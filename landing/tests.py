@@ -225,7 +225,7 @@ class SiteTests(SimpleTestCase):
         self.assertIn(".intro { display: none !important; }", css.split("prefers-reduced-motion", 1)[1],
                       "reduced motion must hide the intro")
         used = set()
-        for name in ("home.html", "origin.html", "_topbar.html", "_scan.html", "_stars.html", "blog/index.html",
+        for name in ("home.html", "origin.html", "_topbar.html", "_scan.html", "blog/index.html",
                      "blog/_article.html", "blog/the-cost-of-the-next-attempt.html"):
             markup = (root / "templates/landing" / name).read_text()
             for attr in re.findall(r'class="([^"]*)"', markup):
@@ -262,7 +262,7 @@ class SiteTests(SimpleTestCase):
                       'class="paths paths--post" data-paths', 'class="scan"'):
             self.assertContains(post, chunk)
         # the index hero: the robot as dots, the title, the mark on the eyebrow
-        for chunk in ('class="cloud__canvas" data-cloud', 'data-reveal>Notes from the bench.', "js/cloud.js",
+        for chunk in ('class="cloud__canvas" data-cloud', 'data-reveal>Blog.', "js/cloud.js",
                       'class="eyebrow eyebrow--scan" data-reveal data-scan'):
             self.assertContains(index, chunk)
         self.assertEqual(self.client.get("/static/models/robot-cloud.bin").status_code, 200)
@@ -282,8 +282,7 @@ class SiteTests(SimpleTestCase):
             self.assertNotIn('href="/blog/"', header, path)
             self.assertIn('class="footer__blog link" href="/blog/"', page, path)
         home = self.client.get("/").content.decode()
-        self.assertIn('class="starbtn" href="/blog/" data-starbtn', home)
-        self.assertIn("js/starbtn.js", home)
+        self.assertIn('class="beam" href="/blog/"', home)
         header = body.split("<header", 1)[1].split("</header>", 1)[0]
         self.assertIn('href="/#contact"', header)
         sitemap = self.client.get("/sitemap.xml").content.decode()

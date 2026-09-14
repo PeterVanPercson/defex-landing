@@ -24,17 +24,16 @@
 <main>
     <!-- The hero: the copy on the left and the robot on the right as ink
          dots: 30,000 points sampled over the Defex robot model, drawn by
-         static/js/cloud.js. Drag turns it, the wheel zooms, and it turns by
-         itself when left alone. Without JS the right half is paper. -->
+         static/js/cloud.js. Drag turns it, and it turns by itself when left
+         alone. Without JS the right half is paper. -->
     <section class="bloghero" aria-labelledby="blog-title">
         <div class="bloghero__copy">
-            <p class="eyebrow eyebrow--scan" data-reveal data-scan>{% include "landing/_scan.html" %}Blog</p>
-            <h1 class="bloghero__t engraved" id="blog-title" data-reveal>Notes from the bench.</h1>
+            <p class="eyebrow eyebrow--scan" data-reveal data-scan>{% include "landing/_scan.html" %}Defex</p>
+            <h1 class="bloghero__t engraved" id="blog-title" data-reveal>Blog.</h1>
             <p class="masthead__lead">What we are learning while building robots that practice, test their own work and reset for the next attempt.</p>
         </div>
         <figure class="cloud">
             <canvas class="cloud__canvas" data-cloud="{% static 'models/robot-cloud.bin' %}?v={{ asset_v }}" aria-label="The Defex robot, drawn as a cloud of ink dots. Drag to turn it."></canvas>
-            <figcaption class="cloud__hint">drag to rotate &middot; scroll to zoom</figcaption>
         </figure>
     </section>
 

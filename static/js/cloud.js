@@ -5,8 +5,8 @@
     // count). Each frame projects them orthographically into a pixel buffer
     // and paints one dot per point: the lit side sparse and pale, the shadow
     // side dense and dark, the far side faint, which is how stippling shows
-    // form. Drag turns it, the wheel zooms, and it turns by itself when left
-    // alone. Reduce Motion gets a still robot that still turns by hand.
+    // form. Drag turns it, and it turns by itself when left alone. Reduce
+    // Motion gets a still robot that still turns by hand.
     const canvas = document.querySelector('[data-cloud]');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -21,7 +21,6 @@
     let buf = null;
     let yaw = 0.55;      // the front, three-quarter
     let pitch = 0.16;
-    let zoom = 1;
     let dirty = true;
     let dragging = false;
     let lastX = 0;
@@ -61,7 +60,7 @@
         buf.fill(0);
         const cy = Math.cos(yaw), sy = Math.sin(yaw);
         const cp = Math.cos(pitch), sp = Math.sin(pitch);
-        const scale = (Math.min(W, H) * 0.44 * zoom) / 32000;
+        const scale = (Math.min(W, H) * 0.44) / 32000;
         const ox = W / 2, oy = H / 2;
         const lx = -0.45, ly = 0.75, lz = 0.5;   // lit from the upper left, in front
         const dot = DPR >= 2 ? 2 : 1;            // one CSS pixel on a 2x screen
@@ -119,12 +118,6 @@
     const release = () => { if (!dragging) return; dragging = false; idleAt = performance.now(); canvas.classList.remove('is-dragging'); };
     canvas.addEventListener('pointerup', release);
     canvas.addEventListener('pointercancel', release);
-    canvas.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        zoom = Math.max(0.6, Math.min(2.4, zoom * Math.exp(-e.deltaY * 0.0012)));
-        idleAt = performance.now();
-        dirty = true; run();
-    }, { passive: false });
 
     size();
     if ('ResizeObserver' in window) new ResizeObserver(() => { size(); run(); }).observe(canvas);
