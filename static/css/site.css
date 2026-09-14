@@ -324,6 +324,9 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* A long, short wordmark needs more width to carry the same weight as the
    badge, and its type is already grey, so it rests a little less faded. */
 .backers__logo--wide { width: clamp(230px, 21vw, 300px); opacity: .78; }
+/* a16z's mark is a square tile, so it takes the height the wordmarks have
+   rather than their width */
+.backers__logo--square { width: clamp(72px, 6.5vw, 92px); border-radius: 10px; }
 
 /* Scroll reveal, the way origami's sections arrive. Keyed on html.reveal,
    which only static/js/reveal.js sets, so without JS nothing is hidden. A
