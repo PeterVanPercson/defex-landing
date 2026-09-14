@@ -29,6 +29,7 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, 'alt="Z Fellows"')
         self.assertContains(home, 'alt="Google for Startups"')
         self.assertContains(home, 'alt="a16z"')
+        self.assertContains(home, 'alt="Yandex Cloud"')
         # the hero has to say what the machine does and ask for something
         self.assertContains(home, 'href="#contact"')
         # the calendar is the action; the form is the fallback, one line under it
@@ -94,7 +95,7 @@ class SiteTests(SimpleTestCase):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
-        for asset in ("js/hero-film.js", "js/origin.js", "js/reveal.js", "img/backers/nvidia-inception.png", "img/backers/zfellows.png", "img/backers/zfellows-collage.png", "img/backers/google-for-startups.png", "img/backers/a16z.png", "video/origin.mp4", "video/origin-poster.jpg"):
+        for asset in ("js/hero-film.js", "js/origin.js", "js/reveal.js", "img/backers/nvidia-inception.png", "img/backers/zfellows.png", "img/backers/zfellows-collage.png", "img/backers/google-for-startups.png", "img/backers/a16z.png", "img/backers/yandex-cloud.png", "video/origin.mp4", "video/origin-poster.jpg"):
             self.assertEqual(self.client.get(f"/static/{asset}").status_code, 200, asset)
 
     def test_hero_supports_byte_ranges(self):
