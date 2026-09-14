@@ -287,6 +287,20 @@ class SiteTests(SimpleTestCase):
         self.assertIn("<loc>http://testserver/blog/the-cost-of-the-next-attempt/</loc>", sitemap)
         self.assertEqual(self.client.get("/static/js/post.js").status_code, 200)
 
+    def test_no_template_syntax_reaches_the_browser(self):
+        """A multi-line {# #} comment is not a comment in Django: the whole
+        thing rendered as text inside the nav on every page, live, and
+        nothing here noticed. Now something does."""
+        for path in ("/", "/careers/", "/where-it-started/", "/blog/", "/blog/the-cost-of-the-next-attempt/"):
+            body = self.client.get(path).content.decode()
+            for leak in ("{#", "#}", "{%", "{{", "%}", "}}"):
+                self.assertNotIn(leak, body, f"{leak!r} leaked into {path}")
+            # the nav is one line of short labels, never a paragraph
+            header = body.split("<header", 1)[1].split("</header>", 1)[0]
+            import re
+            words = re.sub(r"<[^>]+>", " ", header).split()
+            self.assertLessEqual(len(words), 12, f"nav on {path} carries {len(words)} words: {' '.join(words)[:120]}")
+
     def test_crawl_surface(self):
         robots = self.client.get("/robots.txt")
         self.assertEqual(robots.status_code, 200)
