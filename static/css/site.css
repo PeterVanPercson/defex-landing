@@ -307,8 +307,9 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 
 /* Backed by: one quiet row, the way origami shows its backers. A small
    label, and the marks muted until they are pointed at. */
-/* shorter than the other sheets: a label and one row of marks */
-.backers.sheet { padding-block: clamp(40px, 6vh, 72px); text-align: center; }
+/* shorter than the other sheets: a label and one band of marks, which runs
+   the sheet's full width, so no side padding */
+.backers.sheet { padding-block: clamp(40px, 6vh, 72px); padding-inline: 0; text-align: center; }
 .backers__label { font: 500 11px/1.4 var(--mono); letter-spacing: .28em; text-transform: uppercase; color: var(--mute); }
 .backers__logos { margin-top: clamp(14px, 2.4vh, 24px); display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 16px clamp(24px, 3.4vw, 52px); list-style: none; }
 .backers__logo { display: block; width: clamp(140px, 12.5vw, 180px); height: auto; filter: grayscale(1) contrast(.92); opacity: .62; transition: filter .35s ease, opacity .35s ease; }
@@ -331,18 +332,37 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* Phones: five marks in two rows, a size down. Declared after the rules
    above so they win. */
 @media (max-width: 720px) {
-    .backers__logos { gap: 14px 18px; }
     .backers__logo { width: 116px; }
     .backers__logo--wide { width: 146px; }
     .backers__logo--yandex { width: 92px; }
     .backers__logo--square { width: 40px; border-radius: 6px; }
 }
 @media (max-width: 380px) {
-    .backers__logos { gap: 12px 16px; }
     .backers__logo { width: 104px; }
     .backers__logo--wide { width: 132px; }
     .backers__logo--yandex { width: 84px; }
     .backers__logo--square { width: 36px; }
+}
+
+/* The moving banner. The track holds four copies of the list; each list
+   carries its own trailing gap, so moving the track a quarter of its width
+   lands exactly where it began and the loop has no seam. It moves by
+   transform alone, so the compositor carries it without repainting the
+   marks. The edges fade into the paper rather than cutting a mark in half. */
+.marquee { --gap: clamp(56px, 5.5vw, 84px); margin-top: clamp(14px, 2.4vh, 24px); overflow: hidden; -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent); }
+.marquee__track { display: flex; width: max-content; animation: marquee 38s linear infinite; }
+.marquee:hover .marquee__track { animation-play-state: paused; }
+.marquee__list { flex: none; flex-wrap: nowrap; justify-content: flex-start; margin-top: 0; gap: var(--gap); padding-right: var(--gap); }
+@keyframes marquee { to { transform: translateX(-25%); } }
+@media (max-width: 720px) {
+    .marquee { --gap: 40px; -webkit-mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent); mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent); }
+    .marquee__track { animation-duration: 26s; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .marquee { -webkit-mask-image: none; mask-image: none; }
+    .marquee__track { width: auto; animation: none; justify-content: center; }
+    .marquee__list:not(:first-child) { display: none; }
+    .marquee__list { flex-wrap: wrap; justify-content: center; gap: 16px var(--gap); padding: 0 var(--pad); }
 }
 
 /* Scroll reveal, the way origami's sections arrive. Keyed on html.reveal,

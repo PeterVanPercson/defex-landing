@@ -30,6 +30,12 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, 'alt="Google for Startups"')
         self.assertContains(home, 'alt="a16z"')
         self.assertContains(home, 'alt="Yandex Cloud"')
+        # the marks run as a moving banner: the list set four times, only the
+        # first read out
+        page = home.content.decode()
+        self.assertIn('<div class="marquee" data-reveal>', page)
+        self.assertEqual(page.count('class="backers__logos marquee__list"'), 4)
+        self.assertEqual(page.count('class="backers__logos marquee__list" aria-hidden="true"'), 3)
         # the hero has to say what the machine does and ask for something
         self.assertContains(home, 'href="#contact"')
         # the calendar is the action; the form is the fallback, one line under it
