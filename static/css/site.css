@@ -159,10 +159,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .navlink { font: 400 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); transition: color .2s ease; }
 .navlink:hover, .navlink[aria-current="page"] { color: var(--ink); }
 
-.pill { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 18px; border: 1px solid var(--rule); border-radius: 0; background: none; color: var(--ink); font: 500 10.5px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; cursor: pointer; transition: background .2s, border-color .2s, color .2s, transform .2s; }
-.pill:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.pill:active { transform: scale(.98); }
-.pill--wide { height: 45px; padding: 0 28px; font-size: 14px; }
 .cta--quiet { min-height: 38px; padding: 0 18px; font-size: 10px; }
 .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 34px; border: 1px solid var(--rule); border-radius: 0; background: none; color: var(--ink); font: 500 11px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; cursor: pointer; transition: border-color .2s, background .2s; }
 .cta:hover { border-color: var(--ink); background: var(--surface); }
@@ -487,7 +483,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
     /* mark + 3 items needs 361px at the previous spacing, which overflows a
        360px Android by a pixel. This buys it back. */
     .topbar__end { gap: 12px; }
-    .pill { min-height: 44px; padding: 0 12px; letter-spacing: .1em; }
     .navlink { font-size: 10px; letter-spacing: .06em; }
     .lede h1 { font-size: clamp(32px, 8.6vw, 42px); max-width: 18ch; line-height: 1.1; letter-spacing: -.01em; }
     .rows { grid-template-columns: 1fr; gap: 26px; margin-top: 28px; }
@@ -529,7 +524,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .hero__film { -webkit-mask-image: none; mask-image: none; }
-    .pill, .link, .field input, .field textarea, .sound, .navlink { transition: none; }
+    .link, .field input, .field textarea, .sound, .navlink { transition: none; }
     .reveal [data-reveal] { opacity: 1; transform: none; filter: none; transition: none; }
     .flash.is-on { animation-duration: .5s; }
 }
@@ -577,12 +572,24 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .beam__text { position: relative; }
 .beam__arrow { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .3s ease; }
 .beam:hover .beam__arrow { transform: translateX(2px); }
-/* the product button is the primary: paper face, ink type, and the beam in
-   the brand orange, which is a fill here, never text */
-.beam--primary .beam__face { background: linear-gradient(to bottom, #F7F4EE, #D6D1C8); color: #1A1815; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7); }
-.beam--primary:hover .beam__face { color: #1A1815; }
-.beam--primary .beam__ring { background: rgba(234, 232, 227, .5); }
-.beam--primary .beam__spin { background: conic-gradient(from 90deg at 50% 50%, transparent 0%, transparent 75%, var(--accent) 100%); }
+/* The same pill in the nav, at the nav's size, as the product's way in on
+   every page. Its beam is the brand orange, which shows on the paper nav
+   as well as on the dark one over the hero. */
+.beam--nav { flex-shrink: 0; }
+.beam--nav .beam__face { min-height: 36px; padding: 0 18px; gap: 8px; font-size: 10.5px; letter-spacing: .16em; white-space: nowrap; }
+.beam--nav .beam__arrow { width: 12px; height: 12px; }
+.beam--nav .beam__spin { background: conic-gradient(from 90deg at 50% 50%, transparent 0%, transparent 75%, var(--accent) 100%); }
+/* Phone sizes, declared after the pill's own rules so they win. */
+@media (max-width: 720px) {
+    .beam--nav .beam__face { min-height: 40px; padding: 0 14px; letter-spacing: .1em; }
+}
+/* The mark, both links and this pill need about 350px and a 360px phone has
+   316 inside its gutters: the label wrapped onto two lines and the links ran
+   into the mark. The origin story is the first thing under the hero on the
+   home page, so its link is the one a narrow phone gives up. */
+@media (max-width: 480px) {
+    .navlink--origin { display: none; }
+}
 .footer__blog { font: 400 12px/1.6 var(--mono); color: var(--mute); }
 
 /* Reading progress: a hairline of the accent along the top edge, above the

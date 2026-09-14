@@ -305,9 +305,13 @@ class SiteTests(SimpleTestCase):
             self.assertIn('class="footer__blog link" href="/blog/"', page, path)
         home = self.client.get("/").content.decode()
         self.assertIn('class="beam" href="/blog/"', home)
-        # the product first, the blog second
-        self.assertIn('class="beam beam--primary" href="#contact"', home)
-        self.assertLess(home.index('class="beam beam--primary" href="#contact"'), home.index('class="beam" href="/blog/"'))
+        # the hero carries one button, the blog; the product's way in is the
+        # pill in the nav, which replaced the square "Get in touch"
+        self.assertNotIn("beam--primary", home)
+        home_header = home.split("<header", 1)[1].split("</header>", 1)[0]
+        self.assertIn('href="#contact" class="beam beam--nav"', home_header)
+        self.assertIn("Test our product", home_header)
+        self.assertNotIn("Get in touch", home_header)
         header = body.split("<header", 1)[1].split("</header>", 1)[0]
         self.assertIn('href="/#contact"', header)
         sitemap = self.client.get("/sitemap.xml").content.decode()

@@ -12,10 +12,9 @@
 
 <main>
     <!-- The film is pinned and advances with the scroll. It never plays on its own.
-         Under the headline sit two buttons, the product first and the blog
-         second: Husan asked for the blog's way in here, under the robot, and
-         the product is what the page is for. The nav keeps the standing CTA,
-         and the page ends on one. -->
+         Under the headline sits one button, the blog's way in: Husan asked for
+         it here, under the robot. The product's way in is the pill in the nav,
+         on every page, and the page ends on the booker. -->
     <section class="hero" id="top" aria-labelledby="hero-title">
         <div class="hero__sticky">
             <video class="hero__film" id="film" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"
@@ -28,11 +27,6 @@
             <div class="lede">
                 <h1 class="cut" id="hero-title"><span class="cut__face engraved">Self-teaching robots<br>for <em>manufacturing</em>.</span><span class="cut__mask" aria-hidden="true">Self-teaching robots<br>for <em>manufacturing</em>.</span></h1>
                 <div class="lede__actions">
-                    <a class="beam beam--primary" href="#contact">
-                        <span class="beam__spin" aria-hidden="true"></span>
-                        <span class="beam__ring" aria-hidden="true"></span>
-                        <span class="beam__face"><span class="beam__text">Test our product</span><svg class="beam__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
-                    </a>
                     <a class="beam" href="{% url 'blog' %}">
                         <span class="beam__spin" aria-hidden="true"></span>
                         <span class="beam__ring" aria-hidden="true"></span>
