@@ -863,40 +863,50 @@ html.is-intro .intro { display: flex; }
    while a dash slides along it. The dash pattern always sums to one path
    length, so an offset of two is an offset of zero and the loop is
    seamless. The mask fades them out before the text starts. */
-.paths { position: absolute; inset: 0; pointer-events: none; -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 100%); mask-image: linear-gradient(to bottom, #000 45%, transparent 100%); }
-.paths__svg { display: block; width: 100%; height: 100%; }
-.paths__line { fill: none; stroke: var(--ink); stroke-dasharray: .3 .7; opacity: .3; animation: paths-flow var(--dur, 24s) linear infinite; animation-delay: var(--delay, 0s); }
+/* The ribbons are mirrored in paths.js so they enter from the right and fall
+   away down-left: the engraved titles are semi-transparent and cannot sit
+   over lines at all, so the copy has to be on clean paper. */
+/* No mask on the container, on purpose: a masked layer whose children
+   animate is repainted every frame and it flickered. The fade is a gradient
+   on the stroke, built in paths.js; the stroke colour is currentColor, so
+   it is the page's ink. */
+.paths { position: absolute; inset: 0; pointer-events: none; }
+.paths__svg { display: block; width: 100%; height: 100%; color: var(--ink); }
+.paths__line { fill: none; stroke-dasharray: .3 .7; opacity: .3; animation: paths-flow var(--dur, 24s) linear infinite; animation-delay: var(--delay, 0s); }
 @keyframes paths-flow {
     0% { stroke-dasharray: .3 .7; stroke-dashoffset: 0; opacity: .3; }
     50% { stroke-dasharray: 1 0; stroke-dashoffset: -1; opacity: .6; }
     100% { stroke-dasharray: .3 .7; stroke-dashoffset: -2; opacity: .3; }
 }
 
-/* The blog hero: full bleed like the sheets, the title on the column, the
-   ribbons behind it. Replaces the careers masthead on this page only. */
-.bloghero { position: relative; overflow: hidden; min-height: clamp(400px, 60svh, 640px); display: grid; align-content: center; padding: clamp(64px, 10vh, 120px) max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
+/* The blog hero: full bleed like the sheets, the copy on the left of the
+   column, the ribbons falling in from the right. Replaces the careers
+   masthead on this page only. */
+.bloghero { position: relative; overflow: hidden; min-height: clamp(380px, 54svh, 560px); display: grid; align-content: center; padding: clamp(64px, 10vh, 120px) max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
 .bloghero__copy { position: relative; z-index: 1; }
 .bloghero__t { margin-top: 20px; max-width: 18ch; font-size: clamp(38px, 6vw, 68px); line-height: 1.04; letter-spacing: -.015em; }
 .bloghero .masthead__lead { max-width: 56ch; }
-/* the title's letters, from paths.js: each rises .55em and fades in, 30 ms
-   apart within a word and 100 ms between words, like the component's spring */
-.rise__word { display: inline-block; white-space: nowrap; }
-.rise__letter { display: inline-block; }
-.is-rising .rise__letter { animation: rise .9s cubic-bezier(.22, .61, .36, 1) both; animation-delay: var(--d, 0ms); }
-@keyframes rise { from { opacity: 0; transform: translateY(.55em); } to { opacity: 1; transform: none; } }
-
 /* On the article the ribbons sit behind the head only. .post goes full bleed
    for them, with the text kept on the column by the same padding the nav and
    the sheets use, and everything on top of them is lifted a layer. */
 .post { max-width: none; margin: 0; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); position: relative; }
-.paths--post { inset: 0 0 auto 0; height: min(560px, 72svh); }
+/* The article's ribbons sit in the head's top-right, shallow enough to be
+   faded out above the TL;DR and offset so their tails clear the title; gone
+   below 900px, where there is no room beside the column. The box is wider
+   than the ribbons ever reach, so no line is cut by an edge. */
+.paths--post { inset: 0 0 auto 30%; height: 320px; }
 .post__head, .prose, .post__end { position: relative; z-index: 1; }
 
+@media (max-width: 899px) {
+    .paths--post { display: none; }
+}
 @media (max-width: 720px) {
-    .bloghero { min-height: clamp(340px, 52svh, 520px); }
+    /* the copy sits at the top and the ribbons take a band under it, where
+       nothing is written, whatever height the copy wraps to */
+    .bloghero { min-height: 0; align-content: start; padding-bottom: 180px; }
+    .bloghero .paths { inset: auto 0 0 0; height: 250px; }
     .bloghero__t { font-size: clamp(34px, 10vw, 44px); }
-    .paths--post { height: min(420px, 60svh); }
 }
 @media (prefers-reduced-motion: reduce) {
-    .paths__line, .is-rising .rise__letter, .is-scanning .scan__line, .navlink--blog:hover .scan__line, .postrow:hover .scan__line, .eyebrow--scan:hover .scan__line { animation: none; }
+    .paths__line, .is-scanning .scan__line, .navlink--blog:hover .scan__line, .postrow:hover .scan__line, .eyebrow--scan:hover .scan__line { animation: none; }
 }
