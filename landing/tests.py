@@ -341,6 +341,16 @@ class SiteTests(SimpleTestCase):
             words = re.sub(r"<[^>]+>", " ", header).split()
             self.assertLessEqual(len(words), 12, f"nav on {path} carries {len(words)} words: {' '.join(words)[:120]}")
 
+    def test_emails_carry_the_current_positioning(self):
+        """The auto-reply asked visitors for "photos of typical defects, the
+        inspection role you want to replace" long after the company had moved
+        to self-teaching robots. It signs off with the positioning instead."""
+        from landing.notify import autoresponder_email
+        subject, html = autoresponder_email("Ada Lovelace", "Analytical Engines")
+        self.assertIn("Self-teaching robots for manufacturing", html)
+        for stale in ("inspection", "defect", "vision"):
+            self.assertNotIn(stale, html.lower())
+
     def test_crawl_surface(self):
         robots = self.client.get("/robots.txt")
         self.assertEqual(robots.status_code, 200)
