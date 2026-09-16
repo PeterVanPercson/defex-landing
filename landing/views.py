@@ -99,17 +99,7 @@ POSTS = (
         "author": {
             "name": "Matthew S. Smith",
             "url": "https://mattontech.me/",
-            "site": "mattontech.me",
-            "bio": ("IEEE Spectrum contributing editor covering consumer technology, "
-                    "artificial intelligence, and augmented reality."),
-        },
-        "source": {
-            "name": "IEEE Spectrum",
-            "url": "https://spectrum.ieee.org/inference-hardware-revolution",
-        },
-        "canonical_url": "https://spectrum.ieee.org/inference-hardware-revolution",
-        "keywords": ("AI inference, AI hardware, GPU memory bandwidth, HBM4, SRAM, "
-                     "Cerebras, Groq, d-Matrix, quantization, NVFP4, MXFP4"),
+      
     },
     {
         "slug": "the-cost-of-the-next-attempt",
