@@ -24,7 +24,7 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 # Until there is somewhere durable to put it, the submission goes to the log at
 # ERROR, where Vercel keeps it and it can be read back by hand. What must never
 # happen is the visitor being told it worked.
-LOST_MESSAGE = ("That did not send. Please email husan@defex.app directly "
+LOST_MESSAGE = ("That did not send. Please email husan@defexrobotics.com directly "
                 "and we will pick it up from there.")
 
 CONTACT_LABELS = {"name": "name", "factory": "company",
@@ -45,7 +45,7 @@ def _what_to_fix(form, labels: dict) -> str:
         named = [labels.get(f, f) for f in form.errors if f != "website"]
         if named:
             return "Check " + ", ".join(named) + ", then send it again."
-    return "Something looked off. Try again, or email husan@defex.app directly."
+    return "Something looked off. Try again, or email husan@defexrobotics.com directly."
 
 
 def home(request):
