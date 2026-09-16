@@ -23,19 +23,19 @@ class SiteTests(SimpleTestCase):
         # the section is "Why us", not the old slogan
         self.assertContains(home, 'id="why-title" data-reveal>Why <em>us</em></h2>')
         self.assertNotContains(home, "the test becomes the teacher")
-        # backed by: the NVIDIA Inception mark, named for anyone who cannot see it
-        self.assertContains(home, 'id="backed-title"')
-        self.assertContains(home, 'alt="NVIDIA Inception Program"')
-        self.assertContains(home, 'alt="Z Fellows"')
-        self.assertContains(home, 'alt="Google for Startups"')
-        self.assertContains(home, 'alt="a16z"')
-        self.assertContains(home, 'alt="Yandex Cloud"')
-        # the marks run as a moving banner: the list set four times, only the
-        # first read out
+        # backed by: a16z alone, in the hero under the button rather than in a
+        # sheet further down, shown once, with no moving banner
         page = home.content.decode()
-        self.assertIn('<div class="marquee" data-reveal>', page)
-        self.assertEqual(page.count('class="backers__logos marquee__list"'), 4)
-        self.assertEqual(page.count('class="backers__logos marquee__list" aria-hidden="true"'), 3)
+        self.assertContains(home, 'alt="a16z"')
+        self.assertEqual(page.count('alt="a16z"'), 1)
+        self.assertIn('class="lede__backed"', page)
+        # it is inside the hero, above everything else on the page
+        self.assertLess(page.index('class="lede__backed"'), page.index('id="origin"'))
+        self.assertNotIn('class="marquee', page)
+        self.assertNotIn("marquee__", page)
+        self.assertNotIn('id="backed"', page)
+        for gone in ("NVIDIA Inception Program", "Z Fellows", "Google for Startups", "Yandex Cloud"):
+            self.assertNotIn(f'alt="{gone}"', page)
         # the hero has to say what the machine does and ask for something
         self.assertContains(home, 'href="#contact"')
         # the calendar is the action; the form is the fallback, one line under it

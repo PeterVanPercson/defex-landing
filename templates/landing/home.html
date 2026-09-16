@@ -33,6 +33,18 @@
                             <span class="glass-button-shadow" aria-hidden="true"></span>
                         </span>
                     </a>
+                    <!-- The proof, where it is actually seen: beside the first
+                         button rather than three sheets down. It rides in the
+                         button's own row so it costs the hero no height — the
+                         lede sits low over the film and a row beneath the
+                         button falls off the bottom of a laptop screen. The
+                         mark is a dark tile on a dark film, so unlike the
+                         muted row it used to sit in it keeps its colour, and a
+                         hairline ring gives its edge something to land on. -->
+                    <p class="lede__backed">
+                        <span class="lede__backed-label">Backed by</span>
+                        <img class="lede__backed-mark" src="{% static 'img/backers/a16z.png' %}?v={{ asset_v }}" alt="a16z" width="256" height="256" decoding="async">
+                    </p>
                 </div>
             </div>
             <p class="scroll-cue" aria-hidden="true">Scroll <span>&#8595;</span></p>
@@ -84,33 +96,6 @@
                 <p class="feature__d">Robots are harder to fixture than you think. Ours practice by themselves.</p>
             </li>
         </ol>
-    </section>
-
-    <!-- Backed by. One quiet row under the claims, so the proof sits next to
-         them. The mark is muted until pointed at, the way origami shows its
-         backers. -->
-    <section class="sheet backers" id="backed" aria-labelledby="backed-title">
-        <h2 class="backers__label" id="backed-title">Backed by</h2>
-        <!-- A moving banner: the marks run right to left and loop without a seam.
-             The list is set four times so the band is never shorter than a wide
-             screen; only the first copy is read out. Pointing at it stops it, so a
-             mark can be looked at; with Reduce Motion it is one still row. -->
-        <div class="marquee" data-reveal>
-            <div class="marquee__track">
-                {% for copy in "1234" %}
-                <ul class="backers__logos marquee__list"{% if not forloop.first %} aria-hidden="true"{% endif %}>
-                    <li><img class="backers__logo" src="{% static 'img/backers/nvidia-inception.png' %}?v={{ asset_v }}" alt="NVIDIA Inception Program" width="402" height="143" loading="lazy" decoding="async"></li>
-                    <li><img class="backers__logo backers__logo--wide" src="{% static 'img/backers/google-for-startups.png' %}?v={{ asset_v }}" alt="Google for Startups" width="900" height="111" loading="lazy" decoding="async"></li>
-                    <li><img class="backers__logo backers__logo--yandex" src="{% static 'img/backers/yandex-cloud.png' %}?v={{ asset_v }}" alt="Yandex Cloud" width="283" height="68" loading="lazy" decoding="async"></li>
-                    <li class="backers__swap">
-                        <img class="backers__logo" src="{% static 'img/backers/zfellows.png' %}?v={{ asset_v }}" alt="Z Fellows" width="713" height="126" loading="lazy" decoding="async">
-                        <img class="backers__logo backers__logo--reveal" src="{% static 'img/backers/zfellows-collage.png' %}?v={{ asset_v }}" alt="" aria-hidden="true" width="713" height="126" loading="lazy" decoding="async">
-                    </li>
-                    <li><img class="backers__logo backers__logo--square" src="{% static 'img/backers/a16z.png' %}?v={{ asset_v }}" alt="a16z" width="256" height="256" loading="lazy" decoding="async"></li>
-                </ul>
-                {% endfor %}
-            </div>
-        </div>
     </section>
 
     <section class="careers sheet" id="careers" aria-labelledby="careers-title">
