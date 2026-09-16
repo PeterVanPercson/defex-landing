@@ -194,13 +194,16 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    visitor's eye already is, and it is deliberately quiet: a small label and
    the mark, not a banner. The tile is dark crimson on a dark film, so it
    keeps its colour here rather than taking the greyed-back treatment the old
-   row used, and a hairline ring gives its edge something to land on. */
-.lede__backed { display: flex; align-items: center; gap: 10px; margin: 0 0 0 clamp(6px, 1.2vw, 18px); }
-.lede__backed-label { font: 500 10px/1 var(--mono); letter-spacing: .26em; text-transform: uppercase; color: var(--mute); }
-.lede__backed-mark { display: block; width: 38px; height: 38px; border-radius: 9px; box-shadow: 0 0 0 1px rgb(255 255 255 / .16), 0 1px 10px rgb(0 0 0 / .32); }
+   row used, but it is small and wears no ring: at this size a ring and a
+   shadow turn a quiet credit into a badge. 24px is the floor — the wordmark
+   is set edge to edge inside the tile, so below that it stops being
+   readable and is just a red square. */
+.lede__backed { display: flex; align-items: center; gap: 8px; margin: 0 0 0 clamp(10px, 1.6vw, 22px); }
+.lede__backed-label { font: 500 9px/1 var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--mute); opacity: .8; }
+.lede__backed-mark { display: block; width: 24px; height: 24px; border-radius: 6px; opacity: .92; }
 @media (max-width: 720px) {
     .lede__backed { gap: 8px; margin-left: 0; }
-    .lede__backed-mark { width: 32px; height: 32px; border-radius: 8px; }
+    .lede__backed-mark { width: 22px; height: 22px; border-radius: 5px; }
 }
 
 /* Hero support: the one line that says what the machine does, and the ask.
