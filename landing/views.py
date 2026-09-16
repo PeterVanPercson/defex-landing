@@ -126,7 +126,7 @@ POSTS = (
 def _post(slug):
     for post in POSTS:
         if post["slug"] == slug:
-            return dict(post, url="https://defex.app" + reverse("blog_post", kwargs={"slug": slug}))
+            return dict(post, url="https://defexrobotics.com" + reverse("blog_post", kwargs={"slug": slug}))
     raise Http404
 
 
@@ -161,7 +161,7 @@ def robots(request):
         "User-agent: YandexBot\nAllow: /\n"
         "\n"
         f"Sitemap: {request.build_absolute_uri('/sitemap.xml')}\n"
-        "Host: defex.app\n"
+        "Host: defexrobotics.com\n"
     )
     return HttpResponse(body, content_type="text/plain; charset=utf-8")
 

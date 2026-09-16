@@ -8,8 +8,8 @@
     <meta name="keywords" content="{% block keywords %}self-teaching robots, robotic connector assembly, robot insertion, continuity testing, force verification, assembly setup reduction, factory workstation automation, manufacturing automation, defex{% endblock %}">
     <meta name="description" content="{% block description %}Defex builds assembly robots that learn from physical tests. The robot attempts a connector assembly, a test scores the joint, and a reset starts the next try.{% endblock %}">
     <meta name="google-site-verification" content="dgatfCwRWASvUL2_glDXe0rc2x8Cnxlu_Sn27S1Y9ck">
-    <link rel="canonical" href="{% block canonical %}https://defex.app/{% endblock %}">
-    <link rel="alternate" type="application/rss+xml" title="Defex blog" href="https://defex.app/blog/feed.xml">
+    <link rel="canonical" href="{% block canonical %}https://defexrobotics.com/{% endblock %}">
+    <link rel="alternate" type="application/rss+xml" title="Defex blog" href="https://defexrobotics.com/blog/feed.xml">
     <meta name="theme-color" content="{% block theme_color %}#090F15{% endblock %}">
     <meta name="color-scheme" content="{% block color_scheme %}dark{% endblock %}">
 
@@ -17,8 +17,8 @@
     <meta property="og:site_name" content="defex">
     <meta property="og:title" content="{% block og_title %}defex — Self-teaching robots for manufacturing.{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Defex builds assembly robots that learn from physical tests. The robot attempts a connector assembly, a test scores the joint, and a reset starts the next try.{% endblock %}">
-    <meta property="og:url" content="{% block og_url %}https://defex.app/{% endblock %}">
-    <meta property="og:image" content="https://defex.app{% static 'img/og.jpg' %}?v={{ asset_v }}">
+    <meta property="og:url" content="{% block og_url %}https://defexrobotics.com/{% endblock %}">
+    <meta property="og:image" content="https://defexrobotics.com{% static 'img/og.jpg' %}?v={{ asset_v }}">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -26,7 +26,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% block twitter_title %}defex — Self-teaching robots for manufacturing.{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Defex builds assembly robots that learn from physical tests. The robot attempts a connector assembly, a test scores the joint, and a reset starts the next try.{% endblock %}">
-    <meta name="twitter:image" content="https://defex.app{% static 'img/og.jpg' %}?v={{ asset_v }}">
+    <meta name="twitter:image" content="https://defexrobotics.com{% static 'img/og.jpg' %}?v={{ asset_v }}">
 
     <link rel="icon" type="image/svg+xml" href="{% static 'img/defex-mark.svg' %}">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
@@ -34,7 +34,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/apple-touch-icon.png' %}">
 
     <!-- One graph, so Google resolves defex and its founder as linked entities.
-         husanmavlonov.com already points its Person node at defex.app/#org; this
+         husanmavlonov.com already points its Person node at defexrobotics.com/#org; this
          is the other half of that link. knowsAbout carries the search terms
          structurally, which is what actually gets read, rather than stuffing
          them into visible copy. -->
@@ -44,12 +44,12 @@
       "@graph": [
         {
           "@type": "Organization",
-          "@id": "https://defex.app/#org",
+          "@id": "https://defexrobotics.com/#org",
           "name": "defex",
           "alternateName": ["Defex", "defex.app", "Defex AI", "Дефекс"],
-          "url": "https://defex.app/",
-          "logo": {"@type": "ImageObject", "url": "https://defex.app{% static 'img/apple-touch-icon.png' %}", "width": 180, "height": 180},
-          "image": "https://defex.app{% static 'img/og.jpg' %}?v={{ asset_v }}",
+          "url": "https://defexrobotics.com/",
+          "logo": {"@type": "ImageObject", "url": "https://defexrobotics.com{% static 'img/apple-touch-icon.png' %}", "width": 180, "height": 180},
+          "image": "https://defexrobotics.com{% static 'img/og.jpg' %}?v={{ asset_v }}",
           "description": "Defex builds self-teaching assembly robots for manufacturing. The robot practices an assembly, a physical test scores the joint it just made, and a reset prepares the next attempt. First workstation: connector assembly.",
           "slogan": "Self-teaching robots for manufacturing.",
           "email": "husan@defex.app",
@@ -86,19 +86,19 @@
         },
         {
           "@type": "WebSite",
-          "@id": "https://defex.app/#website",
-          "url": "https://defex.app/",
+          "@id": "https://defexrobotics.com/#website",
+          "url": "https://defexrobotics.com/",
           "name": "defex",
           "inLanguage": "en",
-          "publisher": {"@id": "https://defex.app/#org"}
+          "publisher": {"@id": "https://defexrobotics.com/#org"}
         },
         {
           "@type": "WebPage",
-          "@id": "{% block page_id %}https://defex.app/{% endblock %}#webpage",
-          "url": "{% block page_url %}https://defex.app/{% endblock %}",
+          "@id": "{% block page_id %}https://defexrobotics.com/{% endblock %}#webpage",
+          "url": "{% block page_url %}https://defexrobotics.com/{% endblock %}",
           "name": "{% block page_name %}defex — Self-teaching robots for manufacturing.{% endblock %}",
-          "isPartOf": {"@id": "https://defex.app/#website"},
-          "about": {"@id": "https://defex.app/#org"},
+          "isPartOf": {"@id": "https://defexrobotics.com/#website"},
+          "about": {"@id": "https://defexrobotics.com/#org"},
           "inLanguage": "en"
         }
       ]

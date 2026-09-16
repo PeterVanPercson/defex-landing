@@ -215,8 +215,8 @@ class SiteTests(SimpleTestCase):
         self.assertLessEqual(card.stat().st_size, 300 * 1024)
         for path in ("/", "/where-it-started/", "/careers/"):
             body = self.client.get(path).content.decode()
-            self.assertIn('property="og:image" content="https://defex.app/static/img/og.jpg?v=', body)
-            self.assertIn('name="twitter:image" content="https://defex.app/static/img/og.jpg?v=', body)
+            self.assertIn('property="og:image" content="https://defexrobotics.com/static/img/og.jpg?v=', body)
+            self.assertIn('name="twitter:image" content="https://defexrobotics.com/static/img/og.jpg?v=', body)
 
     def test_every_class_on_the_marketing_pages_is_styled(self):
         """A CSS edit that drops a rule block renders the section unstyled but
@@ -259,7 +259,7 @@ class SiteTests(SimpleTestCase):
                       "not Defex measurements",
                       "Evidence to collect", "/where-it-started/",
                       'property="og:type" content="article"', '"@type": "BlogPosting"',
-                      'rel="canonical" href="https://defex.app/blog/the-cost-of-the-next-attempt/"',
+                      'rel="canonical" href="https://defexrobotics.com/blog/the-cost-of-the-next-attempt/"',
                       "js/post.js", "js/reveal.js", "data-copy-link",
                       # the scan mark on the way back, the byline
                       'class="scan"',
@@ -347,7 +347,7 @@ class SiteTests(SimpleTestCase):
         for chunk in (
             '<h1 class="post__title engraved">The AI Inference Revolution Is Here</h1>',
             "Matthew S. Smith",
-            'rel="canonical" href="https://defex.app/blog/the-ai-inference-revolution-is-here/"',
+            'rel="canonical" href="https://defexrobotics.com/blog/the-ai-inference-revolution-is-here/"',
             "How does AI inference differ from AI training?", "Memory’s role in inferencing",
             "Combining chips for faster inference", "Learning to do more with less (bits)",
             "Inference is everyone’s game", "article-image__panel",
@@ -410,7 +410,7 @@ class SiteTests(SimpleTestCase):
 
         # the founder link must stay bidirectional with husanmavlonov.com
         self.assertIn("https://husanmavlonov.com/#person", home)
-        self.assertIn("https://defex.app/#org", home)
+        self.assertIn("https://defexrobotics.com/#org", home)
 
 
 class SecurityTests(SimpleTestCase):
@@ -440,6 +440,8 @@ class SecurityTests(SimpleTestCase):
             self.assertTrue(ns.get(flag), f"{flag} is not on in production")
         self.assertGreaterEqual(ns.get("SECURE_HSTS_SECONDS", 0), 86400)
         self.assertNotIn(".onrender.com", ns["ALLOWED_HOSTS"])
+        self.assertIn("defexrobotics.com", ns["ALLOWED_HOSTS"])
+        self.assertIn("https://defexrobotics.com", ns["CSRF_TRUSTED_ORIGINS"])
 
     def test_secret_key_has_no_committed_fallback(self):
         """The old default was a literal in a public repo. Serving without a

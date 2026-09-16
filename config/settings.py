@@ -42,12 +42,12 @@ if not SECRET_KEY:
 
 ALLOWED_HOSTS = os.getenv(
     "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,.vercel.app,defex.app,www.defex.app"
+    "localhost,127.0.0.1,.vercel.app,defexrobotics.com,www.defexrobotics.com,defex.app,www.defex.app"
 ).split(",")
 
 CSRF_TRUSTED_ORIGINS = os.getenv(
     "CSRF_TRUSTED_ORIGINS",
-    "https://*.vercel.app,https://defex.app,https://www.defex.app"
+    "https://*.vercel.app,https://defexrobotics.com,https://www.defexrobotics.com,https://defex.app,https://www.defex.app"
 ).split(",")
 
 # Render / Vercel terminate SSL at their proxy — trust X-Forwarded-Proto.

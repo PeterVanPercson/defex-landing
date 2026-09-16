@@ -35,10 +35,10 @@
   "datePublished": "{{ post.date|date:'c' }}",
   "dateModified": "{{ post.date|date:'c' }}",
   "author": {"@type": "Person", "@id": "{{ post.author.url }}#person", "name": "{{ post.author.name|escapejs }}", "url": "{{ post.author.url }}"},
-  "publisher": {"@id": "https://defex.app/#org"},
-  "image": "https://defex.app{% static 'img/og.jpg' %}?v={{ asset_v }}",
+  "publisher": {"@id": "https://defexrobotics.com/#org"},
+  "image": "https://defexrobotics.com{% static 'img/og.jpg' %}?v={{ asset_v }}",
   {% if post.source %}"isBasedOn": "{{ post.source.url }}",{% endif %}
-  "isPartOf": {"@id": "https://defex.app/#website"},
+  "isPartOf": {"@id": "https://defexrobotics.com/#website"},
   "inLanguage": "en"
 }
 </script>

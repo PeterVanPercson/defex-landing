@@ -88,7 +88,7 @@ def autoresponder_email(name: str, factory: str) -> tuple[str, str]:
         '&mdash; just reply to this email.</p>'
         '<p style="margin-top:24px">&mdash; Husan Mavlonov<br>'
         '<span style="color:#7A7B7F;font-size:13px">Self-teaching robots for manufacturing &middot; '
-        '<a href="https://defex.app" style="color:#FF5A1F;text-decoration:none">defex.app</a></span></p>'
+        '<a href="https://defexrobotics.com" style="color:#FF5A1F;text-decoration:none">defexrobotics.com</a></span></p>'
         '</div>'
     )
     return subject, html
@@ -118,7 +118,7 @@ def submission_email(data: dict, request) -> tuple[str, str]:
     )
     html = (
         '<div style="font-family:ui-monospace,monospace;color:#111;max-width:600px">'
-        '<p style="margin:0 0 12px;font-size:15px"><b>Pilot request from defex.app</b></p>'
+        '<p style="margin:0 0 12px;font-size:15px"><b>Pilot request from defexrobotics.com</b></p>'
         f'<table style="border-collapse:collapse">{body}</table>'
         '</div>'
     )
