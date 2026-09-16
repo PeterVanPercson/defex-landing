@@ -328,7 +328,15 @@ class SiteTests(SimpleTestCase):
         self.assertIn("<loc>http://testserver/blog/the-cost-of-the-next-attempt/</loc>", sitemap)
         self.assertEqual(self.client.get("/static/js/post.js").status_code, 200)
 
-    def test_republished_inference_article(self):
+    def test_inference_article(self):
+        from landing.views import POSTS
+
+        article = next(post for post in POSTS if post["slug"] == "the-ai-inference-revolution-is-here")
+        self.assertEqual(article["author"]["name"], "Matthew S. Smith")
+        self.assertEqual(article["author"]["site"], "mattontech.me")
+        self.assertNotIn("source", article)
+        self.assertNotIn("canonical_url", article)
+
         index = self.client.get("/blog/")
         self.assertContains(index, "The AI Inference Revolution Is Here")
         self.assertContains(index, 'href="/blog/the-ai-inference-revolution-is-here/"')
@@ -338,14 +346,16 @@ class SiteTests(SimpleTestCase):
         body = post.content.decode()
         for chunk in (
             '<h1 class="post__title engraved">The AI Inference Revolution Is Here</h1>',
-            "Matthew S. Smith", "Originally published by", "IEEE Spectrum",
-            'rel="canonical" href="https://spectrum.ieee.org/inference-hardware-revolution"',
-            '"isBasedOn": "https://spectrum.ieee.org/inference-hardware-revolution"',
+            "Matthew S. Smith",
+            'rel="canonical" href="https://defex.app/blog/the-ai-inference-revolution-is-here/"',
             "How does AI inference differ from AI training?", "Memory’s role in inferencing",
             "Combining chips for faster inference", "Learning to do more with less (bits)",
             "Inference is everyone’s game", "article-image__panel",
         ):
             self.assertContains(post, chunk)
+        self.assertNotIn("Originally published by", body)
+        self.assertNotIn("IEEE Spectrum", body)
+        self.assertNotIn('"isBasedOn"', body)
         self.assertGreaterEqual(body.count('class="figure figure--wide article-image"'), 8)
         self.assertNotIn("**ince", body)
         self.assertNotIn(">audio player<", body)
