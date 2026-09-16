@@ -6,7 +6,7 @@
 {% block title %}{{ post.title }} · defex{% endblock %}
 {% block description %}{{ post.dek }}{% endblock %}
 {% block keywords %}{{ post.keywords }}{% endblock %}
-{% block canonical %}{{ post.url }}{% endblock %}
+{% block canonical %}{{ post.canonical_url|default:post.url }}{% endblock %}
 {% block page_id %}{{ post.url }}{% endblock %}
 {% block page_url %}{{ post.url }}{% endblock %}
 {% block page_name %}{{ post.title }} · defex{% endblock %}
@@ -37,6 +37,7 @@
   "author": {"@type": "Person", "@id": "{{ post.author.url }}#person", "name": "{{ post.author.name|escapejs }}", "url": "{{ post.author.url }}"},
   "publisher": {"@id": "https://defex.app/#org"},
   "image": "https://defex.app{% static 'img/og.jpg' %}?v={{ asset_v }}",
+  {% if post.source %}"isBasedOn": "{{ post.source.url }}",{% endif %}
   "isPartOf": {"@id": "https://defex.app/#website"},
   "inLanguage": "en"
 }
@@ -65,6 +66,7 @@
         <h1 class="post__title engraved">{{ post.title }}</h1>
         {% block standfirst %}{% endblock %}
         <p class="post__meta">By <a class="link" href="{{ post.author.url }}">{{ post.author.name }}</a> &middot; <time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time></p>
+        {% if post.source %}<p class="post__source">Originally published by <a class="link" href="{{ post.source.url }}" rel="canonical noopener">{{ post.source.name }}</a>.</p>{% endif %}
     </header>
 
     <article class="prose">

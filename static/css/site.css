@@ -692,6 +692,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    a size up from the body, softer, no label and no bar */
 .standfirst { margin-top: clamp(18px, 3vh, 26px); max-width: 66ch; font: 400 15px/1.75 var(--mono); color: var(--ink-soft); }
 .post__meta { margin-top: 22px; font: 400 11px/1.6 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+.post__source { margin-top: 9px; font: 400 11.5px/1.65 var(--mono); color: var(--mute); }
 
 /* One measure for the text, with lanes either side for figures to grow into.
    Everything in the article is a grid item, so margins do not collapse and
@@ -707,6 +708,10 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* the nav and the strip together cover about 104px of the top of the screen */
 .prose > h2[id] { scroll-margin-top: calc(var(--nav) + 56px); }
 .prose > h2 + p { margin-top: 22px; }
+.prose > h3 { margin-top: clamp(38px, 6vh, 58px); font-family: var(--serif); font-size: clamp(21px, 2.4vw, 28px); font-weight: 400; line-height: 1.2; letter-spacing: -.01em; }
+.prose > h3[id] { scroll-margin-top: calc(var(--nav) + 56px); }
+.prose > h3 + p { margin-top: 18px; }
+.prose a.link { border-bottom-color: var(--rule); }
 .prose__list { margin-top: 18px; display: grid; gap: 10px; list-style: none; }
 .prose__list li { position: relative; padding-left: 20px; }
 .prose__list li::before { content: "\2022"; position: absolute; left: 2px; color: var(--mute); }
@@ -719,6 +724,10 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* under a wide figure the caption starts where the text does, not at the panel's edge */
 .figure--wide .figure__cap { margin-left: max(0px, calc((100% - 600px) / 2)); }
 .panel { position: relative; padding: clamp(24px, 3vw, 40px) 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.article-image { isolation: isolate; }
+.article-image__panel { padding: 0; overflow: hidden; background: #121417; }
+.article-image__panel img { display: block; width: 100%; height: auto; max-height: min(72vh, 720px); object-fit: contain; }
+.article-image__credit { display: block; margin-top: 5px; color: var(--ink-soft); }
 
 /* the swatches: shared by the bench's controls and its bar */
 .swatch { display: inline-block; flex: none; width: 12px; height: 12px; border-radius: 2px; background: var(--ink); }

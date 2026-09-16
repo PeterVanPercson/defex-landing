@@ -13,7 +13,7 @@ class BlogFeed(Feed):
     feed_type = Rss201rev2Feed
     title = "Defex blog"
     link = "/blog/"
-    description = "Notes from Defex on teaching robots physical work: assembly, testing, reset, and what the next attempt costs."
+    description = "Notes and selected reading on physical AI, robot learning, manufacturing, and AI hardware."
 
     def items(self):
         return POSTS

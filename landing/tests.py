@@ -228,7 +228,8 @@ class SiteTests(SimpleTestCase):
         top = re.sub(r"@media[^{]*\{(?:[^{}]|\{[^{}]*\})*\}", "", css, flags=re.S)
         used = set()
         for name in ("home.html", "origin.html", "_topbar.html", "_scan.html", "blog/index.html",
-                     "blog/_article.html", "blog/the-cost-of-the-next-attempt.html"):
+                     "blog/_article.html", "blog/the-cost-of-the-next-attempt.html",
+                     "blog/the-ai-inference-revolution-is-here.html"):
             markup = (root / "templates/landing" / name).read_text()
             for attr in re.findall(r'class="([^"]*)"', markup):
                 used |= {c for c in attr.split() if re.fullmatch(r"[a-z][a-z0-9_-]*", c)}
@@ -327,11 +328,41 @@ class SiteTests(SimpleTestCase):
         self.assertIn("<loc>http://testserver/blog/the-cost-of-the-next-attempt/</loc>", sitemap)
         self.assertEqual(self.client.get("/static/js/post.js").status_code, 200)
 
+    def test_republished_inference_article(self):
+        index = self.client.get("/blog/")
+        self.assertContains(index, "The AI Inference Revolution Is Here")
+        self.assertContains(index, 'href="/blog/the-ai-inference-revolution-is-here/"')
+
+        post = self.client.get("/blog/the-ai-inference-revolution-is-here/")
+        self.assertEqual(post.status_code, 200)
+        body = post.content.decode()
+        for chunk in (
+            '<h1 class="post__title engraved">The AI Inference Revolution Is Here</h1>',
+            "Matthew S. Smith", "Originally published by", "IEEE Spectrum",
+            'rel="canonical" href="https://spectrum.ieee.org/inference-hardware-revolution"',
+            '"isBasedOn": "https://spectrum.ieee.org/inference-hardware-revolution"',
+            "How does AI inference differ from AI training?", "Memory’s role in inferencing",
+            "Combining chips for faster inference", "Learning to do more with less (bits)",
+            "Inference is everyone’s game", "article-image__panel",
+        ):
+            self.assertContains(post, chunk)
+        self.assertGreaterEqual(body.count('class="figure figure--wide article-image"'), 8)
+        self.assertNotIn("**ince", body)
+        self.assertNotIn(">audio player<", body)
+
+        sitemap = self.client.get("/sitemap.xml").content.decode()
+        self.assertIn("/blog/the-ai-inference-revolution-is-here/", sitemap)
+        feed = self.client.get("/blog/feed.xml").content.decode()
+        self.assertIn("The AI Inference Revolution Is Here", feed)
+        self.assertIn("Matthew S. Smith", feed)
+
     def test_no_template_syntax_reaches_the_browser(self):
         """A multi-line {# #} comment is not a comment in Django: the whole
         thing rendered as text inside the nav on every page, live, and
         nothing here noticed. Now something does."""
-        for path in ("/", "/careers/", "/where-it-started/", "/blog/", "/blog/the-cost-of-the-next-attempt/"):
+        for path in ("/", "/careers/", "/where-it-started/", "/blog/",
+                     "/blog/the-cost-of-the-next-attempt/",
+                     "/blog/the-ai-inference-revolution-is-here/"):
             body = self.client.get(path).content.decode()
             for leak in ("{#", "#}", "{%", "{{", "%}", "}}"):
                 self.assertNotIn(leak, body, f"{leak!r} leaked into {path}")
