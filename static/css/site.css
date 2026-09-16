@@ -607,33 +607,38 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 @property --angle-1 { syntax: "<angle>"; inherits: false; initial-value: -75deg; }
 @property --angle-2 { syntax: "<angle>"; inherits: false; initial-value: -45deg; }
 .lede__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: clamp(18px, 3vh, 28px); }
-.glass-button-wrap { --fg: var(--ink); --bgc: var(--bg); --anim-time: 400ms; --anim-ease: cubic-bezier(.25, 1, .5, 1); --border-width: clamp(1px, .0625em, 4px); position: relative; z-index: 2; display: inline-block; font-size: 16px; border-radius: 9999px; cursor: pointer; transform-style: preserve-3d; transition: transform var(--anim-time) var(--anim-ease); }
-.glass-button-wrap:has(.glass-button:active) { transform: rotateX(25deg); }
+/* The link is the outer element and never moves: the hover scale and the
+   press tilt sit on layers inside it. While the link itself moved, a press
+   that ended a pixel outside its box was dropped and the button read as
+   hard to click. Nothing about the painting changes. */
+.glass-button-wrap { --fg: var(--ink); --bgc: var(--bg); --anim-time: 400ms; --anim-ease: cubic-bezier(.25, 1, .5, 1); --border-width: clamp(1px, .0625em, 4px); position: relative; z-index: 2; display: inline-block; font-size: 16px; border-radius: 9999px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.glass-button-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.glass-button-tilt { display: block; position: relative; transform-style: preserve-3d; transition: transform var(--anim-time) var(--anim-ease); }
+.glass-button-wrap:active .glass-button-tilt { transform: rotateX(25deg); }
 .glass-button-shadow { --shadow-cutoff-fix: 2em; position: absolute; z-index: 0; width: calc(100% + var(--shadow-cutoff-fix)); height: calc(100% + var(--shadow-cutoff-fix)); top: calc(0% - var(--shadow-cutoff-fix) / 2); left: calc(0% - var(--shadow-cutoff-fix) / 2); filter: blur(clamp(2px, .125em, 12px)); transition: filter var(--anim-time) var(--anim-ease); pointer-events: none; }
 .glass-button-shadow::after { content: ""; position: absolute; inset: 0; border-radius: 9999px; background: linear-gradient(180deg, color-mix(in oklch, var(--fg) 20%, transparent), color-mix(in oklch, var(--fg) 10%, transparent)); width: calc(100% - var(--shadow-cutoff-fix) - .25em); height: calc(100% - var(--shadow-cutoff-fix) - .25em); top: calc(var(--shadow-cutoff-fix) - .5em); left: calc(var(--shadow-cutoff-fix) - .875em); padding: .125em; box-sizing: border-box; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; transition: all var(--anim-time) var(--anim-ease); opacity: 1; }
 .glass-button { all: unset; position: relative; z-index: 1; isolation: isolate; display: block; border-radius: 9999px; cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-backdrop-filter: blur(clamp(1px, .125em, 4px)); backdrop-filter: blur(clamp(1px, .125em, 4px)); transition: all var(--anim-time) var(--anim-ease); background: linear-gradient(-75deg, color-mix(in oklch, var(--bgc) 5%, transparent), color-mix(in oklch, var(--bgc) 20%, transparent), color-mix(in oklch, var(--bgc) 5%, transparent)); box-shadow: inset 0 .125em .125em color-mix(in oklch, var(--fg) 5%, transparent), inset 0 -.125em .125em color-mix(in oklch, var(--bgc) 50%, transparent), 0 .25em .125em -.125em color-mix(in oklch, var(--fg) 20%, transparent), 0 0 .1em .25em inset color-mix(in oklch, var(--bgc) 20%, transparent), 0 0 0 0 var(--bgc); }
-.glass-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-.glass-button:hover { transform: scale(.975); -webkit-backdrop-filter: blur(.01em); backdrop-filter: blur(.01em); box-shadow: inset 0 .125em .125em color-mix(in oklch, var(--fg) 5%, transparent), inset 0 -.125em .125em color-mix(in oklch, var(--bgc) 50%, transparent), 0 .15em .05em -.1em color-mix(in oklch, var(--fg) 25%, transparent), 0 0 .05em .1em inset color-mix(in oklch, var(--bgc) 50%, transparent), 0 0 0 0 var(--bgc); }
+.glass-button-wrap:hover .glass-button { transform: scale(.975); -webkit-backdrop-filter: blur(.01em); backdrop-filter: blur(.01em); box-shadow: inset 0 .125em .125em color-mix(in oklch, var(--fg) 5%, transparent), inset 0 -.125em .125em color-mix(in oklch, var(--bgc) 50%, transparent), 0 .15em .05em -.1em color-mix(in oklch, var(--fg) 25%, transparent), 0 0 .05em .1em inset color-mix(in oklch, var(--bgc) 50%, transparent), 0 0 0 0 var(--bgc); }
 .glass-button-text { position: relative; display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 26px; font: 500 11px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; white-space: nowrap; user-select: none; color: color-mix(in oklch, var(--fg) 90%, transparent); text-shadow: 0 .25em .05em color-mix(in oklch, var(--fg) 10%, transparent); transition: all var(--anim-time) var(--anim-ease); }
-.glass-button:hover .glass-button-text { text-shadow: .025em .025em .025em color-mix(in oklch, var(--fg) 12%, transparent); }
+.glass-button-wrap:hover .glass-button-text { text-shadow: .025em .025em .025em color-mix(in oklch, var(--fg) 12%, transparent); }
 .glass-button-text::after { content: ""; display: block; position: absolute; width: calc(100% - var(--border-width)); height: calc(100% - var(--border-width)); top: calc(0% + var(--border-width) / 2); left: calc(0% + var(--border-width) / 2); box-sizing: border-box; border-radius: 9999px; overflow: clip; background: linear-gradient(var(--angle-2), transparent 0%, color-mix(in oklch, var(--bgc) 50%, transparent) 40% 50%, transparent 55%); z-index: 3; mix-blend-mode: screen; pointer-events: none; background-size: 200% 200%; background-position: 0% 50%; transition: background-position calc(var(--anim-time) * 1.25) var(--anim-ease), --angle-2 calc(var(--anim-time) * 1.25) var(--anim-ease); }
-.glass-button:hover .glass-button-text::after { background-position: 25% 50%; }
-.glass-button:active .glass-button-text::after { background-position: 50% 15%; --angle-2: -15deg; }
+.glass-button-wrap:hover .glass-button-text::after { background-position: 25% 50%; }
+.glass-button-wrap:active .glass-button-text::after { background-position: 50% 15%; --angle-2: -15deg; }
 .glass-button::after { content: ""; position: absolute; z-index: 1; inset: 0; border-radius: 9999px; width: calc(100% + var(--border-width)); height: calc(100% + var(--border-width)); top: calc(0% - var(--border-width) / 2); left: calc(0% - var(--border-width) / 2); padding: var(--border-width); box-sizing: border-box; background: conic-gradient(from var(--angle-1) at 50% 50%, color-mix(in oklch, var(--fg) 50%, transparent) 0%, transparent 5% 40%, color-mix(in oklch, var(--fg) 50%, transparent) 50%, transparent 60% 95%, color-mix(in oklch, var(--fg) 50%, transparent) 100%), linear-gradient(180deg, color-mix(in oklch, var(--bgc) 50%, transparent), color-mix(in oklch, var(--bgc) 50%, transparent)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; transition: all var(--anim-time) var(--anim-ease), --angle-1 500ms ease; box-shadow: inset 0 0 0 calc(var(--border-width) / 2) color-mix(in oklch, var(--bgc) 50%, transparent); pointer-events: none; }
-.glass-button:hover::after { --angle-1: -125deg; }
-.glass-button:active::after { --angle-1: -75deg; }
-.glass-button-wrap:has(.glass-button:hover) .glass-button-shadow { filter: blur(clamp(2px, .0625em, 6px)); }
-.glass-button-wrap:has(.glass-button:hover) .glass-button-shadow::after { top: calc(var(--shadow-cutoff-fix) - .875em); opacity: 1; }
-.glass-button-wrap:has(.glass-button:active) .glass-button-shadow { filter: blur(clamp(2px, .125em, 12px)); }
-.glass-button-wrap:has(.glass-button:active) .glass-button-shadow::after { top: calc(var(--shadow-cutoff-fix) - .5em); opacity: .75; }
-.glass-button-wrap:has(.glass-button:active) .glass-button-text { text-shadow: .025em .25em .05em color-mix(in oklch, var(--fg) 12%, transparent); }
-.glass-button-wrap:has(.glass-button:active) .glass-button { box-shadow: inset 0 .125em .125em color-mix(in oklch, var(--fg) 5%, transparent), inset 0 -.125em .125em color-mix(in oklch, var(--bgc) 50%, transparent), 0 .125em .125em -.125em color-mix(in oklch, var(--fg) 20%, transparent), 0 0 .1em .25em inset color-mix(in oklch, var(--bgc) 20%, transparent), 0 .225em .05em 0 color-mix(in oklch, var(--fg) 5%, transparent), 0 .25em 0 0 color-mix(in oklch, var(--bgc) 75%, transparent), inset 0 .25em .05em 0 color-mix(in oklch, var(--fg) 15%, transparent); }
+.glass-button-wrap:hover .glass-button::after { --angle-1: -125deg; }
+.glass-button-wrap:active .glass-button::after { --angle-1: -75deg; }
+.glass-button-wrap:hover .glass-button-shadow { filter: blur(clamp(2px, .0625em, 6px)); }
+.glass-button-wrap:hover .glass-button-shadow::after { top: calc(var(--shadow-cutoff-fix) - .875em); opacity: 1; }
+.glass-button-wrap:active .glass-button-shadow { filter: blur(clamp(2px, .125em, 12px)); }
+.glass-button-wrap:active .glass-button-shadow::after { top: calc(var(--shadow-cutoff-fix) - .5em); opacity: .75; }
+.glass-button-wrap:active .glass-button-text { text-shadow: .025em .25em .05em color-mix(in oklch, var(--fg) 12%, transparent); }
+.glass-button-wrap:active .glass-button { box-shadow: inset 0 .125em .125em color-mix(in oklch, var(--fg) 5%, transparent), inset 0 -.125em .125em color-mix(in oklch, var(--bgc) 50%, transparent), 0 .125em .125em -.125em color-mix(in oklch, var(--fg) 20%, transparent), 0 0 .1em .25em inset color-mix(in oklch, var(--bgc) 20%, transparent), 0 .225em .05em 0 color-mix(in oklch, var(--fg) 5%, transparent), 0 .25em 0 0 color-mix(in oklch, var(--bgc) 75%, transparent), inset 0 .25em .05em 0 color-mix(in oklch, var(--fg) 15%, transparent); }
 @media (hover: none) and (pointer: coarse) {
-    .glass-button::after, .glass-button:hover::after, .glass-button:active::after { --angle-1: -75deg; }
-    .glass-button .glass-button-text::after, .glass-button:active .glass-button-text::after { --angle-2: -45deg; }
+    .glass-button::after, .glass-button-wrap:hover .glass-button::after, .glass-button-wrap:active .glass-button::after { --angle-1: -75deg; }
+    .glass-button .glass-button-text::after, .glass-button-wrap:active .glass-button-text::after { --angle-2: -45deg; }
 }
 .glass-button-arrow { flex: none; width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform var(--anim-time) var(--anim-ease); }
-.glass-button:hover .glass-button-arrow { transform: translateX(2px); }
+.glass-button-wrap:hover .glass-button-arrow { transform: translateX(2px); }
 /* The same button in the nav, at the nav's size, as the product's way in on
    every page. */
 .glass-button-wrap--nav { flex-shrink: 0; }
@@ -918,8 +923,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
     .bloghero__t { font-size: clamp(34px, 10vw, 44px); }
 }
 @media (prefers-reduced-motion: reduce) {
-    .glass-button-wrap, .glass-button, .glass-button-text, .glass-button-text::after, .glass-button::after, .glass-button-shadow, .glass-button-shadow::after, .glass-button-arrow { transition: none; }
-    .glass-button-wrap:has(.glass-button:active) { transform: none; }
+    .glass-button-wrap, .glass-button-tilt, .glass-button, .glass-button-text, .glass-button-text::after, .glass-button::after, .glass-button-shadow, .glass-button-shadow::after, .glass-button-arrow { transition: none; }
+    .glass-button-wrap:active .glass-button-tilt { transform: none; }
     .is-scanning .scan__line, .postrow:hover .scan__line, .eyebrow--scan:hover .scan__line { animation: none; }
 }
 
