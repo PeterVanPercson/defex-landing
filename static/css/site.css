@@ -182,7 +182,10 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .has-scroll-film .hero__sticky { position: sticky; top: var(--nav); height: calc(100svh - var(--nav)); overflow: clip; }
 .has-scroll-film .hero__film { width: min(100%, calc((100svh - var(--nav) - var(--lede-space)) * 16 / 9)); }
 /* the headline now sits in the frame, so the cue moves out of its way */
-.has-scroll-film .scroll-cue { display: block; position: absolute; right: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); bottom: 16px; margin: 0; font-size: 12px; color: var(--mute); opacity: var(--cue-opacity, 1); pointer-events: none; }
+/* The cue used to own the bottom-right corner. The a16z credit sits there
+   now, on the button's row, and the two printed straight over each other,
+   so the cue moves to the centre of the same edge. */
+.has-scroll-film .scroll-cue { display: block; position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; margin: 0; font-size: 12px; color: var(--mute); opacity: var(--cue-opacity, 1); pointer-events: none; }
 .scroll-cue span { display: inline-block; margin-left: 9px; }
 
 .lede { width: 100%; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
@@ -197,8 +200,10 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    row used, but it is small and wears no ring: at this size a ring and a
    shadow turn a quiet credit into a badge. 24px is the floor — the wordmark
    is set edge to edge inside the tile, so below that it stops being
-   readable and is just a red square. */
-.lede__backed { display: flex; align-items: center; gap: 8px; margin: 0 0 0 clamp(10px, 1.6vw, 22px); }
+   readable and is just a red square.
+   It sits at the far end of the button's row, against the same gutter the
+   nav and the scroll cue use, so the row reads button-left, credit-right. */
+.lede__backed { display: flex; align-items: center; gap: 8px; margin: 0; }
 .lede__backed-label { font: 500 9px/1 var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--mute); opacity: .8; }
 .lede__backed-mark { display: block; width: 24px; height: 24px; border-radius: 6px; opacity: .92; }
 @media (max-width: 720px) {
@@ -562,7 +567,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    a 16px wrap, so its shadows and rim keep their proportions. */
 @property --angle-1 { syntax: "<angle>"; inherits: false; initial-value: -75deg; }
 @property --angle-2 { syntax: "<angle>"; inherits: false; initial-value: -45deg; }
-.lede__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: clamp(18px, 3vh, 28px); }
+.lede__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: clamp(18px, 3vh, 28px); }
 /* The link is the outer element and never moves: the hover scale and the
    press tilt sit on layers inside it. While the link itself moved, a press
    that ended a pixel outside its box was dropped and the button read as
