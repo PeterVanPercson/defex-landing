@@ -32,6 +32,7 @@ jobs:
       - name: Front-end JavaScript syntax
         run: |
           node --check static/js/hero-film.js
+          node --check static/js/origin.js
           node --check static/js/reveal.js
           node --check static/js/book.js
           node --check static/js/post.js

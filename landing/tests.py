@@ -30,7 +30,7 @@ class SiteTests(SimpleTestCase):
         self.assertEqual(page.count('alt="a16z"'), 1)
         self.assertIn('class="lede__backed"', page)
         # it is inside the hero, above everything else on the page
-        self.assertLess(page.index('class="lede__backed"'), page.index('id="why"'))
+        self.assertLess(page.index('class="lede__backed"'), page.index('id="origin"'))
         self.assertNotIn('class="marquee', page)
         self.assertNotIn("marquee__", page)
         self.assertNotIn('id="backed"', page)
@@ -69,15 +69,15 @@ class SiteTests(SimpleTestCase):
         self.assertNotContains(home, 'id="intro"')
         self.assertNotContains(home, "is-intro")
         self.assertNotContains(home, "js/intro.js")
-        # "where it started" is gone: no section, no nav link, no clip
+        # the clip stays under the hero; the "where it started" label and page do not
         self.assertNotContains(home, "/where-it-started/")
-        self.assertNotContains(home, 'id="origin"')
-        self.assertNotContains(home, "origin.mp4")
         self.assertNotContains(home, "Where it started")
         self.assertNotContains(home, "where it started")
+        self.assertContains(home, 'id="origin-video" muted loop')
+        self.assertContains(home, "That is how we learned the camera is not enough")
         # no example text in the part field
         self.assertNotContains(home, 'placeholder="e.g.')
-        self.assertNotContains(home, "js/origin.js")
+        self.assertContains(home, "js/origin.js")
         # it was indexed, so the old URL redirects home rather than 404ing
         origin = self.client.get("/where-it-started/")
         self.assertEqual(origin.status_code, 301)
@@ -99,7 +99,7 @@ class SiteTests(SimpleTestCase):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
-        for asset in ("js/hero-film.js", "js/reveal.js", "img/backers/nvidia-inception.png", "img/backers/zfellows.png", "img/backers/zfellows-collage.png", "img/backers/google-for-startups.png", "img/backers/a16z.png", "img/backers/yandex-cloud.png"):
+        for asset in ("js/hero-film.js", "js/origin.js", "js/reveal.js", "img/backers/nvidia-inception.png", "img/backers/zfellows.png", "img/backers/zfellows-collage.png", "img/backers/google-for-startups.png", "img/backers/a16z.png", "img/backers/yandex-cloud.png", "video/origin.mp4", "video/origin-poster.jpg"):
             self.assertEqual(self.client.get(f"/static/{asset}").status_code, 200, asset)
 
     def test_hero_supports_byte_ranges(self):
