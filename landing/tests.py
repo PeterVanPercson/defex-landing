@@ -9,7 +9,7 @@ from django.test import SimpleTestCase, override_settings
 @override_settings(SECURE_SSL_REDIRECT=False)
 class SiteTests(SimpleTestCase):
     def test_pages_and_analyze(self):
-        for path in ("/", "/where-it-started/", "/careers/"):
+        for path in ("/", "/careers/"):
             self.assertEqual(self.client.get(path).status_code, 200)
         home = self.client.get("/")
         # the headline and the three steps must match the deck, not the
@@ -30,7 +30,7 @@ class SiteTests(SimpleTestCase):
         self.assertEqual(page.count('alt="a16z"'), 1)
         self.assertIn('class="lede__backed"', page)
         # it is inside the hero, above everything else on the page
-        self.assertLess(page.index('class="lede__backed"'), page.index('id="origin"'))
+        self.assertLess(page.index('class="lede__backed"'), page.index('id="why"'))
         self.assertNotIn('class="marquee', page)
         self.assertNotIn("marquee__", page)
         self.assertNotIn('id="backed"', page)
@@ -69,21 +69,19 @@ class SiteTests(SimpleTestCase):
         self.assertNotContains(home, 'id="intro"')
         self.assertNotContains(home, "is-intro")
         self.assertNotContains(home, "js/intro.js")
-        self.assertContains(home, "/where-it-started/")
-        # the origin clip now runs on the home page too, under the hero
-        self.assertContains(home, 'id="origin-video"')
-        # the clip loops rather than freezing on its last frame
-        self.assertContains(home, 'id="origin-video" muted loop')
+        # "where it started" is gone: no section, no nav link, no clip
+        self.assertNotContains(home, "/where-it-started/")
+        self.assertNotContains(home, 'id="origin"')
+        self.assertNotContains(home, "origin.mp4")
+        self.assertNotContains(home, "Where it started")
+        self.assertNotContains(home, "where it started")
         # no example text in the part field
         self.assertNotContains(home, 'placeholder="e.g.')
-        self.assertContains(home, "js/origin.js")
-        self.assertContains(home, "That is how we learned the camera is not enough")
+        self.assertNotContains(home, "js/origin.js")
+        # it was indexed, so the old URL redirects home rather than 404ing
         origin = self.client.get("/where-it-started/")
-        self.assertEqual(origin.status_code, 200)
-        self.assertContains(origin, 'id="origin-video"')
-        self.assertContains(origin, 'id="playpause"')
-        self.assertContains(origin, "started off helping factory lines")
-        self.assertContains(origin, "how we learned the camera is not enough")
+        self.assertEqual(origin.status_code, 301)
+        self.assertEqual(origin["Location"], "/")
         self.assertContains(home, 'data-fps="60"')
         self.assertContains(home, "defex-intro-v4.mp4")
         self.assertContains(home, "defex-poster-v4.webp")
@@ -101,7 +99,7 @@ class SiteTests(SimpleTestCase):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
-        for asset in ("js/hero-film.js", "js/origin.js", "js/reveal.js", "img/backers/nvidia-inception.png", "img/backers/zfellows.png", "img/backers/zfellows-collage.png", "img/backers/google-for-startups.png", "img/backers/a16z.png", "img/backers/yandex-cloud.png", "video/origin.mp4", "video/origin-poster.jpg"):
+        for asset in ("js/hero-film.js", "js/reveal.js", "img/backers/nvidia-inception.png", "img/backers/zfellows.png", "img/backers/zfellows-collage.png", "img/backers/google-for-startups.png", "img/backers/a16z.png", "img/backers/yandex-cloud.png"):
             self.assertEqual(self.client.get(f"/static/{asset}").status_code, 200, asset)
 
     def test_hero_supports_byte_ranges(self):
@@ -147,7 +145,7 @@ class SiteTests(SimpleTestCase):
     def test_every_page_can_reach_the_contact_form(self):
         """The nav button rendered #contact on /careers/, where there is no
         contact section, so it went nowhere."""
-        for path in ("/careers/", "/where-it-started/"):
+        for path in ("/careers/", "/blog/"):
             body = self.client.get(path).content.decode()
             header = body.split("<header", 1)[1].split("</header>", 1)[0]
             self.assertIn('href="/#contact"', header, path)
@@ -213,7 +211,7 @@ class SiteTests(SimpleTestCase):
         card = Path(settings.BASE_DIR) / "static" / "img" / "og.jpg"
         self.assertTrue(card.exists())
         self.assertLessEqual(card.stat().st_size, 300 * 1024)
-        for path in ("/", "/where-it-started/", "/careers/"):
+        for path in ("/", "/careers/"):
             body = self.client.get(path).content.decode()
             self.assertIn('property="og:image" content="https://defexrobotics.com/static/img/og.jpg?v=', body)
             self.assertIn('name="twitter:image" content="https://defexrobotics.com/static/img/og.jpg?v=', body)
@@ -227,7 +225,7 @@ class SiteTests(SimpleTestCase):
         # rules inside a media query do not style the default (desktop) case
         top = re.sub(r"@media[^{]*\{(?:[^{}]|\{[^{}]*\})*\}", "", css, flags=re.S)
         used = set()
-        for name in ("home.html", "origin.html", "_topbar.html", "_scan.html", "blog/index.html",
+        for name in ("home.html", "_topbar.html", "_scan.html", "blog/index.html",
                      "blog/_article.html", "blog/the-cost-of-the-next-attempt.html",
                      "blog/the-ai-inference-revolution-is-here.html"):
             markup = (root / "templates/landing" / name).read_text()
@@ -257,7 +255,7 @@ class SiteTests(SimpleTestCase):
                       # the three worked examples from the text, as presets
                       'data-preset="20,10,90,0"', 'data-preset="10,10,90,0"', 'data-preset="20,10,10,0"',
                       "not Defex measurements",
-                      "Evidence to collect", "/where-it-started/",
+                      "Evidence to collect",
                       'property="og:type" content="article"', '"@type": "BlogPosting"',
                       'rel="canonical" href="https://defexrobotics.com/blog/the-cost-of-the-next-attempt/"',
                       "js/post.js", "js/reveal.js", "data-copy-link",
@@ -306,7 +304,7 @@ class SiteTests(SimpleTestCase):
         self.assertEqual(self.client.get("/blog/not-a-post/").status_code, 404)
         # the blog's way in is the button under the hero headline and a footer
         # link on every page; the nav stays as it was
-        for path in ("/", "/careers/", "/where-it-started/", "/blog/"):
+        for path in ("/", "/careers/", "/blog/"):
             page = self.client.get(path).content.decode()
             header = page.split("<header", 1)[1].split("</header>", 1)[0]
             self.assertNotIn('href="/blog/"', header, path)
@@ -370,7 +368,7 @@ class SiteTests(SimpleTestCase):
         """A multi-line {# #} comment is not a comment in Django: the whole
         thing rendered as text inside the nav on every page, live, and
         nothing here noticed. Now something does."""
-        for path in ("/", "/careers/", "/where-it-started/", "/blog/",
+        for path in ("/", "/careers/", "/blog/",
                      "/blog/the-cost-of-the-next-attempt/",
                      "/blog/the-ai-inference-revolution-is-here/"):
             body = self.client.get(path).content.decode()
@@ -402,7 +400,7 @@ class SiteTests(SimpleTestCase):
         self.assertEqual(sitemap.status_code, 200)
         self.assertIn("xml", sitemap["Content-Type"])
         body = sitemap.content.decode()
-        for path in ("/", "/where-it-started/", "/careers/"):
+        for path in ("/", "/careers/"):
             self.assertIn(f"<loc>http://testserver{path}</loc>", body)
 
         # the demo page was unreachable from the site for weeks; keep it linked

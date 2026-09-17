@@ -3,7 +3,7 @@
 ## Hero film
 
 The hero is a plain `<video>` that is **never played**. It is pinned with
-`position: sticky` for the height of `.hero` (560svh, 400svh in portrait) and
+`position: sticky` for the height of `.hero` (280svh, 220svh in portrait) and
 `static/js/hero-film.js` maps the page's scroll position onto `video.currentTime`.
 Scrolling is watching, so the whole fifteen seconds is visible however fast
 someone moves. This replaces the earlier autoplay, where the film finished before
@@ -71,7 +71,7 @@ hold at seconds 7 to 12. Do not drop the resolution or the frame rate.
 
 `data-fps` on the video element must match the file (60). The scrub seeks to
 multiples of `1/FPS`; a value below the file's real rate lands between frames and
-most of them never render. At 60 fps over the 560svh of travel the scrub advances
+most of them never render. At 60 fps over the 280svh of travel the scrub advances
 a frame roughly every 4px of scroll, which is what keeps a slow drag smooth. `hero-film.js` seeks to `(frame + .5) / FPS` because
 container timestamps round, and an exact frame boundary can land on the frame
 before. The scrub ends at `duration - 1/FPS`, which is the final-frame hold, not
@@ -128,7 +128,7 @@ could not decode the file read the whole page through a dark bar sitting on the
 paper ground.
 
 Reduced-motion visitors get the final-frame poster, no sticky section and **no
-film download**: `.hero` only becomes 560svh when JS adds `has-scroll-film`.
+film download**: `.hero` only becomes 280svh when JS adds `has-scroll-film`.
 
 ### Seeking
 
@@ -138,19 +138,6 @@ only issued once `seeked` has fired. A watchdog clears the flag after 400 ms in
 case the event is swallowed. iOS will not paint a seek until the element has
 decoded once, so the first pointer or touch event does a muted `play()`/`pause()`
 to unlock it.
-
-## Origin clip
-
-`.origin` holds one line of copy and the original vertical clip. It autoplays
-muted when scrolled into view, pauses when it leaves, and has a single small
-speaker control. The clip carries burned-in captions, so it reads fine with the
-sound off. It is the only real footage on the site, which is why the home page
-links to it from the "what exists today" band.
-
-| Path | What |
-|---|---|
-| `static/video/origin.mp4` | 720×1280, 30 fps, H.264 + AAC, 50 s, 9.5 MB, `preload="none"` |
-| `static/video/origin-poster.jpg` | Frame at 5.2 s |
 
 ## Theme
 
@@ -162,8 +149,7 @@ the section ground. The top and bottom mask gradients hide it at those edges.
 ## Checks
 
 `python manage.py test` covers the pages, the hero assets and their size budget,
-the share card, and byte ranges. `node --check` runs over `hero-film.js` and
-`origin.js` in CI.
+the share card, and byte ranges. `node --check` runs over the front-end scripts in CI.
 
 Test the scrub under `DEBUG=False` and gunicorn, never `runserver`: the dev
 server does not serve byte ranges, so the video reports `seekable: [0, 0]` and
@@ -192,4 +178,4 @@ pinned to an old number silently serves stale assets. The share card
 (`static/img/og.jpg`) carries it too, because Telegram, LinkedIn and X cache
 `og:image` hard and will otherwise keep showing the previous card.
 
-Range requests must stay enabled on the hero MP4s and on `origin.mp4`.
+Range requests must stay enabled on the hero MP4s.

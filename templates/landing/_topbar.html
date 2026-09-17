@@ -4,7 +4,6 @@
         <svg viewBox="0 0 20 64" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="currentColor"/><circle cx="10" cy="32" r="7" fill="#FF5A1F"/><circle cx="10" cy="54" r="7" fill="currentColor"/></svg>
     </a>
     <nav class="topbar__end">
-        <a href="{% url 'where_it_started' %}" class="navlink navlink--origin"{% if page == 'origin' %} aria-current="page"{% endif %}>Where it started</a>
         <a href="{% url 'careers' %}" class="navlink"{% if page == 'careers' %} aria-current="page"{% endif %}>Careers</a>
         {# only the home page has a #contact section; every other page has to go home for it #}
         <a href="{% if page %}/#contact{% else %}#contact{% endif %}" class="glass-button-wrap glass-button-wrap--nav">

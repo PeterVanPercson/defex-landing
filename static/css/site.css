@@ -67,6 +67,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+::selection { background: var(--accent); color: #1A1815; text-shadow: none; -webkit-text-fill-color: #1A1815; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body { background: var(--grain), var(--bg); color: var(--ink); font: 15px/1.55 var(--font); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
@@ -178,7 +179,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
             mask-image: linear-gradient(to bottom, transparent 0, #000 26%, #000 76%, transparent 100%); }
 .scroll-cue { display: none; }
 
-.has-scroll-film .hero { height: 380svh; }
+.has-scroll-film .hero { height: 280svh; }
 .has-scroll-film .hero__sticky { position: sticky; top: var(--nav); height: calc(100svh - var(--nav)); overflow: clip; }
 .has-scroll-film .hero__film { width: min(100%, calc((100svh - var(--nav) - var(--lede-space)) * 16 / 9)); }
 /* the headline now sits in the frame, so the cue moves out of its way */
@@ -279,8 +280,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 
 /* what we do */
 .about { max-width: var(--max); margin-inline: auto; padding: calc(28px + var(--hero-fade)) var(--pad) 0; }
-.kicker { display: flex; align-items: center; gap: 12px; font: 500 11px/1.4 var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--mute); }
-.kicker__dash { width: 20px; height: 2px; background: var(--accent); }
 .rows { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; margin-top: 36px; }
 .rows__row { padding-top: 22px; border-top: 1px solid var(--line); }
 .rows dt { display: flex; justify-content: space-between; align-items: baseline; font-size: clamp(21px, 2.4vw, 29px); letter-spacing: -.035em; }
@@ -322,6 +321,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* The split between sections, from origami-robotics.com: each section is a
    sheet laid over the page, a shade lighter, casting a soft shadow up onto
    the one before it. Full bleed, with the content kept on the column. */
+/* the first sheet under the hero starts below the dissolve, not on top of it */
+.hero + .sheet { margin-top: var(--hero-fade); }
 .sheet { position: relative; z-index: 1; max-width: none; padding-block: clamp(96px, 14vh, 150px); padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); background: var(--grain), var(--sheet); box-shadow: var(--sheet-shadow); }
 /* the last sheet has to clear the dissolve into the closing dark block */
 .careers.sheet { padding-bottom: var(--close-fade); }
@@ -382,39 +383,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .role__include li { font: 400 13px/1.7 var(--mono); color: var(--ink-soft); }
 .role__aside .cta { width: 100%; margin-top: 14px; }
 
-/* where it started: its own page, one line and the original clip */
-.origin-page { min-height: calc(100svh - var(--nav) - 92px); display: grid; align-items: center; }
-/* The copy sits at the top of the clip, not centred on it: the clip is a
-   portrait, and centring left 230px of empty paper above the kicker. */
-.origin { max-width: var(--max); margin-inline: auto; width: 100%; padding: clamp(48px, 8vh, 104px) var(--pad); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: clamp(28px, 5vw, 80px); align-items: start; }
-.origin__copy { padding-top: clamp(12px, 3vh, 40px); }
-.origin__copy p { margin-top: 22px; max-width: 26ch; font-family: var(--serif); font-size: clamp(24px, 2.9vw, 36px); line-height: 1.18; letter-spacing: -.01em; font-weight: 400; }
-.origin__copy p.origin__note { max-width: 52ch; margin-top: 24px; font-family: var(--mono); font-size: 13px; line-height: 1.85; letter-spacing: 0; font-weight: 400; color: var(--ink-soft); }
-.origin__film { position: relative; margin: 0; border-radius: var(--radius); overflow: hidden; background: var(--surface); }
-.origin__video { display: block; width: 100%; height: auto; }
-/* the same block on the home page, where it is the first thing under the hero
-   and has to clear the dissolve */
-.origin--home { padding-top: calc(28px + var(--hero-fade)); }
-/* .engraved, not p: .origin__note is also a p in here and ties on specificity,
-   so a bare p selector declared later swallows the small line too. */
-.origin--home .origin__copy p.engraved { font-size: var(--say); line-height: 1.12; }
-
-/* the whole frame is the play control; the sound chip sits above it */
-.playpause { position: absolute; inset: 0; z-index: 1; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; -webkit-appearance: none; appearance: none; }
-.playpause:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
-.flash { position: absolute; inset: 0; z-index: 2; margin: auto; width: 58px; height: 58px; display: grid; place-items: center; border-radius: 999px; background: rgba(9, 15, 21, .58); color: var(--ink); opacity: 0; pointer-events: none; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-.flash svg { width: 22px; height: 22px; display: block; }
-.flash.is-on { animation: flash .5s cubic-bezier(.22, .61, .36, 1) both; }
-@keyframes flash {
-      0% { opacity: 0; transform: scale(.78); }
-     26% { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(1.16); }
-}
-.sound { position: absolute; z-index: 3; right: 12px; bottom: 12px; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid rgba(234, 232, 227, .18); border-radius: 999px; background: rgba(9, 15, 21, .62); color: var(--ink); cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: background .2s ease, border-color .2s ease, transform .2s ease; }
-.sound:hover { background: rgba(9, 15, 21, .85); border-color: rgba(234, 232, 227, .38); }
-.sound:active { transform: scale(.94); }
-.sound svg { width: 16px; height: 16px; display: block; }
-
 /* contact */
 .contact { max-width: 560px; margin-inline: auto; padding: clamp(110px, 17vh, 180px) var(--pad) clamp(96px, 14vh, 150px); text-align: center; }
 .contact h2 { font-family: var(--serif); font-size: clamp(38px, 5.4vw, 58px); font-weight: 400; line-height: 1.06; letter-spacing: -.01em; }
@@ -454,7 +422,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    frozen frame before it scrolled away, and the other six seconds ran off
    screen. Pinned, the film stays put for the whole eight seconds. */
 @media (max-aspect-ratio: 13/10) {
-    .has-scroll-film .hero { height: 300svh; }
+    .has-scroll-film .hero { height: 220svh; }
     /* A 16:9 film is a 221px strip on a phone. Cropping to 5:4 makes it 314px.
        Centred: the robot is centred in frame and the crop keeps it there. This
        was 63% for the previous film, which carried a baked "ultra inspection"
@@ -468,12 +436,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
        headline and the screen read as half-empty. Centred it splits into
        154px above and 188px below and the composition reads as framed. */
     .has-scroll-film .hero__sticky { align-content: center; }
-}
-
-@media (max-width: 900px) {
-    .origin { grid-template-columns: 1fr; gap: 28px; justify-items: start; }
-    .origin__film { width: 100%; max-width: 340px; }
-    .origin-page { min-height: 0; }
 }
 
 @media (max-width: 720px) {
@@ -497,7 +459,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
        cleared 40px, so the first heading sat inside the dark end of the ramp
        and was invisible. Shorter ramp here, and real clearance for it. */
 :root { --hero-fade: clamp(120px, 20vh, 200px); }
-    .about, .band--first, .origin--home { padding-top: calc(24px + var(--hero-fade)); }
+    .about, .band--first { padding-top: calc(24px + var(--hero-fade)); }
     /* stacked on a phone, so it needs more room before it mounts */
     .booker__frame { min-height: 1080px; }
     .contact { padding-top: 80px; padding-bottom: 80px; }
@@ -526,9 +488,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .hero__film { -webkit-mask-image: none; mask-image: none; }
-    .link, .field input, .field textarea, .sound, .navlink { transition: none; }
+    .link, .field input, .field textarea, .navlink { transition: none; }
     .reveal [data-reveal] { opacity: 1; transform: none; filter: none; transition: none; }
-    .flash.is-on { animation-duration: .5s; }
 }
 @media (forced-colors: active) {
     /* backgrounds and blending are overridden here, so the mask would show as a second copy */
@@ -552,9 +513,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .postrow__dek { font: 400 13px/1.75 var(--mono); color: var(--ink-soft); }
 .postrow__go { font: 500 10px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--mute); white-space: nowrap; transition: color .3s ease, transform .35s ease; }
 .postrow:hover .postrow__go { color: var(--ink); transform: translateX(5px); }
-
-/* the label has a space in it, and the nav must never wrap */
-.navlink--origin { white-space: nowrap; }
 
 /* The site's pill buttons: easemize's glass button from 21st.dev, ported
    from its stylesheet as it ships. A clear pill with a blurred backdrop, a
@@ -608,13 +566,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* Phone sizes, declared after the button's own rules so they win. */
 @media (max-width: 720px) {
     .glass-button-wrap--nav .glass-button-text { min-height: 40px; padding: 0 14px; letter-spacing: .1em; }
-}
-/* The mark, both links and this pill need about 350px and a 360px phone has
-   316 inside its gutters: the label wrapped onto two lines and the links ran
-   into the mark. The origin story is the first thing under the hero on the
-   home page, so its link is the one a narrow phone gives up. */
-@media (max-width: 480px) {
-    .navlink--origin { display: none; }
 }
 .footer__blog { font: 400 12px/1.6 var(--mono); color: var(--mute); }
 

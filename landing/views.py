@@ -83,7 +83,8 @@ def book(request):
 
 
 def where_it_started(request):
-    return render(request, "landing/origin.html", {"asset_v": settings.DEFEX_ASSET_VERSION})
+    """The origin page is gone. It was live and indexed, so it redirects."""
+    return redirect("/", permanent=True)
 
 
 # Blog. One registry, so the index, the sitemap and the article page cannot
@@ -142,7 +143,6 @@ def blog_post(request, slug):
 # out of sync with urls.py, and so Vercel serves them from the same function.
 SITEMAP_PAGES = (
     ("home", "1.0", "weekly"),
-    ("where_it_started", "0.7", "monthly"),
     ("careers", "0.8", "weekly"),
     ("blog", "0.8", "weekly"),
 )
