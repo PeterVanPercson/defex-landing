@@ -21,10 +21,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
       - name: Install site and browser
         run: |
           pip install -r requirements.txt
-          npm install -g agent-browser
+          npm install -g agent-browser@0.38.1
           agent-browser install --with-deps
       - name: Verify company page at desktop and mobile sizes
         run: |
@@ -46,12 +49,6 @@ jobs:
           agent-browser eval 'if (document.documentElement.scrollWidth > innerWidth) throw new Error("Mobile horizontal overflow"); "mobile: pass"' | tee browser-artifacts/mobile-check.txt
           agent-browser screenshot browser-artifacts/company-mobile.png --full
           agent-browser errors >browser-artifacts/browser-errors.txt
-      - name: Package public source for independent review
-        if: always()
-        run: |
-          mkdir -p browser-artifacts/wheels
-          pip download -r requirements.txt -d browser-artifacts/wheels
-          git archive --format=tar.gz HEAD >browser-artifacts/public-source.tar.gz
       - uses: actions/upload-artifact@v4
         if: always()
         with:

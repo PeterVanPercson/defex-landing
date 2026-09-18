@@ -1,5 +1,6 @@
 """Public company facts and canonical crawl surfaces. No private fundraising data."""
 import json
+import os
 from datetime import date
 from xml.etree.ElementTree import Element, SubElement, tostring
 
@@ -31,7 +32,7 @@ PUBLIC_COMPANY = {
     },
     "founders": [
         {"name": "Husan Mavlonov", "role": "Co-founder and CEO", "id": "https://husanmavlonov.com/#person", "url": "https://husanmavlonov.com/", "bio": "Hardware researcher with more than three years in electronics manufacturing and batteries, with factory operations experience across Uzbekistan, Turkiye, China and the United States."},
-        {"name": "Hasan Mavlonov", "role": "Co-founder and CTO", "id": CANONICAL_ORIGIN + "/company/#hasan-mavlonov", "bio": "Built an AI question-generation pipeline for a government education platform with more than 60,000 registered students. Leads Defex's robot software and hardware integration."},
+        {"name": "Hasan Mavlonov", "role": "Co-founder and CTO", "id": CANONICAL_ORIGIN + "/company/#hasan-mavlonov", "bio": "Built an AI question-generation pipeline for a government education platform with more than 60,000 students. Leads Defex's robot software and hardware integration."},
     ],
     "contact": "husan@defexrobotics.com",
     "links": {
@@ -79,6 +80,9 @@ def company(request):
 def company_json(request):
     response = JsonResponse(PUBLIC_COMPANY, json_dumps_params={"indent": 2})
     response["X-Robots-Tag"] = "noindex"
+    revision = os.environ.get("VERCEL_GIT_COMMIT_SHA", "")
+    if revision:
+        response["X-Defex-Revision"] = revision
     response["Link"] = '<' + CANONICAL_ORIGIN + '/company/>; rel="canonical"'
     return response
 
@@ -87,7 +91,7 @@ def company_json(request):
 def robots(request):
     # Named crawler groups must repeat exclusions: they do not inherit the '*'
     # group. Existing public-page access, including training policy, is unchanged.
-    rules = "Allow: /\nDisallow: /contact/\nDisallow: /careers/apply/\nDisallow: /ping/\nDisallow: /admin/\n"
+    rules = "Disallow: /contact/\nDisallow: /careers/apply/\nDisallow: /ping/\nDisallow: /admin/\nAllow: /\n"
     agents = ("*", "Googlebot", "Bingbot", "YandexBot", "OAI-SearchBot", "ChatGPT-User")
     body = "\n".join("User-agent: " + agent + "\n" + rules for agent in agents)
     body += "\nSitemap: " + CANONICAL_ORIGIN + "/sitemap.xml\n"

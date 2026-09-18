@@ -1,0 +1,28 @@
+name: notify-search-engines
+
+on:
+  workflow_run:
+    workflows: [smoke]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indexnow-production
+  cancel-in-progress: true
+
+jobs:
+  notify:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Wait for matching production deployment and notify IndexNow
+        run: python scripts/indexnow.py --submit --wait-seconds 420 --expected-sha "${{ github.event.workflow_run.head_sha }}"
