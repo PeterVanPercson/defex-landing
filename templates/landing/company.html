@@ -46,6 +46,7 @@
         <p>Identical twin brothers, building together in San Francisco.</p>
 
         <h2 id="contact-company">Get in touch.</h2>
+        <p>We are raising a pre-seed round. <a class="link" href="{% url 'investors' %}">Investors, start here</a>.</p>
         <p>For factory applications, investment enquiries and press: <a class="link" href="mailto:{{ company.contact }}">{{ company.contact }}</a>.</p>
         <p><a class="link" href="{% url 'company_json' %}">Public company facts, as JSON</a> &middot; <a class="link" href="{% url 'blog_feed' %}">Subscribe to the engineering feed</a>.</p>
     </article>
@@ -57,7 +58,7 @@
         <span>defex<span class="dot">.</span></span>
     </a>
     <span class="footer__fine">&copy; {% now "Y" %} Defex. All rights reserved.</span>
-    <a class="footer__blog link" href="{% url 'blog' %}">Blog</a>
+    <span class="footer__links"><a class="footer__blog link" href="{% url 'blog' %}">Blog</a> <a class="footer__company link" href="{% url 'investors' %}">Investors</a></span>
     <span class="footer__line">San Francisco, CA</span>
 </footer>
 {% endblock %}

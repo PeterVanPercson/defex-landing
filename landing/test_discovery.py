@@ -125,3 +125,15 @@ class DiscoverabilityTests(SimpleTestCase):
         for url in ("/company/", "/careers/", "/blog/the-cost-of-the-next-attempt/", "/blog/feed.xml"):
             self.assertIn(CANONICAL_ORIGIN + url, body)
         self.assertNotIn("defex.app/", body)
+
+    def test_investors_page_invites_email_and_is_discoverable(self):
+        page = self.get_page("/investors/")
+        self.assertIn("$1.5M", page)
+        self.assertIn('href="mailto:husan@defexrobotics.com?subject=Defex%20pre-seed"', page)
+        self.assertIn(CANONICAL_ORIGIN + "/investors/", page)
+        for word in ("Domino", "Khosla", "valuation", "cap"):
+            self.assertNotIn(word, re.sub(r"<script.*?</script>|<[^>]+>", " ", page, flags=re.S), word)
+        for path in ("/", "/company/", "/careers/", "/blog/", "/blog/the-cost-of-the-next-attempt/"):
+            self.assertIn('href="/investors/"', self.get_page(path), path)
+        self.assertIn(CANONICAL_ORIGIN + "/investors/", self.get_page("/sitemap.xml"))
+        self.assertIn(CANONICAL_ORIGIN + "/investors/", self.get_page("/llms.txt"))

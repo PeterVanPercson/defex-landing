@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Investors | Defex Robotics{% endblock %}
+{% block description %}Defex is raising a $1.5M pre-seed to build self-teaching assembly robots for manufacturing. 21 factories on the paid waitlist. Write to husan@defexrobotics.com for the deck.{% endblock %}
+{% block page_name %}Investors | Defex Robotics{% endblock %}
+{% block theme_color %}#F3EFE8{% endblock %}
+{% block color_scheme %}light{% endblock %}
+{% block og_title %}Defex is raising a $1.5M pre-seed{% endblock %}
+{% block og_description %}Self-teaching assembly robots for manufacturing. 21 factories paid to be first. Write to us for the deck.{% endblock %}
+{% block twitter_title %}Defex is raising a $1.5M pre-seed{% endblock %}
+{% block twitter_description %}Self-teaching assembly robots for manufacturing. 21 factories paid to be first. Write to us for the deck.{% endblock %}
+
+{% block content %}
+<a class="skip" href="#investors">Skip to investor information</a>
+{% include "landing/_topbar.html" with page='investors' %}
+
+<main class="post" id="investors">
+    <header class="post__head">
+        <p class="eyebrow">Defex Robotics &middot; Pre-seed</p>
+        <h1 class="post__title engraved">We are raising $1.5M<br>to teach robots assembly.</h1>
+        <p class="post__meta">Round open &middot; updated <time datetime="{{ updated|date:'Y-m-d' }}">{{ updated|date:"F j, Y" }}</time></p>
+    </header>
+    <article class="prose">
+        <p>Much of electronics assembly is still done by hand, because programming a robot for each new part variant costs more than the robot saves. We are building a cell that assembles a connector, tests the joint it just made, resets and tries again. Every attempt is scored by a physical test, so a new variant takes practice instead of weeks of hand programming.</p>
+        <p><a class="cta" href="mailto:{{ company.contact }}?subject=Defex%20pre-seed">Ask for the deck</a></p>
+
+        <h2 id="today">What is true today.</h2>
+        <p><strong>{{ company.paid_waitlist.factories }} factories on the paid waitlist</strong> as of {{ updated|date:"F j, Y" }}. They paid to hold a place before the first assembly cell ships.</p>
+        <p>Our vision inspection prototype is built and has run on a live camera. The assembly cell is in development. <a class="link" href="/#origin">Watch the prototype</a>.</p>
+
+        <h2 id="round">What the round buys.</h2>
+        <p>Eighteen months, two engineers and three cells, aimed at one milestone: the cell running attempt, test and reset unattended, and a learned skill beating a scripted baseline on fresh parts. That is the result the next round is priced on.</p>
+        <p>How we think about it, in our own words: <a class="link" href="{% url 'blog_post' 'the-cost-of-the-next-attempt' %}">The Cost of the Next Attempt</a>.</p>
+
+        <h2 id="team">Who you would back.</h2>
+        <p><strong>Husan Mavlonov, {{ company.founders.0.role }}.</strong> {{ company.founders.0.bio }}</p>
+        <p><strong>Hasan Mavlonov, {{ company.founders.1.role }}.</strong> {{ company.founders.1.bio }}</p>
+        <p>Identical twins, building together in San Francisco. <a class="link" href="{% url 'company' %}">Company facts</a>.</p>
+
+        <h2 id="write">Write to us.</h2>
+        <p>Angels, funds and scouts: email <a class="link" href="mailto:{{ company.contact }}?subject=Defex%20pre-seed">{{ company.contact }}</a> and we will send the deck and a short video of the prototype. You will hear back from Husan directly.</p>
+        <p><a class="cta" href="mailto:{{ company.contact }}?subject=Defex%20pre-seed">Email Husan</a></p>
+    </article>
+</main>
+
+<footer class="footer">
+    <a href="/" class="brand brand--small" aria-label="defex home">
+        <svg viewBox="0 0 20 64" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="currentColor"/><circle cx="10" cy="32" r="7" fill="#FF5A1F"/><circle cx="10" cy="54" r="7" fill="currentColor"/></svg>
+        <span>defex<span class="dot">.</span></span>
+    </a>
+    <span class="footer__fine">&copy; {% now "Y" %} Defex. All rights reserved.</span>
+    <span class="footer__links"><a class="footer__blog link" href="{% url 'blog' %}">Blog</a> <a class="footer__company link" href="{% url 'company' %}">Company</a> <a class="footer__company link" href="{% url 'investors' %}">Investors</a></span>
+    <span class="footer__line">San Francisco, CA</span>
+</footer>
+{% endblock %}

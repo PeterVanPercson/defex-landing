@@ -77,6 +77,11 @@ def company(request):
 
 
 @require_safe
+def investors(request):
+    return render(request, "landing/investors.html", {"company": PUBLIC_COMPANY, "updated": COMPANY_UPDATED})
+
+
+@require_safe
 def company_json(request):
     response = JsonResponse(PUBLIC_COMPANY, json_dumps_params={"indent": 2})
     response["X-Robots-Tag"] = "noindex"
@@ -101,6 +106,7 @@ def llms_txt(request):
         "## Company",
         "- [Company facts](" + PUBLIC_COMPANY["links"]["company"] + "): product stage, paid waitlist, founders, contact",
         "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robots do and the inspection prototype",
+        "- [Investors](" + CANONICAL_ORIGIN + reverse("investors") + "): the pre-seed round and how to reach us",
         "- [Careers](" + CANONICAL_ORIGIN + reverse("careers") + "): open roles", "",
         "## Writing",
     ]
@@ -131,7 +137,8 @@ def sitemap(request):
 
     # Do not manufacture lastmod=date.today(). Omit unknown modification dates.
     pages = [(reverse("home"), None), (reverse("careers"), None),
-             (reverse("blog"), None), (reverse("company"), COMPANY_UPDATED)]
+             (reverse("blog"), None), (reverse("company"), COMPANY_UPDATED),
+             (reverse("investors"), COMPANY_UPDATED)]
     for post in POSTS:
         path = reverse("blog_post", kwargs={"slug": post["slug"]})
         canonical = post.get("canonical_url", CANONICAL_ORIGIN + path)
