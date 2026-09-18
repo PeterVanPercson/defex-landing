@@ -1,10 +1,15 @@
 from django.urls import path
 
+from .discovery import company, company_json, robots, sitemap
 from .feeds import BlogFeed
-from .views import apply, blog, blog_post, book, careers, contact, home, ping, robots, sitemap, where_it_started
+from .indexing import indexnow_key
+from .views import apply, blog, blog_post, book, careers, contact, home, ping, where_it_started
 
 urlpatterns = [
     path('', home, name='home'),
+    path('company/', company, name='company'),
+    path('company.json', company_json, name='company_json'),
+    path('indexnow-key.txt', indexnow_key, name='indexnow_key'),
     path('where-it-started/', where_it_started, name='where_it_started'),
     path('book/', book, name='book'),
     path('careers/', careers, name='careers'),

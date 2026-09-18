@@ -268,7 +268,7 @@ class SiteTests(SimpleTestCase):
         feed = self.client.get("/blog/feed.xml")
         self.assertEqual(feed.status_code, 200)
         self.assertIn("xml", feed["Content-Type"])
-        self.assertIn("http://testserver/blog/the-cost-of-the-next-attempt/", feed.content.decode())
+        self.assertIn("https://defexrobotics.com/blog/the-cost-of-the-next-attempt/", feed.content.decode())
         self.assertIn("Husan Mavlonov", feed.content.decode())
         self.assertContains(post, 'type="application/rss+xml"')
         # no chart before the first sentence, and no embossed headings in the article
@@ -308,7 +308,8 @@ class SiteTests(SimpleTestCase):
             page = self.client.get(path).content.decode()
             header = page.split("<header", 1)[1].split("</header>", 1)[0]
             self.assertNotIn('href="/blog/"', header, path)
-            self.assertIn('class="footer__blog link" href="/blog/"', page, path)
+            footer_path = "/company/" if path == "/blog/" else "/blog/"
+            self.assertIn(f'class="footer__blog link" href="{footer_path}"', page, path)
         home = self.client.get("/").content.decode()
         self.assertIn('class="glass-button-wrap" href="/blog/"', home)
         # the hero carries one button, the blog; the product's way in is the
@@ -322,8 +323,8 @@ class SiteTests(SimpleTestCase):
         header = body.split("<header", 1)[1].split("</header>", 1)[0]
         self.assertIn('href="/#contact"', header)
         sitemap = self.client.get("/sitemap.xml").content.decode()
-        self.assertIn("<loc>http://testserver/blog/</loc>", sitemap)
-        self.assertIn("<loc>http://testserver/blog/the-cost-of-the-next-attempt/</loc>", sitemap)
+        self.assertIn("<loc>https://defexrobotics.com/blog/</loc>", sitemap)
+        self.assertIn("<loc>https://defexrobotics.com/blog/the-cost-of-the-next-attempt/</loc>", sitemap)
         self.assertEqual(self.client.get("/static/js/post.js").status_code, 200)
 
     def test_inference_article(self):
@@ -394,14 +395,14 @@ class SiteTests(SimpleTestCase):
         robots = self.client.get("/robots.txt")
         self.assertEqual(robots.status_code, 200)
         self.assertIn("text/plain", robots["Content-Type"])
-        self.assertIn("Sitemap: http://testserver/sitemap.xml", robots.content.decode())
+        self.assertIn("Sitemap: https://defexrobotics.com/sitemap.xml", robots.content.decode())
 
         sitemap = self.client.get("/sitemap.xml")
         self.assertEqual(sitemap.status_code, 200)
         self.assertIn("xml", sitemap["Content-Type"])
         body = sitemap.content.decode()
         for path in ("/", "/careers/"):
-            self.assertIn(f"<loc>http://testserver{path}</loc>", body)
+            self.assertIn(f"<loc>https://defexrobotics.com{path}</loc>", body)
 
         # the demo page was unreachable from the site for weeks; keep it linked
         home = self.client.get("/").content.decode()

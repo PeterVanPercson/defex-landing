@@ -4,28 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>{% block title %}defex — Self-teaching robots for manufacturing.{% endblock %}</title>
-    <meta name="keywords" content="{% block keywords %}self-teaching robots, robotic connector assembly, robot insertion, continuity testing, force verification, assembly setup reduction, factory workstation automation, manufacturing automation, defex{% endblock %}">
-    <meta name="description" content="{% block description %}Defex builds assembly robots that learn from physical tests. The robot attempts a connector assembly, a test scores the joint, and a reset starts the next try.{% endblock %}">
+    <title>{% block title %}Defex Robotics | Self-teaching robots for manufacturing{% endblock %}</title>
+    <meta name="description" content="{% block description %}Defex is developing self-teaching assembly robots for manufacturing, starting with connector assembly. Meet the founders and explore our work.{% endblock %}">
     <meta name="google-site-verification" content="dgatfCwRWASvUL2_glDXe0rc2x8Cnxlu_Sn27S1Y9ck">
-    <link rel="canonical" href="{% block canonical %}https://defexrobotics.com/{% endblock %}">
+    <link rel="canonical" href="{% block canonical %}{{ canonical_url }}{% endblock %}">
     <link rel="alternate" type="application/rss+xml" title="Defex blog" href="https://defexrobotics.com/blog/feed.xml">
     <meta name="theme-color" content="{% block theme_color %}#090F15{% endblock %}">
     <meta name="color-scheme" content="{% block color_scheme %}dark{% endblock %}">
 
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
-    <meta property="og:site_name" content="defex">
-    <meta property="og:title" content="{% block og_title %}defex — Self-teaching robots for manufacturing.{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}Defex builds assembly robots that learn from physical tests. The robot attempts a connector assembly, a test scores the joint, and a reset starts the next try.{% endblock %}">
-    <meta property="og:url" content="{% block og_url %}https://defexrobotics.com/{% endblock %}">
+    <meta property="og:site_name" content="Defex Robotics">
+    <meta property="og:title" content="{% block og_title %}Defex Robotics | Self-teaching robots for manufacturing{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Defex is developing self-teaching assembly robots for manufacturing, starting with connector assembly.{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ canonical_url }}{% endblock %}">
     <meta property="og:image" content="https://defexrobotics.com{% static 'img/og.jpg' %}?v={{ asset_v }}">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Defex — self-teaching robots for manufacturing">
+    <meta property="og:image:alt" content="Defex Robotics | Self-teaching robots for manufacturing">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{% block twitter_title %}defex — Self-teaching robots for manufacturing.{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}Defex builds assembly robots that learn from physical tests. The robot attempts a connector assembly, a test scores the joint, and a reset starts the next try.{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}Defex Robotics | Self-teaching robots for manufacturing{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Defex is developing self-teaching assembly robots for manufacturing, starting with connector assembly.{% endblock %}">
     <meta name="twitter:image" content="https://defexrobotics.com{% static 'img/og.jpg' %}?v={{ asset_v }}">
 
     <link rel="icon" type="image/svg+xml" href="{% static 'img/defex-mark.svg' %}">
@@ -33,75 +32,17 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon-16.png' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/apple-touch-icon.png' %}">
 
-    <!-- One graph, so Google resolves defex and its founder as linked entities.
-         husanmavlonov.com already points its Person node at defexrobotics.com/#org; this
-         is the other half of that link. knowsAbout carries the search terms
-         structurally, which is what actually gets read, rather than stuffing
-         them into visible copy. -->
+    <script type="application/ld+json">{{ organization_jsonld|safe }}</script>
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": "Organization",
-          "@id": "https://defexrobotics.com/#org",
-          "name": "defex",
-          "alternateName": ["Defex", "defex.app", "Defex AI", "Дефекс"],
-          "url": "https://defexrobotics.com/",
-          "logo": {"@type": "ImageObject", "url": "https://defexrobotics.com{% static 'img/apple-touch-icon.png' %}", "width": 180, "height": 180},
-          "image": "https://defexrobotics.com{% static 'img/og.jpg' %}?v={{ asset_v }}",
-          "description": "Defex builds self-teaching assembly robots for manufacturing. The robot practices an assembly, a physical test scores the joint it just made, and a reset prepares the next attempt. First workstation: connector assembly.",
-          "slogan": "Self-teaching robots for manufacturing.",
-          "email": "husan@defexrobotics.com",
-          "foundingDate": "2025",
-          "founder": {
-            "@type": "Person",
-            "@id": "https://husanmavlonov.com/#person",
-            "name": "Husan Mavlonov",
-            "alternateName": ["Хусан Мавлонов", "Xusan Mavlonov", "Husan Mavlonоv"],
-            "url": "https://husanmavlonov.com/"
-          },
-          "address": {"@type": "PostalAddress", "addressLocality": "San Francisco", "addressRegion": "CA", "addressCountry": "US"},
-          "areaServed": ["US", "UZ", "CN", "KG", "KZ"],
-          "knowsAbout": [
-            "self-teaching robots",
-            "robotic connector assembly",
-            "robot insertion and alignment",
-            "electrical continuity testing",
-            "force and mechanical engagement testing",
-            "physical practice learning",
-            "automated reset and retry",
-            "assembly setup reduction",
-            "factory workstation automation",
-            "industrial robotics",
-            "manufacturing automation",
-            "robot skill learning"
-          ],
-          "sameAs": [
-            "https://husanmavlonov.com/",
-            "https://www.linkedin.com/in/husan-mavlonov",
-            "https://github.com/PeterVanPercson",
-            "https://x.com/MavlonovHusan"
-          ]
-        },
-        {
-          "@type": "WebSite",
-          "@id": "https://defexrobotics.com/#website",
-          "url": "https://defexrobotics.com/",
-          "name": "defex",
-          "inLanguage": "en",
-          "publisher": {"@id": "https://defexrobotics.com/#org"}
-        },
-        {
-          "@type": "WebPage",
-          "@id": "{% block page_id %}https://defexrobotics.com/{% endblock %}#webpage",
-          "url": "{% block page_url %}https://defexrobotics.com/{% endblock %}",
-          "name": "{% block page_name %}defex — Self-teaching robots for manufacturing.{% endblock %}",
-          "isPartOf": {"@id": "https://defexrobotics.com/#website"},
-          "about": {"@id": "https://defexrobotics.com/#org"},
-          "inLanguage": "en"
-        }
-      ]
+      "@type": "WebPage",
+      "@id": "{% block page_id %}{{ canonical_url|escapejs }}{% endblock %}#webpage",
+      "url": "{% block page_url %}{{ canonical_url|escapejs }}{% endblock %}",
+      "name": "{% block page_name %}Defex Robotics | Self-teaching robots for manufacturing{% endblock %}",
+      "isPartOf": {"@id": "https://defexrobotics.com/#website"},
+      "about": {"@id": "https://defexrobotics.com/#org"},
+      "inLanguage": "en"
     }
     </script>
 
