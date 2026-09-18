@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .discovery import company, company_json, robots, sitemap
+from .discovery import company, company_json, llms_txt, robots, sitemap
 from .feeds import BlogFeed
 from .indexing import indexnow_key
 from .views import apply, blog, blog_post, book, careers, contact, home, ping, where_it_started
@@ -19,6 +19,7 @@ urlpatterns = [
     path('careers/apply/', apply, name='apply'),
     path('contact/', contact, name='contact'),
     path('ping/', ping, name='ping'),
+    path('llms.txt', llms_txt, name='llms_txt'),
     path('robots.txt', robots, name='robots'),
     path('sitemap.xml', sitemap, name='sitemap'),
 ]

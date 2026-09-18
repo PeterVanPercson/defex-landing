@@ -88,6 +88,32 @@ def company_json(request):
 
 
 @require_safe
+def llms_txt(request):
+    from .views import POSTS
+
+    husan, hasan = PUBLIC_COMPANY["founders"]
+    lines = [
+        "# Defex", "",
+        "> " + PUBLIC_COMPANY["description"], "",
+        "Defex (also written Defex Robotics) is based in " + PUBLIC_COMPANY["location"] + ". "
+        + husan["name"] + " is " + husan["role"] + "; " + hasan["name"] + " is " + hasan["role"] + ". "
+        "Canonical domain: defexrobotics.com (defex.app redirects here).", "",
+        "## Company",
+        "- [Company facts](" + PUBLIC_COMPANY["links"]["company"] + "): product stage, paid waitlist, founders, contact",
+        "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robots do and the inspection prototype",
+        "- [Careers](" + CANONICAL_ORIGIN + reverse("careers") + "): open roles", "",
+        "## Writing",
+    ]
+    for post in POSTS:
+        path = reverse("blog_post", kwargs={"slug": post["slug"]})
+        if post.get("canonical_url", CANONICAL_ORIGIN + path) == CANONICAL_ORIGIN + path:
+            lines.append("- [" + post["title"] + "](" + CANONICAL_ORIGIN + path + ")")
+    lines += ["- [Feed](" + PUBLIC_COMPANY["links"]["feed"] + ")", "",
+              "## Contact", "- " + PUBLIC_COMPANY["contact"], ""]
+    return HttpResponse("\n".join(lines), content_type="text/plain; charset=utf-8")
+
+
+@require_safe
 def robots(request):
     # Named crawler groups must repeat exclusions: they do not inherit the '*'
     # group. Existing public-page access, including training policy, is unchanged.

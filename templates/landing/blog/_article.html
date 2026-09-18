@@ -3,13 +3,13 @@
 {# The shell around every post: metadata, the section strip, the head, the
    share row and the way out. A post template fills `sections` and `article`. #}
 
-{% block title %}{{ post.title }} · defex{% endblock %}
+{% block title %}{{ post.title }} | Defex Robotics{% endblock %}
 {% block description %}{{ post.dek }}{% endblock %}
 {% block keywords %}{{ post.keywords }}{% endblock %}
 {% block canonical %}{{ post.canonical_url|default:post.url }}{% endblock %}
 {% block page_id %}{{ post.url }}{% endblock %}
 {% block page_url %}{{ post.url }}{% endblock %}
-{% block page_name %}{{ post.title }} · defex{% endblock %}
+{% block page_name %}{{ post.title }} | Defex Robotics{% endblock %}
 {% block og_type %}article{% endblock %}
 {% block theme_color %}#F3EFE8{% endblock %}
 {% block color_scheme %}light{% endblock %}
@@ -95,7 +95,7 @@
         <span>defex<span class="dot">.</span></span>
     </a>
     <span class="footer__fine">&copy; {% now "Y" %} Defex. All rights reserved.</span>
-    <a class="footer__blog link" href="{% url 'blog' %}">Blog</a>
+    <span class="footer__links"><a class="footer__blog link" href="{% url 'blog' %}">Blog</a> <a class="footer__company link" href="{% url 'company' %}">Company</a></span>
     <span class="footer__line">San Francisco, CA</span>
 </footer>
 {% endblock %}

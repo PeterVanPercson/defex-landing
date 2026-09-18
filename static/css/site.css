@@ -603,7 +603,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 @media (max-width: 720px) {
     .glass-button-wrap--nav .glass-button-text { min-height: 40px; padding: 0 14px; letter-spacing: .1em; }
 }
-.footer__blog { font: 400 12px/1.6 var(--mono); color: var(--mute); }
+.footer__blog, .footer__company { font: 400 12px/1.6 var(--mono); color: var(--mute); }
+.footer__links { display: flex; gap: 20px; }
 
 /* Reading progress: a hairline of the accent along the top edge, above the
    nav. post.js sets --progress on the bar; without JS it stays at zero. */

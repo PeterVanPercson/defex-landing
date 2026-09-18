@@ -1,20 +1,55 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Careers · defex{% endblock %}
+{% block title %}Careers | Defex Robotics{% endblock %}
 {% block description %}Defex is hiring a Content Producer to turn bench tests and assembly cell runs into work people finish watching.{% endblock %}
 {% block canonical %}https://defexrobotics.com/careers/{% endblock %}
 {% block page_id %}https://defexrobotics.com/careers/{% endblock %}
 {% block page_url %}https://defexrobotics.com/careers/{% endblock %}
-{% block page_name %}Careers · defex{% endblock %}
+{% block page_name %}Careers | Defex Robotics{% endblock %}
 {% block theme_color %}#F3EFE8{% endblock %}
 {% block color_scheme %}light{% endblock %}
 {% block keywords %}defex careers, robotics content producer job, manufacturing robotics jobs, hardware video producer, San Francisco robotics hiring{% endblock %}
-{% block og_title %}Careers · defex{% endblock %}
+{% block og_title %}Careers | Defex Robotics{% endblock %}
 {% block og_description %}Defex is hiring a Content Producer to turn bench tests and assembly cell runs into work people finish watching.{% endblock %}
 {% block og_url %}https://defexrobotics.com/careers/{% endblock %}
-{% block twitter_title %}Careers · defex{% endblock %}
+{% block twitter_title %}Careers | Defex Robotics{% endblock %}
 {% block twitter_description %}Defex is hiring a Content Producer to turn bench tests and assembly cell runs into work people finish watching.{% endblock %}
+
+{% block extra_head %}
+<!-- Google for Jobs reads this; it mirrors the visible role below. Update both together. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "JobPosting",
+  "@id": "https://defexrobotics.com/careers/#content-producer",
+  "url": "https://defexrobotics.com/careers/#content-producer",
+  "title": "Content Producer",
+  "description": "<p>Join a small team building a robot cell that assembles a part and then proves the joint held. You will be in the room for the bench runs and the failures, decide what is worth showing, and shape how factories, candidates and investors first meet us.<\/p><p><strong>In this role you will<\/strong><\/p><ul><li>Film the bench runs, the cell and the parts that failed, and cut them into something people finish.<\/li><li>Sit with the engineering long enough to describe it accurately, including when the result is a no.<\/li><li>Run the publishing calendar across LinkedIn, X, YouTube and Instagram.<\/li><li>Build the launch around each milestone: first bench result, first install, first paid pilot.<\/li><li>Get a written post, a short cut and stills out of every shoot day.<\/li><li>Keep the footage organized so the second year is faster than the first.<\/li><\/ul><p><strong>What we hope you'll bring<\/strong><\/p><ul><li>Work you personally shot and cut, not work you commissioned.<\/li><li>The whole pipeline solo: storyboard, light, shoot, edit, publish.<\/li><li>Writing an engineer would not need to correct.<\/li><li>Ease around machines, prototypes and people who are mid-problem.<\/li><li>A read on which hardware demos look real and which look staged.<\/li><\/ul><p><strong>Bonus points if you have<\/strong><\/p><ul><li>Shot inside a factory, a lab or a machine shop.<\/li><li>Worked in Resolve, Premiere, After Effects, Blender or motion graphics.<\/li><li>Grown a channel and know how a format changes per platform.<\/li><\/ul>",
+  "datePosted": "2026-09-09",
+  "employmentType": "FULL_TIME",
+  "directApply": true,
+  "industry": "Robotics",
+  "occupationalCategory": "27-4032.00 Film and Video Editors",
+  "hiringOrganization": {
+    "@type": "Organization",
+    "@id": "https://defexrobotics.com/#org",
+    "name": "Defex",
+    "sameAs": "https://defexrobotics.com/",
+    "logo": "https://defexrobotics.com{% static 'img/apple-touch-icon.png' %}"
+  },
+  "jobLocation": {
+    "@type": "Place",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "San Francisco",
+      "addressRegion": "CA",
+      "addressCountry": "US"
+    }
+  }
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <a class="skip" href="#roles">Skip to the roles</a>
@@ -121,7 +156,7 @@
         <span>defex<span class="dot">.</span></span>
     </a>
     <span class="footer__fine">&copy; {% now "Y" %} Defex. All rights reserved.</span>
-    <a class="footer__blog link" href="{% url 'blog' %}">Blog</a>
+    <span class="footer__links"><a class="footer__blog link" href="{% url 'blog' %}">Blog</a> <a class="footer__company link" href="{% url 'company' %}">Company</a></span>
     <span class="footer__line">San Francisco, CA</span>
 </footer>
 {% endblock %}

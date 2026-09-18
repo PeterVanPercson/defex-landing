@@ -104,3 +104,24 @@ class DiscoverabilityTests(SimpleTestCase):
     def test_read_only_discovery_routes_reject_post(self):
         for path in ("/company/", "/company.json", "/robots.txt", "/sitemap.xml"):
             self.assertEqual(self.client.post(path).status_code, 405)
+
+    def test_husan_is_cofounder_everywhere(self):
+        for path in ("/", "/company/", "/careers/", "/blog/", "/blog/the-cost-of-the-next-attempt/", "/llms.txt"):
+            page = self.get_page(path)
+            self.assertIsNone(re.search(r"(?<![Cc]o-)(?<![Cc]o)\b[Ff]ounder (of|and|&|profile)", page), path)
+        self.assertIn("Co-founder and CEO of Defex", self.get_page("/blog/the-cost-of-the-next-attempt/"))
+
+    def test_careers_has_a_google_jobs_posting(self):
+        jobs = [node for node in self.graphs(self.get_page("/careers/")) if node.get("@type") == "JobPosting"]
+        self.assertEqual(len(jobs), 1)
+        job = jobs[0]
+        for key in ("title", "description", "datePosted", "hiringOrganization", "jobLocation", "employmentType"):
+            self.assertTrue(job.get(key), key)
+        self.assertEqual(job["hiringOrganization"]["@id"], CANONICAL_ORIGIN + "/#org")
+
+    def test_llms_txt_lists_canonical_pages(self):
+        body = self.get_page("/llms.txt")
+        self.assertTrue(body.startswith("# Defex\n"))
+        for url in ("/company/", "/careers/", "/blog/the-cost-of-the-next-attempt/", "/blog/feed.xml"):
+            self.assertIn(CANONICAL_ORIGIN + url, body)
+        self.assertNotIn("defex.app/", body)
