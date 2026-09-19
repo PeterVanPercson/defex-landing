@@ -208,34 +208,32 @@ class SiteTests(SimpleTestCase):
         self.assertNotContains(home, "robot software and hardware integration")
 
     def test_why_us_page(self):
-        """The case for the approach, on its own page: the thesis, the three
-        mechanisms with their drawings, what exists today with a date, and the
-        ask. A1 is in development, so every drawing says it is a schematic and
-        the one number says it is a target."""
+        """The case for the robot, on its own dark page. It opens on WHY US
+        (the Glyph Portal), speaks in short plain words, never says
+        "assembly" or "A1", labels the render and the one target, and ends
+        on booking a call."""
         import re
         response = self.client.get("/why-us/")
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()
-        self.assertIn("<title>Why us | Defex Robotics</title>", body)
-        self.assertIn('id="why-title">Every part tested. Every failure, a <em>lesson</em>.</h1>', body)
-        for section in ("portal", "case", "problem", "check", "reset", "variant", "gate", "evidence", "founders", "talk"):
+        self.assertIn("<title>Why Defex | Robots that test every part they build</title>", body)
+        self.assertIn('data-word="WHY US"', body)
+        self.assertIn('id="why-title"><span class="wy-sr">Why us: </span>Robots that test every part', body)
+        for section in ("portal", "problem", "promise", "watch", "tests", "learns", "resets", "newpart", "proof", "faq", "founders", "talk"):
             self.assertIn(f'id="{section}"', body)
-        # the render is labelled as one, and the one number as a target
-        for claim in ("Concept render", "Target</span>The next part in half the engineering hours.",
-                      "21 factories paid to be first in line.", 'href="/#contact"'):
+        for claim in ("Concept render", "Target</span>", "factories paid to be first in line.",
+                      'href="/#contact"', "Book a call", "Robots are cheap."):
             self.assertIn(claim, body)
-        # no numbered steps, no claims that nobody else can do this, and
-        # Hasan's bio as Husan cut it on the home page
         text = re.sub(r"<[^>]+>", " ", re.sub(r"<(script|style)\b.*?</\1>", " ", body, flags=re.S))
-        self.assertIsNone(re.search(r"\b0\d\b", text), "a numbered step")
-        # it is the robot, not a model number
+        self.assertIsNone(re.search(r"assembl", text, re.I), "the page says assembly")
         self.assertNotIn("A1", text)
+        self.assertIsNone(re.search(r"\b0\d\b", text), "a numbered step")
         for gone in ("nobody else", "the only", "robot software and hardware integration"):
             self.assertNotIn(gone, text)
         # the portal keeps its licence notice; the clip and its stills stay small
         root = Path(settings.BASE_DIR)
         self.assertIn("Glyph Portal \u00a9 2026 Christian Katzmann. MIT.", (root / "static/js/portal.js").read_text())
-        for asset, cap in (("why/scene.mp4", 1024 * 1024), ("why/scene-first.webp", 80 * 1024), ("why/scene-final.webp", 80 * 1024)):
+        for asset, cap in (("why/story.mp4", 2 * 1024 * 1024), ("why/story-first.webp", 80 * 1024), ("why/story-lit.webp", 80 * 1024)):
             self.assertIn(asset, body)
             self.assertLessEqual((root / "static" / asset).stat().st_size, cap, asset)
         for script in ("js/portal.js", "js/why.js"):

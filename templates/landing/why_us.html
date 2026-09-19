@@ -1,354 +1,461 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Why us | Defex Robotics{% endblock %}
-{% block description %}Why Defex: robots that test every part they build and learn from every failure. Built for factories, starting with connector assembly.{% endblock %}
-{% block page_name %}Why us | Defex Robotics{% endblock %}
-{% block theme_color %}#050708{% endblock %}
-{% block og_title %}Why Defex: every part tested{% endblock %}
-{% block og_description %}Robots that test every part they build and learn from every failure. Built for factories, starting with connector assembly.{% endblock %}
-{% block twitter_title %}Why Defex: every part tested{% endblock %}
-{% block twitter_description %}Robots that test every part they build and learn from every failure. Built for factories.{% endblock %}
+{% block title %}Why Defex | Robots that test every part they build{% endblock %}
+{% block description %}Our robot tests every part it builds, learns from every failure and resets itself. Less setup, fewer people watching the line. 21 factories are in line.{% endblock %}
+{% block page_name %}Why Defex | Robots that test every part they build{% endblock %}
+{% block theme_color %}#050505{% endblock %}
+{% block og_title %}Why Defex: robots that test every part they build{% endblock %}
+{% block og_description %}It tests every part, learns from every miss and resets itself. A new part is not a new project. 21 factories are in line.{% endblock %}
+{% block twitter_title %}Why Defex: robots that test every part they build{% endblock %}
+{% block twitter_description %}It tests every part, learns from every miss and resets itself. 21 factories are in line.{% endblock %}
 
 {% block extra_head %}
-<!-- The portal's word, in the heading face at its heaviest. Only the three
-     letters it needs, so the file is a couple of kilobytes. -->
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@60,900&text=TEST&display=block" rel="stylesheet">
-<link rel="preload" as="image" href="{% static 'why/scene-first.webp' %}?v={{ asset_v }}">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..900&display=swap" rel="stylesheet">
 <noscript><style>.portal__fallback { display: grid; } .portal__hint { display: none; }</style></noscript>
 {% endblock %}
 
 {% block content %}
-<a class="skip" href="#case">Skip to the case</a>
+<a class="skip" href="#problem">Skip to the page</a>
 {% include "landing/_topbar.html" with page='why' %}
 
-<main>
-    <!-- The opening. A scroll-driven camera through live type: the word is a
-         window onto a concept render of the robot, and scrolling flies the camera into
-         one of its letters. The clip inside is scrubbed by the same scroll, so
-         the connector goes home and the tester lights as the camera clears the
-         ink. Hover a letter first to choose the way in. static/js/portal.js. -->
-    <section class="portal" id="portal" aria-labelledby="why-title" data-portal data-word="TEST" data-length="1.9">
+<main class="wy">
+    <!-- The opening. 21st.dev's Glyph Portal (static/js/portal.js): the words
+         WHY US are windows onto a yellow world of factory parts, and the
+         scroll flies the camera into one letter. Hover a letter first to
+         choose the way in. Inside, the problem is told over the parts. -->
+    <section class="portal" id="portal" aria-labelledby="why-title" data-portal data-word="WHY US" data-font='"Geist"' data-length="1.9">
         <div class="portal__probe" aria-hidden="true"></div>
         <div class="portal__pin">
-            <div class="portal__field" aria-hidden="true">
+            <div class="portal__field" aria-hidden="true" data-anim>
                 <div class="portal__stage">
-                    <video class="portal__scene" muted playsinline preload="none" disablepictureinpicture width="1920" height="1080"
-                           poster="{% static 'why/scene-first.webp' %}?v={{ asset_v }}"
-                           data-src="{% static 'why/scene.mp4' %}?v={{ asset_v }}"
-                           data-final="{% static 'why/scene-final.webp' %}?v={{ asset_v }}"></video>
+                    <svg class="parts" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                        <g class="parts__d" style="--depth: 1.2"><g class="parts__f" style="--t: 7s; --d: -1s">
+                            <g transform="translate(1060 180) rotate(-12)">
+                                <rect x="-110" y="-65" width="220" height="130" rx="24" fill="#0A0A0A"/>
+                                <rect x="-70" y="-26" width="28" height="52" rx="7" fill="#FFFFFF"/>
+                                <rect x="-14" y="-26" width="28" height="52" rx="7" fill="#FFFFFF"/>
+                                <rect x="42" y="-26" width="28" height="52" rx="7" fill="#FFFFFF"/>
+                            </g>
+                        </g></g>
+                        <g class="parts__d" style="--depth: .8"><g class="parts__f" style="--t: 9s; --d: -4s">
+                            <g transform="translate(1330 440) rotate(18)">
+                                <rect x="-20" y="50" width="16" height="48" rx="5" fill="#0A0A0A"/>
+                                <rect x="22" y="50" width="16" height="48" rx="5" fill="#0A0A0A"/>
+                                <rect x="-75" y="-55" width="150" height="110" rx="20" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="9"/>
+                                <rect x="-30" y="-72" width="60" height="22" rx="6" fill="#3D63FF"/>
+                            </g>
+                        </g></g>
+                        <g class="parts__d" style="--depth: 1"><g class="parts__spin">
+                            <g transform="translate(1240 790)">
+                                <g fill="#3D63FF">
+                                    <rect x="-16" y="-112" width="32" height="40" rx="6"/>
+                                    <rect x="-16" y="-112" width="32" height="40" rx="6" transform="rotate(36)"/>
+                                    <rect x="-16" y="-112" width="32" height="40" rx="6" transform="rotate(72)"/>
+                                    <rect x="-16" y="-112" width="32" height="40" rx="6" transform="rotate(108)"/>
+                                    <rect x="-16" y="-112" width="32" height="40" rx="6" transform="rotate(144)"/>
+                                    <rect x="-16" y="-112" width="32" height="40" rx="6" transform="rotate(180)"/>
+                                    <rect x="-16" y="-112" width="32" height="40" rx="6" transform="rotate(216)"/>
+                                    <rect x="-16" y="-112" width="32" height="40" rx="6" transform="rotate(252)"/>
+                                    <rect x="-16" y="-112" width="32" height="40" rx="6" transform="rotate(288)"/>
+                                    <rect x="-16" y="-112" width="32" height="40" rx="6" transform="rotate(324)"/>
+                                    <circle r="88"/>
+                                </g>
+                                <circle r="30" fill="#FFD42A"/>
+                                <circle r="30" fill="none" stroke="#0A0A0A" stroke-width="9"/>
+                            </g>
+                        </g></g>
+                        <g class="parts__d" style="--depth: 1.4"><g class="parts__f" style="--t: 8s; --d: -2s">
+                            <path transform="translate(1000 600) rotate(28)" d="M-120 0 l20 -34 l30 68 l30 -68 l30 68 l30 -68 l30 68 l30 -68 l20 34" fill="none" stroke="#0A0A0A" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+                        </g></g>
+                        <g class="parts__d" style="--depth: .6"><g class="parts__f" style="--t: 6s; --d: -3s">
+                            <g transform="translate(1470 170) rotate(40)">
+                                <circle r="48" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="9"/>
+                                <rect x="-30" y="-7" width="60" height="14" rx="4" fill="#0A0A0A"/>
+                            </g>
+                        </g></g>
+                        <g class="parts__d" style="--depth: .5">
+                            <path d="M900 1010 C 940 900, 1060 920, 1090 830 S 1070 700, 1120 660" fill="none" stroke="#0A0A0A" stroke-width="15" stroke-linecap="round"/>
+                        </g>
+                        <g class="parts__d" style="--depth: 1.3"><g class="parts__f" style="--t: 10s; --d: -6s">
+                            <g transform="translate(1480 620)">
+                                <circle r="64" fill="none" stroke="#FFFFFF" stroke-width="18"/>
+                                <path d="M-26 2 l18 18 l36 -38" fill="none" stroke="#0A0A0A" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+                            </g>
+                        </g></g>
+                        <g class="parts__d" style="--depth: .9"><g class="parts__f" style="--t: 8s; --d: -5s">
+                            <rect transform="translate(1300 64) rotate(24)" x="-95" y="-30" width="190" height="60" rx="30" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="9"/>
+                        </g></g>
+                        <g class="parts__d" style="--depth: 1.1"><g class="parts__f" style="--t: 9s; --d: -7s">
+                            <g transform="translate(930 330) rotate(-18)">
+                                <rect x="-70" y="-14" width="140" height="28" rx="8" fill="#0A0A0A"/>
+                                <rect x="-62" y="8" width="26" height="92" rx="13" fill="#3D63FF"/>
+                                <rect x="36" y="8" width="26" height="92" rx="13" fill="#3D63FF"/>
+                            </g>
+                        </g></g>
+                        <g class="parts__d" style="--depth: .7"><g class="parts__f" style="--t: 7s; --d: -2s">
+                            <path transform="translate(1080 930) rotate(-8)" d="M-60 30 V-20 a30 30 0 0 1 60 0 V10 h30" fill="none" stroke="#0A0A0A" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+                        </g></g>
+                        <g class="parts__d" style="--depth: 1.6">
+                            <rect x="1150" y="330" width="30" height="30" fill="#FFFFFF" stroke="#3D63FF" stroke-width="6"/>
+                            <rect x="1560" y="410" width="30" height="30" fill="#FFFFFF" stroke="#3D63FF" stroke-width="6"/>
+                            <rect x="300" y="860" width="30" height="30" fill="#FFFFFF" stroke="#3D63FF" stroke-width="6"/>
+                            <circle cx="210" cy="140" r="16" fill="#0A0A0A"/>
+                            <circle cx="120" cy="620" r="10" fill="#0A0A0A"/>
+                            <circle cx="430" cy="960" r="22" fill="none" stroke="#0A0A0A" stroke-width="8"/>
+                        </g>
+                        <g class="parts__d" style="--depth: 1.2"><g class="parts__f" style="--t: 11s; --d: -1s">
+                            <path transform="translate(1520 1000) rotate(12)" d="M0 -70 L64 44 H-64 Z" fill="#0A0A0A"/>
+                        </g></g>
+                    </svg>
                 </div>
             </div>
             <svg class="portal__art" aria-hidden="true" focusable="false">
                 <defs>
                     <clipPath id="portal-clip" clipPathUnits="userSpaceOnUse">
-                        <text class="portal__glyph" x="0" y="0">TEST</text>
+                        <text class="portal__glyph" x="0" y="0">WHY US</text>
                     </clipPath>
                 </defs>
                 <g class="portal__marks"><path class="portal__dims"/><path class="portal__cross"/></g>
             </svg>
-            <div class="portal__choices" role="radiogroup" aria-label="Choose the letter to enter through" inert>
-                <button type="button" role="radio" aria-checked="false" tabindex="-1" data-letter="0" aria-label="T, letter 1 of 4"></button>
-                <button type="button" role="radio" aria-checked="false" tabindex="-1" data-letter="1" aria-label="E, letter 2 of 4"></button>
-                <button type="button" role="radio" aria-checked="false" tabindex="-1" data-letter="2" aria-label="S, letter 3 of 4"></button>
-                <button type="button" role="radio" aria-checked="false" tabindex="-1" data-letter="3" aria-label="T, letter 4 of 4"></button>
+            <div class="portal__choices" role="radiogroup" aria-label="Choose the letter to fly into" inert>
+                <button type="button" role="radio" aria-checked="false" tabindex="-1" data-letter="0" aria-label="W"></button>
+                <button type="button" role="radio" aria-checked="false" tabindex="-1" data-letter="1" aria-label="H"></button>
+                <button type="button" role="radio" aria-checked="false" tabindex="-1" data-letter="2" aria-label="Y"></button>
+                <button type="button" role="radio" aria-checked="false" tabindex="-1" data-letter="4" aria-label="U"></button>
+                <button type="button" role="radio" aria-checked="false" tabindex="-1" data-letter="5" aria-label="S"></button>
             </div>
             <div class="portal__front">
-                <p class="portal__eyebrow">Why Defex</p>
-                <h1 class="portal__title" id="why-title">Every part tested. Every failure, a <em>lesson</em>.</h1>
+                <h1 class="portal__title" id="why-title"><span class="wy-sr">Why us: </span>Robots that test every part <span class="wy-hl">they build</span>.</h1>
             </div>
-            <span class="portal__fallback" aria-hidden="true">TEST</span>
+            <span class="portal__fallback" aria-hidden="true">WHY US</span>
             <div class="portal__caption">
-                <span class="portal__hint" aria-hidden="true">Scroll to enter</span>
-                <a class="portal__skip" href="#case">Skip the intro <span aria-hidden="true">&#8600;</span></a>
+                <span class="portal__hint" aria-hidden="true">Scroll to fly in</span>
+                <a class="portal__skip" href="#problem">Skip <span aria-hidden="true">&#8600;</span></a>
             </div>
-            <p class="portal__label" aria-hidden="true">Concept render</p>
         </div>
 
-        <!-- What the camera found, on a sheet laid over the scene. -->
-        <div class="portal__content sheet" id="case" tabindex="-1">
-            <div class="thesis">
-                <p class="thesis__say engraved">Robots that learn from every part they <em>build</em>.</p>
-                <div class="thesis__side">
-                    <p class="why-body">Our robot assembles the part, tests it, and gets better with every attempt. Fewer people babysitting the line. Less engineering every time the part changes.</p>
-                    <p class="why-status"><span class="why-status__dot" aria-hidden="true"></span>Starting with connector assembly</p>
-                    <div class="why-actions">
-                        <a class="glass-button-wrap" href="/#contact">
-                            <span class="glass-button-tilt">
-                                <span class="glass-button"><span class="glass-button-text">Test it on your part<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
-                                <span class="glass-button-shadow" aria-hidden="true"></span>
-                            </span>
-                        </a>
-                    </div>
+        <!-- Inside the letter: the problem, told over the parts. -->
+        <div class="portal__content" id="problem" tabindex="-1">
+            <p class="beat"><span>Robots are cheap.</span></p>
+            <p class="beat"><span>Setting them up is <span class="beat__not">not</span>.</span></p>
+            <p class="beat beat--small"><span>Every new part means weeks of engineers programming every move. So most factories still do it by hand.</span></p>
+        </div>
+    </section>
+
+    <!-- The turn. The arm is made of flat shapes and does the whole job on
+         a loop: picks a part, puts it in, the tester lights, it goes again.
+         Angles solved with two-link inverse kinematics, one pose per stop. -->
+    <section class="wy-sec wy-promise" id="promise" aria-labelledby="promise-title">
+        <div class="wy-promise__text">
+            <p class="wy-kicker" data-reveal>It doesn&rsquo;t have to be like that.</p>
+            <h2 class="wy-h wy-h--xl" id="promise-title" data-reveal>Our robot teaches <span class="wy-hl">itself</span>.</h2>
+            <p class="wy-lead" data-reveal>Show it the job. It practices, tests its own work and gets better every time. It keeps up when your parts change.</p>
+            <div class="wy-actions" data-reveal>
+                <a class="wy-btn" href="/#contact">Test it on your part <span aria-hidden="true">&rarr;</span></a>
+                <a class="wy-link" href="#watch">Watch it work <span aria-hidden="true">&darr;</span></a>
+            </div>
+        </div>
+        <figure class="arm" data-anim>
+            <svg class="arm__svg" viewBox="110 88 510 296" aria-hidden="true">
+                <path class="arm__floor" d="M120 360 H612"/>
+                <rect class="arm__tray" x="296" y="336" width="68" height="9" rx="4.5"/>
+                <g class="arm__traypart">
+                    <rect x="315" y="310" width="30" height="26" rx="5" class="arm__part"/>
+                </g>
+                <path class="arm__cable" d="M500 340 C 520 352, 524 330, 540 330"/>
+                <rect class="arm__socket" x="440" y="316" width="60" height="40" rx="7"/>
+                <rect class="arm__slot" x="459" y="316" width="6" height="12" rx="2"/>
+                <rect class="arm__slot" x="475" y="316" width="6" height="12" rx="2"/>
+                <g class="arm__seated">
+                    <rect x="455" y="290" width="30" height="26" rx="5" class="arm__part"/>
+                </g>
+                <circle class="arm__ring" cx="470" cy="318" r="58" pathLength="1"/>
+                <rect class="arm__tester" x="540" y="304" width="62" height="52" rx="10"/>
+                <circle class="arm__lamp" cx="571" cy="330" r="12"/>
+                <g class="arm__badge">
+                    <circle cx="571" cy="252" r="26"/>
+                    <path d="M559 252 l8 8 l16 -17"/>
+                </g>
+                <rect class="arm__base" x="150" y="326" width="80" height="34" rx="9"/>
+                <g class="arm__shoulder">
+                    <rect class="arm__upper" x="190" y="280" width="170" height="32" rx="16"/>
+                    <g class="arm__elbow">
+                        <rect class="arm__fore" x="360" y="283" width="150" height="26" rx="13"/>
+                        <circle class="arm__joint arm__joint--y" cx="360" cy="296" r="20"/>
+                        <circle class="arm__pin" cx="360" cy="296" r="6"/>
+                        <g class="arm__wrist">
+                            <g class="arm__held">
+                                <rect x="495" y="320" width="30" height="26" rx="5" class="arm__part"/>
+                                <rect x="502" y="346" width="4" height="8" rx="1" class="arm__lead"/>
+                                <rect x="514" y="346" width="4" height="8" rx="1" class="arm__lead"/>
+                            </g>
+                            <rect class="arm__finger arm__finger--l" x="486" y="310" width="9" height="36" rx="4.5"/>
+                            <rect class="arm__finger arm__finger--r" x="525" y="310" width="9" height="36" rx="4.5"/>
+                            <rect class="arm__grip" x="484" y="302" width="52" height="12" rx="5"/>
+                            <circle class="arm__joint arm__joint--b" cx="510" cy="296" r="13"/>
+                        </g>
+                    </g>
+                </g>
+                <circle class="arm__joint arm__joint--y" cx="190" cy="296" r="25"/>
+                <circle class="arm__pin" cx="190" cy="296" r="8"/>
+            </svg>
+            <figcaption class="wy-tag">Illustration</figcaption>
+        </figure>
+    </section>
+
+    <!-- The concept render, scrubbed by the scroll inside a window, with the
+         three things it does beside it. static/js/why.js. -->
+    <section class="wy-sec wy-watch" id="watch" aria-labelledby="watch-title" data-story>
+        <h2 class="wy-h" id="watch-title" data-reveal>Watch it <span class="wy-hl">work</span>.</h2>
+        <div class="story">
+            <div class="story__media">
+                <div class="window">
+                    <p class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>Concept render</span></p>
+                    <video class="story__video" muted playsinline preload="none" disablepictureinpicture aria-hidden="true" width="1920" height="1080"
+                           poster="{% static 'why/story-first.webp' %}?v={{ asset_v }}"
+                           data-src="{% static 'why/story.mp4' %}?v={{ asset_v }}"
+                           data-still="{% static 'why/story-lit.webp' %}?v={{ asset_v }}"></video>
                 </div>
             </div>
+            <ol class="story__steps">
+                <li class="story__step is-on" data-step>
+                    <p class="story__t">It puts the part together.</p>
+                    <p class="story__d">Vision finds it. Touch guides it in.</p>
+                </li>
+                <li class="story__step" data-step>
+                    <p class="story__t">It tests it on the spot.</p>
+                    <p class="story__d">Connected? Locked? The light says pass or fail.</p>
+                </li>
+                <li class="story__step" data-step>
+                    <p class="story__t">It lets go and starts the next one.</p>
+                    <p class="story__d">No one standing over it.</p>
+                </li>
+            </ol>
         </div>
     </section>
 
-    <!-- The customer's problem, as the sheet a changeover actually is. Most
-         automation ticks the last line; the rest stays open. -->
-    <section class="sheet why-row" id="problem" aria-labelledby="problem-title">
-        <div class="why-row__text">
-            <h2 class="sechead__t engraved" id="problem-title" data-reveal>The robot is the <em>easy</em> part.</h2>
-            <p class="why-lead">The weeks go into everything around it: fixtures, tuning, testing, recovering failures and proving every new part.</p>
-            <p class="why-body">That is the work we take off your hands.</p>
+    <!-- It tests every part: two checks tick, then the gauge says pass, or
+         fail and the part is pulled aside. -->
+    <section class="wy-sec wy-feat" id="tests" aria-labelledby="tests-title">
+        <div class="wy-feat__text">
+            <h2 class="wy-h" id="tests-title" data-reveal>It tests every <span class="wy-hl">part</span>.</h2>
+            <p class="wy-lead" data-reveal>Is it connected? Is it locked? Every part gets checked on the spot. Bad parts never ship.</p>
         </div>
-        <figure class="jobsheet" data-reveal aria-labelledby="jobsheet-cap">
-            <div class="jobsheet__form">
-                <p class="jobsheet__head"><span>Changeover</span><span>Connector, variant B</span></p>
-                <ul class="jobsheet__list">
-                    <li>Adapt the fixture</li>
-                    <li>Tune the process</li>
-                    <li>Agree what counts as a good part</li>
-                    <li>Prepare the material</li>
-                    <li>Recover the failed attempts</li>
-                    <li>Prove the new variant</li>
-                    <li class="jobsheet__done"><span>Program the motion</span></li>
-                </ul>
+        <figure class="gauge" id="gauge" data-anim aria-hidden="true">
+            <svg class="gauge__svg" viewBox="0 0 600 380">
+                <rect class="gauge__socket" x="70" y="200" width="150" height="110" rx="16"/>
+                <g class="gauge__plug">
+                    <rect x="98" y="118" width="94" height="96" rx="14"/>
+                    <rect class="gauge__tab" x="122" y="100" width="46" height="18" rx="5"/>
+                </g>
+                <path class="gauge__wire" d="M220 255 C 280 255, 280 190, 330 190"/>
+                <circle class="gauge__track" cx="440" cy="190" r="104"/>
+                <circle class="gauge__arc" cx="440" cy="190" r="104" pathLength="1"/>
+            </svg>
+            <div class="gauge__readout">
+                <p class="gauge__result"><span class="gauge__wait">Testing</span><span class="gauge__pass">Pass</span><span class="gauge__fail">Fail</span></p>
             </div>
-            <figcaption class="figure__cap" id="jobsheet-cap">Most automation only does the last line.</figcaption>
+            <ul class="gauge__checks">
+                <li class="gauge__check" data-check="1">Connected</li>
+                <li class="gauge__check" data-check="2">Locked</li>
+            </ul>
         </figure>
     </section>
 
-    <!-- The acceptance test: the blog's latch figure, the sentence in motion.
-         Contact, force and continuity each read as done while the latch is
-         still open; it clicks last. -->
-    <section class="sheet why-row" id="check" aria-labelledby="check-title">
-        <div class="why-row__text">
-            <p class="eyebrow">Built-in testing</p>
-            <h2 class="sechead__t engraved" id="check-title" data-reveal>It knows when a part is really <em>done</em>.</h2>
-            <p class="why-lead">A connector can look plugged in and still be loose. Our robot tests every one: electrical contact, and a locked latch.</p>
-            <p class="why-body">If it fails, it does not ship. You set what a good part is.</p>
+    <!-- Every miss makes it better: tries drawn one after another as paths
+         with their handles, the way a design tool shows a curve. The last
+         one lands. -->
+    <section class="wy-sec wy-feat wy-feat--flip" id="learns" aria-labelledby="learns-title">
+        <div class="wy-feat__text">
+            <h2 class="wy-h" id="learns-title" data-reveal>Every miss makes it <span class="wy-hl">better</span>.</h2>
+            <p class="wy-lead" data-reveal>Pass or fail, every try teaches it. It improves on its own. No engineer rewriting code.</p>
         </div>
-        <figure class="figure why-fig" id="latch" aria-labelledby="latch-cap" data-anim>
-            <div class="panel">
-                <svg class="latch__svg" viewBox="0 44 600 132" aria-hidden="true">
-                    <path class="latch__housing" d="M330 60 H540 V160 H330"/>
-                    <rect class="latch__catch" x="338" y="60" width="14" height="10"/>
-                    <rect class="latch__pad" x="356" y="96" width="14" height="6"/>
-                    <rect class="latch__pad" x="356" y="118" width="14" height="6"/>
-                    <g class="latch__plug">
-                        <path class="latch__cable" d="M60 110 C 30 110, 22 142, 2 154"/>
-                        <rect class="latch__body" x="60" y="72" width="150" height="76" rx="4"/>
-                        <rect class="latch__tab" x="180" y="62" width="26" height="10" rx="2"/>
-                        <line class="latch__pin" x1="210" y1="99" x2="262" y2="99"/>
-                        <line class="latch__pin" x1="210" y1="121" x2="262" y2="121"/>
-                    </g>
-                </svg>
-                <ol class="lamps" aria-hidden="true">
-                    <li class="lamps__i lamps__i--contact">Contact</li>
-                    <li class="lamps__i lamps__i--force">Force</li>
-                    <li class="lamps__i lamps__i--position">Continuity</li>
-                    <li class="lamps__i lamps__i--latched">Latched</li>
-                </ol>
-            </div>
-            <figcaption class="figure__cap" id="latch-cap">Contact, force and continuity can all pass while the latch is still open. We check the lock too.</figcaption>
-        </figure>
-        <dl class="roles">
-            <div class="roles__i"><dt>Vision</dt><dd>finds it</dd></div>
-            <div class="roles__i"><dt>Force</dt><dd>guides it in</dd></div>
-            <div class="roles__i"><dt>The test</dt><dd>proves it</dd></div>
-        </dl>
-    </section>
-
-    <!-- The reset: a prepared pair comes in, is assembled and tested, and
-         leaves for acceptance or quarantine while the next pair moves up. The
-         carriers are drawn by static/js/why.js on one clock, so the tool
-         dips and the lamp lights exactly as each one passes. -->
-    <section class="sheet why-row why-row--flip" id="reset" aria-labelledby="reset-title">
-        <div class="why-row__text">
-            <p class="eyebrow">Runs on its own</p>
-            <h2 class="sechead__t engraved" id="reset-title" data-reveal>It resets itself. It keeps <em>going</em>.</h2>
-            <p class="why-lead">Good parts move out. Bad parts get pulled. The next pair moves in.</p>
-            <p class="why-body">Your team loads the parts. The robot does the rest, attempt after attempt, without anyone standing over it.</p>
-        </div>
-        <figure class="figure why-fig line" id="line" aria-labelledby="line-cap" data-anim>
-            <div class="panel line__panel">
-                <svg class="line__svg" viewBox="0 0 600 196" aria-hidden="true">
-                    <path class="line__track" id="line-accept" d="M16 118 H430 C465 118 470 70 505 70 H584"/>
-                    <path class="line__track" id="line-quarantine" d="M16 118 H430 C465 118 470 166 505 166 H584"/>
-                    <path class="line__end" d="M584 58 v24 M584 154 v24"/>
-                    <g class="line__tool" id="line-tool">
-                        <path class="line__arm" d="M190 0 V42"/>
-                        <rect class="line__head" x="173" y="42" width="34" height="20" rx="2"/>
-                    </g>
-                    <path class="line__stem" d="M345 68 V106"/>
-                    <circle class="line__lamp" id="line-lamp" cx="345" cy="58" r="10"/>
-                    <g id="line-carriers"></g>
-                </svg>
-                <ul class="line__labels" aria-hidden="true">
-                    <li style="--x: 10%;">Prepared pair</li>
-                    <li style="--x: 31.7%;">Insert</li>
-                    <li style="--x: 57.5%;">Test</li>
-                </ul>
-            </div>
-            <figcaption class="figure__cap" id="line-cap">
-                <span class="variant__key"><span class="swatch swatch--action"></span>Passed: shipped</span>
-                <span class="variant__key"><span class="swatch swatch--reset"></span>Failed: pulled aside</span>
-            </figcaption>
+        <figure class="tries" data-anim aria-hidden="true">
+            <svg class="tries__svg" viewBox="0 0 600 380">
+                <g class="tries__target">
+                    <circle class="tries__ring" cx="500" cy="96" r="40"/>
+                    <circle class="tries__bull" cx="500" cy="96" r="12"/>
+                    <path class="tries__box" d="M452 48 H548 V144 H452 Z"/>
+                    <rect class="tries__h" x="446" y="42" width="12" height="12"/>
+                    <rect class="tries__h" x="542" y="42" width="12" height="12"/>
+                    <rect class="tries__h" x="446" y="138" width="12" height="12"/>
+                    <rect class="tries__h" x="542" y="138" width="12" height="12"/>
+                </g>
+                <g class="tries__try tries__try--0">
+                    <path class="tries__path" pathLength="1" d="M70 300 C 190 300, 250 120, 420 214"/>
+                    <path class="tries__handles" d="M70 300 L190 300 M420 214 L250 120"/>
+                    <rect class="tries__a" x="184" y="294" width="12" height="12"/><rect class="tries__a" x="244" y="114" width="12" height="12"/>
+                    <circle class="tries__end" cx="420" cy="214" r="9"/>
+                    <text class="tries__label" x="420" y="248">miss</text>
+                </g>
+                <g class="tries__try tries__try--1">
+                    <path class="tries__path" pathLength="1" d="M70 300 C 200 280, 250 80, 432 160"/>
+                    <path class="tries__handles" d="M70 300 L200 280 M432 160 L250 80"/>
+                    <rect class="tries__a" x="194" y="274" width="12" height="12"/><rect class="tries__a" x="244" y="74" width="12" height="12"/>
+                    <circle class="tries__end" cx="432" cy="160" r="9"/>
+                    <text class="tries__label" x="370" y="182">miss</text>
+                </g>
+                <g class="tries__try tries__try--2">
+                    <path class="tries__path" pathLength="1" d="M70 300 C 220 270, 280 40, 468 118"/>
+                    <path class="tries__handles" d="M70 300 L220 270 M468 118 L280 40"/>
+                    <rect class="tries__a" x="214" y="264" width="12" height="12"/><rect class="tries__a" x="274" y="34" width="12" height="12"/>
+                    <circle class="tries__end" cx="468" cy="118" r="9"/>
+                    <text class="tries__label" x="398" y="140">close</text>
+                </g>
+                <g class="tries__try tries__try--3 tries__try--hit">
+                    <path class="tries__path" pathLength="1" d="M70 300 C 230 260, 300 30, 500 96"/>
+                    <path class="tries__handles" d="M70 300 L230 260 M500 96 L300 30"/>
+                    <rect class="tries__a" x="224" y="254" width="12" height="12"/><rect class="tries__a" x="294" y="24" width="12" height="12"/>
+                    <text class="tries__label tries__label--hit" x="500" y="182">hit</text>
+                </g>
+                <rect class="tries__start" x="58" y="288" width="24" height="24" rx="4"/>
+            </svg>
         </figure>
     </section>
 
-    <!-- The next variant: two related connectors, what carries over in ink
-         and what changes in orange. The leader lines draw once, on arrival. -->
-    <section class="sheet why-row" id="variant" aria-labelledby="variant-title">
-        <div class="why-row__text">
-            <p class="eyebrow">New parts</p>
-            <h2 class="sechead__t engraved" id="variant-title" data-reveal>Change the part. Keep what it <em>learned</em>.</h2>
-            <p class="why-lead">The skill, the fixture setup and the test carry over to the next connector. Only what changed has to be taught.</p>
-                        <p class="why-target"><span class="why-target__k">Target</span>The next part in half the engineering hours.</p>
+    <!-- It resets itself: carriers ride a loop. A pair is loaded, joined,
+         tested, and the part leaves for Out or Aside while the empty carrier
+         goes round for the next pair. Drawn by static/js/why.js. -->
+    <section class="wy-sec wy-feat" id="resets" aria-labelledby="resets-title">
+        <div class="wy-feat__text">
+            <h2 class="wy-h" id="resets-title" data-reveal>It resets <span class="wy-hl">itself</span>.</h2>
+            <p class="wy-lead" data-reveal>Good parts out. Bad parts aside. Next parts in. No one has to stand over it.</p>
         </div>
-        <figure class="figure why-fig variant" id="variants" aria-labelledby="variant-cap" data-reveal>
-            <div class="panel">
-                <svg class="variant__svg" viewBox="0 0 640 250" aria-hidden="true">
-                    <g class="variant__part">
-                        <path class="variant__axis" d="M135 8 V44"/>
-                        <path class="variant__tip" d="M129 36 L135 46 L141 36"/>
-                        <rect class="variant__tab" x="113" y="54" width="44" height="16" rx="2"/>
-                        <rect class="variant__body" x="40" y="70" width="190" height="104" rx="6"/>
-                        <rect class="variant__cavity" x="66" y="104" width="22" height="22" rx="2"/>
-                        <rect class="variant__cavity" x="101" y="104" width="22" height="22" rx="2"/>
-                        <rect class="variant__cavity" x="147" y="104" width="22" height="22" rx="2"/>
-                        <rect class="variant__cavity" x="182" y="104" width="22" height="22" rx="2"/>
-                        <circle class="variant__pad" cx="77" cy="150" r="4"/>
-                        <circle class="variant__pad" cx="193" cy="150" r="4"/>
-                        <path class="variant__datum" d="M52 174 L61 189 L43 189 Z"/>
-                    </g>
-                    <g class="variant__part">
-                        <path class="variant__axis" d="M480 8 V44"/>
-                        <path class="variant__tip" d="M474 36 L480 46 L486 36"/>
-                        <rect class="variant__tab" x="458" y="54" width="44" height="16" rx="2"/>
-                        <rect class="variant__body" x="350" y="70" width="260" height="104" rx="6"/>
-                        <rect class="variant__cavity" x="376" y="104" width="22" height="22" rx="2"/>
-                        <rect class="variant__cavity" x="411" y="104" width="22" height="22" rx="2"/>
-                        <rect class="variant__cavity" x="446" y="104" width="22" height="22" rx="2"/>
-                        <rect class="variant__cavity" x="492" y="104" width="22" height="22" rx="2"/>
-                        <rect class="variant__cavity variant__cavity--new" x="527" y="104" width="22" height="22" rx="2"/>
-                        <rect class="variant__cavity variant__cavity--new" x="562" y="104" width="22" height="22" rx="2"/>
-                        <circle class="variant__pad" cx="387" cy="150" r="4"/>
-                        <circle class="variant__pad" cx="573" cy="150" r="4"/>
-                        <path class="variant__datum" d="M362 174 L371 189 L353 189 Z"/>
-                        <path class="variant__width" d="M350 226 H610 M350 220 v12 M610 220 v12"/>
-                    </g>
-                    <path class="variant__carry" pathLength="1" d="M157 62 C 260 30, 360 30, 458 62"/>
-                    <path class="variant__carry" pathLength="1" d="M198 154 C 250 204, 332 204, 382 154"/>
-                    <path class="variant__carry" pathLength="1" d="M52 194 C 150 240, 264 240, 362 194"/>
-                </svg>
-                <p class="variant__names" aria-hidden="true"><span>Variant A</span><span>Variant B</span></p>
-            </div>
-            <figcaption class="figure__cap" id="variant-cap">
-                <span class="variant__key"><span class="swatch swatch--check"></span>Carries over: the skill, the fixture, the test</span>
-                <span class="variant__key"><span class="swatch swatch--action"></span>Changes: pin count, width</span>
-            </figcaption>
+        <figure class="loop" id="loop" data-anim aria-hidden="true">
+            <svg class="loop__svg" viewBox="0 0 600 380">
+                <path class="loop__track" id="loop-track" d="M120 110 H440 A80 80 0 0 1 440 270 H120 A80 80 0 0 1 120 110 Z"/>
+                <circle class="loop__station" cx="150" cy="110" r="9"/>
+                <circle class="loop__station" cx="290" cy="110" r="9"/>
+                <circle class="loop__station" cx="520" cy="190" r="9"/>
+                <circle class="loop__station" cx="390" cy="270" r="9"/>
+                <circle class="loop__station" cx="250" cy="270" r="9"/>
+                <g id="loop-tool" class="loop__tool"><rect x="277" y="8" width="26" height="50" rx="7"/><rect x="262" y="54" width="56" height="14" rx="6"/></g>
+                <circle id="loop-lamp" class="loop__lamp" cx="570" cy="190" r="20"/>
+                <path class="loop__bin" d="M340 314 v36 h100 v-36"/>
+                <path class="loop__bin loop__bin--aside" d="M200 314 v36 h100 v-36"/>
+                <g id="loop-carriers"></g>
+                <g id="loop-flying"></g>
+            </svg>
+            <ul class="loop__labels">
+                <li style="--x: 25%; --y: 21%;">In</li>
+                <li style="--x: 36%; --y: 8%;">Build</li>
+                <li style="--x: 95%; --y: 66%;">Test</li>
+                <li style="--x: 65%; --y: 97%;">Out</li>
+                <li style="--x: 41.7%; --y: 97%;">Aside</li>
+            </ul>
         </figure>
     </section>
 
-    <!-- Practice, qualify, run: the route a learned skill takes to the line,
-         with the gate in the middle. -->
-    <section class="sheet why-gate" id="gate" aria-labelledby="gate-title">
-        <div class="sechead">
-            <h2 class="sechead__t engraved" id="gate-title" data-reveal>Practice, qualify, then <em>run</em>.</h2>
-            <p class="sechead__sub">It practices off the line. Only a skill that passes the test runs in production.</p>
+    <!-- A new part is not a new project: the learned path stays; the part
+         under it changes shape. The one number is a target and says so. -->
+    <section class="wy-sec wy-feat wy-feat--flip" id="newpart" aria-labelledby="newpart-title">
+        <div class="wy-feat__text">
+            <h2 class="wy-h" id="newpart-title" data-reveal>A new part is not a new <span class="wy-hl">project</span>.</h2>
+            <p class="wy-lead" data-reveal>What it learns on one part carries to the next. Teach it what changed, not the whole job.</p>
+            <p class="half" data-reveal><span class="half__n">Half</span><span class="half__t">the engineering hours for the next part</span><span class="half__tag">Target</span></p>
         </div>
-        <figure class="figure gate" id="gatefig" aria-labelledby="gate-cap" data-anim>
-            <div class="gate__row">
-                <div class="gate__stage">
-                    <p class="gate__name">Practice</p>
-                    <p class="gate__what">Many attempts, every one tested</p>
-                    <div class="gate__attempts" aria-hidden="true">{% for hit in practice_marks %}<i{% if hit %} data-hit{% endif %}></i>{% endfor %}</div>
-                </div>
-                <div class="gate__stage">
-                    <p class="gate__name">Qualify</p>
-                    <p class="gate__what">Fresh parts, same test</p>
-                    <div class="gate__trials" aria-hidden="true">{% for n in trials %}<i style="--i: {{ n }};"></i>{% endfor %}</div>
-                </div>
-                <div class="gate__bar" aria-hidden="true"><span>Approval</span></div>
-                <div class="gate__stage">
-                    <p class="gate__name">Run</p>
-                    <p class="gate__what">Only approved skills, on your line</p>
-                    <div class="gate__run" aria-hidden="true"><span></span></div>
-                </div>
-            </div>
-            <figcaption class="figure__cap" id="gate-cap">Production never runs an untested skill.</figcaption>
+        <figure class="morph" data-anim aria-hidden="true">
+            <svg class="morph__svg" viewBox="40 22 430 322">
+                <path class="morph__skill" d="M80 70 C 200 70, 230 200, 300 222"/>
+                <path class="morph__handles" d="M80 70 H200 M300 222 L230 200"/>
+                <rect class="morph__a" x="194" y="64" width="12" height="12"/>
+                <rect class="morph__a" x="224" y="194" width="12" height="12"/>
+                <rect class="morph__start" x="68" y="58" width="24" height="24" rx="4"/>
+                <text class="morph__label" x="104" y="44">The skill carries over</text>
+                <g class="morph__part morph__part--a">
+                    <rect class="morph__body" x="190" y="230" width="220" height="100" rx="16"/>
+                    <rect class="morph__pin" x="222" y="262" width="26" height="36" rx="6"/>
+                    <rect class="morph__pin" x="266" y="262" width="26" height="36" rx="6"/>
+                    <rect class="morph__pin" x="308" y="262" width="26" height="36" rx="6"/>
+                    <rect class="morph__pin" x="350" y="262" width="26" height="36" rx="6"/>
+                </g>
+                <g class="morph__part morph__part--b">
+                    <rect class="morph__body" x="150" y="230" width="300" height="100" rx="16"/>
+                    <rect class="morph__pin" x="176" y="262" width="26" height="36" rx="6"/>
+                    <rect class="morph__pin" x="220" y="262" width="26" height="36" rx="6"/>
+                    <rect class="morph__pin" x="264" y="262" width="26" height="36" rx="6"/>
+                    <rect class="morph__pin" x="308" y="262" width="26" height="36" rx="6"/>
+                    <rect class="morph__pin morph__pin--new" x="352" y="262" width="26" height="36" rx="6"/>
+                    <rect class="morph__pin morph__pin--new" x="396" y="262" width="26" height="36" rx="6"/>
+                </g>
+            </svg>
+            <p class="morph__names"><span class="morph__name morph__name--a">Part A</span><span class="morph__name morph__name--b">Part B</span></p>
         </figure>
     </section>
 
-    <!-- What exists, dated. Built and paid for on the left, what is still to
-         be shown on the right, and a mark where the company is now. -->
-    <section class="sheet" id="evidence" aria-labelledby="evidence-title">
-        <div class="sechead">
-            <h2 class="sechead__t engraved" id="evidence-title" data-reveal>Where we are <em>today</em>.</h2>
-            <p class="sechead__sub">As of <time datetime="{{ updated|date:'Y-m-d' }}">{{ updated|date:"F j, Y" }}</time>.</p>
+    <!-- Proof, dated: the one number that is already true, and where the
+         robot is today. -->
+    <section class="wy-sec wy-proof" id="proof" aria-labelledby="proof-title">
+        <h2 class="wy-h" id="proof-title" data-reveal>Factories are already in <span class="wy-hl">line</span>.</h2>
+        <div class="proof">
+            <p class="proof__big" data-reveal><span class="proof__n" data-count="{{ company.paid_waitlist.factories }}">{{ company.paid_waitlist.factories }}</span><span class="proof__t">factories paid to be first in line.</span></p>
+            <ul class="proof__now">
+                <li class="proof__i proof__i--done" data-reveal><span class="proof__k">Built</span><span class="proof__v">Vision inspection, run on a live camera. <a class="wy-link" href="/#origin">Watch it &rarr;</a></span></li>
+                <li class="proof__i proof__i--now" data-reveal><span class="proof__k">Now</span><span class="proof__v">Building the robot, starting with connectors.</span></li>
+                <li class="proof__i" data-reveal><span class="proof__k">Next</span><span class="proof__v">Running on its own.</span></li>
+            </ul>
+            <p class="proof__date">As of <time datetime="{{ updated|date:'Y-m-d' }}">{{ updated|date:"F j, Y" }}</time></p>
         </div>
-        <ol class="status">
-            <li class="status__i status__i--done">
-                <p class="status__k">Built</p>
-                <p class="status__v">Vision inspection, run on a live camera. <a class="link" href="/#origin">Watch it</a></p>
-            </li>
-            <li class="status__i status__i--done">
-                <p class="status__k">Paid</p>
-                <p class="status__v">{{ company.paid_waitlist.factories }} factories paid to be first in line.</p>
-            </li>
-            <li class="status__i status__i--now">
-                <p class="status__k">Building now</p>
-                <p class="status__v">The assembly robot, starting with connectors.</p>
-            </li>
-            <li class="status__i">
-                <p class="status__k">Next</p>
-                <p class="status__v">Running on its own: assemble, test, reset.</p>
-            </li>
-            <li class="status__i">
-                <p class="status__k">Then</p>
-                <p class="status__v">Proof it beats a hand-programmed robot on fresh parts.</p>
-            </li>
-        </ol>
     </section>
 
-    <!-- The people doing it, briefly. The full section is on the home page. -->
-    <section class="sheet why-team" id="founders" aria-labelledby="founders-title">
-        <div class="sechead">
-            <h2 class="sechead__t engraved" id="founders-title" data-reveal>Who is <em>building</em> it.</h2>
-            <p class="sechead__sub duo__lead">Twin brothers, building together for more than 20 years. <a class="link" href="/#team">Meet the team</a></p>
+    <section class="wy-sec wy-faq" id="faq" aria-labelledby="faq-title">
+        <h2 class="wy-h" id="faq-title" data-reveal>Straight <span class="wy-hl">answers</span>.</h2>
+        <div class="faq">
+            <details class="faq__i">
+                <summary class="faq__q">What can it build?</summary>
+                <p class="faq__a">Connectors first: putting the two halves together and testing every one. More part types after that.</p>
+            </details>
+            <details class="faq__i">
+                <summary class="faq__q">What does my team still do?</summary>
+                <p class="faq__a">Load the parts, say what counts as a good part, and handle the odd problem. The robot does the rest.</p>
+            </details>
+            <details class="faq__i">
+                <summary class="faq__q">Will it try new things on my line?</summary>
+                <p class="faq__a">No. It practices off the line. Only a skill that passes the test runs on yours.</p>
+            </details>
+            <details class="faq__i">
+                <summary class="faq__q">Is it ready today?</summary>
+                <p class="faq__a">We are building it now. {{ company.paid_waitlist.factories }} factories have paid to be first in line. Book a call to join them.</p>
+            </details>
+            <details class="faq__i">
+                <summary class="faq__q">How do we start?</summary>
+                <p class="faq__a">Book a call. Tell us the part and how you check it. We will tell you straight if it is a fit.</p>
+            </details>
         </div>
-        <ul class="duo">
-            <li class="duo__i">
+    </section>
+
+    <section class="wy-sec wy-team" id="founders" aria-labelledby="founders-title">
+        <h2 class="wy-h" id="founders-title" data-reveal>Factory floor meets <span class="wy-hl">software</span>.</h2>
+        <p class="wy-lead" data-reveal>Twin brothers, building together for more than 20 years.</p>
+        <ul class="faces">
+            <li class="face" data-reveal>
                 <div class="founder__frame">
-                    <img class="founder__photo" src="{% static 'img/team/husan-mavlonov-360.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/husan-mavlonov-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/husan-mavlonov-720.webp' %}?v={{ asset_v }} 720w" sizes="150px" width="720" height="900" alt="Portrait of Husan Mavlonov" loading="lazy" decoding="async">
-                    <img class="founder__color" src="{% static 'img/team/husan-mavlonov-color-360.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/husan-mavlonov-color-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/husan-mavlonov-color-720.webp' %}?v={{ asset_v }} 720w" sizes="150px" width="720" height="900" alt="" loading="lazy" decoding="async">
+                    <img class="founder__photo" src="{% static 'img/team/husan-mavlonov-720.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/husan-mavlonov-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/husan-mavlonov-720.webp' %}?v={{ asset_v }} 720w" sizes="(max-width: 719px) 44vw, 360px" width="720" height="900" alt="Portrait of Husan Mavlonov" loading="lazy" decoding="async">
+                    <img class="founder__color" src="{% static 'img/team/husan-mavlonov-color-720.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/husan-mavlonov-color-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/husan-mavlonov-color-720.webp' %}?v={{ asset_v }} 720w" sizes="(max-width: 719px) 44vw, 360px" width="720" height="900" alt="" loading="lazy" decoding="async">
                 </div>
-                <div class="duo__text">
-                    <h3 class="founder__name">Husan Mavlonov</h3>
-                    <p class="founder__role">Co-founder &amp; CEO</p>
-                    <p class="founder__bio">Scaled factory operations across Uzbekistan, T&uuml;rkiye, China and the USA. 3+ years in electronics manufacturing and batteries.</p>
-                </div>
+                <h3 class="face__name">Husan Mavlonov</h3>
+                <p class="face__role">Co-founder &amp; CEO</p>
+                <p class="face__bio">Scaled factory operations across Uzbekistan, T&uuml;rkiye, China and the USA.</p>
             </li>
-            <li class="duo__i">
+            <li class="face" data-reveal>
                 <div class="founder__frame">
-                    <img class="founder__photo" src="{% static 'img/team/hasan-mavlonov-360.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/hasan-mavlonov-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/hasan-mavlonov-720.webp' %}?v={{ asset_v }} 720w" sizes="150px" width="720" height="900" alt="Portrait of Hasan Mavlonov" loading="lazy" decoding="async">
-                    <img class="founder__color" src="{% static 'img/team/hasan-mavlonov-color-360.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/hasan-mavlonov-color-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/hasan-mavlonov-color-720.webp' %}?v={{ asset_v }} 720w" sizes="150px" width="720" height="900" alt="" loading="lazy" decoding="async">
+                    <img class="founder__photo" src="{% static 'img/team/hasan-mavlonov-720.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/hasan-mavlonov-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/hasan-mavlonov-720.webp' %}?v={{ asset_v }} 720w" sizes="(max-width: 719px) 44vw, 360px" width="720" height="900" alt="Portrait of Hasan Mavlonov" loading="lazy" decoding="async">
+                    <img class="founder__color" src="{% static 'img/team/hasan-mavlonov-color-720.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/hasan-mavlonov-color-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/hasan-mavlonov-color-720.webp' %}?v={{ asset_v }} 720w" sizes="(max-width: 719px) 44vw, 360px" width="720" height="900" alt="" loading="lazy" decoding="async">
                 </div>
-                <div class="duo__text">
-                    <h3 class="founder__name">Hasan Mavlonov</h3>
-                    <p class="founder__role">Co-founder &amp; CTO</p>
-                    <p class="founder__bio">Built an AI question-generation pipeline for a government education platform with 60k+ students.</p>
-                </div>
+                <h3 class="face__name">Hasan Mavlonov</h3>
+                <p class="face__role">Co-founder &amp; CTO</p>
+                <p class="face__bio">Built an AI question-generation pipeline for a government education platform with 60k+ students.</p>
             </li>
         </ul>
     </section>
 
-    <section class="why-close dark" id="talk" aria-labelledby="talk-title">
-        <div class="why-close__inner">
-            <h2 class="sechead__t cut" id="talk-title" data-reveal><span class="cut__face engraved">Bring us the part your team <em>hates</em> assembling.</span><span class="cut__mask" aria-hidden="true">Bring us the part your team <em>hates</em> assembling.</span></h2>
-            <p class="why-close__lead">Tell us what it is and how you check it. We will tell you straight if our robot can take it on.</p>
-            <div class="why-actions">
-                <a class="glass-button-wrap" href="/#contact">
-                    <span class="glass-button-tilt">
-                        <span class="glass-button"><span class="glass-button-text">Test it on your part<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
-                        <span class="glass-button-shadow" aria-hidden="true"></span>
-                    </span>
-                </a>
-                <a class="link" href="mailto:{{ company.contact }}">{{ company.contact }}</a>
-            </div>
+    <section class="wy-sec wy-close" id="talk" aria-labelledby="talk-title">
+        <h2 class="wy-h wy-h--xl" id="talk-title" data-reveal>Bring us the job your team <span class="wy-hl">hates</span>.</h2>
+        <p class="wy-lead" data-reveal>Tell us the part and how you check it. We will tell you straight if our robot can take it on.</p>
+        <div class="wy-actions" data-reveal>
+            <a class="wy-btn wy-btn--big" href="/#contact">Book a call <span aria-hidden="true">&rarr;</span></a>
+            <a class="wy-link" href="mailto:{{ company.contact }}">{{ company.contact }}</a>
         </div>
     </section>
 </main>

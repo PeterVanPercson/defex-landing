@@ -6,11 +6,10 @@
  * Ported from the React component to plain JS for defexrobotics.com, which
  * keeps zero front-end dependencies. The ink scan, the camera, the roll and
  * the letter picker are the component's own. What changed for the Why us
- * page: the field seen through the letters is a scroll-scrubbed clip of the
- * A1 concept render (the connector goes in, then the tester lights), the pin
- * sits under the site's sticky nav, the nav is dark while the portal's dark
- * ground is behind it, and what follows the dive is a paper sheet laid over
- * the scene rather than copy faded onto it.
+ * page: the pin sits under the site's sticky nav, the field seen through
+ * the letters is a world of factory parts drawn in SVG, and once the camera
+ * is through, --gp-after tells the parts how far the copy has scrolled past
+ * them so they can drift at their own depths.
  */
 (() => {
     const section = document.querySelector('[data-portal]');
@@ -21,7 +20,7 @@
         const t = clamp((n - a) / (b - a));
         return t * t * (3 - 2 * t);
     };
-    const FALLBACK = 'Georgia, "Times New Roman", serif';
+    const FALLBACK = '"Arial Black", Arial, sans-serif';
     const WEIGHT = 900;
 
     const text = (section.dataset.word || 'TEST').trim().normalize('NFC');
@@ -37,7 +36,6 @@
     const choices = section.querySelector('.portal__choices');
     const buttons = [...choices.querySelectorAll('button')];
     const probe = section.querySelector('.portal__probe');
-    const scene = section.querySelector('.portal__scene');
     const motion = matchMedia('(prefers-reduced-motion: reduce)');
 
     /** Largest opaque square, in linear time. Unlike a stem guess, it works in O, S and Ø. */
@@ -189,12 +187,11 @@
             section.style.setProperty('--gp-caption', String(1 - smooth(0.01, 0.16, p)));
             section.style.setProperty('--gp-caption-hit', p < 0.08 ? 'auto' : 'none');
             section.style.setProperty('--gp-field-scale', String(1 + 0.12 * smooth(0, 0.82, p)));
-            section.style.setProperty('--gp-label', String(smooth(0.8, 0.9, p)));
             section.dataset.entered = String(p >= 0.9);
-            // the tester lights as the camera clears the ink; a still page
-            // shows the lit frame from the start
-            scrubTo(motion.matches ? 1 : clamp((p - 0.04) / 0.74));
-            navDark(still || p < 0.72);
+            section.style.setProperty('--gp-reveal', String(still ? 1 : smooth(0.78, 0.9, p)));
+            // past the dive, how far the copy has scrolled over the parts
+            const past = stickyTop() - section.getBoundingClientRect().top - travel;
+            section.style.setProperty('--gp-after', still ? '0' : clamp(past / Math.max(1, section.offsetHeight - travel - H)).toFixed(4));
         }
 
         function layout() {
@@ -276,90 +273,4 @@
         schedule();
     }
 
-    // ------------------------------------------------------------------
-    // The scene: the clip seen through the letters, scrubbed by the dive. By
-    // the time the camera is through the ink the connector is home and the
-    // tester is lit. One seek in flight at a time, eased toward the scroll,
-    // with a watchdog, the way the home page's film does it.
-    const FRAME = 1 / 30;
-    const EASE = 24;
-    let clipReady = false, seeking = false, running = false, lastTick = 0;
-    let want = 0, shown = 0, lastFrame = -1, watchdog = 0;
-    function releaseSeek() { clearTimeout(watchdog); seeking = false; }
-    function show() {
-        if (seeking || !clipReady) return;
-        const frameAt = Math.round(shown / FRAME);
-        if (frameAt === lastFrame) return;
-        lastFrame = frameAt;
-        seeking = true;
-        clearTimeout(watchdog);
-        watchdog = setTimeout(() => { seeking = false; lastFrame = -1; show(); }, 400);
-        scene.currentTime = Math.min((frameAt + 0.5) * FRAME, scene.duration - 0.001);
-    }
-    function tick(now) {
-        if (!clipReady) { running = false; lastTick = 0; return; }
-        const dt = lastTick ? Math.min(0.05, (now - lastTick) / 1000) : 1 / 60;
-        lastTick = now;
-        shown += (want - shown) * (1 - Math.exp(-EASE * dt));
-        if (Math.abs(want - shown) < FRAME / 3) shown = want;
-        show();
-        if (shown !== want) requestAnimationFrame(tick);
-        else { running = false; lastTick = 0; }
-    }
-    function scrubTo(fraction) {
-        if (!clipReady || !isFinite(scene.duration)) return;
-        want = fraction * (scene.duration - FRAME);
-        if (!running) { running = true; lastTick = 0; requestAnimationFrame(tick); }
-    }
-    if (scene) {
-        if (motion.matches) {
-            // Reduced motion: the finished frame, and no clip downloaded.
-            if (scene.dataset.final) scene.poster = scene.dataset.final;
-        } else if (scene.dataset.src && scene.canPlayType('video/mp4')) {
-            scene.addEventListener('seeked', () => { releaseSeek(); show(); });
-            const markReady = () => {
-                if (clipReady || scene.readyState < 2) return;
-                clipReady = true;
-                scrubTo(0);
-            };
-            ['loadeddata', 'canplay', 'loadedmetadata'].forEach((e) => scene.addEventListener(e, markReady));
-            scene.addEventListener('error', () => { releaseSeek(); clipReady = false; });
-            scene.src = scene.dataset.src;
-            scene.load();
-            // iOS paints a seek only after the element has decoded once.
-            const unlock = () => {
-                const played = scene.play();
-                if (played && played.then) played.then(() => scene.pause()).catch(() => {});
-            };
-            addEventListener('touchstart', unlock, { once: true, passive: true });
-            addEventListener('pointerdown', unlock, { once: true });
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // The nav is dark over the portal's ground and over the closing block,
-    // and paper everywhere in between. The portal reports its half; the rest
-    // is read here, once per frame while scrolling.
-    const close = document.querySelector('.why-close');
-    let overPortal = true, navQueued = false, fade = 0;
-    // the closing block dissolves in above itself; the bar turns dark a
-    // quarter of the way down that dissolve, as it does on the home page
-    const measureFade = () => { fade = close ? parseFloat(getComputedStyle(close, '::before').height) || 0 : 0; };
-    measureFade();
-    addEventListener('resize', measureFade);
-    function navDark(dark) {
-        overPortal = dark;
-        syncNav();
-    }
-    function syncNav() {
-        navQueued = false;
-        const nav = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav')) || 64;
-        const pinRect = pin.getBoundingClientRect();
-        const onPortal = overPortal && pinRect.bottom > nav;
-        const onClose = close ? close.getBoundingClientRect().top - fade * 0.25 <= nav : false;
-        document.documentElement.classList.toggle('nav-paper', !onPortal && !onClose);
-    }
-    addEventListener('scroll', () => { if (!navQueued) { navQueued = true; requestAnimationFrame(syncNav); } }, { passive: true });
-    addEventListener('pageshow', syncNav);
-    syncNav();
 })();
