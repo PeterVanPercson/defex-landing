@@ -245,6 +245,14 @@ class SiteTests(SimpleTestCase):
             self.assertIn('href="/why-us/"', header, path)
         self.assertIn('class="features__more"><a class="link" href="/why-us/">See why it works</a>', self.client.get("/").content.decode())
 
+    def test_hasan_leads_with_the_personality_layer(self):
+        """Husan's call: Hasan is presented first for building a personality
+        layer for AI, on every page that describes him."""
+        for path in ("/", "/why-us/", "/company/", "/investors/"):
+            body = self.client.get(path).content.decode()
+            self.assertIn("personality layer for AI", body, path)
+            self.assertNotIn("robot software and hardware integration", body, path)
+
     def test_hero_assets_stay_within_budget(self):
         """The hero shipped at 34.5MB once, on every device, with no narrow
         build and nothing in CI that noticed. A visitor on a phone pays for

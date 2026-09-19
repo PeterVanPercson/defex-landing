@@ -32,7 +32,7 @@ PUBLIC_COMPANY = {
     },
     "founders": [
         {"name": "Husan Mavlonov", "role": "Co-founder and CEO", "id": "https://husanmavlonov.com/#person", "url": "https://husanmavlonov.com/", "bio": "Hardware researcher with more than three years in electronics manufacturing and batteries, with factory operations experience across Uzbekistan, Turkiye, China and the United States."},
-        {"name": "Hasan Mavlonov", "role": "Co-founder and CTO", "id": CANONICAL_ORIGIN + "/company/#hasan-mavlonov", "bio": "Built an AI question-generation pipeline for a government education platform with more than 60,000 students. Leads Defex's robot software and hardware integration."},
+        {"name": "Hasan Mavlonov", "role": "Co-founder and CTO", "id": CANONICAL_ORIGIN + "/company/#hasan-mavlonov", "bio": "Building a personality layer for AI, after publishing more than 10 research papers on it. Built an AI question-generation pipeline for a government education platform with more than 60,000 students."},
     ],
     "contact": "husan@defexrobotics.com",
     "links": {
