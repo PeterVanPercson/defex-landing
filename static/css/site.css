@@ -1021,14 +1021,13 @@ body:has(.portal) .topbar { transition: background .25s ease, color .25s ease, b
 .thesis { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 88px); align-items: start; }
 .thesis__say { max-width: 17ch; font-family: var(--serif); font-size: var(--say); line-height: 1.12; letter-spacing: -.01em; }
 .thesis__side { padding-top: .4em; }
-.why-lead { margin-top: 26px; max-width: 48ch; font: 400 14px/1.85 var(--mono); color: var(--ink); }
-.why-body { margin-top: 14px; max-width: 48ch; font: 400 13px/1.85 var(--mono); color: var(--ink-soft); }
-.thesis .why-body { margin-top: 0; font-size: 14px; }
+.why-lead { margin-top: 26px; max-width: 40ch; font: 400 16px/1.7 var(--mono); color: var(--ink); }
+.why-body { margin-top: 14px; max-width: 44ch; font: 400 14px/1.8 var(--mono); color: var(--ink-soft); }
+.thesis .why-body { margin-top: 0; font-size: 15px; line-height: 1.75; }
 .why-status { display: flex; align-items: center; gap: 10px; margin-top: 18px; font: 500 10.5px/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); }
 .why-status__dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
 .why-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; margin-top: 30px; }
 .why-actions > .link { font: 400 12.5px/1.6 var(--mono); color: var(--ink-soft); }
-.why-note { margin-top: 20px; padding-top: 14px; max-width: 48ch; border-top: 1px solid var(--line); font: 400 12px/1.75 var(--mono); color: var(--mute); }
 
 /* One argument per sheet: the words on one side, the mechanism drawn on the
    other, alternating so the page does not read as a list. */

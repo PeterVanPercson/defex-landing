@@ -217,17 +217,19 @@ class SiteTests(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()
         self.assertIn("<title>Why us | Defex Robotics</title>", body)
-        self.assertIn('id="why-title">The test becomes the <em>teacher</em>.</h1>', body)
+        self.assertIn('id="why-title">Every part tested. Every failure, a <em>lesson</em>.</h1>', body)
         for section in ("portal", "case", "problem", "check", "reset", "variant", "gate", "evidence", "founders", "talk"):
             self.assertIn(f'id="{section}"', body)
-        for claim in ("A1 is in development.", "A1 concept render", "A target, not a result.",
-                      "21 factories on the paid waitlist", 'href="/#contact"'):
+        # the render is labelled as one, and the one number as a target
+        for claim in ("Concept render", "Target</span>The next part in half the engineering hours.",
+                      "21 factories paid to be first in line.", 'href="/#contact"'):
             self.assertIn(claim, body)
-        self.assertGreaterEqual(body.count("Schematic"), 4)
         # no numbered steps, no claims that nobody else can do this, and
         # Hasan's bio as Husan cut it on the home page
         text = re.sub(r"<[^>]+>", " ", re.sub(r"<(script|style)\b.*?</\1>", " ", body, flags=re.S))
         self.assertIsNone(re.search(r"\b0\d\b", text), "a numbered step")
+        # it is the robot, not a model number
+        self.assertNotIn("A1", text)
         for gone in ("nobody else", "the only", "robot software and hardware integration"):
             self.assertNotIn(gone, text)
         # the portal keeps its licence notice; the clip and its stills stay small
@@ -243,7 +245,7 @@ class SiteTests(SimpleTestCase):
         for path in ("/", "/careers/", "/blog/", "/company/", "/why-us/"):
             header = self.client.get(path).content.decode().split("<header", 1)[1].split("</header>", 1)[0]
             self.assertIn('href="/why-us/"', header, path)
-        self.assertIn('class="features__more"><a class="link" href="/why-us/"', self.client.get("/").content.decode())
+        self.assertIn('class="features__more"><a class="link" href="/why-us/">See why it works</a>', self.client.get("/").content.decode())
 
     def test_hero_assets_stay_within_budget(self):
         """The hero shipped at 34.5MB once, on every device, with no narrow

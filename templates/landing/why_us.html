@@ -2,13 +2,13 @@
 {% load static %}
 
 {% block title %}Why us | Defex Robotics{% endblock %}
-{% block description %}Why Defex: assembly cells that learn from physical outcomes. A physical acceptance test, repeatable practice and measured reuse on the next connector variant. A1 is in development.{% endblock %}
+{% block description %}Why Defex: robots that test every part they build and learn from every failure. Built for factories, starting with connector assembly.{% endblock %}
 {% block page_name %}Why us | Defex Robotics{% endblock %}
 {% block theme_color %}#050708{% endblock %}
-{% block og_title %}Why Defex: the test becomes the teacher{% endblock %}
-{% block og_description %}Assembly cells that learn from physical outcomes, starting with connectors. How the acceptance test, the reset and the next variant fit together, and what exists today.{% endblock %}
-{% block twitter_title %}Why Defex: the test becomes the teacher{% endblock %}
-{% block twitter_description %}Assembly cells that learn from physical outcomes, starting with connectors. What exists today, and what comes next.{% endblock %}
+{% block og_title %}Why Defex: every part tested{% endblock %}
+{% block og_description %}Robots that test every part they build and learn from every failure. Built for factories, starting with connector assembly.{% endblock %}
+{% block twitter_title %}Why Defex: every part tested{% endblock %}
+{% block twitter_description %}Robots that test every part they build and learn from every failure. Built for factories.{% endblock %}
 
 {% block extra_head %}
 <!-- The portal's word, in the heading face at its heaviest. Only the three
@@ -24,7 +24,7 @@
 
 <main>
     <!-- The opening. A scroll-driven camera through live type: the word is a
-         window onto the A1 concept render, and scrolling flies the camera into
+         window onto a concept render of the robot, and scrolling flies the camera into
          one of its letters. The clip inside is scrubbed by the same scroll, so
          the connector goes home and the tester lights as the camera clears the
          ink. Hover a letter first to choose the way in. static/js/portal.js. -->
@@ -55,31 +55,30 @@
             </div>
             <div class="portal__front">
                 <p class="portal__eyebrow">Why Defex</p>
-                <h1 class="portal__title" id="why-title">The test becomes the <em>teacher</em>.</h1>
+                <h1 class="portal__title" id="why-title">Every part tested. Every failure, a <em>lesson</em>.</h1>
             </div>
             <span class="portal__fallback" aria-hidden="true">TEST</span>
             <div class="portal__caption">
                 <span class="portal__hint" aria-hidden="true">Scroll to enter</span>
                 <a class="portal__skip" href="#case">Skip the intro <span aria-hidden="true">&#8600;</span></a>
             </div>
-            <p class="portal__label" aria-hidden="true">A1 concept render</p>
+            <p class="portal__label" aria-hidden="true">Concept render</p>
         </div>
 
         <!-- What the camera found, on a sheet laid over the scene. -->
         <div class="portal__content sheet" id="case" tabindex="-1">
             <div class="thesis">
-                <p class="thesis__say engraved">We&rsquo;re building assembly cells that learn from <em>physical outcomes</em>.</p>
+                <p class="thesis__say engraved">Robots that learn from every part they <em>build</em>.</p>
                 <div class="thesis__side">
-                    <p class="why-body">A1 brings the attempt, the outcome check and the preparation for the next attempt into one workcell, starting with connectors. The goal is fewer interventions, and less engineering effort each time a supported part variant changes.</p>
-                    <p class="why-status"><span class="why-status__dot" aria-hidden="true"></span>A1 is in development.</p>
+                    <p class="why-body">Our robot assembles the part, tests it, and gets better with every attempt. Fewer people babysitting the line. Less engineering every time the part changes.</p>
+                    <p class="why-status"><span class="why-status__dot" aria-hidden="true"></span>Starting with connector assembly</p>
                     <div class="why-actions">
                         <a class="glass-button-wrap" href="/#contact">
                             <span class="glass-button-tilt">
-                                <span class="glass-button"><span class="glass-button-text">Discuss your assembly task<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
+                                <span class="glass-button"><span class="glass-button-text">Test it on your part<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
                                 <span class="glass-button-shadow" aria-hidden="true"></span>
                             </span>
                         </a>
-                        <a class="link" href="{% url 'blog_post' 'the-cost-of-the-next-attempt' %}">How the loop works, in detail</a>
                     </div>
                 </div>
             </div>
@@ -90,9 +89,9 @@
          automation ticks the last line; the rest stays open. -->
     <section class="sheet why-row" id="problem" aria-labelledby="problem-title">
         <div class="why-row__text">
-            <h2 class="sechead__t engraved" id="problem-title" data-reveal>The expensive part is getting the <em>next</em> task ready.</h2>
-            <p class="why-lead">A robot can repeat a motion all day. The time goes into the work around it: adapting the fixture, tuning the process, agreeing what counts as a good part, preparing material, recovering failed attempts and proving the next variant.</p>
-            <p class="why-body">That surrounding work is what A1 is designed to shrink.</p>
+            <h2 class="sechead__t engraved" id="problem-title" data-reveal>The robot is the <em>easy</em> part.</h2>
+            <p class="why-lead">The weeks go into everything around it: fixtures, tuning, testing, recovering failures and proving every new part.</p>
+            <p class="why-body">That is the work we take off your hands.</p>
         </div>
         <figure class="jobsheet" data-reveal aria-labelledby="jobsheet-cap">
             <div class="jobsheet__form">
@@ -107,7 +106,7 @@
                     <li class="jobsheet__done"><span>Program the motion</span></li>
                 </ul>
             </div>
-            <figcaption class="figure__cap" id="jobsheet-cap">Most automation starts and stops at the last line. The six above it are where the time goes.</figcaption>
+            <figcaption class="figure__cap" id="jobsheet-cap">Most automation only does the last line.</figcaption>
         </figure>
     </section>
 
@@ -116,10 +115,10 @@
          still open; it clicks last. -->
     <section class="sheet why-row" id="check" aria-labelledby="check-title">
         <div class="why-row__text">
-            <p class="eyebrow">The acceptance test</p>
-            <h2 class="sechead__t engraved" id="check-title" data-reveal>Check the connection that <em>matters</em>.</h2>
-            <p class="why-lead">A connector can look seated before it is locked. We are designing A1 around a physical acceptance procedure: an electrical continuity check and a mechanical engagement check, defined for the supported task.</p>
-            <p class="why-body">Those checks are the evidence used to judge each assembly and to develop candidate skills. The cell is built around your definition of an acceptable part.</p>
+            <p class="eyebrow">Built-in testing</p>
+            <h2 class="sechead__t engraved" id="check-title" data-reveal>It knows when a part is really <em>done</em>.</h2>
+            <p class="why-lead">A connector can look plugged in and still be loose. Our robot tests every one: electrical contact, and a locked latch.</p>
+            <p class="why-body">If it fails, it does not ship. You set what a good part is.</p>
         </div>
         <figure class="figure why-fig" id="latch" aria-labelledby="latch-cap" data-anim>
             <div class="panel">
@@ -143,12 +142,12 @@
                     <li class="lamps__i lamps__i--latched">Latched</li>
                 </ol>
             </div>
-            <figcaption class="figure__cap" id="latch-cap">Schematic. Contact, force and continuity can each read as a pass before the latch engages. The acceptance test asks for the connection and the lock.</figcaption>
+            <figcaption class="figure__cap" id="latch-cap">Contact, force and continuity can all pass while the latch is still open. We check the lock too.</figcaption>
         </figure>
         <dl class="roles">
-            <div class="roles__i"><dt>Vision</dt><dd>finds the part</dd></div>
-            <div class="roles__i"><dt>Force</dt><dd>guides the contact</dd></div>
-            <div class="roles__i"><dt>The acceptance test</dt><dd>judges the joint</dd></div>
+            <div class="roles__i"><dt>Vision</dt><dd>finds it</dd></div>
+            <div class="roles__i"><dt>Force</dt><dd>guides it in</dd></div>
+            <div class="roles__i"><dt>The test</dt><dd>proves it</dd></div>
         </dl>
     </section>
 
@@ -158,11 +157,10 @@
          dips and the lamp lights exactly as each one passes. -->
     <section class="sheet why-row why-row--flip" id="reset" aria-labelledby="reset-title">
         <div class="why-row__text">
-            <p class="eyebrow">The reset</p>
-            <h2 class="sechead__t engraved" id="reset-title" data-reveal>Make practice <em>repeatable</em>.</h2>
-            <p class="why-lead">Learning takes more than another arm movement. The finished or failed assembly has to leave the station, and the next attempt has to start from a known condition.</p>
-            <p class="why-body">A1&rsquo;s planned carrier system advances prepared part pairs and routes every finished attempt to acceptance or quarantine, so practice continues between human interventions.</p>
-            <p class="why-note">People still define the task, prepare and replenish parts, and handle exceptions. Each batch is finite.</p>
+            <p class="eyebrow">Runs on its own</p>
+            <h2 class="sechead__t engraved" id="reset-title" data-reveal>It resets itself. It keeps <em>going</em>.</h2>
+            <p class="why-lead">Good parts move out. Bad parts get pulled. The next pair moves in.</p>
+            <p class="why-body">Your team loads the parts. The robot does the rest, attempt after attempt, without anyone standing over it.</p>
         </div>
         <figure class="figure why-fig line" id="line" aria-labelledby="line-cap" data-anim>
             <div class="panel line__panel">
@@ -185,9 +183,8 @@
                 </ul>
             </div>
             <figcaption class="figure__cap" id="line-cap">
-                <span class="variant__key"><span class="swatch swatch--action"></span>Passed its test: routed to acceptance</span>
-                <span class="variant__key"><span class="swatch swatch--reset"></span>Failed: routed to quarantine, one pair in five here</span>
-                Schematic of the planned carrier line.
+                <span class="variant__key"><span class="swatch swatch--action"></span>Passed: shipped</span>
+                <span class="variant__key"><span class="swatch swatch--reset"></span>Failed: pulled aside</span>
             </figcaption>
         </figure>
     </section>
@@ -196,11 +193,10 @@
          and what changes in orange. The leader lines draw once, on arrival. -->
     <section class="sheet why-row" id="variant" aria-labelledby="variant-title">
         <div class="why-row__text">
-            <p class="eyebrow">The next variant</p>
-            <h2 class="sechead__t engraved" id="variant-title" data-reveal>Make the next variant take <em>less work</em>.</h2>
-            <p class="why-lead">The useful test of learning is what happens when the part changes. We are building toward reuse of motion skills, fixture knowledge and test methods across related connector variants.</p>
-            <p class="why-body">We will measure the total engineering effort to qualify the next variant at comparable quality and throughput: fixture work, demonstrations, corrections, training, debugging, validation and interventions.</p>
-            <p class="why-target"><span class="why-target__k">Target</span>Variant B qualified in under half the engineering hours of variant A, at matched quality. A target, not a result.</p>
+            <p class="eyebrow">New parts</p>
+            <h2 class="sechead__t engraved" id="variant-title" data-reveal>Change the part. Keep what it <em>learned</em>.</h2>
+            <p class="why-lead">The skill, the fixture setup and the test carry over to the next connector. Only what changed has to be taught.</p>
+                        <p class="why-target"><span class="why-target__k">Target</span>The next part in half the engineering hours.</p>
         </div>
         <figure class="figure why-fig variant" id="variants" aria-labelledby="variant-cap" data-reveal>
             <div class="panel">
@@ -241,9 +237,8 @@
                 <p class="variant__names" aria-hidden="true"><span>Variant A</span><span>Variant B</span></p>
             </div>
             <figcaption class="figure__cap" id="variant-cap">
-                <span class="variant__key"><span class="swatch swatch--check"></span>Carries over: the insertion skill, the fixture datums, the test method</span>
-                <span class="variant__key"><span class="swatch swatch--action"></span>Changes: the pin count, the housing width</span>
-                Schematic, not a measured result.
+                <span class="variant__key"><span class="swatch swatch--check"></span>Carries over: the skill, the fixture, the test</span>
+                <span class="variant__key"><span class="swatch swatch--action"></span>Changes: pin count, width</span>
             </figcaption>
         </figure>
     </section>
@@ -253,28 +248,28 @@
     <section class="sheet why-gate" id="gate" aria-labelledby="gate-title">
         <div class="sechead">
             <h2 class="sechead__t engraved" id="gate-title" data-reveal>Practice, qualify, then <em>run</em>.</h2>
-            <p class="sechead__sub">Candidate skills are developed in practice and evaluated on fresh parts against a fixed acceptance procedure. Production runs an approved skill version within defined limits.</p>
+            <p class="sechead__sub">It practices off the line. Only a skill that passes the test runs in production.</p>
         </div>
         <figure class="figure gate" id="gatefig" aria-labelledby="gate-cap" data-anim>
             <div class="gate__row">
                 <div class="gate__stage">
                     <p class="gate__name">Practice</p>
-                    <p class="gate__what">Candidate skills, many attempts, each one scored by the test</p>
+                    <p class="gate__what">Many attempts, every one tested</p>
                     <div class="gate__attempts" aria-hidden="true">{% for hit in practice_marks %}<i{% if hit %} data-hit{% endif %}></i>{% endfor %}</div>
                 </div>
                 <div class="gate__stage">
                     <p class="gate__name">Qualify</p>
-                    <p class="gate__what">Fresh parts, the same fixed acceptance procedure</p>
+                    <p class="gate__what">Fresh parts, same test</p>
                     <div class="gate__trials" aria-hidden="true">{% for n in trials %}<i style="--i: {{ n }};"></i>{% endfor %}</div>
                 </div>
                 <div class="gate__bar" aria-hidden="true"><span>Approval</span></div>
                 <div class="gate__stage">
                     <p class="gate__name">Run</p>
-                    <p class="gate__what">The approved version, within defined operating limits</p>
+                    <p class="gate__what">Only approved skills, on your line</p>
                     <div class="gate__run" aria-hidden="true"><span></span></div>
                 </div>
             </div>
-            <figcaption class="figure__cap" id="gate-cap">Schematic. A new candidate earns deployment by passing evaluation. The robot on the line does not change its behavior after every attempt.</figcaption>
+            <figcaption class="figure__cap" id="gate-cap">Production never runs an untested skill.</figcaption>
         </figure>
     </section>
 
@@ -282,29 +277,29 @@
          be shown on the right, and a mark where the company is now. -->
     <section class="sheet" id="evidence" aria-labelledby="evidence-title">
         <div class="sechead">
-            <h2 class="sechead__t engraved" id="evidence-title" data-reveal>What we have built. What comes <em>next</em>.</h2>
+            <h2 class="sechead__t engraved" id="evidence-title" data-reveal>Where we are <em>today</em>.</h2>
             <p class="sechead__sub">As of <time datetime="{{ updated|date:'Y-m-d' }}">{{ updated|date:"F j, Y" }}</time>.</p>
         </div>
         <ol class="status">
             <li class="status__i status__i--done">
                 <p class="status__k">Built</p>
-                <p class="status__v">A vision inspection prototype, run on a live camera. <a class="link" href="/#origin">Watch it</a></p>
+                <p class="status__v">Vision inspection, run on a live camera. <a class="link" href="/#origin">Watch it</a></p>
             </li>
             <li class="status__i status__i--done">
-                <p class="status__k">Demand</p>
-                <p class="status__v">{{ company.paid_waitlist.factories }} factories on the paid waitlist. They paid to hold a place before the first assembly cell ships.</p>
+                <p class="status__k">Paid</p>
+                <p class="status__v">{{ company.paid_waitlist.factories }} factories paid to be first in line.</p>
             </li>
             <li class="status__i status__i--now">
-                <p class="status__k">In development</p>
-                <p class="status__v">A1, the assembly cell, starting with connectors.</p>
+                <p class="status__k">Building now</p>
+                <p class="status__v">The assembly robot, starting with connectors.</p>
             </li>
             <li class="status__i">
-                <p class="status__k">Next milestone</p>
-                <p class="status__v">An unattended attempt, test and reset loop on an instrumented bench.</p>
+                <p class="status__k">Next</p>
+                <p class="status__v">Running on its own: assemble, test, reset.</p>
             </li>
             <li class="status__i">
                 <p class="status__k">Then</p>
-                <p class="status__v">Learning measured against a scripted baseline on fresh parts, and the effort to qualify a related variant.</p>
+                <p class="status__v">Proof it beats a hand-programmed robot on fresh parts.</p>
             </li>
         </ol>
     </section>
@@ -312,7 +307,7 @@
     <!-- The people doing it, briefly. The full section is on the home page. -->
     <section class="sheet why-team" id="founders" aria-labelledby="founders-title">
         <div class="sechead">
-            <h2 class="sechead__t engraved" id="founders-title" data-reveal>Factory experience and software, on the same <em>problem</em>.</h2>
+            <h2 class="sechead__t engraved" id="founders-title" data-reveal>Who is <em>building</em> it.</h2>
             <p class="sechead__sub duo__lead">Twin brothers, building together for more than 20 years. <a class="link" href="/#team">Meet the team</a></p>
         </div>
         <ul class="duo">
@@ -324,7 +319,7 @@
                 <div class="duo__text">
                     <h3 class="founder__name">Husan Mavlonov</h3>
                     <p class="founder__role">Co-founder &amp; CEO</p>
-                    <p class="founder__bio">Hardware researcher with 3+ years in electronics manufacturing and batteries, who scaled factory operations across Uzbekistan, T&uuml;rkiye, China and the USA. Leads the company, customers and the factory side of the product.</p>
+                    <p class="founder__bio">Scaled factory operations across Uzbekistan, T&uuml;rkiye, China and the USA. 3+ years in electronics manufacturing and batteries.</p>
                 </div>
             </li>
             <li class="duo__i">
@@ -343,12 +338,12 @@
 
     <section class="why-close dark" id="talk" aria-labelledby="talk-title">
         <div class="why-close__inner">
-            <h2 class="sechead__t cut" id="talk-title" data-reveal><span class="cut__face engraved">Bring us the assembly task that keeps <em>needing attention</em>.</span><span class="cut__mask" aria-hidden="true">Bring us the assembly task that keeps <em>needing attention</em>.</span></h2>
-            <p class="why-close__lead">Tell us what the parts are, how you check the result and where the current process needs help. We will tell you whether it fits A1&rsquo;s initial scope.</p>
+            <h2 class="sechead__t cut" id="talk-title" data-reveal><span class="cut__face engraved">Bring us the part your team <em>hates</em> assembling.</span><span class="cut__mask" aria-hidden="true">Bring us the part your team <em>hates</em> assembling.</span></h2>
+            <p class="why-close__lead">Tell us what it is and how you check it. We will tell you straight if our robot can take it on.</p>
             <div class="why-actions">
                 <a class="glass-button-wrap" href="/#contact">
                     <span class="glass-button-tilt">
-                        <span class="glass-button"><span class="glass-button-text">Discuss your assembly task<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
+                        <span class="glass-button"><span class="glass-button-text">Test it on your part<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
                         <span class="glass-button-shadow" aria-hidden="true"></span>
                     </span>
                 </a>

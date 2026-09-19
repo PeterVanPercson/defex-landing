@@ -118,7 +118,7 @@ def llms_txt(request):
         "## Company",
         "- [Company facts](" + PUBLIC_COMPANY["links"]["company"] + "): product stage, paid waitlist, founders, contact",
         "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robots do and the inspection prototype",
-        "- [Why us](" + CANONICAL_ORIGIN + reverse("why_us") + "): the engineering case: the acceptance test, the reset, the next variant, and what exists today",
+        "- [Why us](" + CANONICAL_ORIGIN + reverse("why_us") + "): why robots that test every part they build: built-in testing, self-reset, new parts, and where we are today",
         "- [Investors](" + CANONICAL_ORIGIN + reverse("investors") + "): the pre-seed round and how to reach us",
         "- [Careers](" + CANONICAL_ORIGIN + reverse("careers") + "): open roles", "",
         "## Writing",
