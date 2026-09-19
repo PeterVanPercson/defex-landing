@@ -38,6 +38,8 @@ jobs:
           node --check static/js/post.js
           node --check static/js/spline.js
           node --check static/js/gridpulse.js
+          node --check static/js/portal.js
+          node --check static/js/why.js
 
       - name: collectstatic
         run: python manage.py collectstatic --no-input

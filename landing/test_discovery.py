@@ -47,7 +47,7 @@ class DiscoverabilityTests(SimpleTestCase):
         self.assertIn("https://www.linkedin.com/in/husan-mavlonov", people["https://husanmavlonov.com/#person"]["sameAs"])
 
     def test_every_existing_indexable_page_has_valid_jsonld_and_canonical(self):
-        paths = ["/", "/company/", "/careers/", "/blog/", "/blog/the-cost-of-the-next-attempt/", "/blog/the-ai-inference-revolution-is-here/"]
+        paths = ["/", "/company/", "/careers/", "/why-us/", "/blog/", "/blog/the-cost-of-the-next-attempt/", "/blog/the-ai-inference-revolution-is-here/"]
         for path in paths:
             with self.subTest(path=path):
                 page = self.get_page(path)
@@ -106,7 +106,7 @@ class DiscoverabilityTests(SimpleTestCase):
             self.assertEqual(self.client.post(path).status_code, 405)
 
     def test_husan_is_cofounder_everywhere(self):
-        for path in ("/", "/company/", "/careers/", "/blog/", "/blog/the-cost-of-the-next-attempt/", "/llms.txt"):
+        for path in ("/", "/company/", "/careers/", "/why-us/", "/blog/", "/blog/the-cost-of-the-next-attempt/", "/llms.txt"):
             page = self.get_page(path)
             self.assertIsNone(re.search(r"(?<![Cc]o-)(?<![Cc]o)\b[Ff]ounder (of|and|&|profile)", page), path)
         self.assertIn("Co-founder and CEO of Defex", self.get_page("/blog/the-cost-of-the-next-attempt/"))
@@ -122,7 +122,7 @@ class DiscoverabilityTests(SimpleTestCase):
     def test_llms_txt_lists_canonical_pages(self):
         body = self.get_page("/llms.txt")
         self.assertTrue(body.startswith("# Defex\n"))
-        for url in ("/company/", "/careers/", "/blog/the-cost-of-the-next-attempt/", "/blog/feed.xml"):
+        for url in ("/company/", "/careers/", "/why-us/", "/blog/the-cost-of-the-next-attempt/", "/blog/feed.xml"):
             self.assertIn(CANONICAL_ORIGIN + url, body)
         self.assertNotIn("defex.app/", body)
 

@@ -207,6 +207,44 @@ class SiteTests(SimpleTestCase):
         # Husan asked for this line to go from Hasan's bio
         self.assertNotContains(home, "robot software and hardware integration")
 
+    def test_why_us_page(self):
+        """The case for the approach, on its own page: the thesis, the three
+        mechanisms with their drawings, what exists today with a date, and the
+        ask. A1 is in development, so every drawing says it is a schematic and
+        the one number says it is a target."""
+        import re
+        response = self.client.get("/why-us/")
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
+        self.assertIn("<title>Why us | Defex Robotics</title>", body)
+        self.assertIn('id="why-title">The test becomes the <em>teacher</em>.</h1>', body)
+        for section in ("portal", "case", "problem", "check", "reset", "variant", "gate", "evidence", "founders", "talk"):
+            self.assertIn(f'id="{section}"', body)
+        for claim in ("A1 is in development.", "A1 concept render", "A target, not a result.",
+                      "21 factories on the paid waitlist", 'href="/#contact"'):
+            self.assertIn(claim, body)
+        self.assertGreaterEqual(body.count("Schematic"), 4)
+        # no numbered steps, no claims that nobody else can do this, and
+        # Hasan's bio as Husan cut it on the home page
+        text = re.sub(r"<[^>]+>", " ", re.sub(r"<(script|style)\b.*?</\1>", " ", body, flags=re.S))
+        self.assertIsNone(re.search(r"\b0\d\b", text), "a numbered step")
+        for gone in ("nobody else", "the only", "robot software and hardware integration"):
+            self.assertNotIn(gone, text)
+        # the portal keeps its licence notice; the clip and its stills stay small
+        root = Path(settings.BASE_DIR)
+        self.assertIn("Glyph Portal \u00a9 2026 Christian Katzmann. MIT.", (root / "static/js/portal.js").read_text())
+        for asset, cap in (("why/scene.mp4", 1024 * 1024), ("why/scene-first.webp", 80 * 1024), ("why/scene-final.webp", 80 * 1024)):
+            self.assertIn(asset, body)
+            self.assertLessEqual((root / "static" / asset).stat().st_size, cap, asset)
+        for script in ("js/portal.js", "js/why.js"):
+            self.assertIn(script, body)
+            self.assertEqual(self.client.get(f"/static/{script}").status_code, 200)
+        # reachable from the nav on every page, and from the home page's claims
+        for path in ("/", "/careers/", "/blog/", "/company/", "/why-us/"):
+            header = self.client.get(path).content.decode().split("<header", 1)[1].split("</header>", 1)[0]
+            self.assertIn('href="/why-us/"', header, path)
+        self.assertIn('class="features__more"><a class="link" href="/why-us/"', self.client.get("/").content.decode())
+
     def test_hero_assets_stay_within_budget(self):
         """The hero shipped at 34.5MB once, on every device, with no narrow
         build and nothing in CI that noticed. A visitor on a phone pays for
@@ -251,7 +289,7 @@ class SiteTests(SimpleTestCase):
         # rules inside a media query do not style the default (desktop) case
         top = re.sub(r"@media[^{]*\{(?:[^{}]|\{[^{}]*\})*\}", "", css, flags=re.S)
         used = set()
-        for name in ("home.html", "_topbar.html", "_scan.html", "blog/index.html",
+        for name in ("home.html", "why_us.html", "_topbar.html", "_scan.html", "blog/index.html",
                      "blog/_article.html", "blog/the-cost-of-the-next-attempt.html",
                      "blog/the-ai-inference-revolution-is-here.html"):
             markup = (root / "templates/landing" / name).read_text()

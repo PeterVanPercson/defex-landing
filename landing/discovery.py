@@ -81,6 +81,18 @@ def investors(request):
     return render(request, "landing/investors.html", {"company": PUBLIC_COMPANY, "updated": COMPANY_UPDATED})
 
 
+# The practice field on /why-us/: 36 attempts, the misses thinning out as a
+# candidate improves. Illustrative only; the page labels the figure a schematic.
+PRACTICE = "..x.x..x.xx." "x.xx.xxx.xxx" "xxxx.xxxxxxx"
+
+
+@require_safe
+def why_us(request):
+    return render(request, "landing/why_us.html", {
+        "company": PUBLIC_COMPANY, "updated": COMPANY_UPDATED,
+        "practice_marks": [mark == "x" for mark in PRACTICE], "trials": range(8)})
+
+
 @require_safe
 def company_json(request):
     response = JsonResponse(PUBLIC_COMPANY, json_dumps_params={"indent": 2})
@@ -106,6 +118,7 @@ def llms_txt(request):
         "## Company",
         "- [Company facts](" + PUBLIC_COMPANY["links"]["company"] + "): product stage, paid waitlist, founders, contact",
         "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robots do and the inspection prototype",
+        "- [Why us](" + CANONICAL_ORIGIN + reverse("why_us") + "): the engineering case: the acceptance test, the reset, the next variant, and what exists today",
         "- [Investors](" + CANONICAL_ORIGIN + reverse("investors") + "): the pre-seed round and how to reach us",
         "- [Careers](" + CANONICAL_ORIGIN + reverse("careers") + "): open roles", "",
         "## Writing",
@@ -138,7 +151,7 @@ def sitemap(request):
     # Do not manufacture lastmod=date.today(). Omit unknown modification dates.
     pages = [(reverse("home"), None), (reverse("careers"), None),
              (reverse("blog"), None), (reverse("company"), COMPANY_UPDATED),
-             (reverse("investors"), COMPANY_UPDATED)]
+             (reverse("investors"), COMPANY_UPDATED), (reverse("why_us"), None)]
     for post in POSTS:
         path = reverse("blog_post", kwargs={"slug": post["slug"]})
         canonical = post.get("canonical_url", CANONICAL_ORIGIN + path)

@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Why us | Defex Robotics{% endblock %}
+{% block description %}Why Defex: assembly cells that learn from physical outcomes. A physical acceptance test, repeatable practice and measured reuse on the next connector variant. A1 is in development.{% endblock %}
+{% block page_name %}Why us | Defex Robotics{% endblock %}
+{% block theme_color %}#050708{% endblock %}
+{% block og_title %}Why Defex: the test becomes the teacher{% endblock %}
+{% block og_description %}Assembly cells that learn from physical outcomes, starting with connectors. How the acceptance test, the reset and the next variant fit together, and what exists today.{% endblock %}
+{% block twitter_title %}Why Defex: the test becomes the teacher{% endblock %}
+{% block twitter_description %}Assembly cells that learn from physical outcomes, starting with connectors. What exists today, and what comes next.{% endblock %}
+
+{% block extra_head %}
+<!-- The portal's word, in the heading face at its heaviest. Only the three
+     letters it needs, so the file is a couple of kilobytes. -->
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@60,900&text=TEST&display=block" rel="stylesheet">
+<link rel="preload" as="image" href="{% static 'why/scene-first.webp' %}?v={{ asset_v }}">
+<noscript><style>.portal__fallback { display: grid; } .portal__hint { display: none; }</style></noscript>
+{% endblock %}
+
+{% block content %}
+<a class="skip" href="#case">Skip to the case</a>
+{% include "landing/_topbar.html" with page='why' %}
+
+<main>
+    <!-- The opening. A scroll-driven camera through live type: the word is a
+         window onto the A1 concept render, and scrolling flies the camera into
+         one of its letters. The clip inside is scrubbed by the same scroll, so
+         the connector goes home and the tester lights as the camera clears the
+         ink. Hover a letter first to choose the way in. static/js/portal.js. -->
+    <section class="portal" id="portal" aria-labelledby="why-title" data-portal data-word="TEST" data-length="1.9">
+        <div class="portal__probe" aria-hidden="true"></div>
+        <div class="portal__pin">
+            <div class="portal__field" aria-hidden="true">
+                <div class="portal__stage">
+                    <video class="portal__scene" muted playsinline preload="none" disablepictureinpicture width="1920" height="1080"
+                           poster="{% static 'why/scene-first.webp' %}?v={{ asset_v }}"
+                           data-src="{% static 'why/scene.mp4' %}?v={{ asset_v }}"
+                           data-final="{% static 'why/scene-final.webp' %}?v={{ asset_v }}"></video>
+                </div>
+            </div>
+            <svg class="portal__art" aria-hidden="true" focusable="false">
+                <defs>
+                    <clipPath id="portal-clip" clipPathUnits="userSpaceOnUse">
+                        <text class="portal__glyph" x="0" y="0">TEST</text>
+                    </clipPath>
+                </defs>
+                <g class="portal__marks"><path class="portal__dims"/><path class="portal__cross"/></g>
+            </svg>
+            <div class="portal__choices" role="radiogroup" aria-label="Choose the letter to enter through" inert>
+                <button type="button" role="radio" aria-checked="false" tabindex="-1" data-letter="0" aria-label="T, letter 1 of 4"></button>
+                <button type="button" role="radio" aria-checked="false" tabindex="-1" data-letter="1" aria-label="E, letter 2 of 4"></button>
+                <button type="button" role="radio" aria-checked="false" tabindex="-1" data-letter="2" aria-label="S, letter 3 of 4"></button>
+                <button type="button" role="radio" aria-checked="false" tabindex="-1" data-letter="3" aria-label="T, letter 4 of 4"></button>
+            </div>
+            <div class="portal__front">
+                <p class="portal__eyebrow">Why Defex</p>
+                <h1 class="portal__title" id="why-title">The test becomes the <em>teacher</em>.</h1>
+            </div>
+            <span class="portal__fallback" aria-hidden="true">TEST</span>
+            <div class="portal__caption">
+                <span class="portal__hint" aria-hidden="true">Scroll to enter</span>
+                <a class="portal__skip" href="#case">Skip the intro <span aria-hidden="true">&#8600;</span></a>
+            </div>
+            <p class="portal__label" aria-hidden="true">A1 concept render</p>
+        </div>
+
+        <!-- What the camera found, on a sheet laid over the scene. -->
+        <div class="portal__content sheet" id="case" tabindex="-1">
+            <div class="thesis">
+                <p class="thesis__say engraved">We&rsquo;re building assembly cells that learn from <em>physical outcomes</em>.</p>
+                <div class="thesis__side">
+                    <p class="why-body">A1 brings the attempt, the outcome check and the preparation for the next attempt into one workcell, starting with connectors. The goal is fewer interventions, and less engineering effort each time a supported part variant changes.</p>
+                    <p class="why-status"><span class="why-status__dot" aria-hidden="true"></span>A1 is in development.</p>
+                    <div class="why-actions">
+                        <a class="glass-button-wrap" href="/#contact">
+                            <span class="glass-button-tilt">
+                                <span class="glass-button"><span class="glass-button-text">Discuss your assembly task<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
+                                <span class="glass-button-shadow" aria-hidden="true"></span>
+                            </span>
+                        </a>
+                        <a class="link" href="{% url 'blog_post' 'the-cost-of-the-next-attempt' %}">How the loop works, in detail</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The customer's problem, as the sheet a changeover actually is. Most
+         automation ticks the last line; the rest stays open. -->
+    <section class="sheet why-row" id="problem" aria-labelledby="problem-title">
+        <div class="why-row__text">
+            <h2 class="sechead__t engraved" id="problem-title" data-reveal>The expensive part is getting the <em>next</em> task ready.</h2>
+            <p class="why-lead">A robot can repeat a motion all day. The time goes into the work around it: adapting the fixture, tuning the process, agreeing what counts as a good part, preparing material, recovering failed attempts and proving the next variant.</p>
+            <p class="why-body">That surrounding work is what A1 is designed to shrink.</p>
+        </div>
+        <figure class="jobsheet" data-reveal aria-labelledby="jobsheet-cap">
+            <div class="jobsheet__form">
+                <p class="jobsheet__head"><span>Changeover</span><span>Connector, variant B</span></p>
+                <ul class="jobsheet__list">
+                    <li>Adapt the fixture</li>
+                    <li>Tune the process</li>
+                    <li>Agree what counts as a good part</li>
+                    <li>Prepare the material</li>
+                    <li>Recover the failed attempts</li>
+                    <li>Prove the new variant</li>
+                    <li class="jobsheet__done"><span>Program the motion</span></li>
+                </ul>
+            </div>
+            <figcaption class="figure__cap" id="jobsheet-cap">Most automation starts and stops at the last line. The six above it are where the time goes.</figcaption>
+        </figure>
+    </section>
+
+    <!-- The acceptance test: the blog's latch figure, the sentence in motion.
+         Contact, force and continuity each read as done while the latch is
+         still open; it clicks last. -->
+    <section class="sheet why-row" id="check" aria-labelledby="check-title">
+        <div class="why-row__text">
+            <p class="eyebrow">The acceptance test</p>
+            <h2 class="sechead__t engraved" id="check-title" data-reveal>Check the connection that <em>matters</em>.</h2>
+            <p class="why-lead">A connector can look seated before it is locked. We are designing A1 around a physical acceptance procedure: an electrical continuity check and a mechanical engagement check, defined for the supported task.</p>
+            <p class="why-body">Those checks are the evidence used to judge each assembly and to develop candidate skills. The cell is built around your definition of an acceptable part.</p>
+        </div>
+        <figure class="figure why-fig" id="latch" aria-labelledby="latch-cap" data-anim>
+            <div class="panel">
+                <svg class="latch__svg" viewBox="0 44 600 132" aria-hidden="true">
+                    <path class="latch__housing" d="M330 60 H540 V160 H330"/>
+                    <rect class="latch__catch" x="338" y="60" width="14" height="10"/>
+                    <rect class="latch__pad" x="356" y="96" width="14" height="6"/>
+                    <rect class="latch__pad" x="356" y="118" width="14" height="6"/>
+                    <g class="latch__plug">
+                        <path class="latch__cable" d="M60 110 C 30 110, 22 142, 2 154"/>
+                        <rect class="latch__body" x="60" y="72" width="150" height="76" rx="4"/>
+                        <rect class="latch__tab" x="180" y="62" width="26" height="10" rx="2"/>
+                        <line class="latch__pin" x1="210" y1="99" x2="262" y2="99"/>
+                        <line class="latch__pin" x1="210" y1="121" x2="262" y2="121"/>
+                    </g>
+                </svg>
+                <ol class="lamps" aria-hidden="true">
+                    <li class="lamps__i lamps__i--contact">Contact</li>
+                    <li class="lamps__i lamps__i--force">Force</li>
+                    <li class="lamps__i lamps__i--position">Continuity</li>
+                    <li class="lamps__i lamps__i--latched">Latched</li>
+                </ol>
+            </div>
+            <figcaption class="figure__cap" id="latch-cap">Schematic. Contact, force and continuity can each read as a pass before the latch engages. The acceptance test asks for the connection and the lock.</figcaption>
+        </figure>
+        <dl class="roles">
+            <div class="roles__i"><dt>Vision</dt><dd>finds the part</dd></div>
+            <div class="roles__i"><dt>Force</dt><dd>guides the contact</dd></div>
+            <div class="roles__i"><dt>The acceptance test</dt><dd>judges the joint</dd></div>
+        </dl>
+    </section>
+
+    <!-- The reset: a prepared pair comes in, is assembled and tested, and
+         leaves for acceptance or quarantine while the next pair moves up. The
+         carriers are drawn by static/js/why.js on one clock, so the tool
+         dips and the lamp lights exactly as each one passes. -->
+    <section class="sheet why-row why-row--flip" id="reset" aria-labelledby="reset-title">
+        <div class="why-row__text">
+            <p class="eyebrow">The reset</p>
+            <h2 class="sechead__t engraved" id="reset-title" data-reveal>Make practice <em>repeatable</em>.</h2>
+            <p class="why-lead">Learning takes more than another arm movement. The finished or failed assembly has to leave the station, and the next attempt has to start from a known condition.</p>
+            <p class="why-body">A1&rsquo;s planned carrier system advances prepared part pairs and routes every finished attempt to acceptance or quarantine, so practice continues between human interventions.</p>
+            <p class="why-note">People still define the task, prepare and replenish parts, and handle exceptions. Each batch is finite.</p>
+        </div>
+        <figure class="figure why-fig line" id="line" aria-labelledby="line-cap" data-anim>
+            <div class="panel line__panel">
+                <svg class="line__svg" viewBox="0 0 600 196" aria-hidden="true">
+                    <path class="line__track" id="line-accept" d="M16 118 H430 C465 118 470 70 505 70 H584"/>
+                    <path class="line__track" id="line-quarantine" d="M16 118 H430 C465 118 470 166 505 166 H584"/>
+                    <path class="line__end" d="M584 58 v24 M584 154 v24"/>
+                    <g class="line__tool" id="line-tool">
+                        <path class="line__arm" d="M190 0 V42"/>
+                        <rect class="line__head" x="173" y="42" width="34" height="20" rx="2"/>
+                    </g>
+                    <path class="line__stem" d="M345 68 V106"/>
+                    <circle class="line__lamp" id="line-lamp" cx="345" cy="58" r="10"/>
+                    <g id="line-carriers"></g>
+                </svg>
+                <ul class="line__labels" aria-hidden="true">
+                    <li style="--x: 10%;">Prepared pair</li>
+                    <li style="--x: 31.7%;">Insert</li>
+                    <li style="--x: 57.5%;">Test</li>
+                </ul>
+            </div>
+            <figcaption class="figure__cap" id="line-cap">
+                <span class="variant__key"><span class="swatch swatch--action"></span>Passed its test: routed to acceptance</span>
+                <span class="variant__key"><span class="swatch swatch--reset"></span>Failed: routed to quarantine, one pair in five here</span>
+                Schematic of the planned carrier line.
+            </figcaption>
+        </figure>
+    </section>
+
+    <!-- The next variant: two related connectors, what carries over in ink
+         and what changes in orange. The leader lines draw once, on arrival. -->
+    <section class="sheet why-row" id="variant" aria-labelledby="variant-title">
+        <div class="why-row__text">
+            <p class="eyebrow">The next variant</p>
+            <h2 class="sechead__t engraved" id="variant-title" data-reveal>Make the next variant take <em>less work</em>.</h2>
+            <p class="why-lead">The useful test of learning is what happens when the part changes. We are building toward reuse of motion skills, fixture knowledge and test methods across related connector variants.</p>
+            <p class="why-body">We will measure the total engineering effort to qualify the next variant at comparable quality and throughput: fixture work, demonstrations, corrections, training, debugging, validation and interventions.</p>
+            <p class="why-target"><span class="why-target__k">Target</span>Variant B qualified in under half the engineering hours of variant A, at matched quality. A target, not a result.</p>
+        </div>
+        <figure class="figure why-fig variant" id="variants" aria-labelledby="variant-cap" data-reveal>
+            <div class="panel">
+                <svg class="variant__svg" viewBox="0 0 640 250" aria-hidden="true">
+                    <g class="variant__part">
+                        <path class="variant__axis" d="M135 8 V44"/>
+                        <path class="variant__tip" d="M129 36 L135 46 L141 36"/>
+                        <rect class="variant__tab" x="113" y="54" width="44" height="16" rx="2"/>
+                        <rect class="variant__body" x="40" y="70" width="190" height="104" rx="6"/>
+                        <rect class="variant__cavity" x="66" y="104" width="22" height="22" rx="2"/>
+                        <rect class="variant__cavity" x="101" y="104" width="22" height="22" rx="2"/>
+                        <rect class="variant__cavity" x="147" y="104" width="22" height="22" rx="2"/>
+                        <rect class="variant__cavity" x="182" y="104" width="22" height="22" rx="2"/>
+                        <circle class="variant__pad" cx="77" cy="150" r="4"/>
+                        <circle class="variant__pad" cx="193" cy="150" r="4"/>
+                        <path class="variant__datum" d="M52 174 L61 189 L43 189 Z"/>
+                    </g>
+                    <g class="variant__part">
+                        <path class="variant__axis" d="M480 8 V44"/>
+                        <path class="variant__tip" d="M474 36 L480 46 L486 36"/>
+                        <rect class="variant__tab" x="458" y="54" width="44" height="16" rx="2"/>
+                        <rect class="variant__body" x="350" y="70" width="260" height="104" rx="6"/>
+                        <rect class="variant__cavity" x="376" y="104" width="22" height="22" rx="2"/>
+                        <rect class="variant__cavity" x="411" y="104" width="22" height="22" rx="2"/>
+                        <rect class="variant__cavity" x="446" y="104" width="22" height="22" rx="2"/>
+                        <rect class="variant__cavity" x="492" y="104" width="22" height="22" rx="2"/>
+                        <rect class="variant__cavity variant__cavity--new" x="527" y="104" width="22" height="22" rx="2"/>
+                        <rect class="variant__cavity variant__cavity--new" x="562" y="104" width="22" height="22" rx="2"/>
+                        <circle class="variant__pad" cx="387" cy="150" r="4"/>
+                        <circle class="variant__pad" cx="573" cy="150" r="4"/>
+                        <path class="variant__datum" d="M362 174 L371 189 L353 189 Z"/>
+                        <path class="variant__width" d="M350 226 H610 M350 220 v12 M610 220 v12"/>
+                    </g>
+                    <path class="variant__carry" pathLength="1" d="M157 62 C 260 30, 360 30, 458 62"/>
+                    <path class="variant__carry" pathLength="1" d="M198 154 C 250 204, 332 204, 382 154"/>
+                    <path class="variant__carry" pathLength="1" d="M52 194 C 150 240, 264 240, 362 194"/>
+                </svg>
+                <p class="variant__names" aria-hidden="true"><span>Variant A</span><span>Variant B</span></p>
+            </div>
+            <figcaption class="figure__cap" id="variant-cap">
+                <span class="variant__key"><span class="swatch swatch--check"></span>Carries over: the insertion skill, the fixture datums, the test method</span>
+                <span class="variant__key"><span class="swatch swatch--action"></span>Changes: the pin count, the housing width</span>
+                Schematic, not a measured result.
+            </figcaption>
+        </figure>
+    </section>
+
+    <!-- Practice, qualify, run: the route a learned skill takes to the line,
+         with the gate in the middle. -->
+    <section class="sheet why-gate" id="gate" aria-labelledby="gate-title">
+        <div class="sechead">
+            <h2 class="sechead__t engraved" id="gate-title" data-reveal>Practice, qualify, then <em>run</em>.</h2>
+            <p class="sechead__sub">Candidate skills are developed in practice and evaluated on fresh parts against a fixed acceptance procedure. Production runs an approved skill version within defined limits.</p>
+        </div>
+        <figure class="figure gate" id="gatefig" aria-labelledby="gate-cap" data-anim>
+            <div class="gate__row">
+                <div class="gate__stage">
+                    <p class="gate__name">Practice</p>
+                    <p class="gate__what">Candidate skills, many attempts, each one scored by the test</p>
+                    <div class="gate__attempts" aria-hidden="true">{% for hit in practice_marks %}<i{% if hit %} data-hit{% endif %}></i>{% endfor %}</div>
+                </div>
+                <div class="gate__stage">
+                    <p class="gate__name">Qualify</p>
+                    <p class="gate__what">Fresh parts, the same fixed acceptance procedure</p>
+                    <div class="gate__trials" aria-hidden="true">{% for n in trials %}<i style="--i: {{ n }};"></i>{% endfor %}</div>
+                </div>
+                <div class="gate__bar" aria-hidden="true"><span>Approval</span></div>
+                <div class="gate__stage">
+                    <p class="gate__name">Run</p>
+                    <p class="gate__what">The approved version, within defined operating limits</p>
+                    <div class="gate__run" aria-hidden="true"><span></span></div>
+                </div>
+            </div>
+            <figcaption class="figure__cap" id="gate-cap">Schematic. A new candidate earns deployment by passing evaluation. The robot on the line does not change its behavior after every attempt.</figcaption>
+        </figure>
+    </section>
+
+    <!-- What exists, dated. Built and paid for on the left, what is still to
+         be shown on the right, and a mark where the company is now. -->
+    <section class="sheet" id="evidence" aria-labelledby="evidence-title">
+        <div class="sechead">
+            <h2 class="sechead__t engraved" id="evidence-title" data-reveal>What we have built. What comes <em>next</em>.</h2>
+            <p class="sechead__sub">As of <time datetime="{{ updated|date:'Y-m-d' }}">{{ updated|date:"F j, Y" }}</time>.</p>
+        </div>
+        <ol class="status">
+            <li class="status__i status__i--done">
+                <p class="status__k">Built</p>
+                <p class="status__v">A vision inspection prototype, run on a live camera. <a class="link" href="/#origin">Watch it</a></p>
+            </li>
+            <li class="status__i status__i--done">
+                <p class="status__k">Demand</p>
+                <p class="status__v">{{ company.paid_waitlist.factories }} factories on the paid waitlist. They paid to hold a place before the first assembly cell ships.</p>
+            </li>
+            <li class="status__i status__i--now">
+                <p class="status__k">In development</p>
+                <p class="status__v">A1, the assembly cell, starting with connectors.</p>
+            </li>
+            <li class="status__i">
+                <p class="status__k">Next milestone</p>
+                <p class="status__v">An unattended attempt, test and reset loop on an instrumented bench.</p>
+            </li>
+            <li class="status__i">
+                <p class="status__k">Then</p>
+                <p class="status__v">Learning measured against a scripted baseline on fresh parts, and the effort to qualify a related variant.</p>
+            </li>
+        </ol>
+    </section>
+
+    <!-- The people doing it, briefly. The full section is on the home page. -->
+    <section class="sheet why-team" id="founders" aria-labelledby="founders-title">
+        <div class="sechead">
+            <h2 class="sechead__t engraved" id="founders-title" data-reveal>Factory experience and software, on the same <em>problem</em>.</h2>
+            <p class="sechead__sub duo__lead">Twin brothers, building together for more than 20 years. <a class="link" href="/#team">Meet the team</a></p>
+        </div>
+        <ul class="duo">
+            <li class="duo__i">
+                <div class="founder__frame">
+                    <img class="founder__photo" src="{% static 'img/team/husan-mavlonov-360.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/husan-mavlonov-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/husan-mavlonov-720.webp' %}?v={{ asset_v }} 720w" sizes="150px" width="720" height="900" alt="Portrait of Husan Mavlonov" loading="lazy" decoding="async">
+                    <img class="founder__color" src="{% static 'img/team/husan-mavlonov-color-360.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/husan-mavlonov-color-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/husan-mavlonov-color-720.webp' %}?v={{ asset_v }} 720w" sizes="150px" width="720" height="900" alt="" loading="lazy" decoding="async">
+                </div>
+                <div class="duo__text">
+                    <h3 class="founder__name">Husan Mavlonov</h3>
+                    <p class="founder__role">Co-founder &amp; CEO</p>
+                    <p class="founder__bio">Hardware researcher with 3+ years in electronics manufacturing and batteries, who scaled factory operations across Uzbekistan, T&uuml;rkiye, China and the USA. Leads the company, customers and the factory side of the product.</p>
+                </div>
+            </li>
+            <li class="duo__i">
+                <div class="founder__frame">
+                    <img class="founder__photo" src="{% static 'img/team/hasan-mavlonov-360.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/hasan-mavlonov-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/hasan-mavlonov-720.webp' %}?v={{ asset_v }} 720w" sizes="150px" width="720" height="900" alt="Portrait of Hasan Mavlonov" loading="lazy" decoding="async">
+                    <img class="founder__color" src="{% static 'img/team/hasan-mavlonov-color-360.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/hasan-mavlonov-color-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/hasan-mavlonov-color-720.webp' %}?v={{ asset_v }} 720w" sizes="150px" width="720" height="900" alt="" loading="lazy" decoding="async">
+                </div>
+                <div class="duo__text">
+                    <h3 class="founder__name">Hasan Mavlonov</h3>
+                    <p class="founder__role">Co-founder &amp; CTO</p>
+                    <p class="founder__bio">Built an AI question-generation pipeline for a government education platform with 60k+ students.</p>
+                </div>
+            </li>
+        </ul>
+    </section>
+
+    <section class="why-close dark" id="talk" aria-labelledby="talk-title">
+        <div class="why-close__inner">
+            <h2 class="sechead__t cut" id="talk-title" data-reveal><span class="cut__face engraved">Bring us the assembly task that keeps <em>needing attention</em>.</span><span class="cut__mask" aria-hidden="true">Bring us the assembly task that keeps <em>needing attention</em>.</span></h2>
+            <p class="why-close__lead">Tell us what the parts are, how you check the result and where the current process needs help. We will tell you whether it fits A1&rsquo;s initial scope.</p>
+            <div class="why-actions">
+                <a class="glass-button-wrap" href="/#contact">
+                    <span class="glass-button-tilt">
+                        <span class="glass-button"><span class="glass-button-text">Discuss your assembly task<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
+                        <span class="glass-button-shadow" aria-hidden="true"></span>
+                    </span>
+                </a>
+                <a class="link" href="mailto:{{ company.contact }}">{{ company.contact }}</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="footer dark">
+    <a href="/" class="brand brand--small" aria-label="defex home">
+        <svg viewBox="0 0 20 64" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="currentColor"/><circle cx="10" cy="32" r="7" fill="#FF5A1F"/><circle cx="10" cy="54" r="7" fill="currentColor"/></svg>
+        <span>defex<span class="dot">.</span></span>
+    </a>
+    <span class="footer__fine">&copy; {% now "Y" %} Defex. All rights reserved.</span>
+    <span class="footer__links"><a class="footer__blog link" href="{% url 'blog' %}">Blog</a> <a class="footer__company link" href="{% url 'company' %}">Company</a> <a class="footer__company link" href="{% url 'investors' %}">Investors</a></span>
+    <span class="footer__line">San Francisco, CA</span>
+</footer>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/portal.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/why.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
+{% endblock %}
