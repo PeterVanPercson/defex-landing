@@ -1251,6 +1251,17 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 .wy-invest .wy-actions { justify-content: center; }
 .fleet { --fleet-gap: clamp(20px, 3vw, 48px); display: flex; justify-content: center; gap: var(--fleet-gap); margin-top: clamp(72px, 12vh, 130px); padding-bottom: clamp(36px, 6vh, 64px); }
 .fleet .arm { flex: 0 0 calc((100% - 2 * var(--fleet-gap)) / 3); }
+
+/* The three offices above the footer, each under the time it is there now
+   (static/js/why.js). With no JS the clock line is empty and collapses, and
+   the cities stand on their own. */
+.wy-where { padding-block: clamp(56px, 9vh, 96px); text-align: center; border-top: 1px solid var(--line); }
+.wy-where .wy-kicker { margin: 0 auto clamp(26px, 4vh, 40px); }
+.cities { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(22px, 5vw, 88px); list-style: none; }
+.city { display: grid; justify-items: center; gap: 10px; min-width: 0; }
+.city__n { font: 600 clamp(26px, 3vw, 44px)/1.05 var(--sans); letter-spacing: -.03em; }
+.city__t { font: 500 12px/1.4 var(--mono); letter-spacing: .16em; color: var(--yellow); font-variant-numeric: tabular-nums; }
+.city__t:empty { display: none; }
 body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
 
 @media (max-width: 900px) {
@@ -1269,6 +1280,7 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
     .beat { min-height: 54svh; }
     .faces { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
     .face__bio { font-size: 15px; }
+    .cities { flex-direction: column; gap: 22px; }
     .fleet { --fleet-gap: 3vw; margin-inline: calc(-1 * var(--gutter)); overflow: clip; -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); }
     .fleet .arm { flex-basis: 48vw; }
     .proof__i { grid-template-columns: 96px minmax(0, 1fr); }

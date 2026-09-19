@@ -511,4 +511,27 @@
         }, { rootMargin: '0px 0px -20% 0px' });
         seen.observe(count);
     }
+
+    // ------------------------------------------------------------------
+    // The offices keep their own time: each city shows the clock where it
+    // is, set now and then on the half minute, and never while the tab is
+    // in the background. A time zone the browser does not know is left
+    // blank rather than shown wrong.
+    const clocks = [...document.querySelectorAll('.city__t[data-tz]')];
+    if (clocks.length) {
+        const show = () => {
+            if (document.hidden) return;
+            const now = new Date();
+            for (const el of clocks) {
+                try {
+                    el.textContent = new Intl.DateTimeFormat('en-US', { timeZone: el.dataset.tz, hour: 'numeric', minute: '2-digit' }).format(now);
+                } catch {
+                    el.textContent = '';
+                }
+            }
+        };
+        show();
+        setInterval(show, 30000);
+        document.addEventListener('visibilitychange', show);
+    }
 })();

@@ -335,6 +335,20 @@ class SiteTests(SimpleTestCase):
             self.assertRegex(css, token, f".{name} has no rule at all")
             self.assertRegex(top, token, f".{name} is only styled inside a media query")
 
+    def test_the_three_offices_are_named_across_the_site(self):
+        """His three offices: San Francisco, Hong Kong, Shanghai. In the
+        footer of every page, in the company and investor copy, and as three
+        live clocks at the end of Why us."""
+        footer = 'class="footer__line">San Francisco &middot; Hong Kong &middot; Shanghai</span>'
+        for path in ("/", "/why-us/", "/company/", "/investors/", "/careers/", "/blog/",
+                     "/blog/the-cost-of-the-next-attempt/"):
+            self.assertIn(footer, self.client.get(path).content.decode(), path)
+        why = self.client.get("/why-us/").content.decode()
+        for city, zone in (("San Francisco", "America/Los_Angeles"), ("Hong Kong", "Asia/Hong_Kong"), ("Shanghai", "Asia/Shanghai")):
+            self.assertIn(f'<span class="city__n">{city}</span><span class="city__t" data-tz="{zone}">', why)
+        self.assertIn("offices in Hong Kong and Shanghai", self.client.get("/company/").content.decode())
+        self.assertIn("offices in Hong Kong and Shanghai", self.client.get("/investors/").content.decode())
+
     def test_stylesheet_braces_balance(self):
         """A stray closing brace after the last media query made browsers
         drop the rule under it (.is-off, which pauses the blog's figures off

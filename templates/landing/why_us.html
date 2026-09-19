@@ -369,6 +369,15 @@
             <figure class="arm" data-phase="5.3" data-rate="1.05">{% include "landing/_arm.html" %}</figure>
         </div>
     </section>
+
+    <!-- The three offices, each with the time it is there right now, set by
+         static/js/why.js. Without JS the cities stand on their own. -->
+    <section class="wy-sec wy-where" aria-labelledby="where-title">
+        <h2 class="wy-kicker" id="where-title" data-reveal>Where we are.</h2>
+        <ul class="cities">
+            {% for office in company.offices %}<li class="city" data-reveal><span class="city__n">{{ office.city }}</span><span class="city__t" data-tz="{{ office.time_zone }}"></span></li>{% endfor %}
+        </ul>
+    </section>
 </main>
 
 <footer class="footer dark">
@@ -378,7 +387,7 @@
     </a>
     <span class="footer__fine">&copy; {% now "Y" %} Defex. All rights reserved.</span>
     <span class="footer__links"><a class="footer__blog link" href="{% url 'blog' %}">Blog</a> <a class="footer__company link" href="{% url 'company' %}">Company</a> <a class="footer__company link" href="{% url 'investors' %}">Investors</a></span>
-    <span class="footer__line">San Francisco, CA</span>
+    <span class="footer__line">San Francisco &middot; Hong Kong &middot; Shanghai</span>
 </footer>
 {% endblock %}
 

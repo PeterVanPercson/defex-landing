@@ -36,6 +36,16 @@ class DiscoverabilityTests(SimpleTestCase):
         for word in ("a16z", "Domino", "Khosla", "26000", "ARR", "investors", "commitment"):
             self.assertNotIn(word, response.content.decode())
 
+    def test_three_offices_are_in_the_organization_markup_and_the_facts(self):
+        org = next(node for node in self.graphs(self.get_page("/company/")) if node["@type"] == "Organization")
+        self.assertEqual([place["name"] for place in org["location"]], ["San Francisco", "Hong Kong", "Shanghai"])
+        self.assertEqual([place["address"]["addressCountry"] for place in org["location"]],
+                         ["United States", "Hong Kong SAR", "China"])
+        self.assertEqual(org["location"][0]["address"]["addressRegion"], "California")
+        self.assertEqual([office["city"] for office in self.client.get("/company.json").json()["offices"]],
+                         ["San Francisco", "Hong Kong", "Shanghai"])
+        self.assertIn("with offices in Hong Kong and Shanghai", self.get_page("/llms.txt"))
+
     def test_both_founders_are_distinct_from_organization(self):
         nodes = self.graphs(self.get_page("/company/"))
         org = next(node for node in nodes if node["@type"] == "Organization")

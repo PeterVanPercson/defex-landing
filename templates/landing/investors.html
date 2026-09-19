@@ -36,7 +36,7 @@
         <h2 id="team">Who you would back.</h2>
         <p><strong>Husan Mavlonov, {{ company.founders.0.role }}.</strong> {{ company.founders.0.bio }}</p>
         <p><strong>Hasan Mavlonov, {{ company.founders.1.role }}.</strong> {{ company.founders.1.bio }}</p>
-        <p>Identical twins, building together in San Francisco. <a class="link" href="{% url 'company' %}">Company facts</a>.</p>
+        <p>Identical twins, building together in San Francisco, with offices in Hong Kong and Shanghai. <a class="link" href="{% url 'company' %}">Company facts</a>.</p>
 
         <h2 id="write">Write to us.</h2>
         <p>Angels, funds and scouts: email <a class="link" href="mailto:{{ company.contact }}?subject=Defex%20pre-seed">{{ company.contact }}</a> and we will send the deck and a short video of the prototype. You will hear back from Husan directly.</p>
@@ -51,6 +51,6 @@
     </a>
     <span class="footer__fine">&copy; {% now "Y" %} Defex. All rights reserved.</span>
     <span class="footer__links"><a class="footer__blog link" href="{% url 'blog' %}">Blog</a> <a class="footer__company link" href="{% url 'company' %}">Company</a> <a class="footer__company link" href="{% url 'investors' %}">Investors</a></span>
-    <span class="footer__line">San Francisco, CA</span>
+    <span class="footer__line">San Francisco &middot; Hong Kong &middot; Shanghai</span>
 </footer>
 {% endblock %}

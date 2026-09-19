@@ -18,6 +18,12 @@ PUBLIC_COMPANY = {
     "url": CANONICAL_ORIGIN + "/",
     "description": "Defex is developing self-teaching assembly robots for manufacturing, starting with connector assembly.",
     "location": "San Francisco, California, United States",
+    # headquarters first, then the other two offices, west to east
+    "offices": [
+        {"city": "San Francisco", "region": "California", "country": "United States", "time_zone": "America/Los_Angeles"},
+        {"city": "Hong Kong", "country": "Hong Kong SAR", "time_zone": "Asia/Hong_Kong"},
+        {"city": "Shanghai", "country": "China", "time_zone": "Asia/Shanghai"},
+    ],
     "as_of": COMPANY_UPDATED.isoformat(),
     "product": {
         "focus": "Connector assembly",
@@ -45,6 +51,14 @@ PUBLIC_COMPANY = {
 }
 
 
+def office_place(office):
+    """One office as a Place, so search engines read three locations, not one."""
+    address = {"@type": "PostalAddress", "addressLocality": office["city"], "addressCountry": office["country"]}
+    if office.get("region"):
+        address["addressRegion"] = office["region"]
+    return {"@type": "Place", "name": office["city"], "address": address}
+
+
 def organization_jsonld():
     """Keep the company distinct from its founders. No invented corporate profiles."""
     org_id = CANONICAL_ORIGIN + "/#org"
@@ -55,7 +69,7 @@ def organization_jsonld():
          "logo": {"@type": "ImageObject", "url": CANONICAL_ORIGIN + static("img/apple-touch-icon.png"), "width": 180, "height": 180},
          "email": PUBLIC_COMPANY["contact"],
          "founder": [{"@id": person["id"]} for person in PUBLIC_COMPANY["founders"]],
-         "location": {"@type": "Place", "name": PUBLIC_COMPANY["location"]}},
+         "location": [office_place(office) for office in PUBLIC_COMPANY["offices"]]},
         {"@type": "WebSite", "@id": CANONICAL_ORIGIN + "/#website", "url": PUBLIC_COMPANY["url"],
          "name": "Defex", "alternateName": "Defex Robotics", "inLanguage": "en", "publisher": {"@id": org_id}},
     ]
@@ -112,7 +126,8 @@ def llms_txt(request):
     lines = [
         "# Defex", "",
         "> " + PUBLIC_COMPANY["description"], "",
-        "Defex (also written Defex Robotics) is based in " + PUBLIC_COMPANY["location"] + ". "
+        "Defex (also written Defex Robotics) is based in " + PUBLIC_COMPANY["location"]
+        + ", with offices in " + " and ".join(office["city"] for office in PUBLIC_COMPANY["offices"][1:]) + ". "
         + husan["name"] + " is " + husan["role"] + "; " + hasan["name"] + " is " + hasan["role"] + ". "
         "Canonical domain: defexrobotics.com (defex.app redirects here).", "",
         "## Company",
