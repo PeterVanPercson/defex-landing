@@ -80,22 +80,26 @@
 
         <ol class="features">
             <li class="feature" data-reveal>
-                <span class="feature__n" aria-hidden="true">01</span>
                 <h3 class="feature__t engraved">Robots you can walk away from.</h3>
                 <p class="feature__d">Ours reset and teach themselves, so a failed attempt comes back as a lesson. Not yours to fix.</p>
             </li>
             <li class="feature" data-reveal>
-                <span class="feature__n" aria-hidden="true">02</span>
                 <h3 class="feature__t engraved">Our robots feel what&rsquo;s wrong.</h3>
                 <p class="feature__d">A camera can tell you a part looks right. Ours physically test what they just built, so a defect is caught right away, with vision and touch.</p>
             </li>
             <li class="feature" data-reveal>
-                <span class="feature__n" aria-hidden="true">03</span>
                 <h3 class="feature__t engraved">A new way, not a new project.</h3>
                 <p class="feature__d">Robots are harder to fixture than you think. Ours practice by themselves.</p>
             </li>
         </ol>
-        <p class="features__more"><a class="link" href="{% url 'why_us' %}">See why it works</a></p>
+        <p class="features__more">
+            <a class="glass-button-wrap" href="{% url 'why_us' %}">
+                <span class="glass-button-tilt">
+                    <span class="glass-button"><span class="glass-button-text">See why it works<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
+                    <span class="glass-button-shadow" aria-hidden="true"></span>
+                </span>
+            </a>
+        </p>
     </section>
 
     <!-- The founders, on graph paper. The grid is 21st.dev's grid pulse in the

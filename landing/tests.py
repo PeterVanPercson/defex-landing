@@ -243,7 +243,22 @@ class SiteTests(SimpleTestCase):
         for path in ("/", "/careers/", "/blog/", "/company/", "/why-us/"):
             header = self.client.get(path).content.decode().split("<header", 1)[1].split("</header>", 1)[0]
             self.assertIn('href="/why-us/"', header, path)
-        self.assertIn('class="features__more"><a class="link" href="/why-us/">See why it works</a>', self.client.get("/").content.decode())
+        home = self.client.get("/").content.decode()
+        self.assertRegex(home, r'class="features__more">\s*<a class="glass-button-wrap" href="/why-us/">')
+        self.assertIn("See why it works", home)
+        # the three claims are not numbered
+        self.assertNotIn("feature__n", home)
+
+    def test_blog_robot_has_a_still_for_when_webgl_cannot_run(self):
+        """A factory office PC with WebGL off saw an empty half page where the
+        robot stands. It gets a still of the same robot instead."""
+        still = Path(settings.BASE_DIR) / "static" / "img" / "robot-still.webp"
+        self.assertLessEqual(still.stat().st_size, 80 * 1024)
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertRegex(css, r'\.spline\.is-failed \{[^}]*robot-still\.webp')
+        self.assertIn("is-failed", (Path(settings.BASE_DIR) / "static/js/spline.js").read_text())
+        self.assertIn("robot-still.webp", self.client.get("/blog/").content.decode())
+        self.assertNotContains(self.client.get("/blog/"), "min read")
 
     def test_hasan_leads_with_the_personality_layer(self):
         """Husan's call: Hasan is presented first for building a personality

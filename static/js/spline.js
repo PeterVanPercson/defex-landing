@@ -7,6 +7,20 @@
     // or the network fails, the figure is simply paper.
     const host = document.querySelector('[data-spline]');
     if (!host) return;
+    // No WebGL (switched off, blocklisted, a locked-down office machine):
+    // show the still of the robot rather than start a scene that cannot draw.
+    const webgl = (() => {
+        try {
+            const probe = document.createElement('canvas');
+            const gl = probe.getContext('webgl2') || probe.getContext('webgl');
+            const lose = gl && gl.getExtension('WEBGL_lose_context');
+            if (lose) lose.loseContext();
+            return Boolean(gl);
+        } catch (e) {
+            return false;
+        }
+    })();
+    if (!webgl) { host.classList.add('is-failed'); return; }
     // Resolves in the tail of the camera's move: once it has travelled and
     // its per-frame step has fallen under half a percent of that travel for
     // three frames (the ease-out's last stretch, where the framing is already

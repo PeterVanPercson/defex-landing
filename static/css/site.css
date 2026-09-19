@@ -228,12 +228,11 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* Why us: three claims as ruled rows, the way origami lists its roles. A
    number, the claim cut into the page, and the one sentence behind it. */
 .features { margin-top: clamp(36px, 6vh, 64px); list-style: none; border-top: 1px solid var(--line); }
-.feature { display: grid; grid-template-columns: 56px minmax(0, 1.05fr) minmax(0, 1fr); align-items: baseline; gap: clamp(18px, 3vw, 48px); padding: clamp(34px, 5.5vh, 56px) 8px; border-bottom: 1px solid var(--line); }
-.feature__n { font: 400 11px/1 var(--mono); letter-spacing: .22em; color: var(--mute); }
+.feature { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: baseline; gap: clamp(18px, 3vw, 48px); padding: clamp(34px, 5.5vh, 56px) 8px; border-bottom: 1px solid var(--line); }
 .feature__t { max-width: 17ch; font-size: clamp(27px, 2.7vw, 38px); line-height: 1.12; }
 .feature__d { max-width: 44ch; font: 400 13px/1.85 var(--mono); color: var(--ink-soft); }
 .feature__cta { margin-top: 26px; }
-.features__more { margin-top: 28px; font: 400 12px/1.6 var(--mono); color: var(--ink-soft); }
+.features__more { margin-top: clamp(32px, 5vh, 48px); }
 
 /* Founding team: the two founders on graph paper, set on a three by three
    grid. The title sits beside the portraits, and the line about the two of
@@ -710,6 +709,11 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .eyebrow__link:hover .eyebrow__text { border-color: var(--rule); }
 /* The title cut into the paper like every other title on the site; no
    italic phrase, which read as literary rather than technical. */
+/* the company and investors titles are two set lines, each kept whole: the
+   title runs past the 600px text column to the right, never to the left */
+@media (min-width: 900px) {
+    .post__title.post__title--wide { max-width: none; width: min(900px, calc(50vw + 300px - var(--pad))); }
+}
 .post__title { margin-top: 18px; max-width: 14ch; font-size: clamp(38px, 5.4vw, 64px); line-height: 1.04; letter-spacing: -.015em; }
 /* the summary as a standfirst under the title, in the mono like an abstract:
    a size up from the body, softer, no label and no bar */
@@ -929,6 +933,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .spline { position: relative; margin: 0 0 calc(-1 * var(--hero-pad-b)); width: min(100%, 520px); aspect-ratio: 1; justify-self: end; align-self: end; }
 .spline__canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: pan-y; opacity: 0; transition: opacity .45s ease; -webkit-mask-image: linear-gradient(to bottom, #000 76%, transparent 97%); mask-image: linear-gradient(to bottom, #000 76%, transparent 97%); }
 .spline.is-ready .spline__canvas { opacity: 1; }
+/* where the scene cannot run, a still of the same robot, captured from it */
+.spline.is-failed { background: url("../img/robot-still.webp") center / contain no-repeat; }
 .spline__loader { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 9px; opacity: 0; transition: opacity .4s ease; }
 .spline.is-loading .spline__loader { opacity: 1; }
 .spline__loader i { width: 9px; height: 9px; border-radius: 50%; background: var(--ink); animation: spline-wait 1.2s ease-in-out infinite; }

@@ -20,6 +20,7 @@
 <!-- The robot's runtime and scene start downloading with the page rather
      than after the script has run: the runtime is a module on our host, the
      scene is a fetch from Spline's. -->
+<noscript><style>.spline { background: url("{% static 'img/robot-still.webp' %}") center / contain no-repeat; }</style></noscript>
 <link rel="preconnect" href="https://prod.spline.design" crossorigin>
 <link rel="modulepreload" href="{% static 'vendor/spline-2.0.46/runtime.standalone.webgl.js' %}?v={{ asset_v }}">
 <link rel="preload" as="fetch" href="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode" crossorigin>
@@ -51,7 +52,7 @@
     <section class="page posts" id="posts" aria-label="Posts">
         {% for post in posts %}
         <a class="postrow" href="{% url 'blog_post' post.slug %}" data-reveal>
-            <span class="postrow__meta">{{ post.author.name }} &middot; <time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time> &middot; {{ post.minutes }} min read</span>
+            <span class="postrow__meta">{{ post.author.name }} &middot; <time datetime="{{ post.date|date:'Y-m-d' }}">{{ post.date|date:"F j, Y" }}</time></span>
             <span class="postrow__title">{{ post.title }}</span>
             <span class="postrow__dek">{{ post.dek }}</span>
             <span class="postrow__go">{% include "landing/_scan.html" %}Read</span>
