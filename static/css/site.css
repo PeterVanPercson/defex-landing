@@ -232,6 +232,58 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .feature__d { max-width: 44ch; font: 400 13px/1.85 var(--mono); color: var(--ink-soft); }
 .feature__cta { margin-top: 26px; }
 
+/* Founding team: the two founders on graph paper, set on a three by three
+   grid. The title sits beside the portraits, and the line about the two of
+   them starts on the same line as their names, so every piece of text in the
+   section hangs from one of two rules. The founders' columns are subgrids of
+   the section's, which is what keeps those rules shared. The paper under it
+   all is ruled at a 10px pitch; static/js/gridpulse.js inks its cells where
+   the pointer passes. The hairlines are faint on their own so a lit cell
+   keeps its full weight, and the field fades out at the sheet's top and
+   bottom edges rather than ending in a line. */
+.team { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; column-gap: clamp(32px, 3.4vw, 56px); }
+.team > :not(.gridpulse) { position: relative; z-index: 1; }
+.gridpulse { --gp-cell: 10px; --gp-line: rgba(26, 24, 21, .05); position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; color: var(--ink); contain: strict; }
+/* The mask is on the hairlines alone. Over the canvas it would be composited
+   again on every frame the cells move; the cells fade at the edges in JS. */
+.gridpulse::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(to right, var(--gp-line) 1px, transparent 1px), linear-gradient(to bottom, var(--gp-line) 1px, transparent 1px); background-size: var(--gp-cell) var(--gp-cell); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 84%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 84%, transparent); }
+/* its own layer, so a changing cell never repaints the copy over it */
+.gridpulse canvas { position: absolute; inset: 0; width: 100%; height: 100%; will-change: transform; }
+.team__title { grid-area: 1 / 1; }
+.team__lead { grid-area: 2 / 1 / 4 / 2; margin-top: 26px; max-width: 30ch; font: 400 14px/1.8 var(--mono); color: var(--ink-soft); }
+.founders { grid-area: 1 / 2 / 4 / 4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-columns: subgrid; grid-template-rows: subgrid; column-gap: inherit; list-style: none; }
+.founder { grid-row: 1 / 4; display: grid; grid-template-rows: subgrid; min-width: 0; }
+.reveal .founder:nth-child(2) { transition-delay: .1s; }
+/* a print on the paper: square corners, no frame, no shadow; the grey holds
+   the space while it loads */
+.founder__photo { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; background: var(--reset); }
+.founder__id { margin-top: 26px; min-width: 0; }
+.founder__name { font-size: clamp(24px, 2.3vw, 30px); line-height: 1.1; }
+.founder__role { margin-top: 10px; font: 400 11px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+.founder__bio { margin-top: 16px; max-width: 46ch; font: 400 13px/1.85 var(--mono); color: var(--ink-soft); }
+/* narrower: the title and the line across the top, the founders side by side */
+@media (max-width: 959px) {
+    .team { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .team__title { grid-area: 1 / 1 / 2 / 3; }
+    .team__lead { grid-area: 2 / 1 / 3 / 3; margin-top: 22px; max-width: 44ch; }
+    .founders { grid-area: 3 / 1 / 6 / 3; margin-top: clamp(40px, 6vh, 56px); }
+}
+/* On a phone the two portraits stand side by side as a pair, each with its
+   name under it, and the bios run full width below: each bio opens with the
+   founder's name. The portraits stay small enough to be sharp. */
+@media (max-width: 719px) {
+    .team { column-gap: 14px; }
+    .founders { grid-area: 3 / 1 / 4 / 3; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; column-gap: 14px; }
+    .founder { display: contents; }
+    .founder__photo { grid-row: 1; }
+    .founder__id { grid-row: 2; margin-top: 16px; }
+    .founder__name { font-size: 19px; }
+    .founder__role { margin-top: 7px; font-size: 9.5px; letter-spacing: .1em; }
+    .founder__bio { grid-column: 1 / -1; margin-top: 22px; }
+    .founder:nth-child(1) .founder__bio { grid-row: 3; margin-top: 28px; }
+    .founder:nth-child(2) .founder__bio { grid-row: 4; }
+}
+
 .band__note { margin-top: 32px; font: 400 13px/1.7 var(--mono); color: var(--mute); }
 
 /* The closing block runs full bleed so the dark reaches both edges; the column

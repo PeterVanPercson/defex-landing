@@ -181,6 +181,28 @@ class SiteTests(SimpleTestCase):
         self.assertEqual(moved["Location"], "/#contact")
         self.assertNotIn("/book/", self.client.get("/sitemap.xml").content.decode())
 
+    def test_founding_team_is_on_the_home_page(self):
+        """The two founders, between Why us and the open role: both names,
+        both titles as co-founders, the twins line, portraits that exist and
+        stay small, and the grid that inks the paper under them."""
+        home = self.client.get("/")
+        page = home.content.decode()
+        self.assertContains(home, 'id="team-title" data-reveal data-grid-avoid>Founding <em>team</em></h2>')
+        self.assertContains(home, "Founded by twin brothers who&rsquo;ve been building together for more than 20&nbsp;years.")
+        for name, role in (("Husan Mavlonov", "Co-founder &amp; CEO"), ("Hasan Mavlonov", "Co-founder &amp; CTO")):
+            self.assertContains(home, f'class="founder__name" data-grid-avoid>{name}</h3>')
+            self.assertContains(home, f'class="founder__role" data-grid-avoid>{role}</p>')
+        self.assertLess(page.index('id="why"'), page.index('id="team"'))
+        self.assertLess(page.index('id="team"'), page.index('id="careers"'))
+        self.assertContains(home, "js/gridpulse.js")
+        self.assertEqual(self.client.get("/static/js/gridpulse.js").status_code, 200)
+        photos = Path(settings.BASE_DIR) / "static" / "img" / "team"
+        for person in ("husan-mavlonov", "hasan-mavlonov"):
+            for width in (360, 720):
+                photo = photos / f"{person}-{width}.webp"
+                self.assertIn(f"img/team/{photo.name}", page)
+                self.assertLessEqual(photo.stat().st_size, 120 * 1024, photo.name)
+
     def test_hero_assets_stay_within_budget(self):
         """The hero shipped at 34.5MB once, on every device, with no narrow
         build and nothing in CI that noticed. A visitor on a phone pays for
