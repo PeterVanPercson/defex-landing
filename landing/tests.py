@@ -210,8 +210,9 @@ class SiteTests(SimpleTestCase):
     def test_why_us_page(self):
         """The case for the robot, on its own dark page. It opens on WHY US
         (the Glyph Portal), speaks in short plain words, never says
-        "assembly" or "A1", labels the render and the one target, and ends
-        on booking a call."""
+        "assembly" or "A1", labels the render and the one target, asks
+        factories to book a call, and last of all asks investors to write
+        for the deck, with three arms working under the ask."""
         import re
         response = self.client.get("/why-us/")
         self.assertEqual(response.status_code, 200)
@@ -219,11 +220,19 @@ class SiteTests(SimpleTestCase):
         self.assertIn("<title>Why Defex | Robots that test every part they build</title>", body)
         self.assertIn('data-word="WHY US"', body)
         self.assertIn('id="why-title"><span class="wy-sr">Why us: </span>Robots that test every part', body)
-        for section in ("portal", "problem", "promise", "watch", "tests", "learns", "resets", "newpart", "proof", "faq", "founders", "talk"):
+        for section in ("portal", "problem", "promise", "watch", "tests", "learns", "resets", "newpart", "proof", "faq", "founders", "talk", "investors"):
             self.assertIn(f'id="{section}"', body)
         for claim in ("Concept render", "Target</span>", "factories paid to be first in line.",
-                      'href="/#contact"', "Book a call", "Robots are cheap."):
+                      'href="/#contact"', "Book a call", "Robots are cheap.", "$1.5M",
+                      'href="mailto:husan@defexrobotics.com?subject=Defex%20pre-seed"', 'href="/investors/"'):
             self.assertIn(claim, body)
+        self.assertLess(body.index('id="talk"'), body.index('id="investors"'))
+        self.assertLess(body.index('id="investors"'), body.index("<footer"))
+        fleet = body.split('class="fleet"', 1)[1].split("</section>", 1)[0]
+        self.assertEqual(fleet.count('class="arm"'), 3)
+        self.assertEqual(body.count('class="arm__svg"'), 4)
+        for word in ("Domino", "Khosla", "valuation"):
+            self.assertNotIn(word, body)
         text = re.sub(r"<[^>]+>", " ", re.sub(r"<(script|style)\b.*?</\1>", " ", body, flags=re.S))
         self.assertIsNone(re.search(r"assembl", text, re.I), "the page says assembly")
         self.assertNotIn("A1", text)
@@ -312,7 +321,7 @@ class SiteTests(SimpleTestCase):
         # rules inside a media query do not style the default (desktop) case
         top = re.sub(r"@media[^{]*\{(?:[^{}]|\{[^{}]*\})*\}", "", css, flags=re.S)
         used = set()
-        for name in ("home.html", "why_us.html", "_topbar.html", "_scan.html", "blog/index.html",
+        for name in ("home.html", "why_us.html", "_arm.html", "_topbar.html", "_scan.html", "blog/index.html",
                      "blog/_article.html", "blog/the-cost-of-the-next-attempt.html",
                      "blog/the-ai-inference-revolution-is-here.html"):
             markup = (root / "templates/landing" / name).read_text()
@@ -325,6 +334,20 @@ class SiteTests(SimpleTestCase):
             token = re.compile(rf"\.{re.escape(name)}(?![\w-])")
             self.assertRegex(css, token, f".{name} has no rule at all")
             self.assertRegex(top, token, f".{name} is only styled inside a media query")
+
+    def test_stylesheet_braces_balance(self):
+        """A stray closing brace after the last media query made browsers
+        drop the rule under it (.is-off, which pauses the blog's figures off
+        screen), and every page still returned 200. Each closing brace has to
+        close one that is open, and none is left open at the end."""
+        import re
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        depth = 0
+        for line, text in enumerate(re.sub(r"/\*.*?\*/", lambda m: "\n" * m.group(0).count("\n"), css, flags=re.S).splitlines(), 1):
+            for char in text:
+                depth += {"{": 1, "}": -1}.get(char, 0)
+                self.assertGreaterEqual(depth, 0, f"a closing brace with nothing open on line {line}")
+        self.assertEqual(depth, 0, "a brace left open")
 
     def test_blog(self):
         """The article is the first thing on the site meant to be read rather

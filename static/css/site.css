@@ -234,16 +234,15 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .feature__cta { margin-top: 26px; }
 .features__more { margin-top: clamp(32px, 5vh, 48px); }
 
-/* Founding team: the two founders on graph paper, set on a three by three
-   grid. The title sits beside the portraits, and the line about the two of
-   them starts on the same line as their names, so every piece of text in the
-   section hangs from one of two rules. The founders' columns are subgrids of
-   the section's, which is what keeps those rules shared. The paper under it
-   all is ruled at a 10px pitch; static/js/gridpulse.js inks its cells where
-   the pointer passes. The hairlines are faint on their own so a lit cell
-   keeps its full weight, and the field fades out at the sheet's top and
-   bottom edges rather than ending in a line. */
-.team { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; column-gap: clamp(32px, 3.4vw, 56px); }
+/* Founding team: the two founders on graph paper, down the middle of the
+   sheet: the title, the line about the two of them, then the pair side by
+   side. Each founder is a subgrid of the pair's three rows, so both names
+   and both bios start on shared lines whatever the text above them. The
+   paper under it all is ruled at a 10px pitch; static/js/gridpulse.js inks
+   its cells where the pointer passes. The hairlines are faint on their own
+   so a lit cell keeps its full weight, and the field fades out at the
+   sheet's top and bottom edges rather than ending in a line. */
+.team { display: flex; flex-direction: column; align-items: center; }
 .team > :not(.gridpulse) { position: relative; z-index: 1; }
 .gridpulse { --gp-cell: 10px; --gp-line: rgba(26, 24, 21, .05); position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; color: var(--ink); contain: strict; }
 /* The mask is on the hairlines alone. Over the canvas it would be composited
@@ -251,9 +250,9 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .gridpulse::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(to right, var(--gp-line) 1px, transparent 1px), linear-gradient(to bottom, var(--gp-line) 1px, transparent 1px); background-size: var(--gp-cell) var(--gp-cell); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 84%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 84%, transparent); }
 /* its own layer, so a changing cell never repaints the copy over it */
 .gridpulse canvas { position: absolute; inset: 0; width: 100%; height: 100%; will-change: transform; }
-.team__title { grid-area: 1 / 1; }
-.team__lead { grid-area: 2 / 1 / 4 / 2; margin-top: 26px; max-width: 30ch; font: 400 14px/1.8 var(--mono); color: var(--ink-soft); }
-.founders { grid-area: 1 / 2 / 4 / 4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-columns: subgrid; grid-template-rows: subgrid; column-gap: inherit; list-style: none; }
+.team__title, .team__lead, .founder { text-align: center; }
+.team__lead { margin-top: 22px; max-width: 44ch; font: 400 14px/1.8 var(--mono); color: var(--ink-soft); }
+.founders { display: grid; grid-template-columns: repeat(2, minmax(0, 340px)); grid-template-rows: repeat(3, auto); justify-content: center; column-gap: clamp(32px, 4vw, 64px); align-self: stretch; margin-top: clamp(48px, 8vh, 80px); list-style: none; }
 .founder { grid-row: 1 / 4; display: grid; grid-template-rows: subgrid; min-width: 0; }
 .reveal .founder:nth-child(2) { transition-delay: .1s; }
 /* A print on the paper: square corners, no frame, no shadow; the grey holds
@@ -283,19 +282,11 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .founder__role { margin-top: 10px; font: 400 11px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
 .founder__bio strong { color: var(--ink); font-weight: 500; }
 .founder__bio { margin-top: 16px; max-width: 46ch; font: 400 13px/1.85 var(--mono); color: var(--ink-soft); }
-/* narrower: the title and the line across the top, the founders side by side */
-@media (max-width: 959px) {
-    .team { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .team__title { grid-area: 1 / 1 / 2 / 3; }
-    .team__lead { grid-area: 2 / 1 / 3 / 3; margin-top: 22px; max-width: 44ch; }
-    .founders { grid-area: 3 / 1 / 6 / 3; margin-top: clamp(40px, 6vh, 56px); }
-}
 /* On a phone the two portraits stand side by side as a pair, each with its
    name under it, and the bios run full width below: each bio opens with the
    founder's name. The portraits stay small enough to be sharp. */
 @media (max-width: 719px) {
-    .team { column-gap: 14px; }
-    .founders { grid-area: 3 / 1 / 4 / 3; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; column-gap: 14px; }
+    .founders { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; column-gap: 14px; }
     .founder { display: contents; }
     .founders .founder__frame { grid-row: 1; }
     .founders .founder__id { grid-row: 2; margin-top: 16px; }
@@ -1234,8 +1225,10 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 .faq__i[open] .faq__q::after { transform: rotate(45deg); background: var(--yellow); border-color: var(--yellow); color: #0A0A0A; }
 .faq__a { max-width: 44ch; padding: 0 0 clamp(24px, 4vh, 34px); font: 400 clamp(19px, 1.6vw, 24px)/1.45 var(--sans); color: var(--mute); }
 
-/* the founders */
-.faces { display: grid; grid-template-columns: repeat(2, minmax(0, 360px)); gap: clamp(28px, 5vw, 80px); margin-top: clamp(44px, 8vh, 80px); list-style: none; }
+/* the founders, down the middle */
+.wy-team { text-align: center; }
+.wy-team .wy-h, .wy-team .wy-lead, .face__bio { margin-inline: auto; }
+.faces { display: grid; grid-template-columns: repeat(2, minmax(0, 360px)); justify-content: center; gap: clamp(28px, 5vw, 80px); margin-top: clamp(44px, 8vh, 80px); list-style: none; }
 .face .founder__frame { border-radius: 16px; }
 .face__name { margin-top: 24px; font: 650 clamp(26px, 2.5vw, 38px)/1.05 var(--sans); letter-spacing: -.035em; }
 .face__role { margin-top: 10px; font: 500 12px/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--yellow); }
@@ -1245,6 +1238,19 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 /* the ask */
 .wy-close { padding-block: clamp(150px, 24vh, 280px); border-top: 1px solid var(--line); }
 .wy-close .wy-lead { max-width: 34ch; }
+
+/* For investors, last: the round and the ask, then what the money buys.
+   That is three robots, so three copies of the arm work side by side on the
+   floor above the footer, each started at its own point in the cycle and
+   run at its own speed (static/js/why.js). On a phone the row runs off both
+   edges, one robot whole and one half seen on either side. */
+.wy-sec.wy-invest { padding-bottom: 0; }
+.wy-invest { text-align: center; border-top: 1px solid var(--line); }
+.wy-invest .wy-h, .wy-invest .wy-lead { margin-inline: auto; }
+.wy-invest .wy-lead { max-width: 34ch; }
+.wy-invest .wy-actions { justify-content: center; }
+.fleet { --fleet-gap: clamp(20px, 3vw, 48px); display: flex; justify-content: center; gap: var(--fleet-gap); margin-top: clamp(72px, 12vh, 130px); padding-bottom: clamp(36px, 6vh, 64px); }
+.fleet .arm { flex: 0 0 calc((100% - 2 * var(--fleet-gap)) / 3); }
 body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
 
 @media (max-width: 900px) {
@@ -1263,6 +1269,8 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
     .beat { min-height: 54svh; }
     .faces { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
     .face__bio { font-size: 15px; }
+    .fleet { --fleet-gap: 3vw; margin-inline: calc(-1 * var(--gutter)); overflow: clip; -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); }
+    .fleet .arm { flex-basis: 48vw; }
     .proof__i { grid-template-columns: 96px minmax(0, 1fr); }
     .loop__labels li, .window__bar { font-size: 10px; letter-spacing: .1em; }
     .gauge__checks { flex-wrap: wrap; }
@@ -1271,7 +1279,6 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
     .story__step { opacity: 1; }
     .window__line { display: none; }
     .gauge__plug, .gauge__arc, .gauge__tab, .gauge__check::before, .gauge__pass, .gauge__fail { transition: none; animation: none; }
-}
 }
 
 /* Set by post.js on a figure that has left the screen. Last in the file on

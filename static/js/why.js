@@ -106,9 +106,11 @@
     // the slot, a click as it seats, then away while the tester runs and
     // the next part slides onto the tray. Joint angles are solved every
     // frame (two-link inverse kinematics, elbow up), so the tool follows
-    // a true path instead of swinging between poses.
-    const arm = document.querySelector('.arm');
-    if (arm) {
+    // a true path instead of swinging between poses. Every arm on the page
+    // runs this: the one in the turn, and the three in the fleet at the end,
+    // which start at their own point in the cycle (data-phase, seconds) and
+    // run at their own speed (data-rate), so they never line up for long.
+    for (const arm of document.querySelectorAll('.arm')) {
         const q = (s) => arm.querySelector(s);
         const shoulder = q('.arm__shoulder'), elbow = q('.arm__elbow'), wrist = q('.arm__wrist');
         const fingerL = q('.arm__finger--l'), fingerR = q('.arm__finger--r');
@@ -143,8 +145,9 @@
             if (t < 6.15) return curve(ABOVE, VIA, HOME, E.inOut5(seg(t, 4.95, 6.15)));
             return HOME;
         };
+        const rate = Number(arm.dataset.rate) || 1;
         run(arm, (time) => {
-            const t = time % LOOP;
+            const t = (time * rate) % LOOP;
             const [s, e, w] = ik(tool(t));
             shoulder.style.transform = `rotate(${s.toFixed(3)}deg)`;
             elbow.style.transform = `rotate(${e.toFixed(3)}deg)`;
@@ -163,7 +166,7 @@
             lamp.style.fill = t >= 5.45 && t < 7.3 ? '#FFD42A' : '#2A2A2A';
             const pop = t < 5.5 ? 0 : t < 7.2 ? E.outBack(seg(t, 5.5, 5.85)) : 1 - E.in2(seg(t, 7.2, 7.5));
             badge.style.transform = `scale(${pop.toFixed(3)})`;
-        });
+        }, Number(arm.dataset.phase) || 0);
     }
 
     // ------------------------------------------------------------------

@@ -92,51 +92,7 @@
                 <a class="wy-link" href="#watch">Watch it work <span aria-hidden="true">&darr;</span></a>
             </div>
         </div>
-        <figure class="arm" aria-hidden="true">
-            <svg class="arm__svg" viewBox="110 88 510 296" aria-hidden="true">
-                <path class="arm__floor" d="M120 360 H612"/>
-                <rect class="arm__tray" x="296" y="336" width="68" height="9" rx="4.5"/>
-                <g class="arm__traypart">
-                    <rect x="315" y="310" width="30" height="26" rx="5" class="arm__part"/>
-                </g>
-                <path class="arm__cable" d="M500 340 C 520 352, 524 330, 540 330"/>
-                <rect class="arm__socket" x="440" y="316" width="60" height="40" rx="7"/>
-                <rect class="arm__slot" x="459" y="316" width="6" height="12" rx="2"/>
-                <rect class="arm__slot" x="475" y="316" width="6" height="12" rx="2"/>
-                <g class="arm__seated">
-                    <rect x="455" y="290" width="30" height="26" rx="5" class="arm__part"/>
-                </g>
-                <circle class="arm__ring" cx="470" cy="318" r="58" pathLength="1"/>
-                <rect class="arm__tester" x="540" y="304" width="62" height="52" rx="10"/>
-                <circle class="arm__lamp" cx="571" cy="330" r="12"/>
-                <g class="arm__badge">
-                    <circle cx="571" cy="252" r="26"/>
-                    <path d="M559 252 l8 8 l16 -17"/>
-                </g>
-                <rect class="arm__base" x="150" y="326" width="80" height="34" rx="9"/>
-                <g class="arm__shoulder">
-                    <rect class="arm__upper" x="190" y="280" width="170" height="32" rx="16"/>
-                    <g class="arm__elbow">
-                        <rect class="arm__fore" x="360" y="283" width="150" height="26" rx="13"/>
-                        <circle class="arm__joint arm__joint--y" cx="360" cy="296" r="20"/>
-                        <circle class="arm__pin" cx="360" cy="296" r="6"/>
-                        <g class="arm__wrist">
-                            <g class="arm__held">
-                                <rect x="495" y="320" width="30" height="26" rx="5" class="arm__part"/>
-                                <rect x="502" y="346" width="4" height="8" rx="1" class="arm__lead"/>
-                                <rect x="514" y="346" width="4" height="8" rx="1" class="arm__lead"/>
-                            </g>
-                            <rect class="arm__finger arm__finger--l" x="486" y="310" width="9" height="36" rx="4.5"/>
-                            <rect class="arm__finger arm__finger--r" x="525" y="310" width="9" height="36" rx="4.5"/>
-                            <rect class="arm__grip" x="484" y="302" width="52" height="12" rx="5"/>
-                            <circle class="arm__joint arm__joint--b" cx="510" cy="296" r="13"/>
-                        </g>
-                    </g>
-                </g>
-                <circle class="arm__joint arm__joint--y" cx="190" cy="296" r="25"/>
-                <circle class="arm__pin" cx="190" cy="296" r="8"/>
-            </svg>
-        </figure>
+        <figure class="arm" aria-hidden="true">{% include "landing/_arm.html" %}</figure>
     </section>
 
     <!-- The concept render, scrubbed by the scroll inside a window, with the
@@ -392,6 +348,25 @@
         <div class="wy-actions" data-reveal>
             <a class="wy-btn wy-btn--big" href="/#contact">Book a call <span aria-hidden="true">&rarr;</span></a>
             <a class="wy-link" href="mailto:{{ company.contact }}">{{ company.contact }}</a>
+        </div>
+    </section>
+
+    <!-- For investors, last: the round, what it buys and the ask, with the
+         long version one link away on /investors/. What it buys is three
+         robots, so three arms work side by side on the floor of the page,
+         never quite in step. -->
+    <section class="wy-sec wy-invest" id="investors" aria-labelledby="invest-title">
+        <p class="wy-kicker" data-reveal>For investors</p>
+        <h2 class="wy-h wy-h--xl" id="invest-title" data-reveal>We are raising <span class="wy-hl">$1.5M</span>.</h2>
+        <p class="wy-lead" data-reveal>Our pre-seed buys 18 months, 2 engineers and 3 robots. The goal: the robot runs on its own, and what it teaches itself beats what we program.</p>
+        <div class="wy-actions" data-reveal>
+            <a class="wy-btn wy-btn--big" href="mailto:{{ company.contact }}?subject=Defex%20pre-seed">Ask for the deck <span aria-hidden="true">&rarr;</span></a>
+            <a class="wy-link" href="{% url 'investors' %}">The investor page</a>
+        </div>
+        <div class="fleet" aria-hidden="true">
+            <figure class="arm">{% include "landing/_arm.html" %}</figure>
+            <figure class="arm" data-phase="2.7" data-rate="0.94">{% include "landing/_arm.html" %}</figure>
+            <figure class="arm" data-phase="5.3" data-rate="1.05">{% include "landing/_arm.html" %}</figure>
         </div>
     </section>
 </main>
