@@ -197,11 +197,15 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, "js/gridpulse.js")
         self.assertEqual(self.client.get("/static/js/gridpulse.js").status_code, 200)
         photos = Path(settings.BASE_DIR) / "static" / "img" / "team"
-        for person in ("husan-mavlonov", "hasan-mavlonov"):
+        # each portrait in black and white, and the colour print that develops
+        # over it under the pointer
+        for person in ("husan-mavlonov", "hasan-mavlonov", "husan-mavlonov-color", "hasan-mavlonov-color"):
             for width in (360, 720):
                 photo = photos / f"{person}-{width}.webp"
                 self.assertIn(f"img/team/{photo.name}", page)
                 self.assertLessEqual(photo.stat().st_size, 120 * 1024, photo.name)
+        # Husan asked for this line to go from Hasan's bio
+        self.assertNotContains(home, "robot software and hardware integration")
 
     def test_hero_assets_stay_within_budget(self):
         """The hero shipped at 34.5MB once, on every device, with no narrow

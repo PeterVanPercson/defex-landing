@@ -101,14 +101,18 @@
          site's own colours (static/js/gridpulse.js): cells take ink where the
          pointer passes. Its hairlines are CSS, so without JS the sheet is
          still ruled. Both portraits are one warm black and white graded to
-         the page, so a studio shot and a street shot read as a pair. -->
+         the page, so a studio shot and a street shot read as a pair; each
+         develops into colour under the pointer. -->
     <section class="team sheet" id="team" aria-labelledby="team-title">
         <div class="gridpulse" data-gridpulse aria-hidden="true"><canvas></canvas></div>
         <h2 class="team__title sechead__t engraved" id="team-title" data-reveal data-grid-avoid>Founding <em>team</em></h2>
         <p class="team__lead" data-reveal data-grid-avoid>Founded by twin brothers who&rsquo;ve been building together for more than 20&nbsp;years.</p>
         <ul class="founders">
             <li class="founder" data-reveal>
-                <img class="founder__photo" src="{% static 'img/team/husan-mavlonov-720.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/husan-mavlonov-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/husan-mavlonov-720.webp' %}?v={{ asset_v }} 720w" sizes="(max-width: 719px) 44vw, (max-width: 959px) 45vw, 340px" width="720" height="900" alt="Portrait of Husan Mavlonov" loading="lazy" decoding="async" data-grid-avoid>
+                <div class="founder__frame">
+                    <img class="founder__photo" src="{% static 'img/team/husan-mavlonov-720.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/husan-mavlonov-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/husan-mavlonov-720.webp' %}?v={{ asset_v }} 720w" sizes="(max-width: 719px) 44vw, (max-width: 959px) 45vw, 340px" width="720" height="900" alt="Portrait of Husan Mavlonov" loading="lazy" decoding="async" data-grid-avoid>
+                    <img class="founder__color" src="{% static 'img/team/husan-mavlonov-color-720.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/husan-mavlonov-color-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/husan-mavlonov-color-720.webp' %}?v={{ asset_v }} 720w" sizes="(max-width: 719px) 44vw, (max-width: 959px) 45vw, 340px" width="720" height="900" alt="" loading="lazy" decoding="async">
+                </div>
                 <div class="founder__id">
                     <h3 class="founder__name" data-grid-avoid>Husan Mavlonov</h3>
                     <p class="founder__role" data-grid-avoid>Co-founder &amp; CEO</p>
@@ -116,12 +120,15 @@
                 <p class="founder__bio" data-grid-avoid>Husan is a hardware researcher with 3+ years of experience in electronics manufacturing and batteries who scaled global factory ops across Uzbekistan, T&uuml;rkiye, China, and the USA.</p>
             </li>
             <li class="founder" data-reveal>
-                <img class="founder__photo" src="{% static 'img/team/hasan-mavlonov-720.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/hasan-mavlonov-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/hasan-mavlonov-720.webp' %}?v={{ asset_v }} 720w" sizes="(max-width: 719px) 44vw, (max-width: 959px) 45vw, 340px" width="720" height="900" alt="Portrait of Hasan Mavlonov" loading="lazy" decoding="async" data-grid-avoid>
+                <div class="founder__frame">
+                    <img class="founder__photo" src="{% static 'img/team/hasan-mavlonov-720.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/hasan-mavlonov-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/hasan-mavlonov-720.webp' %}?v={{ asset_v }} 720w" sizes="(max-width: 719px) 44vw, (max-width: 959px) 45vw, 340px" width="720" height="900" alt="Portrait of Hasan Mavlonov" loading="lazy" decoding="async" data-grid-avoid>
+                    <img class="founder__color" src="{% static 'img/team/hasan-mavlonov-color-720.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/hasan-mavlonov-color-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/hasan-mavlonov-color-720.webp' %}?v={{ asset_v }} 720w" sizes="(max-width: 719px) 44vw, (max-width: 959px) 45vw, 340px" width="720" height="900" alt="" loading="lazy" decoding="async">
+                </div>
                 <div class="founder__id">
                     <h3 class="founder__name" data-grid-avoid>Hasan Mavlonov</h3>
                     <p class="founder__role" data-grid-avoid>Co-founder &amp; CTO</p>
                 </div>
-                <p class="founder__bio" data-grid-avoid>Hasan built an AI question-generation pipeline for a government education platform with 60k+ students. He is building a personality layer for AI, after publishing over 10 research papers on it, and leading Defex&rsquo;s robot software and hardware integration.</p>
+                <p class="founder__bio" data-grid-avoid>Hasan built an AI question-generation pipeline for a government education platform with 60k+ students. He is building a personality layer for AI, after publishing over 10 research papers on it.</p>
             </li>
         </ul>
     </section>
