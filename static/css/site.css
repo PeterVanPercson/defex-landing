@@ -68,7 +68,9 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 ::selection { background: var(--accent); color: #1A1815; text-shadow: none; -webkit-text-fill-color: #1A1815; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+/* No smooth scrolling. A link to a section further down jumps straight
+   there; gliding would run the scroll-driven film and portal past at speed. */
+html { -webkit-text-size-adjust: 100%; }
 body { background: var(--grain), var(--bg); color: var(--ink); font: 15px/1.55 var(--font); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
 /* The film is baked on rgb(11,16,21) and cannot be made transparent, so the
@@ -593,7 +595,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
     .lede h1 br { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
     .hero__film { -webkit-mask-image: none; mask-image: none; }
     .link, .field input, .field textarea, .sound, .navlink { transition: none; }
     .reveal [data-reveal] { opacity: 1; transform: none; filter: none; transition: none; }
@@ -1003,10 +1004,6 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 .portal__title { position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--gp-word-bottom, 62%) + clamp(30px, 5vh, 56px)); margin-inline: auto; max-width: 20ch; text-align: center; font: 600 clamp(28px, 3.4vw, 54px)/1.06 var(--sans); letter-spacing: -.035em; color: var(--ink); text-wrap: balance; }
 .portal__fallback { position: absolute; inset: 0; display: none; place-items: center; font: 900 min(19cqw, 34cqh)/1 "Geist", "Arial Black", sans-serif; letter-spacing: -.02em; color: var(--gp-field); }
 .portal[data-ready] .portal__fallback { visibility: hidden; }
-.portal__caption { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; font: 500 12px/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); opacity: var(--gp-caption, 1); pointer-events: var(--gp-caption-hit, auto); }
-.portal[data-motion="off"] .portal__hint { visibility: hidden; }
-.portal__skip { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin-left: auto; color: inherit; transition: color .2s ease; }
-.portal__skip:hover { color: var(--yellow); }
 /* Inside the letter: the problem, in black on the yellow, scrolling over the
    parts while they drift at their own depths. A halo in the yellow keeps the
    words clear of any part passing behind them. */
@@ -1032,7 +1029,6 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 .wy-btn--big { min-height: 70px; padding: 0 40px; font-size: 21px; }
 .wy-link { color: var(--ink); font: 500 18px/1.4 var(--sans); border-bottom: 1px solid rgba(244, 244, 240, .3); transition: color .2s ease, border-color .2s ease; }
 .wy-link:hover { color: var(--yellow); border-color: var(--yellow); }
-.wy-tag { margin-top: 14px; font: 500 12px/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(244, 244, 240, .42); }
 
 /* the turn: text and the arm */
 .wy-promise, .wy-feat { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); align-items: center; gap: clamp(36px, 5vw, 100px); }
@@ -1378,7 +1374,7 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
     .faces { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
     .face__bio { font-size: 15px; }
     .proof__i { grid-template-columns: 96px minmax(0, 1fr); }
-    .loop__labels li, .wy-tag, .window__bar { font-size: 10px; letter-spacing: .1em; }
+    .loop__labels li, .window__bar { font-size: 10px; letter-spacing: .1em; }
     .gauge__checks { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {

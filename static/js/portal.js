@@ -185,7 +185,6 @@
             // Drop the clip only once the camera has already filled the view with ink.
             field.style.clipPath = t >= 1 ? 'none' : 'url(#portal-clip)';
             section.style.setProperty('--gp-caption', String(1 - smooth(0.01, 0.16, p)));
-            section.style.setProperty('--gp-caption-hit', p < 0.08 ? 'auto' : 'none');
             section.style.setProperty('--gp-field-scale', String(1 + 0.12 * smooth(0, 0.82, p)));
             section.dataset.entered = String(p >= 0.9);
             section.style.setProperty('--gp-reveal', String(still ? 1 : smooth(0.78, 0.9, p)));
