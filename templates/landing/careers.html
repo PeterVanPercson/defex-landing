@@ -29,7 +29,7 @@
     <header class="masthead">
         <p class="eyebrow">Join us</p>
         <h1 class="engraved">Build the machine that proves it worked.</h1>
-        <p class="masthead__lead">We are a small team building a cell that assembles a connector and then physically tests the joint it just made. We are looking for people who want to work on real hardware, in a real factory, on a question that has not been answered yet.</p>
+        <p class="masthead__lead">We’re hiring engineers to build our connector-assembly cell, and a content producer to document the work.</p>
     </header>
 
     <div id="roles">
@@ -37,7 +37,7 @@
         <section class="group" aria-labelledby="{{ group.id }}">
             <div class="group__head">
                 <h2 class="engraved" id="{{ group.id }}">{{ group.title }}</h2>
-                <p class="group__meta">{{ group.jobs|length|stringformat:"02d" }} role{{ group.jobs|pluralize }} &middot; {{ group.meta }}</p>
+                <p class="group__meta">{{ group.meta }}</p>
             </div>
             {% for job in group.jobs %}{% include "landing/_job_role.html" %}{% endfor %}
         </section>
@@ -46,9 +46,9 @@
     </div>
 
     <section class="apply" id="application" aria-labelledby="apply-title">
-        <p class="eyebrow">Application &middot; Short version</p>
+        <p class="eyebrow">Apply</p>
         <h2 class="engraved" id="apply-title">Build with us.</h2>
-        <p class="apply__lead">Send one strong example of work you personally made. No cover letter.</p>
+        <p class="apply__lead">Send an example of your work. No cover letter needed.</p>
         <form class="form form--apply" action="{% url 'apply' %}#application" method="post">
             {% csrf_token %}
             {% if messages %}{% for message in messages %}<p class="form__flash form__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
@@ -64,7 +64,7 @@
             </label>
             <label class="field"><span>Best work link (or describe below)</span><input type="url" name="work" placeholder="https://" maxlength="500" value="{{ form.work.value|default_if_none:'' }}"{% if form.work.errors %} aria-invalid="true" aria-describedby="work-error"{% endif %}></label>
             <label class="field"><span>LinkedIn or site</span><input type="url" name="profile" placeholder="https://" maxlength="500" value="{{ form.profile.value|default_if_none:'' }}"{% if form.profile.errors %} aria-invalid="true" aria-describedby="profile-error"{% endif %}></label>
-            <label class="field"><span>What you owned on it</span><textarea name="note" rows="3" maxlength="1800"{% if form.note.errors %} aria-invalid="true" aria-describedby="note-error"{% endif %}>{{ form.note.value|default_if_none:'' }}</textarea></label>
+            <label class="field"><span>Your part in the project</span><textarea name="note" rows="3" maxlength="1800"{% if form.note.errors %} aria-invalid="true" aria-describedby="note-error"{% endif %}>{{ form.note.value|default_if_none:'' }}</textarea></label>
             <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
             <button type="submit" class="cta">Send application</button>
         </form>
