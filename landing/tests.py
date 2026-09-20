@@ -56,7 +56,7 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, "/careers/")
         # the careers page carries the posting and a working application form
         careers = self.client.get("/careers/")
-        for chunk in ("Content Producer", "What to include", "Build with us",
+        for chunk in ("Content Producer", "To apply", "Build with us",
                       'id="content-producer"', 'id="application"', 'name="work"'):
             self.assertContains(careers, chunk)
         # the topbar carries the mark alone; the wordmark belongs to the

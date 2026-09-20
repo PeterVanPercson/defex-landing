@@ -37,7 +37,7 @@ class ApplicationForm(forms.Form):
     def clean(self):
         data = super().clean()
         if not data.get("work") and len(data.get("note", "")) < 40:
-            self.add_error("note", "Add a project link or a short description of work you personally owned (at least 40 characters).")
+            self.add_error("note", "Add a project link or describe your work below (at least 40 characters).")
         return data
 
     def is_spam(self) -> bool:

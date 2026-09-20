@@ -11,8 +11,8 @@
     <div class="role__panel">
         <div class="role__main">{% include "landing/_job_description.html" %}</div>
         <aside class="role__aside">
-            <h4 class="microlabel">What to include</h4>
-            <ol class="role__include">{% for item in job.include %}<li>{{ item }}</li>{% endfor %}</ol>
+            <h4 class="microlabel">To apply</h4>
+            <ul class="role__include">{% for item in job.include %}<li>{{ item }}</li>{% endfor %}</ul>
             <button type="button" class="cta cta--quiet" data-copy-link="https://defexrobotics.com{% url 'career_detail' job.slug %}">Copy job link</button>
             <a class="cta" href="{% url 'careers' %}?role={{ job.slug }}#application" data-apply-role="{{ job.slug }}">Apply for this role</a>
         </aside>
