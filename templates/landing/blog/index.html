@@ -17,13 +17,8 @@
 {% block twitter_description %}Notes and selected reading on physical AI, robot learning, manufacturing, and the hardware underneath modern AI.{% endblock %}
 
 {% block extra_head %}
-<!-- The robot's runtime and scene start downloading with the page rather
-     than after the script has run: the runtime is a module on our host, the
-     scene is a fetch from Spline's. -->
 <noscript><style>.spline { background: url("{% static 'img/robot-still.webp' %}") center / contain no-repeat; }</style></noscript>
 <link rel="preconnect" href="https://prod.spline.design" crossorigin>
-<link rel="modulepreload" href="{% static 'vendor/spline-2.0.46/runtime.standalone.webgl.js' %}?v={{ asset_v }}">
-<link rel="preload" as="fetch" href="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode" crossorigin>
 {% endblock %}
 
 {% block content %}

@@ -11,7 +11,8 @@
     // pointer, one canvas that sleeps whenever nothing is lit, paused off
     // screen, and still for readers who ask for reduced motion.
     const fields = document.querySelectorAll('[data-gridpulse]');
-    if (!fields.length || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const motion = matchMedia('(prefers-reduced-motion: reduce)');
+    if (!fields.length || motion.matches) return;
 
     // How far from the pointer a cell can still catch ink, in cells.
     const REACH = 5.5;
@@ -130,6 +131,11 @@
         let frame = 0;
         function draw(now) {
             frame = 0;
+            if (motion.matches || document.hidden) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                cells.clear();
+                return;
+            }
             for (const [key, c] of cells) {
                 const x = c.col * cell;
                 const y = c.row * cell;
@@ -188,7 +194,7 @@
         let visible = false;
         function paint() {
             pending = 0;
-            if (!at) return;
+            if (!at || motion.matches || document.hidden) return;
             const cx = Math.floor(at.x / cell);
             const cy = Math.floor(at.y / cell);
             const span = Math.ceil(REACH);
@@ -205,7 +211,7 @@
         // Listened for on the window: the grid sits under the content and
         // never receives the pointer itself.
         window.addEventListener('pointermove', (event) => {
-            if (!visible) return;
+            if (!visible || motion.matches || document.hidden) return;
             const bounds = el.getBoundingClientRect();
             at = { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
             if (!pending) pending = requestAnimationFrame(paint);
@@ -214,7 +220,8 @@
         // A few cells find their own way on. Paused while out of sight.
         function drift() {
             setTimeout(drift, 1400 + Math.random() * 1800);
-            if (!visible || document.hidden) return;
+            if (motion.matches || document.hidden) return;
+            if (!visible) return;
             for (let i = 0; i < AMBIENT; i++) {
                 light(Math.floor(Math.random() * cols), Math.floor(Math.random() * rows), 900 + Math.random() * 1600, .2 + .5 * Math.random());
             }

@@ -155,11 +155,12 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    the token change alone repaints, but it keeps the flip readable next to
    the rule it overrides. */
 .past-hero body:has(.hero) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: rgba(26, 24, 21, .74); --on-accent: #1A1815; --rule: rgba(26, 24, 21, .32); background: var(--grain), var(--page); color: #1A1815; box-shadow: inset 0 -1px 0 rgba(26, 24, 21, .14); }
-.brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--brand); font-size: 19px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
+.brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-family: var(--brand); font-size: 19px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
+.topbar > .brand { justify-content: center; min-width: 44px; flex-shrink: 0; margin-left: -17.5px; }
 .brand svg { width: 9px; height: 29px; display: block; }
 .brand--small { font-size: 16px; }
 .topbar__end { display: flex; align-items: center; gap: clamp(14px, 2vw, 26px); }
-.navlink { font: 400 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); transition: color .2s ease; }
+.navlink { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; flex-shrink: 0; white-space: nowrap; font: 400 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); transition: color .2s ease; }
 .navlink:hover, .navlink[aria-current="page"] { color: var(--ink); }
 
 .cta--quiet { min-height: 38px; padding: 0 18px; font-size: 10px; }
@@ -184,6 +185,10 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .has-scroll-film .hero { height: 280svh; }
 .has-scroll-film .hero__sticky { position: sticky; top: var(--nav); height: calc(100svh - var(--nav)); overflow: clip; }
 .has-scroll-film .hero__film { width: min(100%, calc((100svh - var(--nav) - var(--lede-space)) * 16 / 9)); }
+@media (min-aspect-ratio: 13/10) {
+    .has-scroll-film .hero__sticky { grid-template-rows: minmax(0, 1fr) auto; padding-block: 12px 28px; }
+    .has-scroll-film .hero__film { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+}
 /* the headline now sits in the frame, so the cue moves out of its way */
 /* The cue used to own the bottom-right corner. The a16z credit sits there
    now, on the button's row, and the two printed straight over each other,
@@ -329,7 +334,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* The note is the second path, for people who will not book a slot. Closed,
    it is one quiet line under the calendar; open, it is the form. */
 .note { margin-top: clamp(30px, 4.5vh, 48px); }
-.note__open { display: inline-flex; align-items: center; gap: 10px; list-style: none; cursor: pointer; padding-bottom: 3px; border-bottom: 1px solid var(--line); font: 400 12px/1.6 var(--mono); color: var(--ink-soft); transition: color .2s ease, border-color .2s ease; }
+.note__open { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; list-style: none; cursor: pointer; padding-bottom: 3px; border-bottom: 1px solid var(--line); font: 400 12px/1.6 var(--mono); color: var(--ink-soft); transition: color .2s ease, border-color .2s ease; }
 .note__open::-webkit-details-marker { display: none; }
 .note__open::after { content: "+"; font-size: 14px; line-height: 1; color: var(--mute); }
 .note[open] .note__open::after { content: "\2212"; }
@@ -393,7 +398,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* Scroll reveal, the way origami's sections arrive. Keyed on html.reveal,
    which only static/js/reveal.js sets, so without JS nothing is hidden. A
    heading sharpens out of a blur as it rises, as if it were being cut. */
-.reveal [data-reveal] { opacity: 0; transform: translateY(22px); transition: opacity .9s cubic-bezier(.22, .61, .36, 1), transform .9s cubic-bezier(.22, .61, .36, 1), filter .9s ease; }
+.reveal [data-reveal] { opacity: 0; transform: translateY(14px); transition: opacity .65s cubic-bezier(.22, .61, .36, 1), transform .65s cubic-bezier(.22, .61, .36, 1); }
 .reveal .engraved[data-reveal] { filter: blur(3px); }
 .reveal [data-reveal].is-in { opacity: 1; transform: none; filter: none; }
 .reveal .feature:nth-child(2) { transition-delay: .08s; }
@@ -465,6 +470,10 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* the whole frame is the play control; the sound chip sits above it */
 .playpause { position: absolute; inset: 0; z-index: 1; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; -webkit-appearance: none; appearance: none; }
 .playpause:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+.origin__film:not(.has-controls) :is(.playpause, .sound, .flash) { display: none; }
+.playpause { display: grid; place-items: center; color: #EAE8E3; }
+.playpause svg { width: 58px; height: 58px; padding: 17px; border-radius: 50%; background: rgba(9, 15, 21, .72); opacity: 0; transition: opacity .2s ease; }
+.playpause.is-paused svg, .playpause:focus-visible svg { opacity: 1; }
 .flash { position: absolute; inset: 0; z-index: 2; margin: auto; width: 58px; height: 58px; display: grid; place-items: center; border-radius: 999px; background: rgba(9, 15, 21, .58); color: var(--ink); opacity: 0; pointer-events: none; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .flash svg { width: 22px; height: 22px; display: block; }
 .flash.is-on { animation: flash .5s cubic-bezier(.22, .61, .36, 1) both; }
@@ -487,7 +496,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .contact__next { margin-top: 26px; font: 400 12px/1.7 var(--mono); color: var(--ink-soft); }
 .contact__alt { margin-top: 28px; font: 400 12px/1.6 var(--mono); color: var(--mute); }
 .link { border-bottom: 1px solid var(--line); transition: color .2s, border-color .2s; }
-.link:hover { color: var(--accent); border-color: var(--accent); }
+.link:hover { color: var(--ink); border-color: var(--accent); }
 
 .talk { margin-top: 40px; }
 .talk > summary { display: inline-flex; list-style: none; }
@@ -498,7 +507,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .field input, .field textarea { width: 100%; padding: 0 14px; border: 1px solid var(--rule); border-radius: 0; background: var(--surface); font: 16px/1.5 var(--font); color: var(--ink); letter-spacing: 0; text-transform: none; transition: border-color .15s; }
 .field input { height: 48px; }
 .field textarea { padding: 12px 14px; resize: vertical; min-height: 96px; }
-.field input:focus, .field textarea:focus { outline: none; border-color: var(--ink); }
+.field input:focus, .field textarea:focus { border-color: var(--ink); }
+.field input:focus-visible, .field textarea:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .field ::placeholder { color: var(--mute); }
 .form__trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .form .cta { justify-self: center; margin-top: 12px; }
@@ -595,6 +605,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
     /* backgrounds and blending are overridden here, so the mask would show as a second copy */
     .cut { background: none; }
     .cut__mask { display: none; }
+    .engraved { color: CanvasText; -webkit-text-fill-color: CanvasText; background: none; text-shadow: none; }
 }
 
 /* ------------------------------------------------------------------------
@@ -661,11 +672,12 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* The same button in the nav, at the nav's size, as the product's way in on
    every page. */
 .glass-button-wrap--nav { flex-shrink: 0; }
-.glass-button-wrap--nav .glass-button-text { min-height: 36px; padding: 0 18px; gap: 8px; font-size: 10.5px; letter-spacing: .16em; }
+.glass-button-wrap--nav .glass-button-shadow { --shadow-cutoff-fix: 1em; }
+.glass-button-wrap--nav .glass-button-text { min-height: 44px; padding: 0 18px; gap: 8px; font-size: 10.5px; letter-spacing: .16em; }
 .glass-button-wrap--nav .glass-button-arrow { width: 12px; height: 12px; }
 /* Phone sizes, declared after the button's own rules so they win. */
 @media (max-width: 720px) {
-    .glass-button-wrap--nav .glass-button-text { min-height: 40px; padding: 0 14px; letter-spacing: .1em; }
+    .glass-button-wrap--nav .glass-button-text { min-height: 44px; padding: 0 14px; letter-spacing: .1em; }
 }
 .footer__blog, .footer__company { font: 400 12px/1.6 var(--mono); color: var(--mute); }
 .footer__links { display: flex; gap: 20px; }
@@ -942,7 +954,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 @media (max-width: 899px) {
     .bloghero { grid-template-columns: minmax(0, 1fr); }
     .spline { justify-self: center; width: min(100%, 360px); }
-    .sections__track--fade { margin-inline: -28px; padding-inline: 28px; scroll-padding-inline: 28px; -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
+    .sections__track--fade { margin-inline: calc(-1 * var(--pad)); padding-inline: var(--pad); scroll-padding-inline: var(--pad); -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
 }
 @media (max-width: 720px) {
     /* the copy sits at the top and the ribbons take a band under it, where
@@ -1076,7 +1088,8 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 /* height: auto, or the element's height attribute holds it at 1080px */
 .story__video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; object-position: 44% 50%; }
 .story__steps { list-style: none; }
-.story__step { display: flex; flex-direction: column; justify-content: center; min-height: 66svh; opacity: .22; transition: opacity .45s ease; }
+.story__step { display: flex; flex-direction: column; justify-content: center; min-height: 66svh; opacity: 1; transition: opacity .35s ease; }
+.story[data-motion="on"] .story__step:not(.is-on) { opacity: .72; }
 .story__step.is-on { opacity: 1; }
 .story__t { max-width: 12ch; font: 650 clamp(36px, 4vw, 66px)/1 var(--sans); letter-spacing: -.04em; }
 .story__step.is-on .story__t { color: var(--ink); }
@@ -1297,3 +1310,22 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
    purpose: the figures' own animation shorthands would otherwise win the tie
    and set play-state back to running. */
 .is-off *, .is-off *::before, .is-off *::after { animation-play-state: paused; }
+
+.sound { width: 44px; height: 44px; color: #EAE8E3; }
+.booker__status, .booker__fallback { margin: 12px 0; text-align: center; font: 400 12px/1.7 var(--mono); color: var(--ink-soft); }
+.booker__fallback a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+.booker__panel:not([data-state]) .booker__frame { min-height: 0; }
+.booker__panel[data-state="failed"] .booker__frame { min-height: 0; max-height: 160px; overflow: hidden; }
+.booker__panel[data-state="ready"] :is(.booker__status, .booker__fallback) { display: none; }
+.booker__panel[data-state="loading"] .booker__frame { min-height: 200px; }
+
+@media (max-width: 380px) {
+    .topbar { padding-inline: 12px; gap: 6px; }
+    .topbar > .brand { margin-left: 0; }
+    .topbar__end { gap: 6px; }
+    .glass-button-wrap--nav .glass-button-text { padding-inline: 10px; gap: 6px; font-size: 9.5px; letter-spacing: .05em; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    .story[data-motion="on"] .story__step:not(.is-on) { opacity: 1; }
+}

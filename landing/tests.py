@@ -403,9 +403,8 @@ class SiteTests(SimpleTestCase):
         self.assertContains(post, "August 30, 2026")
         self.assertContains(post, '"datePublished": "2026-08-30"')
         self.assertIn("2026-08-30", self.client.get("/sitemap.xml").content.decode())
-        # the runtime and the scene are fetched with the page, not after the script
-        self.assertContains(index, 'rel="modulepreload" href="/static/vendor/spline-2.0.46/runtime.standalone.webgl.js')
-        self.assertContains(index, 'rel="preload" as="fetch" href="https://prod.spline.design/')
+        self.assertNotContains(index, 'rel="modulepreload"')
+        self.assertNotContains(index, 'rel="preload" as="fetch" href="https://prod.spline.design/')
         # analytics only when switched on, so the tag never 404s on every page
         self.assertNotIn("_vercel/insights", self.client.get("/").content.decode())
         with override_settings(WEB_ANALYTICS=True):

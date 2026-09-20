@@ -41,6 +41,9 @@ jobs:
           node --check static/js/portal.js
           node --check static/js/why.js
 
+      - name: Motion and loading recovery regressions
+        run: node --test scripts/test_frontend.cjs
+
       - name: collectstatic
         run: python manage.py collectstatic --no-input
 

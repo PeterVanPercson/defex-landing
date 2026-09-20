@@ -61,7 +61,7 @@
             <p class="origin__note">That is how we learned the camera is not enough.</p>
         </div>
         <figure class="origin__film">
-            <video class="origin__video" id="origin-video" muted loop playsinline preload="metadata" disablepictureinpicture
+            <video class="origin__video" id="origin-video" muted loop controls playsinline preload="none" disablepictureinpicture
                    width="720" height="1280"
                    poster="{% static 'video/origin-poster.jpg' %}?v={{ asset_v }}"
                    src="{% static 'video/origin.mp4' %}?v={{ asset_v }}"></video>
@@ -164,7 +164,9 @@
                 <h2 class="sechead__t cut" id="contact-title" data-reveal><span class="cut__face engraved">Test our <em>product</em></span><span class="cut__mask" aria-hidden="true">Test our <em>product</em></span></h2>
             </div>
             <div class="booker__panel">
+                <p class="booker__status" role="status">Choose a time to talk.</p>
                 <div class="booker__frame" id="cal-inline" data-cal="{{ cal_link }}" role="region" aria-label="Choose a time"></div>
+                <p class="booker__fallback"><a class="link" href="https://cal.com/{{ cal_link }}" target="_blank" rel="noopener noreferrer">Open calendar in a new tab <span aria-hidden="true">↗</span></a></p>
             </div>
         </div>
 

@@ -7,6 +7,9 @@
     // or the network fails, the figure is simply paper.
     const host = document.querySelector('[data-spline]');
     if (!host) return;
+    const motion = matchMedia('(prefers-reduced-motion: reduce)');
+    const saveData = Boolean(navigator.connection && navigator.connection.saveData);
+    if (motion.matches || saveData) { host.classList.add('is-failed'); return; }
     // No WebGL (switched off, blocklisted, a locked-down office machine):
     // show the still of the robot rather than start a scene that cannot draw.
     const webgl = (() => {
@@ -52,14 +55,23 @@
         requestAnimationFrame(tick);
     });
     const canvas = host.querySelector('canvas');
-    let started = false;
+    let started = false, app = null;
+    const fallback = () => {
+        host.classList.remove('is-ready', 'is-loading');
+        host.classList.add('is-failed');
+        if (app) { app.dispose(); app = null; }
+    };
+    motion.addEventListener('change', () => { if (motion.matches) fallback(); });
     const start = async () => {
         if (started) return;
         started = true;
         host.classList.add('is-loading');
+        let expired = false;
+        const timer = setTimeout(() => { expired = true; fallback(); }, 12000);
         try {
             const { Application } = await import(host.dataset.runtime);
-            const app = new Application(canvas);
+            if (expired || motion.matches) return;
+            app = new Application(canvas);
             await app.load(host.dataset.spline);
             // The scene opens on its own entrance: its camera starts pushed
             // in so far that the head fills the frame and the shoulders are
@@ -67,12 +79,16 @@
             // hidden, the dots still showing, until the camera has been still
             // for a moment, so the robot arrives whole. Capped at four
             // seconds in case a scene never settles.
+            if (expired || motion.matches || !app) return;
             await settled(app.findObjectByName('Camera 2'));
+            if (expired || motion.matches) return;
             host.classList.add('is-ready');
         } catch (e) {
-            host.classList.add('is-failed');
+            fallback();
+        } finally {
+            clearTimeout(timer);
+            host.classList.remove('is-loading');
         }
-        host.classList.remove('is-loading');
     };
     if ('IntersectionObserver' in window) {
         const io = new IntersectionObserver((entries) => {
