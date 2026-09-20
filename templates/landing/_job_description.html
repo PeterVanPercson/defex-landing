@@ -1,0 +1,12 @@
+<h4 class="microlabel">Why Defex</h4>
+{% for paragraph in job.about %}<p class="role__prose">{{ paragraph }}</p>{% endfor %}
+<h4 class="microlabel">Compensation</h4>
+<p class="role__prose">{{ job.compensation }}</p>
+<h4 class="microlabel">In this role you will</h4>
+<ul class="role__list">{% for item in job.responsibilities %}<li>{{ item }}</li>{% endfor %}</ul>
+<h4 class="microlabel">What we hope you&rsquo;ll bring</h4>
+<ul class="role__list">{% for item in job.requirements %}<li>{{ item }}</li>{% endfor %}</ul>
+<h4 class="microlabel">Bonus points if you have</h4>
+<ul class="role__list">{% for item in job.bonus %}<li>{{ item }}</li>{% endfor %}</ul>
+<h4 class="microlabel">Early work</h4>
+<p class="role__prose">{{ job.milestone }}</p>

@@ -121,8 +121,10 @@ class DiscoverabilityTests(SimpleTestCase):
             self.assertIsNone(re.search(r"(?<![Cc]o-)(?<![Cc]o)\b[Ff]ounder (of|and|&|profile)", page), path)
         self.assertIn("Co-founder and CEO of Defex", self.get_page("/blog/the-cost-of-the-next-attempt/"))
 
-    def test_careers_has_a_google_jobs_posting(self):
-        jobs = [node for node in self.graphs(self.get_page("/careers/")) if node.get("@type") == "JobPosting"]
+    def test_job_posting_is_on_its_own_page_not_the_listing(self):
+        listing = self.graphs(self.get_page("/careers/"))
+        self.assertFalse(any(node.get("@type") == "JobPosting" for node in listing))
+        jobs = [node for node in self.graphs(self.get_page("/careers/content-producer/")) if node.get("@type") == "JobPosting"]
         self.assertEqual(len(jobs), 1)
         job = jobs[0]
         for key in ("title", "description", "datePosted", "hiringOrganization", "jobLocation", "employmentType"):

@@ -1,5 +1,7 @@
 from django import forms
 
+from .jobs import ROLE_CHOICES
+
 
 class ContactForm(forms.Form):
     name = forms.CharField(max_length=120)
@@ -21,16 +23,22 @@ class ApplicationForm(forms.Form):
     serverless on Vercel with no writable disk and no object store, so a
     resume upload would have nowhere to land. Links carry the same evidence."""
 
-    ROLES = [("content-producer", "Content Producer")]
+    ROLES = ROLE_CHOICES
 
     name = forms.CharField(max_length=120)
     email = forms.EmailField(max_length=200)
     role = forms.ChoiceField(choices=ROLES)
-    work = forms.URLField(max_length=500)          # the one strong example
+    work = forms.URLField(max_length=500, required=False)
     profile = forms.URLField(max_length=500, required=False)
-    note = forms.CharField(max_length=600, required=False)
+    note = forms.CharField(max_length=1800, required=False)
 
     website = forms.CharField(max_length=200, required=False)   # honeypot
+
+    def clean(self):
+        data = super().clean()
+        if not data.get("work") and len(data.get("note", "")) < 40:
+            self.add_error("note", "Add a project link or a short description of work you personally owned (at least 40 characters).")
+        return data
 
     def is_spam(self) -> bool:
         return bool(self.cleaned_data.get("website"))

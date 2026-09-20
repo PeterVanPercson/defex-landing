@@ -1,0 +1,20 @@
+<details class="role" id="{{ job.slug }}"{% if selected_job %} open{% endif %}>
+    <summary class="role__head">
+        <div class="role__id">
+            <p class="role__cat">{{ job.category }}</p>
+            <h3 class="role__title">{{ job.title }}</h3>
+            <ul class="role__tags">{% for tag in job.tags %}<li>{{ tag }}</li>{% endfor %}</ul>
+        </div>
+        <p class="role__pitch">{{ job.pitch }}</p>
+        <span class="role__toggle" aria-hidden="true"></span>
+    </summary>
+    <div class="role__panel">
+        <div class="role__main">{% include "landing/_job_description.html" %}</div>
+        <aside class="role__aside">
+            <h4 class="microlabel">What to include</h4>
+            <ol class="role__include">{% for item in job.include %}<li>{{ item }}</li>{% endfor %}</ol>
+            <button type="button" class="cta cta--quiet" data-copy-link="https://defexrobotics.com{% url 'career_detail' job.slug %}">Copy job link</button>
+            <a class="cta" href="{% url 'careers' %}?role={{ job.slug }}#application" data-apply-role="{{ job.slug }}">Apply for this role</a>
+        </aside>
+    </div>
+</details>

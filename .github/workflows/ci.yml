@@ -40,6 +40,7 @@ jobs:
           node --check static/js/gridpulse.js
           node --check static/js/portal.js
           node --check static/js/why.js
+          node --check static/js/careers.js
 
       - name: Motion and loading recovery regressions
         run: node --test scripts/test_frontend.cjs
@@ -59,7 +60,7 @@ jobs:
             curl -sf -H "X-Forwarded-Proto: https" -o /dev/null http://127.0.0.1:8000/ && break
             sleep 1
           done
-          for route in / /careers/ /blog/ /blog/the-cost-of-the-next-attempt/; do
+          for route in / /careers/ /careers/founding-robotics-engineer/ /careers/robot-learning-engineer/ /careers/content-producer/ /blog/ /blog/the-cost-of-the-next-attempt/; do
             curl --fail --silent --show-error -H "X-Forwarded-Proto: https" -o /dev/null "http://127.0.0.1:8000$route"
           done
           curl --fail --silent --show-error -H "X-Forwarded-Proto: https" -H "Range: bytes=0-1023" \

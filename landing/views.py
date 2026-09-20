@@ -7,11 +7,13 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from .forms import ApplicationForm, ContactForm
+from .jobs import JOBS, JOB_BY_SLUG, JOBS_UPDATED, job_groups, job_path
 from .notify import application_email, autoresponder_email, client_ip, send, send_to, submission_email
 from .throttle import client_ident, rate_limited
 
@@ -49,31 +51,66 @@ def _what_to_fix(form, labels: dict) -> str:
 
 
 def home(request):
-    return render(request, "landing/home.html", {"form": ContactForm(), "asset_v": settings.DEFEX_ASSET_VERSION})
+    return render(request, "landing/home.html", {"form": ContactForm(), "asset_v": settings.DEFEX_ASSET_VERSION, "jobs": JOBS})
 
 
-def careers(request):
-    return render(request, "landing/careers.html", {"form": ApplicationForm()})
+def _careers_context(form, job=None):
+    from .discovery import CANONICAL_ORIGIN
+
+    url = CANONICAL_ORIGIN + (job_path(job) if job else reverse("careers"))
+    context = {
+        "form": form,
+        "groups": job_groups((job,)) if job else job_groups(),
+        "jobs": JOBS,
+        "selected_job": job,
+        "careers_title": f"{job['title']} | Defex Robotics" if job else "Careers | Defex Robotics",
+        "careers_description": job["pitch"] if job else "Join Defex in robotics controls, manipulation learning and technical content. Explore San Francisco roles, pay ranges and projects.",
+        "canonical_url": url,
+    }
+    if job:
+        description = render_to_string("landing/_job_description.html", {"job": job})
+        posting = {
+            "@context": "https://schema.org", "@type": "JobPosting", "@id": url + "#job", "url": url,
+            "title": job["title"], "description": description,
+            "datePosted": JOBS_UPDATED.isoformat(), "employmentType": job["employment_type"], "directApply": True,
+            "hiringOrganization": {"@type": "Organization", "@id": CANONICAL_ORIGIN + "/#org", "name": "Defex", "sameAs": CANONICAL_ORIGIN + "/", "logo": CANONICAL_ORIGIN + "/static/img/apple-touch-icon.png"},
+            "jobLocation": {"@type": "Place", "address": {"@type": "PostalAddress", "addressLocality": "San Francisco", "addressRegion": "CA", "addressCountry": "US"}},
+            "baseSalary": {"@type": "MonetaryAmount", "currency": "USD", "value": {"@type": "QuantitativeValue", "minValue": job["pay_min"], "maxValue": job["pay_max"], "unitText": job["pay_unit"]}},
+        }
+        context["job_jsonld"] = json.dumps(posting, ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    return context
+
+
+@require_http_methods(["GET", "HEAD"])
+def careers(request, slug=None):
+    job = JOB_BY_SLUG.get(slug) if slug else None
+    if slug and not job:
+        raise Http404
+    role = job["slug"] if job else request.GET.get("role", "")
+    initial = {"role": role} if role in JOB_BY_SLUG else {}
+    return render(request, "landing/careers.html", _careers_context(ApplicationForm(initial=initial), job))
 
 
 @require_http_methods(["POST"])
 def apply(request):
+    form = ApplicationForm(request.POST)
     if rate_limited("apply", client_ident(request),
                     settings.CONTACT_RATE_LIMIT, settings.CONTACT_RATE_WINDOW):
         messages.error(request, "That is a lot of applications. Try again a little later.")
-        return redirect(reverse("careers") + "#application")
-    form = ApplicationForm(request.POST)
+        return render(request, "landing/careers.html", _careers_context(form), status=429)
     if form.is_valid() and not form.is_spam():
         subject, html = application_email(form.cleaned_data, request)
         ok, detail = send(subject, html)
         if ok:
             messages.success(request, "Got it. We read every one and reply to the ones we can move on.")
+            return redirect(reverse("careers") + "?role=" + form.cleaned_data["role"] + "#application")
         else:
             _log_lost("application", form.cleaned_data, detail)
             messages.error(request, LOST_MESSAGE)
+            return render(request, "landing/careers.html", _careers_context(form), status=503)
     else:
         messages.error(request, _what_to_fix(form, APPLICATION_LABELS))
-    return redirect(reverse("careers") + "#application")
+        return render(request, "landing/careers.html", _careers_context(form), status=400)
 
 
 def book(request):

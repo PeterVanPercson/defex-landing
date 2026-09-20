@@ -148,6 +148,22 @@ test('backgrounding the page stops hero frame updates', () => {
     assert.equal(p.film.currentTime, time);
 });
 
+test('scrolling below a settled hero does not restart its animation loop', () => {
+    const p = hero();
+    p.film.readyState = 2; p.film.emit('loadeddata');
+    p.context.scrollY = 3000; p.event('scroll');
+    for (let i = 0; i < 100 && p.frames.size; i++) {
+        p.frame(); p.film.emit('seeked');
+    }
+    assert.equal(p.frames.size, 0);
+    for (let i = 0; i < 20; i++) {
+        p.context.scrollY += 20; p.event('scroll');
+    }
+    assert.equal(p.frames.size, 0);
+    p.context.scrollY = 500; p.event('scroll');
+    assert.ok(p.frames.size > 0);
+});
+
 test('origin video pauses in a hidden tab and retains an explicit user pause', () => {
     const p = page(), video = new Element(), surface = new Element();
     video.parent = new Element();
@@ -215,4 +231,146 @@ test('reduced motion skips the Spline WebGL probe and shows the still', () => {
     p.run('spline.js');
     assert.equal(probes, 0);
     assert.equal(host.classList.contains('is-failed'), true);
+});
+
+function grid() {
+    const p = page(), mount = new Element(), paper = new Element(), scope = new Element();
+    let reads = 0, clears = 0;
+    mount.clientWidth = 1200;
+    mount.clientHeight = 800;
+    mount.parentElement = scope;
+    mount.getBoundingClientRect = () => { reads++; return { left: 0, top: 0 }; };
+    paper.getContext = () => ({ setTransform() {}, clearRect() { clears++; }, fillRect() {} });
+    mount.querySelector = () => paper;
+    p.selectors['[data-gridpulse]'] = [mount];
+    p.run('gridpulse.js');
+    p.observers[1].callback([]);
+    return { ...p, mount, reads: () => reads, clears: () => clears };
+}
+
+test('the grid stops queued drawing and ambient timers when it leaves view', () => {
+    const p = grid();
+    p.observers[0].enter(p.mount);
+    p.advance(500);
+    assert.ok(p.frames.size > 0);
+    p.observers[0].enter(p.mount, false);
+    assert.equal(p.frames.size, 0);
+    assert.equal(p.timers.size, 0);
+});
+
+test('backgrounding an active grid clears it without a canvas reference error', () => {
+    const p = grid();
+    p.observers[0].enter(p.mount);
+    p.advance(500);
+    p.doc.hidden = true;
+    assert.doesNotThrow(() => { p.doc.emit('visibilitychange'); p.frame(); });
+    assert.equal(p.frames.size, 0);
+    assert.equal(p.timers.size, 0);
+    assert.ok(p.clears() > 0);
+    p.doc.hidden = false;
+    p.doc.emit('visibilitychange');
+    p.advance(500);
+    assert.ok(p.frames.size > 0);
+});
+
+test('grid pointer events share one geometry read per animation frame', () => {
+    const p = grid();
+    p.observers[0].enter(p.mount);
+    const before = p.reads();
+    p.event('pointermove', { clientX: 400, clientY: 200 });
+    p.event('pointermove', { clientX: 405, clientY: 205 });
+    assert.equal(p.reads(), before);
+    p.frame();
+    assert.equal(p.reads(), before + 1);
+});
+
+test('changing motion preference cancels an active grid and can restart it', () => {
+    const p = grid();
+    p.observers[0].enter(p.mount);
+    p.advance(500);
+    p.motion(true);
+    assert.equal(p.frames.size, 0);
+    assert.equal(p.timers.size, 0);
+    p.motion(false);
+    p.advance(500);
+    assert.ok(p.frames.size > 0);
+});
+
+function careers({ hash = '', hasError = false } = {}) {
+    const p = page(), form = new Element(), select = new Element(), note = new Element();
+    const submit = new Element(), name = new Element(), link = new Element(), copy = new Element();
+    const slugs = ['founding-robotics-engineer', 'robot-learning-engineer', 'content-producer'];
+    select.value = slugs[0];
+    select.options = slugs.map(value => ({ value, dataset: { evidence: 'Evidence for ' + value } }));
+    Object.defineProperty(select, 'selectedIndex', { get: () => slugs.indexOf(select.value) });
+    submit.textContent = 'Send application';
+    name.focus = () => { name.focused = true; };
+    form.scrollIntoView = () => { form.scrolled = true; };
+    form.querySelector = selector => ({
+        '[name="role"]': select, '[name="note"]': note,
+        '[name="name"]': name, '[type="submit"]': submit,
+        '[role="alert"]': hasError ? new Element() : null,
+    })[selector] || null;
+    link.dataset.applyRole = slugs[1];
+    copy.dataset.copyLink = 'https://defexrobotics.com/careers/robot-learning-engineer/';
+    p.selectors['.form--apply'] = form;
+    p.selectors['[data-apply-role]'] = [link];
+    p.selectors['[data-copy-link]'] = [copy];
+    for (const slug of slugs) { p.ids[slug] = new Element(); p.ids[slug].tagName = 'DETAILS'; }
+    p.context.location = { hash };
+    p.context.history = { replaceState: (data, title, value) => { p.context.location.hash = value; } };
+    p.context.navigator.clipboard = { writeText: async value => { p.copied = value; } };
+    p.run('careers.js');
+    return { ...p, form, select, note, submit, name, link, copy, copied: () => p.copied };
+}
+
+test('legacy job fragments open and select the linked role without overwriting failed submissions', () => {
+    const p = careers({ hash: '#content-producer' });
+    assert.equal(p.ids['content-producer'].open, true);
+    assert.equal(p.select.value, 'content-producer');
+    assert.equal(p.note.placeholder, 'Evidence for content-producer');
+    const failed = careers({ hash: '#content-producer', hasError: true });
+    assert.equal(failed.select.value, 'founding-robotics-engineer');
+    assert.doesNotThrow(() => careers({ hash: '#%E0%A4%A' }));
+    assert.doesNotThrow(() => careers({ hash: '#[invalid-selector' }));
+});
+
+test('Apply selects the correct role and evidence prompt while preserving modified-click navigation', () => {
+    const p = careers();
+    let prevented = false;
+    const click = { button: 0, preventDefault: () => { prevented = true; } };
+    p.link.emit('click', { ...click, metaKey: true });
+    assert.equal(prevented, false);
+    assert.equal(p.select.value, 'founding-robotics-engineer');
+    p.link.emit('click', click);
+    assert.equal(prevented, true);
+    assert.equal(p.select.value, 'robot-learning-engineer');
+    assert.equal(p.note.placeholder, 'Evidence for robot-learning-engineer');
+    assert.equal(p.name.focused, true);
+    assert.equal(p.form.scrolled, true);
+    assert.equal(p.context.location.hash, '#application');
+});
+
+test('copy job link uses the public role URL even from a preview', async () => {
+    const p = careers();
+    await p.copy.listeners.click[0]();
+    assert.equal(p.copied(), p.copy.dataset.copyLink);
+    assert.equal(p.copy.textContent, 'Link copied');
+    p.advance(1600);
+    assert.equal(p.copy.textContent, 'Copy job link');
+});
+
+test('duplicate application clicks are blocked and back navigation restores submission', () => {
+    const p = careers();
+    let prevented = false;
+    const event = { preventDefault: () => { prevented = true; } };
+    p.form.emit('submit', event);
+    assert.equal(p.submit.disabled, true);
+    assert.equal(p.form.getAttribute('aria-busy'), 'true');
+    p.form.emit('submit', event);
+    assert.equal(prevented, true);
+    p.event('pageshow');
+    assert.equal(p.submit.disabled, false);
+    assert.equal(p.submit.textContent, 'Send application');
+    assert.equal(p.form.hasAttribute('aria-busy'), false);
 });

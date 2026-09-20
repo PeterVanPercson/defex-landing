@@ -16,6 +16,8 @@ from html import escape
 import requests
 from django.conf import settings
 
+from .jobs import ROLE_CHOICES
+
 log = logging.getLogger(__name__)
 
 RESEND_URL = "https://api.resend.com/emails"
@@ -125,7 +127,7 @@ def submission_email(data: dict, request) -> tuple[str, str]:
     return subject, html
 
 
-_ROLE_LABELS = {"content-producer": "Content Producer"}
+_ROLE_LABELS = dict(ROLE_CHOICES)
 
 
 def application_email(data: dict, request) -> tuple[str, str]:
