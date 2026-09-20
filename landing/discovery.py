@@ -90,11 +90,6 @@ def company(request):
     return render(request, "landing/company.html", {"company": PUBLIC_COMPANY, "updated": COMPANY_UPDATED})
 
 
-@require_safe
-def investors(request):
-    return render(request, "landing/investors.html", {"company": PUBLIC_COMPANY, "updated": COMPANY_UPDATED})
-
-
 # The practice field on /why-us/: 36 attempts, the misses thinning out as a
 # candidate improves. Illustrative only; the page labels the figure a schematic.
 PRACTICE = "..x.x..x.xx." "x.xx.xxx.xxx" "xxxx.xxxxxxx"
@@ -134,7 +129,6 @@ def llms_txt(request):
         "- [Company facts](" + PUBLIC_COMPANY["links"]["company"] + "): product stage, paid waitlist, founders, contact",
         "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robots do and the inspection prototype",
         "- [Why us](" + CANONICAL_ORIGIN + reverse("why_us") + "): why robots that test every part they build: built-in testing, self-reset, new parts, and where we are today",
-        "- [Investors](" + CANONICAL_ORIGIN + reverse("investors") + "): the pre-seed round and how to reach us",
         "- [Careers](" + CANONICAL_ORIGIN + reverse("careers") + "): open roles", "",
         "## Writing",
     ]
@@ -167,7 +161,7 @@ def sitemap(request):
     # Do not manufacture lastmod=date.today(). Omit unknown modification dates.
     pages = [(reverse("home"), None), (reverse("careers"), None),
              (reverse("blog"), None), (reverse("company"), COMPANY_UPDATED),
-             (reverse("investors"), COMPANY_UPDATED), (reverse("why_us"), None)]
+             (reverse("why_us"), None)]
     pages.extend((job_path(job), JOBS_UPDATED) for job in JOBS)
     for post in POSTS:
         path = reverse("blog_post", kwargs={"slug": post["slug"]})

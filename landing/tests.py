@@ -23,14 +23,8 @@ class SiteTests(SimpleTestCase):
         # the section is "Why us", not the old slogan
         self.assertContains(home, 'id="why-title" data-reveal>Why <em>us</em></h2>')
         self.assertNotContains(home, "the test becomes the teacher")
-        # backed by: a16z alone, in the hero under the button rather than in a
-        # sheet further down, shown once, with no moving banner
         page = home.content.decode()
-        self.assertContains(home, 'alt="a16z"')
-        self.assertEqual(page.count('alt="a16z"'), 1)
-        self.assertIn('class="lede__backed"', page)
-        # it is inside the hero, above everything else on the page
-        self.assertLess(page.index('class="lede__backed"'), page.index('id="origin"'))
+        self.assertNotContains(home, 'class="lede__backed"')
         self.assertNotIn('class="marquee', page)
         self.assertNotIn("marquee__", page)
         self.assertNotIn('id="backed"', page)
@@ -99,24 +93,24 @@ class SiteTests(SimpleTestCase):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
-        for asset in ("js/hero-film.js", "js/origin.js", "js/reveal.js", "img/backers/nvidia-inception.png", "img/backers/zfellows.png", "img/backers/zfellows-collage.png", "img/backers/google-for-startups.png", "img/backers/a16z.png", "img/backers/yandex-cloud.png", "video/origin.mp4", "video/origin-poster.jpg"):
+        for asset in ("js/hero-film.js", "js/origin.js", "js/reveal.js", "img/backers/nvidia-inception.png", "img/backers/zfellows.png", "img/backers/zfellows-collage.png", "img/backers/google-for-startups.png", "img/backers/yandex-cloud.png", "video/origin.mp4", "video/origin-poster.jpg"):
             self.assertEqual(self.client.get(f"/static/{asset}").status_code, 200, asset)
 
-    def test_hero_supports_byte_ranges(self):
-        """Scroll seeking needs partial responses at both ends of the film."""
-        path = "defex/assets/defex-intro-v4.mp4"
-        size = (Path(settings.BASE_DIR) / "static" / path).stat().st_size
-        for start in (0, size - 1024):
-            response = self.client.get(
-                f"/static/{path}", HTTP_RANGE=f"bytes={start}-{start + 1023}"
-            )
-            try:
-                self.assertEqual(response.status_code, 206)
-                self.assertEqual(response["Content-Type"], "video/mp4")
-                self.assertEqual(response["Content-Range"], f"bytes {start}-{start + 1023}/{size}")
-                self.assertEqual(len(b"".join(response.streaming_content)), 1024)
-            finally:
-                response.close()
+    def test_scroll_videos_support_byte_ranges(self):
+        """Scroll seeking needs partial responses at both ends of each film."""
+        for path in ("defex/assets/defex-intro-v4.mp4", "why/story.mp4"):
+            size = (Path(settings.BASE_DIR) / "static" / path).stat().st_size
+            for start in (0, size - 1024):
+                response = self.client.get(
+                    f"/static/{path}", HTTP_RANGE=f"bytes={start}-{start + 1023}"
+                )
+                try:
+                    self.assertEqual(response.status_code, 206)
+                    self.assertEqual(response["Content-Type"], "video/mp4")
+                    self.assertEqual(response["Content-Range"], f"bytes {start}-{start + 1023}/{size}")
+                    self.assertEqual(len(b"".join(response.streaming_content)), 1024)
+                finally:
+                    response.close()
 
     def test_contact_never_reports_success_when_the_email_failed(self):
         """There is no database here, so a dropped notification is a lost
@@ -211,8 +205,7 @@ class SiteTests(SimpleTestCase):
         """The case for the robot, on its own dark page. It opens on WHY US
         (the Glyph Portal), speaks in short plain words, never says
         "assembly" or "A1", labels the render and the one target, asks
-        factories to book a call, and last of all asks investors to write
-        for the deck, with three arms working under the ask."""
+        factories to book a call, keeps the customer call to action at the end."""
         import re
         response = self.client.get("/why-us/")
         self.assertEqual(response.status_code, 200)
@@ -220,17 +213,13 @@ class SiteTests(SimpleTestCase):
         self.assertIn("<title>Why Defex | Robots that test every part they build</title>", body)
         self.assertIn('data-word="WHY US"', body)
         self.assertIn('id="why-title"><span class="wy-sr">Why us: </span>Robots that test every part', body)
-        for section in ("portal", "problem", "promise", "watch", "tests", "learns", "resets", "newpart", "proof", "faq", "founders", "talk", "investors"):
+        for section in ("portal", "problem", "promise", "watch", "tests", "learns", "resets", "newpart", "proof", "faq", "founders", "talk"):
             self.assertIn(f'id="{section}"', body)
         for claim in ("Concept render", "Target</span>", "factories paid to be first in line.",
-                      'href="/#contact"', "Book a call", "Robots are cheap.", "$1.5M",
-                      'href="mailto:husan@defexrobotics.com?subject=Defex%20pre-seed"', 'href="/investors/"'):
+                      'href="/#contact"', "Book a call", "Robots are cheap."):
             self.assertIn(claim, body)
-        self.assertLess(body.index('id="talk"'), body.index('id="investors"'))
-        self.assertLess(body.index('id="investors"'), body.index("<footer"))
-        fleet = body.split('class="fleet"', 1)[1].split("</section>", 1)[0]
-        self.assertEqual(fleet.count('class="arm"'), 3)
-        self.assertEqual(body.count('class="arm__svg"'), 4)
+        self.assertLess(body.index('id="talk"'), body.index("<footer"))
+        self.assertEqual(body.count('class="arm__svg"'), 1)
         for word in ("Domino", "Khosla", "valuation"):
             self.assertNotIn(word, body)
         text = re.sub(r"<[^>]+>", " ", re.sub(r"<(script|style)\b.*?</\1>", " ", body, flags=re.S))
@@ -272,7 +261,7 @@ class SiteTests(SimpleTestCase):
     def test_hasan_leads_with_the_personality_layer(self):
         """Husan's call: Hasan is presented first for building a personality
         layer for AI, on every page that describes him."""
-        for path in ("/", "/why-us/", "/company/", "/investors/"):
+        for path in ("/", "/why-us/", "/company/"):
             body = self.client.get(path).content.decode()
             self.assertIn("personality layer for AI", body, path)
             self.assertNotIn("robot software and hardware integration", body, path)
@@ -337,17 +326,16 @@ class SiteTests(SimpleTestCase):
 
     def test_the_three_offices_are_named_across_the_site(self):
         """His three offices: San Francisco, Hong Kong, Shanghai. In the
-        footer of every page, in the company and investor copy, and as three
+        footer of every page, in the company copy, and as three
         live clocks at the end of Why us."""
         footer = 'class="footer__line">San Francisco &middot; Hong Kong &middot; Shanghai</span>'
-        for path in ("/", "/why-us/", "/company/", "/investors/", "/careers/", "/blog/",
+        for path in ("/", "/why-us/", "/company/", "/careers/", "/blog/",
                      "/blog/the-cost-of-the-next-attempt/"):
             self.assertIn(footer, self.client.get(path).content.decode(), path)
         why = self.client.get("/why-us/").content.decode()
         for city, zone in (("San Francisco", "America/Los_Angeles"), ("Hong Kong", "Asia/Hong_Kong"), ("Shanghai", "Asia/Shanghai")):
             self.assertIn(f'<span class="city__n">{city}</span><span class="city__t" data-tz="{zone}">', why)
         self.assertIn("offices in Hong Kong and Shanghai", self.client.get("/company/").content.decode())
-        self.assertIn("offices in Hong Kong and Shanghai", self.client.get("/investors/").content.decode())
 
     def test_stylesheet_braces_balance(self):
         """A stray closing brace after the last media query made browsers

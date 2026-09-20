@@ -138,14 +138,12 @@ class DiscoverabilityTests(SimpleTestCase):
             self.assertIn(CANONICAL_ORIGIN + url, body)
         self.assertNotIn("defex.app/", body)
 
-    def test_investors_page_invites_email_and_is_discoverable(self):
-        page = self.get_page("/investors/")
-        self.assertIn("$1.5M", page)
-        self.assertIn('href="mailto:husan@defexrobotics.com?subject=Defex%20pre-seed"', page)
-        self.assertIn(CANONICAL_ORIGIN + "/investors/", page)
-        for word in ("Domino", "Khosla", "valuation", "cap"):
-            self.assertNotIn(word, re.sub(r"<script.*?</script>|<[^>]+>", " ", page, flags=re.S), word)
-        for path in ("/", "/company/", "/careers/", "/blog/", "/blog/the-cost-of-the-next-attempt/"):
-            self.assertIn('href="/investors/"', self.get_page(path), path)
-        self.assertIn(CANONICAL_ORIGIN + "/investors/", self.get_page("/sitemap.xml"))
-        self.assertIn(CANONICAL_ORIGIN + "/investors/", self.get_page("/llms.txt"))
+    def test_removed_investor_page_is_not_served_or_discoverable(self):
+        for path in ("/investors", "/investors/"):
+            self.assertEqual(self.client.get(path).status_code, 404)
+        sitemap = self.get_page("/sitemap.xml")
+        paths = [urlsplit(node.text).path for node in ET.fromstring(sitemap).findall("{*}url/{*}loc")]
+        for path in (*paths, "/llms.txt", "/company.json", "/sitemap.xml"):
+            page = self.get_page(path).lower()
+            for removed in ("/investors/", "pre-seed", "pre%2dseed", "$1.5m", "ask for the deck", "a16z", "backed by"):
+                self.assertNotIn(removed, page, path)

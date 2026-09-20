@@ -100,7 +100,7 @@ JOBS = (
         "type_label": "Contract",
         "tags": ("Contract", "San Francisco shoots", "Remote editing"),
         "home_meta": "Contract · San Francisco shoots · Remote editing",
-        "pitch": "Document the engineering behind our prototype through video, photography and writing for customers, candidates and investors.",
+        "pitch": "Document the engineering behind our prototype through video, photography and writing for customers and candidates.",
         "compensation": "$1,500–$2,000 USD per month for an initial three-month contract. We’ll agree the work and number of revisions before starting.",
         "pay_min": 1500,
         "pay_max": 2000,
