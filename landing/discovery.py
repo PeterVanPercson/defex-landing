@@ -162,11 +162,13 @@ def robots(request):
 def sitemap(request):
     # Import here to avoid a views/context-processor import cycle.
     from .views import POSTS
+    from .jobs import JOBS, JOBS_UPDATED, job_path
 
     # Do not manufacture lastmod=date.today(). Omit unknown modification dates.
     pages = [(reverse("home"), None), (reverse("careers"), None),
              (reverse("blog"), None), (reverse("company"), COMPANY_UPDATED),
              (reverse("investors"), COMPANY_UPDATED), (reverse("why_us"), None)]
+    pages.extend((job_path(job), JOBS_UPDATED) for job in JOBS)
     for post in POSTS:
         path = reverse("blog_post", kwargs={"slug": post["slug"]})
         canonical = post.get("canonical_url", CANONICAL_ORIGIN + path)

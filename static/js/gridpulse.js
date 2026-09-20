@@ -60,6 +60,9 @@
         let height = 0;
         let clear = [];
         const cells = new Map();
+        let frame = 0, pending = 0, recheck = 0, driftTimer = 0;
+        let at = null, visible = false;
+        const active = () => visible && !motion.matches && !document.hidden;
 
         // Hold back from the lines of text, not the boxes that hold them: a
         // paragraph set to a measure keeps that width on its short last line
@@ -128,14 +131,9 @@
         // touches only the cells whose strength changed since the last frame,
         // never the whole canvas: the field is the size of the section, and
         // wiping it every frame cost more than everything drawn on it.
-        let frame = 0;
         function draw(now) {
             frame = 0;
-            if (motion.matches || document.hidden) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                cells.clear();
-                return;
-            }
+            if (!active()) return;
             for (const [key, c] of cells) {
                 const x = c.col * cell;
                 const y = c.row * cell;
@@ -164,7 +162,7 @@
             if (cells.size) frame = requestAnimationFrame(draw);
         }
         function wake() {
-            if (!frame) frame = requestAnimationFrame(draw);
+            if (!frame && cells.size && active()) frame = requestAnimationFrame(draw);
         }
 
         // Lights one cell, unless it is off the grid or already lit.
@@ -189,14 +187,12 @@
 
         // The pointer paints. Cells further from it catch ink less often, so
         // the edge of the trail breaks up instead of moving as a block.
-        let pending = 0;
-        let at = null;
-        let visible = false;
         function paint() {
             pending = 0;
-            if (!at || motion.matches || document.hidden) return;
-            const cx = Math.floor(at.x / cell);
-            const cy = Math.floor(at.y / cell);
+            if (!at || !active()) return;
+            const bounds = el.getBoundingClientRect();
+            const cx = Math.floor((at.x - bounds.left) / cell);
+            const cy = Math.floor((at.y - bounds.top) / cell);
             const span = Math.ceil(REACH);
             if (cx < -span || cy < -span || cx > cols + span || cy > rows + span) return;
             for (let dy = -span; dy <= span; dy++) {
@@ -211,29 +207,47 @@
         // Listened for on the window: the grid sits under the content and
         // never receives the pointer itself.
         window.addEventListener('pointermove', (event) => {
-            if (!visible || motion.matches || document.hidden) return;
-            const bounds = el.getBoundingClientRect();
-            at = { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
+            if (!active()) return;
+            at = { x: event.clientX, y: event.clientY };
             if (!pending) pending = requestAnimationFrame(paint);
         }, { passive: true });
 
         // A few cells find their own way on. Paused while out of sight.
         function drift() {
-            setTimeout(drift, 1400 + Math.random() * 1800);
-            if (motion.matches || document.hidden) return;
-            if (!visible) return;
+            driftTimer = 0;
+            if (!active()) return;
             for (let i = 0; i < AMBIENT; i++) {
                 light(Math.floor(Math.random() * cols), Math.floor(Math.random() * rows), 900 + Math.random() * 1600, .2 + .5 * Math.random());
             }
+            driftTimer = setTimeout(drift, 1400 + Math.random() * 1800);
         }
-        setTimeout(drift, 500);
-        new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }).observe(el);
+        function syncActivity() {
+            if (active()) {
+                if (!driftTimer) driftTimer = setTimeout(drift, 500);
+                wake();
+                return;
+            }
+            cancelAnimationFrame(frame);
+            cancelAnimationFrame(pending);
+            cancelAnimationFrame(recheck);
+            clearTimeout(driftTimer);
+            frame = pending = recheck = driftTimer = 0;
+            at = null;
+            cells.clear();
+            ctx.clearRect(0, 0, width, height);
+        }
+        new IntersectionObserver(([entry]) => {
+            visible = entry.isIntersecting;
+            syncActivity();
+        }).observe(el);
+        document.addEventListener('visibilitychange', syncActivity);
+        motion.addEventListener('change', syncActivity);
 
         new ResizeObserver(measure).observe(el);
         // The copy rises into place as it is revealed, and moves again once
         // the web fonts arrive: measure the lines where they settle.
-        let recheck = 0;
         scope.addEventListener('transitionend', () => {
+            if (!active()) return;
             if (!recheck) recheck = requestAnimationFrame(() => { recheck = 0; measureText(); });
         });
         if (document.fonts) document.fonts.ready.then(measureText).catch(() => {});

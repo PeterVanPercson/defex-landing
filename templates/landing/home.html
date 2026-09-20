@@ -143,14 +143,16 @@
             <h2 class="sechead__t engraved" id="careers-title" data-reveal>Build with <em>us</em></h2>
             <p class="sechead__sub">A small team building a cell that assembles a part and then physically tests what it just made.</p>
         </div>
-        <a class="rolecard" href="{% url 'careers' %}#content-producer">
+        {% for job in jobs %}
+        <a class="rolecard" href="{% url 'career_detail' job.slug %}">
             <span class="rolecard__id">
-                <span class="rolecard__title">Content Producer</span>
-                <span class="rolecard__meta">Full-time &middot; San Francisco, CA</span>
+                <span class="rolecard__title">{{ job.title }}</span>
+                <span class="rolecard__meta">{{ job.home_meta }}</span>
             </span>
-            <span class="rolecard__pitch">Turn what happens on the bench and inside the cell into work people finish watching.</span>
+            <span class="rolecard__pitch">{{ job.pitch }}</span>
             <span class="rolecard__go">View role &rarr;</span>
         </a>
+        {% endfor %}
         <p class="careers__alt"><a class="link" href="{% url 'careers' %}">See all roles and apply</a></p>
     </section>
 

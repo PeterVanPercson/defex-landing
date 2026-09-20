@@ -19,6 +19,7 @@ urlpatterns = [
     path('blog/feed.xml', BlogFeed(), name='blog_feed'),
     path('blog/<slug:slug>/', blog_post, name='blog_post'),
     path('careers/apply/', apply, name='apply'),
+    path('careers/<slug:slug>/', careers, name='career_detail'),
     path('contact/', contact, name='contact'),
     path('ping/', ping, name='ping'),
     path('llms.txt', llms_txt, name='llms_txt'),

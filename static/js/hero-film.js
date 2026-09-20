@@ -146,15 +146,21 @@
 
     function start() {
         if (running || !ready || reduced.matches || document.hidden) return;
+        if (shown === target && lastFrame >= 0) return;
         running = true;
         lastTick = 0;
         frameId = requestAnimationFrame(tick);
     }
 
+    let cueOpacity = null;
     function onScroll() {
         if (!ready || reduced.matches || !isFinite(film.duration) || film.duration <= 0) return;
         const p = scrollProgress();
-        hero.style.setProperty('--cue-opacity', String(1 - clamp(p * 7, 0, 1)));
+        const opacity = 1 - clamp(p * 7, 0, 1);
+        if (opacity !== cueOpacity) {
+            cueOpacity = opacity;
+            hero.style.setProperty('--cue-opacity', String(opacity));
+        }
         target = clamp(p / SCRUB_END, 0, 1) * (film.duration - FRAME);
         start();
     }
