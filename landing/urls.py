@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .discovery import company, company_json, investors, llms_txt, robots, sitemap, why_us
+from .discovery import company, company_json, llms_txt, robots, sitemap, why_us
 from .feeds import BlogFeed
 from .indexing import indexnow_key
 from .views import apply, blog, blog_post, book, careers, contact, home, ping, where_it_started
@@ -9,7 +9,6 @@ urlpatterns = [
     path('', home, name='home'),
     path('company/', company, name='company'),
     path('company.json', company_json, name='company_json'),
-    path('investors/', investors, name='investors'),
     path('why-us/', why_us, name='why_us'),
     path('indexnow-key.txt', indexnow_key, name='indexnow_key'),
     path('where-it-started/', where_it_started, name='where_it_started'),

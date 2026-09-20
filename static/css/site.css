@@ -190,9 +190,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
     .has-scroll-film .hero__film { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
 }
 /* the headline now sits in the frame, so the cue moves out of its way */
-/* The cue used to own the bottom-right corner. The a16z credit sits there
-   now, on the button's row, and the two printed straight over each other,
-   so the cue moves to the centre of the same edge. */
 .has-scroll-film .scroll-cue { display: block; position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; margin: 0; font-size: 12px; color: var(--mute); opacity: var(--cue-opacity, 1); pointer-events: none; }
 .scroll-cue span { display: inline-block; margin-left: 9px; }
 
@@ -200,24 +197,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* Set like the section titles below (.sechead__t): one face, one italic
    word, the same size and the same stone cut. */
 .lede h1 { max-width: 22ch; font-size: clamp(36px, 3.7vw, 54px); line-height: 1.06; letter-spacing: -.01em; }
-
-/* Backed by, in the hero. It sits under the button because that is where a
-   visitor's eye already is, and it is deliberately quiet: a small label and
-   the mark, not a banner. The tile is dark crimson on a dark film, so it
-   keeps its colour here rather than taking the greyed-back treatment the old
-   row used, but it is small and wears no ring: at this size a ring and a
-   shadow turn a quiet credit into a badge. 24px is the floor — the wordmark
-   is set edge to edge inside the tile, so below that it stops being
-   readable and is just a red square.
-   It sits at the far end of the button's row, against the same gutter the
-   nav and the scroll cue use, so the row reads button-left, credit-right. */
-.lede__backed { display: flex; align-items: center; gap: 8px; margin: 0; }
-.lede__backed-label { font: 500 9px/1 var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--mute); opacity: .8; }
-.lede__backed-mark { display: block; width: 24px; height: 24px; border-radius: 6px; opacity: .92; }
-@media (max-width: 720px) {
-    .lede__backed { gap: 8px; margin-left: 0; }
-    .lede__backed-mark { width: 22px; height: 22px; border-radius: 5px; }
-}
 
 /* Hero support: the one line that says what the machine does, and the ask.
    These also fill the dead space under the headline on a phone, which is what
@@ -710,7 +689,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .eyebrow__link:hover .eyebrow__text { border-color: var(--rule); }
 /* The title cut into the paper like every other title on the site; no
    italic phrase, which read as literary rather than technical. */
-/* the company and investors titles are two set lines, each kept whole: the
+/* the company title uses two set lines, each kept whole: the
    title runs past the 600px text column to the right, never to the left */
 @media (min-width: 900px) {
     .post__title.post__title--wide { max-width: none; width: min(900px, calc(50vw + 300px - var(--pad))); }
@@ -1250,19 +1229,6 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 .wy-close { padding-block: clamp(150px, 24vh, 280px); border-top: 1px solid var(--line); }
 .wy-close .wy-lead { max-width: 34ch; }
 
-/* For investors, last: the round and the ask, then what the money buys.
-   That is three robots, so three copies of the arm work side by side on the
-   floor above the footer, each started at its own point in the cycle and
-   run at its own speed (static/js/why.js). On a phone the row runs off both
-   edges, one robot whole and one half seen on either side. */
-.wy-sec.wy-invest { padding-bottom: 0; }
-.wy-invest { text-align: center; border-top: 1px solid var(--line); }
-.wy-invest .wy-h, .wy-invest .wy-lead { margin-inline: auto; }
-.wy-invest .wy-lead { max-width: 34ch; }
-.wy-invest .wy-actions { justify-content: center; }
-.fleet { --fleet-gap: clamp(20px, 3vw, 48px); display: flex; justify-content: center; gap: var(--fleet-gap); margin-top: clamp(72px, 12vh, 130px); padding-bottom: clamp(36px, 6vh, 64px); }
-.fleet .arm { flex: 0 0 calc((100% - 2 * var(--fleet-gap)) / 3); }
-
 /* The three offices above the footer, each under the time it is there now
    (static/js/why.js). With no JS the clock line is empty and collapses, and
    the cities stand on their own. */
@@ -1292,8 +1258,6 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
     .faces { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
     .face__bio { font-size: 15px; }
     .cities { flex-direction: column; gap: 22px; }
-    .fleet { --fleet-gap: 3vw; margin-inline: calc(-1 * var(--gutter)); overflow: clip; -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); }
-    .fleet .arm { flex-basis: 48vw; }
     .proof__i { grid-template-columns: 96px minmax(0, 1fr); }
     .loop__labels li, .window__bar { font-size: 10px; letter-spacing: .1em; }
     .gauge__checks { flex-wrap: wrap; }

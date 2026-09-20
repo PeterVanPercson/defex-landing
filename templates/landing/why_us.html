@@ -351,25 +351,6 @@
         </div>
     </section>
 
-    <!-- For investors, last: the round, what it buys and the ask, with the
-         long version one link away on /investors/. What it buys is three
-         robots, so three arms work side by side on the floor of the page,
-         never quite in step. -->
-    <section class="wy-sec wy-invest" id="investors" aria-labelledby="invest-title">
-        <p class="wy-kicker" data-reveal>For investors</p>
-        <h2 class="wy-h wy-h--xl" id="invest-title" data-reveal>We are raising <span class="wy-hl">$1.5M</span>.</h2>
-        <p class="wy-lead" data-reveal>Our pre-seed buys 18 months, 2 engineers and 3 robots. The goal: the robot runs on its own, and what it teaches itself beats what we program.</p>
-        <div class="wy-actions" data-reveal>
-            <a class="wy-btn wy-btn--big" href="mailto:{{ company.contact }}?subject=Defex%20pre-seed">Ask for the deck <span aria-hidden="true">&rarr;</span></a>
-            <a class="wy-link" href="{% url 'investors' %}">The investor page</a>
-        </div>
-        <div class="fleet" aria-hidden="true">
-            <figure class="arm">{% include "landing/_arm.html" %}</figure>
-            <figure class="arm" data-phase="2.7" data-rate="0.94">{% include "landing/_arm.html" %}</figure>
-            <figure class="arm" data-phase="5.3" data-rate="1.05">{% include "landing/_arm.html" %}</figure>
-        </div>
-    </section>
-
     <!-- The three offices, each with the time it is there right now, set by
          static/js/why.js. Without JS the cities stand on their own. -->
     <section class="wy-sec wy-where" aria-labelledby="where-title">
@@ -386,7 +367,7 @@
         <span>defex<span class="dot">.</span></span>
     </a>
     <span class="footer__fine">&copy; {% now "Y" %} Defex. All rights reserved.</span>
-    <span class="footer__links"><a class="footer__blog link" href="{% url 'blog' %}">Blog</a> <a class="footer__company link" href="{% url 'company' %}">Company</a> <a class="footer__company link" href="{% url 'investors' %}">Investors</a></span>
+    <span class="footer__links"><a class="footer__blog link" href="{% url 'blog' %}">Blog</a> <a class="footer__company link" href="{% url 'company' %}">Company</a></span>
     <span class="footer__line">San Francisco &middot; Hong Kong &middot; Shanghai</span>
 </footer>
 {% endblock %}
