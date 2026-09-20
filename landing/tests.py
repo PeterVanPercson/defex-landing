@@ -402,7 +402,9 @@ class SiteTests(SimpleTestCase):
         self.assertNotContains(post, "Tell us where we are wrong")
         self.assertContains(post, "August 30, 2026")
         self.assertContains(post, '"datePublished": "2026-08-30"')
-        self.assertIn("2026-08-30", self.client.get("/sitemap.xml").content.decode())
+        self.assertContains(post, '"dateModified": "2026-09-20"')
+        self.assertIn("<loc>https://defexrobotics.com/blog/the-cost-of-the-next-attempt/</loc><lastmod>2026-09-20</lastmod>",
+                      self.client.get("/sitemap.xml").content.decode())
         self.assertNotContains(index, 'rel="modulepreload"')
         self.assertNotContains(index, 'rel="preload" as="fetch" href="https://prod.spline.design/')
         # analytics only when switched on, so the tag never 404s on every page

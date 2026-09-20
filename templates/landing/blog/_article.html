@@ -33,7 +33,7 @@
   "headline": "{{ post.title|escapejs }}",
   "description": "{{ post.dek|escapejs }}",
   "datePublished": "{{ post.date|date:'c' }}",
-  "dateModified": "{{ post.date|date:'c' }}",
+  "dateModified": "{{ post.modified|default:post.date|date:'c' }}",
   "author": {"@type": "Person", "@id": "{{ post.author.url }}#person", "name": "{{ post.author.name|escapejs }}", "url": "{{ post.author.url }}"},
   "publisher": {"@id": "https://defexrobotics.com/#org"},
   "image": "https://defexrobotics.com{% static 'img/og.jpg' %}?v={{ asset_v }}",
