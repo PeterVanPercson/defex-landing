@@ -1,5 +1,7 @@
 (() => {
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const motion = matchMedia('(prefers-reduced-motion: reduce)');
+    let reduce = motion.matches;
+    motion.addEventListener('change', () => { reduce = motion.matches; });
 
     // Reading progress and the section strip. The strip is rendered by the
     // template; this only fills the line, marks the section on screen and
@@ -73,6 +75,7 @@
             const from = shown;
             const t0 = performance.now();
             const step = (now) => {
+                if (reduce) { shown = target; outs.rate.textContent = Math.round(target); return; }
                 const k = Math.min(1, (now - t0) / 420);
                 const e = 1 - Math.pow(1 - k, 3);
                 shown = from + (target - from) * e;

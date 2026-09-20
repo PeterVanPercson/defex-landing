@@ -1,5 +1,6 @@
 (() => {
-    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const motion = matchMedia('(prefers-reduced-motion: reduce)');
+    let reduced = motion.matches;
     const clamp = (n, a = 0, b = 1) => Math.min(b, Math.max(a, n));
     const lerp = (a, b, t) => a + (b - a) * t;
     // where t sits between a and b, as 0 to 1
@@ -21,7 +22,7 @@
     let raf = 0, last = 0;
     const frame = (now) => {
         raf = 0;
-        if (document.hidden) { last = 0; return; }
+        if (document.hidden || reduced) { last = 0; return; }
         const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
         last = now;
         let any = false;
@@ -34,7 +35,7 @@
         if (any) raf = requestAnimationFrame(frame);
         else last = 0;
     };
-    const wake = () => { if (!raf) raf = requestAnimationFrame(frame); };
+    const wake = () => { if (!raf && !reduced && !document.hidden) raf = requestAnimationFrame(frame); };
     const io = 'IntersectionObserver' in window ? new IntersectionObserver((entries) => {
         for (const e of entries) {
             const job = jobs.get(e.target);
@@ -44,11 +45,17 @@
     }, { rootMargin: '100px 0px' }) : null;
     document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
     const run = (el, draw, start = 0) => {
-        if (!el || reduced || !io) return false;
+        if (!el || !io) return false;
         jobs.set(el, { draw, t: start, on: false });
         io.observe(el);
-        return true;
+        return !reduced;
     };
+    motion.addEventListener('change', () => {
+        reduced = motion.matches;
+        cancelAnimationFrame(raf);
+        raf = last = 0;
+        if (!reduced) wake();
+    });
 
     // ------------------------------------------------------------------
     // The parts world inside WHY US. Every part drifts on two slow sines
@@ -187,7 +194,7 @@
         let want = 0, shown = 0, lastFrame = -1, watchdog = 0, active = -1, queued = false;
 
         const show = () => {
-            if (seeking || !ready) return;
+            if (seeking || !ready || reduced || document.hidden) return;
             const f = Math.round(shown / FRAME);
             if (f === lastFrame) return;
             lastFrame = f;
@@ -197,7 +204,7 @@
             video.currentTime = Math.min((f + 0.5) * FRAME, video.duration - 0.001);
         };
         const tick = (now) => {
-            if (!ready) { running = false; return; }
+            if (!ready || reduced || document.hidden) { running = false; lastTick = 0; return; }
             const dt = lastTick ? Math.min(0.05, (now - lastTick) / 1000) : 1 / 60;
             lastTick = now;
             shown += (want - shown) * (1 - Math.exp(-22 * dt));
@@ -214,6 +221,7 @@
         };
         const sync = () => {
             queued = false;
+            if (reduced || !video.hasAttribute('src')) return;
             const box = list.getBoundingClientRect();
             // the line the eye reads at: mid-screen beside the window, or the
             // middle of what is left under it on a phone
@@ -228,14 +236,26 @@
             scrub(CUTS[n] + (CUTS[n + 1] - CUTS[n]) * clamp(p * steps.length - n));
         };
         const ask = () => { if (!queued) { queued = true; requestAnimationFrame(sync); } };
+        motion.addEventListener('change', () => {
+            if (!motion.matches) return;
+            clearTimeout(watchdog);
+            ready = seeking = false;
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+            if (video.dataset.still) video.poster = video.dataset.still;
+            story.dataset.motion = 'off';
+            steps.forEach((s) => s.classList.add('is-on'));
+        });
 
         if (reduced) {
             steps.forEach((s) => s.classList.add('is-on'));
             if (video.dataset.still) video.poster = video.dataset.still;
-        } else if (video.dataset.src && video.canPlayType('video/mp4')) {
+        } else if (video.dataset.src && video.canPlayType('video/mp4') && 'IntersectionObserver' in window) {
+            story.dataset.motion = 'on';
             video.addEventListener('seeked', () => { clearTimeout(watchdog); seeking = false; show(); });
             const markReady = () => {
-                if (ready || video.readyState < 2) return;
+                if (ready || reduced || video.readyState < 2) return;
                 ready = true;
                 sync();
             };
@@ -243,13 +263,14 @@
             video.addEventListener('error', () => { clearTimeout(watchdog); seeking = false; ready = false; });
             // fetched once the section is near, not with the page
             const near = new IntersectionObserver(([entry]) => {
-                if (!entry.isIntersecting) return;
+                if (!entry.isIntersecting || reduced) return;
                 near.disconnect();
                 video.src = video.dataset.src;
                 video.load();
             }, { rootMargin: '800px 0px' });
             near.observe(story);
             const unlock = () => {
+                if (reduced || !video.hasAttribute('src')) return;
                 const played = video.play();
                 if (played && played.then) played.then(() => video.pause()).catch(() => {});
             };
@@ -503,6 +524,7 @@
             seen.disconnect();
             const start = performance.now();
             const step = (now) => {
+                if (reduced) { count.textContent = String(to); return; }
                 const t = clamp((now - start) / 1300);
                 count.textContent = String(Math.round(to * E.out3(t)));
                 if (t < 1) requestAnimationFrame(step);

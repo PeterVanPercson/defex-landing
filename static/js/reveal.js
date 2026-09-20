@@ -6,6 +6,12 @@
     const items = document.querySelectorAll('[data-reveal]');
     if (!items.length || !('IntersectionObserver' in window)) return;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (event) => {
+        if (!event.matches) return;
+        io.disconnect();
+        document.documentElement.classList.remove('reveal');
+        items.forEach((item) => item.classList.remove('is-scanning'));
+    });
 
     document.documentElement.classList.add('reveal');
     const io = new IntersectionObserver((entries) => {

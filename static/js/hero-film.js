@@ -5,6 +5,8 @@
     const sticky = hero.querySelector('.hero__sticky');
     if (!sticky) return;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    const saveData = Boolean(navigator.connection && navigator.connection.saveData);
+    const initialPoster = film.poster;
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
     const FPS = Number(film.dataset.fps) || 60;
@@ -44,6 +46,7 @@
 
     let ready = false, seeking = false, running = false, unlocked = false;
     let target = 0, shown = 0, lastFrame = -1, lastTick = 0;
+    let frameId = 0, loadTimer = 0;
 
     // Geometry is cached. Reading offsetHeight or getBoundingClientRect inside the
     // scroll and wheel handlers forces a synchronous layout on every event, and a
@@ -99,7 +102,7 @@
         seeking = false;
     }
     function paint() {
-        if (seeking || !ready) return;
+        if (seeking || !ready || reduced.matches || document.hidden) return;
         const frame = Math.round(shown / FRAME);
         if (frame === lastFrame) return;
         lastFrame = frame;
@@ -111,49 +114,57 @@
         film.currentTime = Math.min((frame + .5) * FRAME, film.duration - .001);
     }
     film.addEventListener('seeked', () => { releaseSeek(); paint(); });
-    film.addEventListener('error', () => {
+    function still() {
+        clearTimeout(loadTimer);
+        cancelAnimationFrame(frameId);
         releaseSeek();
         ready = false;
+        running = false;
+        lastTick = 0;
+        lastFrame = -1;
+        film.pause();
+        film.removeAttribute('src');
+        film.load();
+        if (film.dataset.posterFinal) film.poster = film.dataset.posterFinal;
         document.documentElement.classList.remove('has-scroll-film');
         measureGeometry();
         syncNav();
-    });
+    }
+    film.addEventListener('error', still);
 
     function tick(now) {
-        if (!ready) { running = false; lastTick = 0; return; }
+        if (!ready || reduced.matches || document.hidden) { running = false; lastTick = 0; return; }
         const dt = lastTick ? Math.min(.05, (now - lastTick) / 1000) : 1 / refresh;
         lastTick = now;
         const gap = target - shown;
         shown += clamp(gap * (1 - Math.exp(-EASE * dt)), -MAX_RATE * dt, MAX_RATE * dt);
         if (Math.abs(target - shown) < FRAME / 3) shown = target;
         paint();
-        if (shown !== target) requestAnimationFrame(tick);
+        if (shown !== target) frameId = requestAnimationFrame(tick);
         else { running = false; lastTick = 0; }
     }
 
     function start() {
-        if (running || !ready) return;
+        if (running || !ready || reduced.matches || document.hidden) return;
         running = true;
         lastTick = 0;
-        requestAnimationFrame(tick);
+        frameId = requestAnimationFrame(tick);
     }
 
     function onScroll() {
-        if (!ready || !isFinite(film.duration) || film.duration <= 0) return;
+        if (!ready || reduced.matches || !isFinite(film.duration) || film.duration <= 0) return;
         const p = scrollProgress();
         hero.style.setProperty('--cue-opacity', String(1 - clamp(p * 7, 0, 1)));
         target = clamp(p / SCRUB_END, 0, 1) * (film.duration - FRAME);
         start();
     }
 
-    function hold() { shown = target = film.duration - FRAME; lastFrame = -1; paint(); }
-
     function markReady() {
-        if (ready || film.readyState < 2) return;   // 2 = HAVE_CURRENT_DATA
+        if (ready || reduced.matches || saveData || !film.hasAttribute('src') || film.readyState < 2) return;
+        clearTimeout(loadTimer);
         ready = true;
         measureGeometry();
-        if (reduced.matches) hold();
-        else onScroll();
+        onScroll();
     }
     // readyState 2 is the first point a seek is guaranteed to have a frame to
     // land on. loadedmetadata (readyState 1) only knows the duration.
@@ -164,7 +175,7 @@
 
     // iOS will not paint a seek until the element has been allowed to decode once.
     function unlock() {
-        if (unlocked) return;
+        if (unlocked || reduced.matches || saveData || !film.hasAttribute('src')) return;
         unlocked = true;
         const played = film.play();
         if (played && played.then) played.then(() => film.pause()).catch(() => {});
@@ -189,12 +200,8 @@
     addEventListener('resize', resync, { passive: true });
     addEventListener('pageshow', resync);
     addEventListener('load', resync);
+    if ('ResizeObserver' in window) new ResizeObserver(resync).observe(document.body);
 
-    // Reduced-motion visitors get the final still without downloading a film.
-    if (reduced.matches) {
-        if (film.dataset.posterFinal) film.poster = film.dataset.posterFinal;
-        return;
-    }
     // The film is H.264 in MP4, which every current browser decodes, so this
     // gate should never fire. It stays as the guard for whatever ships next.
     if (film.dataset.type && !film.canPlayType(film.dataset.type)) return;
@@ -203,21 +210,31 @@
     const small = film.dataset.srcSm;
     const wide = film.dataset.src;
     if (!wide) return;
-    film.src = (small && Math.min(innerWidth, innerHeight) <= 820) ? small : wide;
-
-    // .hero only becomes 560svh now, so every cached measurement is stale.
-    document.documentElement.classList.add('has-scroll-film');
-    measureGeometry();
-    measureRefresh();
+    function configureMotion() {
+        if (reduced.matches || saveData) { still(); return; }
+        unlocked = false;
+        shown = target = 0;
+        film.poster = initialPoster;
+        film.src = (small && Math.min(innerWidth, innerHeight) <= 820) ? small : wide;
+        document.documentElement.classList.add('has-scroll-film');
+        clearTimeout(loadTimer);
+        loadTimer = setTimeout(still, 12000);
+        measureGeometry();
+        measureRefresh();
+        onScroll();
+        syncNav();
+    }
     addEventListener('scroll', onScroll, { passive: true });
-    addEventListener('touchstart', unlock, { once: true, passive: true });
-    addEventListener('pointerdown', unlock, { once: true });
-    onScroll();
-    syncNav();
-
-    reduced.addEventListener('change', (event) => {
-        if (!event.matches) return;
-        document.documentElement.classList.remove('has-scroll-film');
-        if (ready) hold();
+    addEventListener('touchstart', unlock, { passive: true });
+    addEventListener('pointerdown', unlock);
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            cancelAnimationFrame(frameId);
+            running = false;
+            lastTick = 0;
+            releaseSeek();
+        } else resync();
     });
+    reduced.addEventListener('change', configureMotion);
+    configureMotion();
 })();
