@@ -152,6 +152,7 @@ POSTS = (
                 "preparing the world for another try. We are designing a manufacturing "
                 "workcell around that cycle."),
         "date": date(2026, 8, 30),
+        "modified": date(2026, 9, 20),
         "minutes": 9,
         "author": {"name": "Husan Mavlonov", "url": "https://husanmavlonov.com/", "site": "husanmavlonov.com",
                    "bio": "Co-founder and CEO of Defex, building assembly robots that test their own work, in San Francisco."},
