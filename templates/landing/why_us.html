@@ -289,12 +289,13 @@
             </ul>
             <p class="proof__date">As of <time datetime="{{ updated|date:'Y-m-d' }}">{{ updated|date:"F j, Y" }}</time></p>
         </div>
-        <!-- some of them, by name -->
-        <div class="inline inline--dark" id="in-line">
-            <p class="inline__k" data-reveal>Including</p>
-            {% include "landing/_inline.html" %}
-        </div>
     </section>
+
+    <!-- the companies that registered, by name, rolling -->
+    <div class="inline inline--dark" id="in-line">
+        <p class="inline__k">Registered</p>
+        {% include "landing/_inline.html" %}
+    </div>
 
     <section class="wy-sec wy-price" id="pricing" aria-labelledby="pricing-title">
         <h2 class="wy-h" id="pricing-title" data-reveal>What it <span class="wy-hl">costs</span>.</h2>

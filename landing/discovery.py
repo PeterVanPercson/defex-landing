@@ -53,10 +53,19 @@ PUBLIC_COMPANY = {
 }
 
 
-# Factories in line that are shown by name. Add one here and it appears on the home
-# page and on the pitch. Kept out of PUBLIC_COMPANY, which is dumped whole into /company.json.
+# Companies that registered, shown by name in the rolling row on the home page and
+# on the pitch. Add one here and it joins the roll. Their files are served as they
+# were sent. "opaque" marks a file that sits on a white ground instead of a clear
+# one (the page turns that white into nothing, see .roll__logo[data-opaque]); "trim"
+# hides a stray rule along the bottom edge of a file. Kept out of PUBLIC_COMPANY,
+# which is dumped whole into /company.json.
 IN_LINE = [
-    {"name": "GRAND", "what": "hand made shoes", "logo": "img/factories/grand.jpg", "width": 640, "height": 640},
+    {"name": "GRAND", "logo": "img/factories/grand.jpg", "width": 640, "height": 640, "opaque": True, "trim": True},
+    {"name": "UzChasys", "logo": "img/factories/uzchasys.png", "width": 159, "height": 60},
+    {"name": "ATH", "logo": "img/factories/ath.png", "width": 1520, "height": 1034},
+    {"name": "NOVA Solutions", "logo": "img/factories/nova.png", "width": 400, "height": 140},
+    {"name": "Artel", "logo": "img/factories/artel.png", "width": 765, "height": 401, "opaque": True},
+    {"name": "Texnopark", "logo": "img/factories/texnopark.webp", "width": 3719, "height": 577},
 ]
 
 # Kept out of PUBLIC_COMPANY on purpose: that dict is dumped whole into /company.json.
