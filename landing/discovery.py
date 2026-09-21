@@ -53,6 +53,12 @@ PUBLIC_COMPANY = {
 }
 
 
+# Factories in line that are shown by name. Add one here and it appears on the home
+# page and on the pitch. Kept out of PUBLIC_COMPANY, which is dumped whole into /company.json.
+IN_LINE = [
+    {"name": "GRAND", "what": "hand made shoes", "logo": "img/factories/grand.jpg", "width": 640, "height": 640},
+]
+
 # Kept out of PUBLIC_COMPANY on purpose: that dict is dumped whole into /company.json.
 PRICING = {
     "robot": {"price": "$65,000", "what": "One robot, taught your part, running on your floor.",
@@ -114,7 +120,7 @@ PRACTICE = "..x.x..x.xx." "x.xx.xxx.xxx" "xxxx.xxxxxxx"
 @require_safe
 def why_us(request):
     return render(request, "landing/why_us.html", {
-        "company": PUBLIC_COMPANY, "updated": COMPANY_UPDATED, "pricing": PRICING, "form": ContactForm(),
+        "company": PUBLIC_COMPANY, "updated": COMPANY_UPDATED, "pricing": PRICING, "in_line": IN_LINE, "form": ContactForm(),
         "practice_marks": [mark == "x" for mark in PRACTICE], "trials": range(8)})
 
 

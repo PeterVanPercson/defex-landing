@@ -63,35 +63,46 @@
         </figure>
     </section>
 
-    <!-- Why us. The three claims as ruled rows, each a benefit with the reason
-         behind it. The section is a sheet laid over the page: see .sheet. -->
+    <!-- The case in one screen, in the pitch's own words (why_us.html): the
+         problem as the headline, then what the robot does about it as ruled rows,
+         then the way in. The section is a sheet laid over the page: see .sheet. -->
     <section class="sheet" id="why" aria-labelledby="why-title">
         <div class="sechead">
-            <h2 class="sechead__t engraved" id="why-title" data-reveal>Why <em>us</em></h2>
+            <h2 class="sechead__t engraved" id="why-title" data-reveal>Robots are cheap. Setting them up is <em>not</em>.</h2>
         </div>
 
         <ol class="features">
             <li class="feature" data-reveal>
-                <h3 class="feature__t engraved">Robots you can walk away from.</h3>
-                <p class="feature__d">Ours reset and teach themselves, so a failed attempt comes back as a lesson. Not yours to fix.</p>
+                <h3 class="feature__t engraved">Our robot teaches itself.</h3>
+                <p class="feature__d">Show it the job. It practices, tests its own work and gets better every time. No engineer programming every move.</p>
             </li>
             <li class="feature" data-reveal>
-                <h3 class="feature__t engraved">Our robots feel what&rsquo;s wrong.</h3>
-                <p class="feature__d">A camera can tell you a part looks right. Ours physically test what they just built, so a defect is caught right away, with vision and touch.</p>
+                <h3 class="feature__t engraved">Bad parts never ship.</h3>
+                <p class="feature__d">Is it connected? Is it locked? Every part gets tested on the spot, with vision and touch.</p>
             </li>
             <li class="feature" data-reveal>
-                <h3 class="feature__t engraved">A new way, not a new project.</h3>
-                <p class="feature__d">Robots are harder to fixture than you think. Ours practice by themselves.</p>
+                <h3 class="feature__t engraved">No one stands over it.</h3>
+                <p class="feature__d">Good parts out. Bad parts aside. Next parts in. It resets itself.</p>
+            </li>
+            <li class="feature" data-reveal>
+                <h3 class="feature__t engraved">A new part is not a new project.</h3>
+                <p class="feature__d">What it learns on one part carries to the next. Teach it what changed, not the whole job.</p>
             </li>
         </ol>
         <p class="features__more">
             <a class="glass-button-wrap" href="{% url 'why_us' %}">
                 <span class="glass-button-tilt">
-                    <span class="glass-button"><span class="glass-button-text">See why it works<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
+                    <span class="glass-button"><span class="glass-button-text">Test our product<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
                     <span class="glass-button-shadow" aria-hidden="true"></span>
                 </span>
             </a>
         </p>
+    </section>
+
+    <!-- The factories in line, by name. One row that takes more as they come. -->
+    <section class="inline sheet" id="in-line" aria-labelledby="in-line-title">
+        <h2 class="inline__k" id="in-line-title" data-reveal>Factories already in line</h2>
+        {% include "landing/_inline.html" %}
     </section>
 
     <!-- The founders, on graph paper. The grid is 21st.dev's grid pulse in the
