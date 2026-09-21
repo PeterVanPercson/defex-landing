@@ -225,21 +225,31 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .feature__d { max-width: 44ch; font: 400 15px/1.75 var(--mono); color: var(--ink-soft); }
 .feature__cta { margin-top: 26px; }
 .features__more { margin-top: clamp(32px, 5vh, 48px); }
-/* Factories in line, by name: a label and one row of their marks, which wraps as
-   more arrive. The files are theirs, used as sent (black on a white ground), so the
-   ground is dropped in the blend: multiplied into the paper here, inverted and
-   screened on the dark pitch. Nothing between the mark and the ground may be
-   revealed or faded, or the blend has nothing to blend with. */
-.inline { display: flex; flex-wrap: wrap; align-items: center; gap: 18px clamp(28px, 5vw, 72px); }
-.sheet.inline { padding-block: clamp(40px, 7vh, 72px); border-top: 1px solid var(--line); }
-.inline__k { flex: none; font: 500 11px/1.4 var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--mute); }
-.inline__logos { display: flex; flex-wrap: wrap; align-items: center; gap: 18px clamp(28px, 4vw, 60px); list-style: none; }
-.inline__i { display: block; }
-/* the inset hides the stray rule along the bottom edge of the file GRAND sent; the file itself is untouched */
-.inline__logo { display: block; width: auto; height: clamp(104px, 10vw, 140px); mix-blend-mode: multiply; clip-path: inset(0 0 3% 0); }
-.inline--dark { margin-top: clamp(48px, 8vh, 88px); padding-top: clamp(28px, 5vh, 44px); border-top: 1px solid var(--line); }
-.inline--dark .inline__k { font-size: 12px; letter-spacing: .16em; }
-.inline--dark .inline__logo { filter: invert(1); mix-blend-mode: screen; }
+/* Registered: the companies by name, rolling, after origami-robotics.com's partners
+   row: greyed, quiet, one steady speed. The files are theirs, served as sent, so the
+   look is all in the filter. Two of them sit on a white ground instead of a clear
+   one. A blend mode cannot drop it, because the moving track is its own compositing
+   group with nothing behind it; so those two go through #roll-ink (_inline.html),
+   which turns lightness into transparency: white becomes nothing, the mark stays. */
+.inline { position: relative; }
+.sheet.inline { padding-block: clamp(44px, 7vh, 76px); padding-inline: 0; border-top: 1px solid var(--line); }
+.inline__k { padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); font: 500 10px/1.4 var(--mono); letter-spacing: .34em; text-transform: uppercase; color: var(--mute); }
+.roll { --roll-gap: clamp(48px, 6.5vw, 104px); margin-top: clamp(26px, 4vh, 40px); overflow: hidden; }
+.roll__defs { position: absolute; }
+.roll__track { display: flex; align-items: center; width: max-content; list-style: none; animation: roll 40s linear infinite; }
+.roll:hover .roll__track { animation-play-state: paused; }
+.roll__i { --roll-h: 58px; flex: none; display: grid; place-items: center; width: clamp(128px, 12vw, 176px); height: var(--roll-h); margin-right: var(--roll-gap); }
+.roll__i--copy { pointer-events: none; }
+/* a length, not 100%: the grid row is sized by its content, so a percentage here caps nothing */
+.roll__logo { display: block; width: auto; height: auto; max-width: 100%; max-height: var(--roll-h); filter: grayscale(1) contrast(.82); opacity: .42; }
+.roll__logo[data-opaque] { filter: url(#roll-ink); }
+.roll__logo[data-trim] { clip-path: inset(0 0 3% 0); }
+@keyframes roll { to { transform: translateX(-25%); } }
+.inline--dark { padding-bottom: clamp(20px, 4vh, 48px); }
+.inline--dark .inline__k { padding-inline: var(--gutter); font-size: 11px; }
+.inline--dark .roll__logo { filter: grayscale(1) invert(1) contrast(.9); opacity: .62; }
+.inline--dark .roll__logo[data-opaque] { filter: url(#roll-ink-light); }
+.wy-proof { padding-bottom: clamp(64px, 10vh, 110px); }
 
 /* Founding team: the two founders on graph paper, down the middle of the
    sheet: the title, the line about the two of them, then the pair side by
@@ -1328,12 +1338,16 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
     .cities { flex-direction: column; gap: 22px; }
     .proof__i { grid-template-columns: 96px minmax(0, 1fr); }
     .price__i { grid-template-columns: 104px minmax(0, 1fr); padding: 18px 0; }
+    .roll__track { animation-duration: 28s; }
+    .roll__i { --roll-h: 48px; }
     .talk__row { grid-template-columns: minmax(0, 1fr); }
     .price__n { font-size: clamp(72px, 20.5vw, 170px); }
     .loop__labels li, .window__bar { font-size: 10px; letter-spacing: .1em; }
     .gauge__checks { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
+    .roll__track { animation: none; flex-wrap: wrap; width: auto; row-gap: 28px; padding-inline: var(--pad); }
+    .roll__i--copy { display: none; }
     .story__step { opacity: 1; }
     .window__line { display: none; }
     .gauge__plug, .gauge__arc, .gauge__tab, .gauge__check::before, .gauge__pass, .gauge__fail { transition: none; animation: none; }

@@ -175,22 +175,35 @@ class SiteTests(SimpleTestCase):
             bad = self.client.post("/contact/", dict(payload, option="free-robot"), follow=True)
         self.assertIn("what you want", bad.content.decode())
 
-    def test_factories_in_line_are_shown_by_name(self):
-        """One list (discovery.IN_LINE) feeds both places: a row after the case on
-        the home page, and under "Factories are already in line" on the pitch.
-        The mark is the factory's own file, served as it was sent."""
+    def test_registered_companies_roll_by_name(self):
+        """Husan's call: one list (discovery.IN_LINE) feeds a rolling row labelled
+        "Registered", after the case on the home page and after "Factories are
+        already in line" on the pitch. Every mark is the company's own file,
+        served as it was sent; the greyed look is CSS. The row is laid out four
+        times so it never runs dry, and only the first set is read out."""
         from landing.discovery import IN_LINE
+        self.assertGreaterEqual(len(IN_LINE), 6)
         home = self.client.get("/").content.decode()
         pitch = self.client.get("/why-us/").content.decode()
         self.assertLess(home.index('id="why"'), home.index('id="in-line"'))
         self.assertLess(home.index('id="in-line"'), home.index('id="team"'))
         self.assertLess(pitch.index('id="proof"'), pitch.index('id="in-line"'))
         self.assertLess(pitch.index('id="in-line"'), pitch.index('id="pricing"'))
-        for factory in IN_LINE:
-            self.assertTrue((Path(settings.BASE_DIR) / "static" / factory["logo"]).exists(), factory["logo"])
-            for page in (home, pitch):
-                self.assertIn(f'/static/{factory["logo"]}?v=', page)
-                self.assertIn(f'alt="{factory["name"]}, {factory["what"]}"', page)
+        for page in (home, pitch):
+            row = page.split('id="in-line"', 1)[1].split("</ul>", 1)[0]
+            self.assertIn(">Registered<", row)
+            for gone in ("Factories already in line", "Including"):
+                self.assertNotIn(gone, row)
+            self.assertEqual(row.count('class="roll__i"'), len(IN_LINE))
+            self.assertEqual(row.count('class="roll__i roll__i--copy" aria-hidden="true"'), 3 * len(IN_LINE))
+            for company in IN_LINE:
+                self.assertEqual(row.count(f'alt="{company["name"]}"'), 1)
+                self.assertEqual(row.count(f'/static/{company["logo"]}?v='), 4)
+        for company in IN_LINE:
+            self.assertTrue((Path(settings.BASE_DIR) / "static" / company["logo"]).exists(), company["logo"])
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertRegex(css, r"@keyframes roll \{ to \{ transform: translateX\(-25%\); \} \}")
+        self.assertRegex(css, r"prefers-reduced-motion: reduce\) \{\s*\.roll__track \{ animation: none;")
         self.assertNotIn("in_line", self.client.get("/company.json").content.decode())
 
     def test_booker_is_on_the_home_page(self):
