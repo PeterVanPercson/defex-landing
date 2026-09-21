@@ -283,6 +283,9 @@ class SiteTests(SimpleTestCase):
         self.assertLess(body.index('id="pricing"'), body.index('id="faq"'))
         for claim in ("$65,000", "passes your test on your floor", "You only pay for a yes.", "Not a new project.", "Send us your part"):
             self.assertIn(claim, body)
+        # Husan's call: no dated "As of ..." line under the count; it read as filler
+        self.assertNotIn("As of", body)
+        self.assertNotIn("proof__date", body)
         self.assertLess(body.index('id="talk"'), body.index("<footer"))
         self.assertEqual(body.count('class="arm__svg"'), 1)
         for word in ("Domino", "Khosla", "valuation"):
