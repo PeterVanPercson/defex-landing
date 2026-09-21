@@ -535,6 +535,22 @@
     }
 
     // ------------------------------------------------------------------
+    // An option picked in "What it costs" is already chosen in the form at
+    // the end of the page, and named above it, so nobody picks twice.
+    const wants = document.querySelector('.talk__form select[name="option"]');
+    const picked = document.querySelector('.talk__pick');
+    if (wants) {
+        for (const link of document.querySelectorAll('[data-pick]')) {
+            link.addEventListener('click', () => {
+                wants.value = link.dataset.pick;
+                if (!picked || !wants.selectedOptions.length) return;
+                picked.querySelector('strong').textContent = wants.selectedOptions[0].textContent;
+                picked.hidden = false;
+            });
+        }
+    }
+
+    // ------------------------------------------------------------------
     // The offices keep their own time: each city shows the clock where it
     // is, set now and then on the half minute, and never while the tab is
     // in the background. A time zone the browser does not know is left

@@ -88,7 +88,7 @@
             <h2 class="wy-h wy-h--xl" id="promise-title" data-reveal>Our robot teaches <span class="wy-hl">itself</span>.</h2>
             <p class="wy-lead" data-reveal>Show it the job. It practices, tests its own work and gets better every time. It keeps up when your parts change.</p>
             <div class="wy-actions" data-reveal>
-                <a class="wy-btn" href="/#contact">Test it on your part <span aria-hidden="true">&rarr;</span></a>
+                <a class="wy-btn" href="#pricing">See the options <span aria-hidden="true">&rarr;</span></a>
                 <a class="wy-link" href="#watch">Watch it work <span aria-hidden="true">&darr;</span></a>
             </div>
         </div>
@@ -300,13 +300,13 @@
                 <p class="price__s">{{ pricing.robot.terms }}</p>
             </div>
             <ul class="price__list">
-                {% for step in pricing.steps %}<li class="price__i" data-reveal><span class="price__p">{{ step.price }}{% if step.per %}<small class="price__per">{{ step.per }}</small>{% endif %}</span><span class="price__v"><strong>{{ step.title }}</strong> {{ step.line }}</span></li>
+                {% for step in pricing.steps %}<li class="price__i" data-reveal><span class="price__p">{{ step.price }}{% if step.per %}<small class="price__per">{{ step.per }}</small>{% endif %}</span><span class="price__v"><strong>{{ step.title }}</strong> {{ step.line }}{% if step.go %} <a class="price__go" href="#talk" data-pick="{{ step.pick }}">{{ step.go }} <span aria-hidden="true">&rarr;</span></a>{% endif %}</span></li>
                 {% endfor %}
             </ul>
             <div class="price__end" data-reveal>
                 <p class="wy-lead price__note">Whatever you pay first comes off the price of your robot.</p>
                 <div class="wy-actions">
-                    <a class="wy-btn" href="/#contact">Send us your part <span aria-hidden="true">&rarr;</span></a>
+                    <a class="wy-btn" href="#talk" data-pick="part">Send us your part <span aria-hidden="true">&rarr;</span></a>
                     <a class="wy-link" href="mailto:{{ company.contact }}">{{ company.contact }}</a>
                 </div>
             </div>
@@ -366,10 +366,40 @@
 
     <section class="wy-sec wy-close" id="talk" aria-labelledby="talk-title">
         <h2 class="wy-h wy-h--xl" id="talk-title" data-reveal>Bring us the job your team <span class="wy-hl">hates</span>.</h2>
-        <p class="wy-lead" data-reveal>Tell us the part and how you check it. We will tell you straight if our robot can take it on.</p>
-        <div class="wy-actions" data-reveal>
-            <a class="wy-btn wy-btn--big" href="/#contact">Book a call <span aria-hidden="true">&rarr;</span></a>
-            <a class="wy-link" href="mailto:{{ company.contact }}">{{ company.contact }}</a>
+        <p class="wy-lead" data-reveal>Pick a time and talk to a founder. Tell us the part and how you check it. We will tell you straight if our robot can take it on.</p>
+        <p class="talk__pick" hidden>You picked: <strong></strong></p>
+
+        <!-- The same booker as the home page (static/js/book.js), so nobody has to
+             leave the pitch to get a slot. The form is the other way in: it carries
+             the option they picked above. id="contact" is where /contact/ sends them back. -->
+        <div class="talk" id="contact">
+            <div class="talk__cal">
+                <h3 class="wy-kicker talk__h">Book a call with a founder.</h3>
+                <div class="booker__panel">
+                    <p class="booker__status" role="status">Choose a time to talk.</p>
+                    <div class="booker__frame" id="cal-inline" data-cal="{{ cal_link }}" role="region" aria-label="Choose a time"></div>
+                    <p class="booker__fallback"><a class="wy-link" href="https://cal.com/{{ cal_link }}" target="_blank" rel="noopener noreferrer">Open the calendar in a new tab <span aria-hidden="true">&nearr;</span></a></p>
+                </div>
+            </div>
+            <form class="talk__form" action="{% url 'contact' %}" method="post">
+                {% csrf_token %}
+                <h3 class="wy-kicker talk__h">Or send us your part.</h3>
+                {% if messages %}{% for message in messages %}<p class="talk__flash talk__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
+                <div class="talk__row">
+                    <label class="talk__field"><span>Name</span><input type="text" name="name" autocomplete="name" maxlength="120" required></label>
+                    <label class="talk__field"><span>Company</span><input type="text" name="factory" autocomplete="organization" maxlength="200" required></label>
+                </div>
+                <div class="talk__row">
+                    <label class="talk__field"><span>Email, phone or WeChat</span><input type="text" name="contact" autocomplete="email" maxlength="200" required></label>
+                    <label class="talk__field"><span>What you want</span><select name="option">{% for value, label in form.fields.option.choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+                </div>
+                <label class="talk__field"><span>The part and how you check it</span><textarea name="product" rows="4" maxlength="1200"></textarea></label>
+                <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+                <div class="wy-actions talk__send">
+                    <button type="submit" class="wy-btn">Send <span aria-hidden="true">&rarr;</span></button>
+                    <a class="wy-link" href="mailto:{{ company.contact }}">{{ company.contact }}</a>
+                </div>
+            </form>
         </div>
     </section>
 
@@ -398,4 +428,5 @@
 <script src="{% static 'js/portal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/why.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/book.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}

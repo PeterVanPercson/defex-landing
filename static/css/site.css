@@ -1253,6 +1253,32 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 /* the ask */
 .wy-close { padding-block: clamp(150px, 24vh, 280px); border-top: 1px solid var(--line); }
 .wy-close .wy-lead { max-width: 34ch; }
+/* the end of the path: a founder's calendar, or the form, on the pitch itself.
+   An option picked in "What it costs" arrives here already chosen (static/js/why.js). */
+.price__go { display: flex; width: fit-content; align-items: center; gap: 8px; margin-top: 12px; padding-bottom: 2px; border-bottom: 1.5px solid rgba(255, 212, 42, .45); font: 600 clamp(16px, 1.3vw, 19px)/1.3 var(--sans); letter-spacing: -.01em; color: var(--yellow); transition: border-color .2s ease; }
+.price__go:hover { border-color: var(--yellow); }
+.price__go span { transition: transform .3s cubic-bezier(.22, .61, .36, 1); }
+.price__go:hover span { transform: translateX(4px); }
+.talk__pick { margin-top: 22px; font: 500 clamp(18px, 1.5vw, 22px)/1.3 var(--sans); color: var(--mute); }
+.talk__pick[hidden] { display: none; }
+.talk__pick strong { font-weight: 600; color: var(--yellow); }
+.talk { display: grid; gap: clamp(64px, 10vh, 110px); margin-top: clamp(48px, 8vh, 88px); scroll-margin-top: calc(var(--nav) + 24px); }
+.talk__h { margin-bottom: clamp(18px, 3vh, 28px); color: var(--ink); }
+.talk__cal { min-width: 0; }
+.talk .booker__panel { border-color: var(--line); border-radius: 22px; background: #0B0B0B; }
+.talk :is(.booker__status, .booker__fallback) { color: var(--mute); }
+.talk__form { display: grid; gap: 18px; max-width: 900px; }
+.talk__row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+.talk__field { display: grid; gap: 9px; font: 500 15px/1.3 var(--sans); color: var(--mute); }
+.talk__field :is(input, select, textarea) { width: 100%; min-height: 58px; padding: 0 18px; border: 1.5px solid rgba(244, 244, 240, .22); border-radius: 14px; background: #0D0D0D; color: var(--ink); font: 400 18px/1.4 var(--sans); color-scheme: dark; transition: border-color .15s ease; }
+.talk__field textarea { min-height: 132px; padding: 14px 18px; resize: vertical; }
+.talk__field select { appearance: none; padding-right: 46px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFD42A' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; background-size: 20px; }
+.talk__field :is(input, select, textarea):focus { border-color: var(--yellow); outline: none; }
+.talk__field :is(input, select, textarea):focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+.talk__flash { padding: 14px 18px; border: 1.5px solid var(--yellow); border-radius: 14px; font: 500 17px/1.4 var(--sans); color: var(--ink); }
+.talk__flash--error { border-color: var(--fail); }
+.talk__send { margin-top: 6px; }
+.talk__send .wy-btn { border: 0; cursor: pointer; }
 
 /* The three offices above the footer, each under the time it is there now
    (static/js/why.js). With no JS the clock line is empty and collapses, and
@@ -1287,6 +1313,7 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
     .cities { flex-direction: column; gap: 22px; }
     .proof__i { grid-template-columns: 96px minmax(0, 1fr); }
     .price__i { grid-template-columns: 104px minmax(0, 1fr); padding: 18px 0; }
+    .talk__row { grid-template-columns: minmax(0, 1fr); }
     .price__n { font-size: clamp(72px, 20.5vw, 170px); }
     .loop__labels li, .window__bar { font-size: 10px; letter-spacing: .1em; }
     .gauge__checks { flex-wrap: wrap; }
