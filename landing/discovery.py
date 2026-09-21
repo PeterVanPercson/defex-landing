@@ -51,6 +51,20 @@ PUBLIC_COMPANY = {
 }
 
 
+# Kept out of PUBLIC_COMPANY on purpose: that dict is dumped whole into /company.json.
+PRICING = {
+    "robot": {"price": "$65,000", "what": "One robot, taught your part, running on your floor.",
+              "terms": "30% with the order. The rest when it passes your test on your floor."},
+    "steps": [
+        {"price": "Free", "title": "Send us your part.", "line": "A short video or a drawing, how many you make and how you check it. We will tell you straight if it is a fit."},
+        {"price": "$1,000", "title": "Hold your place.", "line": "Your place among the first robots. Not a fit? You get it back."},
+        {"price": "$5,000", "title": "Put your part on our bench.", "line": "A straight yes or no, the test it has to pass in writing and a fixed price for your robot. You only pay for a yes."},
+        {"price": "$500", "per": "a month", "title": "Keep it running.", "line": "Support, maintenance and updates."},
+        {"price": "$5,000", "title": "Teach it a new part.", "line": "Not a new project."},
+    ],
+}
+
+
 def office_place(office):
     """One office as a Place, so search engines read three locations, not one."""
     address = {"@type": "PostalAddress", "addressLocality": office["city"], "addressCountry": office["country"]}
@@ -98,7 +112,7 @@ PRACTICE = "..x.x..x.xx." "x.xx.xxx.xxx" "xxxx.xxxxxxx"
 @require_safe
 def why_us(request):
     return render(request, "landing/why_us.html", {
-        "company": PUBLIC_COMPANY, "updated": COMPANY_UPDATED,
+        "company": PUBLIC_COMPANY, "updated": COMPANY_UPDATED, "pricing": PRICING,
         "practice_marks": [mark == "x" for mark in PRACTICE], "trials": range(8)})
 
 
