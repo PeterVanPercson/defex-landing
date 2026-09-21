@@ -215,10 +215,15 @@ class SiteTests(SimpleTestCase):
         self.assertIn("<title>Why Defex | Robots that test every part they build</title>", body)
         self.assertIn('data-word="WHY US"', body)
         self.assertIn('id="why-title"><span class="wy-sr">Why us: </span>Robots that test every part', body)
-        for section in ("portal", "problem", "promise", "watch", "tests", "learns", "resets", "newpart", "proof", "faq", "founders", "talk"):
+        for section in ("portal", "problem", "promise", "watch", "tests", "learns", "resets", "newpart", "proof", "pricing", "faq", "founders", "talk"):
             self.assertIn(f'id="{section}"', body)
         for claim in ("Concept render", "Target</span>", "factories paid to be first in line.",
                       'href="/#contact"', "Book a call", "Robots are cheap."):
+            self.assertIn(claim, body)
+        # what it costs comes after the proof and before the questions, robot price first
+        self.assertLess(body.index('id="proof"'), body.index('id="pricing"'))
+        self.assertLess(body.index('id="pricing"'), body.index('id="faq"'))
+        for claim in ("$65,000", "passes your test on your floor", "You only pay for a yes.", "Not a new project.", "Send us your part"):
             self.assertIn(claim, body)
         self.assertLess(body.index('id="talk"'), body.index("<footer"))
         self.assertEqual(body.count('class="arm__svg"'), 1)

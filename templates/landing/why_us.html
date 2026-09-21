@@ -291,6 +291,28 @@
         </div>
     </section>
 
+    <section class="wy-sec wy-price" id="pricing" aria-labelledby="pricing-title">
+        <h2 class="wy-h" id="pricing-title" data-reveal>What it <span class="wy-hl">costs</span>.</h2>
+        <div class="price">
+            <p class="price__n" data-reveal>{{ pricing.robot.price }}</p>
+            <div class="price__big" data-reveal>
+                <p class="price__t">{{ pricing.robot.what }}</p>
+                <p class="price__s">{{ pricing.robot.terms }}</p>
+            </div>
+            <ul class="price__list">
+                {% for step in pricing.steps %}<li class="price__i" data-reveal><span class="price__p">{{ step.price }}{% if step.per %}<small class="price__per">{{ step.per }}</small>{% endif %}</span><span class="price__v"><strong>{{ step.title }}</strong> {{ step.line }}</span></li>
+                {% endfor %}
+            </ul>
+            <div class="price__end" data-reveal>
+                <p class="wy-lead price__note">Whatever you pay first comes off the price of your robot.</p>
+                <div class="wy-actions">
+                    <a class="wy-btn" href="/#contact">Send us your part <span aria-hidden="true">&rarr;</span></a>
+                    <a class="wy-link" href="mailto:{{ company.contact }}">{{ company.contact }}</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section class="wy-sec wy-faq" id="faq" aria-labelledby="faq-title">
         <h2 class="wy-h" id="faq-title" data-reveal>Straight <span class="wy-hl">answers</span>.</h2>
         <div class="faq">
