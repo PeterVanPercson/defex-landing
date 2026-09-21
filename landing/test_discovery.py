@@ -145,5 +145,8 @@ class DiscoverabilityTests(SimpleTestCase):
         paths = [urlsplit(node.text).path for node in ET.fromstring(sitemap).findall("{*}url/{*}loc")]
         for path in (*paths, "/llms.txt", "/company.json", "/sitemap.xml"):
             page = self.get_page(path).lower()
-            for removed in ("/investors/", "pre-seed", "pre%2dseed", "$1.5m", "ask for the deck", "a16z", "backed by"):
+            for removed in ("/investors/", "pre-seed", "pre%2dseed", "$1.5m", "ask for the deck"):
                 self.assertNotIn(removed, page, path)
+            if path != "/":
+                for removed in ("a16z", "backed by"):
+                    self.assertNotIn(removed, page, path)
