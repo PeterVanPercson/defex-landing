@@ -30,7 +30,7 @@ LOST_MESSAGE = ("That did not send. Please email husan@defexrobotics.com directl
                 "and we will pick it up from there.")
 
 CONTACT_LABELS = {"name": "name", "factory": "company",
-                  "contact": "email, phone or WeChat", "product": "the part"}
+                  "contact": "email, phone or WeChat", "product": "the part", "option": "what you want"}
 APPLICATION_LABELS = {"name": "name", "email": "email", "role": "role",
                       "work": "work link", "profile": "profile link", "note": "note"}
 
@@ -233,6 +233,7 @@ def contact(request):
     form = ContactForm(request.POST)
     if form.is_valid() and not form.is_spam():
         data = form.cleaned_data
+        data["wants"] = dict(ContactForm.OPTIONS).get(data.get("option"), "")
         # Admin notification → NOTIFY_TO (safe: only ever emails the owner).
         subject, html = submission_email(data, request)
         ok, detail = send(subject, html)

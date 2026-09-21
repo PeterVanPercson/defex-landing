@@ -110,6 +110,7 @@ def submission_email(data: dict, request) -> tuple[str, str]:
         ("Company", factory),
         ("Contact", contact),
         ("Part / joint", product),
+        ("Wants", data.get("wants", "")),
         ("IP", ip or "—"),
     ]
     body = "".join(

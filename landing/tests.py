@@ -138,15 +138,41 @@ class SiteTests(SimpleTestCase):
             response = self.client.post("/contact/", payload, follow=True)
         self.assertIn("We reply within one working day", response.content.decode())
 
-    def test_every_page_can_reach_the_contact_form(self):
-        """The nav button rendered #contact on /careers/, where there is no
-        contact section, so it went nowhere."""
-        for path in ("/careers/", "/blog/"):
-            body = self.client.get(path).content.decode()
-            header = body.split("<header", 1)[1].split("</header>", 1)[0]
-            self.assertIn('href="/#contact"', header, path)
-        home_header = self.client.get("/").content.decode().split("<header", 1)[1].split("</header>", 1)[0]
-        self.assertIn('href="#contact"', home_header)
+    def test_one_clear_way_in_for_a_factory(self):
+        """Husan's call, 2026-09-20: a factory buyer gets one path. "Test our
+        product" sits under the hero film and opens the pitch; the pitch shows
+        the options, each one carries to the sign-up at the end of the same
+        page, and that sign-up is a founder's calendar or the form. Nobody is
+        sent back to the home page to book."""
+        home = self.client.get("/").content.decode()
+        actions = home.split('class="lede__actions"', 1)[1].split("</div>", 1)[0]
+        self.assertIn('class="glass-button-wrap" href="/why-us/"', actions)
+        self.assertIn("Test our product", actions)
+        pitch = self.client.get("/why-us/").content.decode()
+        main = pitch.split("<main", 1)[1]
+        self.assertNotIn('href="/#contact"', main)
+        self.assertIn('href="#pricing">See the options', main)
+        for pick in ("part", "place", "bench"):
+            self.assertIn(f'href="#talk" data-pick="{pick}"', main)
+            self.assertIn(f'<option value="{pick}">', main)
+        talk = main.split('id="talk"', 1)[1]
+        for piece in ('id="contact"', 'id="cal-inline"', 'data-cal="husan-mavlonov-qxqy1a/30min"',
+                      'action="/contact/"', 'name="option"', "Book a call with a founder."):
+            self.assertIn(piece, talk)
+        self.assertIn("js/book.js", pitch)
+        # the option they picked reaches the inbox
+        from unittest.mock import patch
+        payload = {"name": "A Buyer", "factory": "A Factory", "contact": "buyer@example.com",
+                   "product": "12-pin connector", "option": "place"}
+        with patch("landing.views.send", return_value=(True, "sent")) as sent:
+            response = self.client.post("/contact/", payload, HTTP_REFERER="http://testserver/why-us/")
+        self.assertEqual(response["Location"], "http://testserver/why-us/#contact")
+        self.assertIn("Hold my place ($1,000)", sent.call_args[0][1])
+        back = self.client.get("/why-us/").content.decode()
+        self.assertIn("We reply within one working day", back)
+        with patch("landing.views.send", return_value=(True, "sent")):
+            bad = self.client.post("/contact/", dict(payload, option="free-robot"), follow=True)
+        self.assertIn("what you want", bad.content.decode())
 
     def test_booker_is_on_the_home_page(self):
         """It lives at #contact, not on a page of its own: that is where someone
@@ -218,7 +244,7 @@ class SiteTests(SimpleTestCase):
         for section in ("portal", "problem", "promise", "watch", "tests", "learns", "resets", "newpart", "proof", "pricing", "faq", "founders", "talk"):
             self.assertIn(f'id="{section}"', body)
         for claim in ("Concept render", "Target</span>", "factories paid to be first in line.",
-                      'href="/#contact"', "Book a call", "Robots are cheap."):
+                      'href="#talk"', "Book a call", "Robots are cheap."):
             self.assertIn(claim, body)
         # what it costs comes after the proof and before the questions, robot price first
         self.assertLess(body.index('id="proof"'), body.index('id="pricing"'))
@@ -245,9 +271,12 @@ class SiteTests(SimpleTestCase):
             self.assertIn(script, body)
             self.assertEqual(self.client.get(f"/static/{script}").status_code, 200)
         # reachable from the nav on every page, and from the home page's claims
+        # "Why us" is out of the nav for now: the pitch is reached through
+        # "Test our product" under the hero film, and from the home page's claims
         for path in ("/", "/careers/", "/blog/", "/company/", "/why-us/"):
             header = self.client.get(path).content.decode().split("<header", 1)[1].split("</header>", 1)[0]
-            self.assertIn('href="/why-us/"', header, path)
+            self.assertNotIn("Why us", header, path)
+            self.assertNotIn('href="/why-us/"', header, path)
         home = self.client.get("/").content.decode()
         self.assertRegex(home, r'class="features__more">\s*<a class="glass-button-wrap" href="/why-us/">')
         self.assertIn("See why it works", home)
@@ -422,26 +451,24 @@ class SiteTests(SimpleTestCase):
             self.assertIn(f'id="{anchor}"', body)
         # an unpublished slug is a 404, not a template error
         self.assertEqual(self.client.get("/blog/not-a-post/").status_code, 404)
-        # the blog's way in is the button under the hero headline and a footer
-        # link on every page; the nav stays as it was
+        # the blog and the product swapped places: the blog is the pill in the
+        # nav on every page, plus a footer link; the product is under the hero film
         for path in ("/", "/careers/", "/blog/"):
             page = self.client.get(path).content.decode()
             header = page.split("<header", 1)[1].split("</header>", 1)[0]
-            self.assertNotIn('href="/blog/"', header, path)
+            self.assertIn('href="/blog/" class="glass-button-wrap glass-button-wrap--nav"', header, path)
             footer_path = "/company/" if path == "/blog/" else "/blog/"
             self.assertIn(f'class="footer__blog link" href="{footer_path}"', page, path)
         home = self.client.get("/").content.decode()
-        self.assertIn('class="glass-button-wrap" href="/blog/"', home)
-        # the hero carries one button, the blog; the product's way in is the
+        # the hero carries one button, the product; the blog's way in is the
         # pill in the nav, which replaced the square "Get in touch"
+        self.assertNotIn('class="glass-button-wrap" href="/blog/"', home)
         self.assertNotIn('class="beam', home)
         home_header = home.split("<header", 1)[1].split("</header>", 1)[0]
-        self.assertIn('href="#contact" class="glass-button-wrap glass-button-wrap--nav"', home_header)
         self.assertIn("glass-button-wrap--nav", home_header)
-        self.assertIn("Test our product", home_header)
+        self.assertIn(">Blog<svg", home_header)
+        self.assertNotIn("Test our product", home_header)
         self.assertNotIn("Get in touch", home_header)
-        header = body.split("<header", 1)[1].split("</header>", 1)[0]
-        self.assertIn('href="/#contact"', header)
         sitemap = self.client.get("/sitemap.xml").content.decode()
         self.assertIn("<loc>https://defexrobotics.com/blog/</loc>", sitemap)
         self.assertIn("<loc>https://defexrobotics.com/blog/the-cost-of-the-next-attempt/</loc>", sitemap)
