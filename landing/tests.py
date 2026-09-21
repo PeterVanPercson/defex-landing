@@ -15,13 +15,14 @@ class SiteTests(SimpleTestCase):
         # the headline and the three steps must match the deck, not the
         # superseded vision-inspection positioning they replaced
         self.assertContains(home, "Self-teaching robots")
-        # three claims, each a benefit with the mechanism in its second sentence
-        for claim in ("Robots you can walk away from.",
-                      "Our robots feel what&rsquo;s wrong.",
-                      "A new way, not a new project."):
+        # the case in the pitch's own words: what it does for a factory, as ruled rows
+        for claim in ("Our robot teaches itself.", "Bad parts never ship.",
+                      "No one stands over it.", "A new part is not a new project."):
             self.assertContains(home, f'class="feature__t engraved">{claim}</h3>')
+        for slop in ("walk away from", "feel what", "A new way, not a new project", "harder to fixture"):
+            self.assertNotContains(home, slop)
         # the section is "Why us", not the old slogan
-        self.assertContains(home, 'id="why-title" data-reveal>Why <em>us</em></h2>')
+        self.assertContains(home, 'id="why-title" data-reveal>Robots are cheap. Setting them up is <em>not</em>.</h2>')
         self.assertNotContains(home, "the test becomes the teacher")
         page = home.content.decode()
         self.assertEqual(page.count('alt="a16z"'), 1)
@@ -174,6 +175,24 @@ class SiteTests(SimpleTestCase):
             bad = self.client.post("/contact/", dict(payload, option="free-robot"), follow=True)
         self.assertIn("what you want", bad.content.decode())
 
+    def test_factories_in_line_are_shown_by_name(self):
+        """One list (discovery.IN_LINE) feeds both places: a row after the case on
+        the home page, and under "Factories are already in line" on the pitch.
+        The mark is the factory's own file, served as it was sent."""
+        from landing.discovery import IN_LINE
+        home = self.client.get("/").content.decode()
+        pitch = self.client.get("/why-us/").content.decode()
+        self.assertLess(home.index('id="why"'), home.index('id="in-line"'))
+        self.assertLess(home.index('id="in-line"'), home.index('id="team"'))
+        self.assertLess(pitch.index('id="proof"'), pitch.index('id="in-line"'))
+        self.assertLess(pitch.index('id="in-line"'), pitch.index('id="pricing"'))
+        for factory in IN_LINE:
+            self.assertTrue((Path(settings.BASE_DIR) / "static" / factory["logo"]).exists(), factory["logo"])
+            for page in (home, pitch):
+                self.assertIn(f'/static/{factory["logo"]}?v=', page)
+                self.assertIn(f'alt="{factory["name"]}, {factory["what"]}"', page)
+        self.assertNotIn("in_line", self.client.get("/company.json").content.decode())
+
     def test_booker_is_on_the_home_page(self):
         """It lives at #contact, not on a page of its own: that is where someone
         has finished reading, and a second page is one more click before a slot."""
@@ -279,7 +298,8 @@ class SiteTests(SimpleTestCase):
             self.assertNotIn('href="/why-us/"', header, path)
         home = self.client.get("/").content.decode()
         self.assertRegex(home, r'class="features__more">\s*<a class="glass-button-wrap" href="/why-us/">')
-        self.assertIn("See why it works", home)
+        self.assertNotIn("See why it works", home)
+        self.assertIn("Test our product", home.split('class="features__more"', 1)[1].split("</p>", 1)[0])
         # the three claims are not numbered
         self.assertNotIn("feature__n", home)
 
@@ -346,7 +366,7 @@ class SiteTests(SimpleTestCase):
         # rules inside a media query do not style the default (desktop) case
         top = re.sub(r"@media[^{]*\{(?:[^{}]|\{[^{}]*\})*\}", "", css, flags=re.S)
         used = set()
-        for name in ("home.html", "why_us.html", "_arm.html", "_topbar.html", "_scan.html", "blog/index.html",
+        for name in ("home.html", "why_us.html", "_inline.html", "_arm.html", "_topbar.html", "_scan.html", "blog/index.html",
                      "blog/_article.html", "blog/the-cost-of-the-next-attempt.html",
                      "blog/the-ai-inference-revolution-is-here.html"):
             markup = (root / "templates/landing" / name).read_text()

@@ -1,0 +1,6 @@
+{% load static %}
+{# The factories in line that are shown by name (landing/discovery.py IN_LINE). The files are theirs, used as sent. #}
+<ul class="inline__logos">
+    {% for factory in in_line %}<li class="inline__i"><img class="inline__logo" src="{% static factory.logo %}?v={{ asset_v }}" alt="{{ factory.name }}, {{ factory.what }}" width="{{ factory.width }}" height="{{ factory.height }}" loading="lazy" decoding="async"></li>
+    {% endfor %}
+</ul>

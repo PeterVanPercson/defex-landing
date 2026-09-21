@@ -222,9 +222,24 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .features { margin-top: clamp(36px, 6vh, 64px); list-style: none; border-top: 1px solid var(--line); }
 .feature { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: baseline; gap: clamp(18px, 3vw, 48px); padding: clamp(34px, 5.5vh, 56px) 8px; border-bottom: 1px solid var(--line); }
 .feature__t { max-width: 17ch; font-size: clamp(27px, 2.7vw, 38px); line-height: 1.12; }
-.feature__d { max-width: 44ch; font: 400 13px/1.85 var(--mono); color: var(--ink-soft); }
+.feature__d { max-width: 44ch; font: 400 15px/1.75 var(--mono); color: var(--ink-soft); }
 .feature__cta { margin-top: 26px; }
 .features__more { margin-top: clamp(32px, 5vh, 48px); }
+/* Factories in line, by name: a label and one row of their marks, which wraps as
+   more arrive. The files are theirs, used as sent (black on a white ground), so the
+   ground is dropped in the blend: multiplied into the paper here, inverted and
+   screened on the dark pitch. Nothing between the mark and the ground may be
+   revealed or faded, or the blend has nothing to blend with. */
+.inline { display: flex; flex-wrap: wrap; align-items: center; gap: 18px clamp(28px, 5vw, 72px); }
+.sheet.inline { padding-block: clamp(40px, 7vh, 72px); border-top: 1px solid var(--line); }
+.inline__k { flex: none; font: 500 11px/1.4 var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--mute); }
+.inline__logos { display: flex; flex-wrap: wrap; align-items: center; gap: 18px clamp(28px, 4vw, 60px); list-style: none; }
+.inline__i { display: block; }
+/* the inset hides the stray rule along the bottom edge of the file GRAND sent; the file itself is untouched */
+.inline__logo { display: block; width: auto; height: clamp(104px, 10vw, 140px); mix-blend-mode: multiply; clip-path: inset(0 0 3% 0); }
+.inline--dark { margin-top: clamp(48px, 8vh, 88px); padding-top: clamp(28px, 5vh, 44px); border-top: 1px solid var(--line); }
+.inline--dark .inline__k { font-size: 12px; letter-spacing: .16em; }
+.inline--dark .inline__logo { filter: invert(1); mix-blend-mode: screen; }
 
 /* Founding team: the two founders on graph paper, down the middle of the
    sheet: the title, the line about the two of them, then the pair side by
