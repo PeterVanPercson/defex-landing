@@ -40,18 +40,21 @@ fill as it goes. Only the window around the shown frame is decoded
 (`img.decode()` ahead of time); the browser's own image cache holds the rest
 compressed, about 9 MB, which is less than the MP4 was.
 
-**Every mouse is a different speed.** A trackpad or Magic Mouse sends a dense
-stream of small fractional deltas; a notched wheel sends one whole step of 53,
-100 or 120 px per click, which most browsers animate over ~150 ms but not all,
-and not on every setting; touch has its own momentum; keys and anchors jump.
-`hero-film.js` classifies the input from the `wheel` events it sees
-(`deltaMode`, whole-number deltas of 40 px or more with 30 ms or more between
-them, `wheelDeltaY` in multiples of 120) and from `touchstart`/`keydown`, and
-follows the scroll through an exponential lag whose time constant depends on
-the class: 45 ms for precise input (near-literal), 110 ms for a notched wheel
-(so one click's 15 frames glide rather than jump), 60 ms for keys. A jump of
-more than 60 frames (an anchor, Home, a scrollbar drag) snaps instead of
-gliding through two seconds of film.
+**Every mouse is a different speed.** A trackpad or Magic Mouse moves the page
+in a dense stream of small steps; a notched wheel moves it 53, 100 or 120 px
+per click, which most browsers spread over ~150 ms of small steps too, but not
+all of them and not on every setting; touch has its own momentum; keys and
+anchors jump. The `wheel` events are no guide to which is which (their deltas
+depend on the OS, the browser and the mouse's own driver; a synthetic 100 px
+click reached the page as `deltaY` 50 in one trace), so `hero-film.js` reads
+the scroll position instead. A change that arrives as one isolated step of
+eight frames or more, with nothing in the 80 ms before it, is a click nobody
+animated: the frame glides across it with a 110 ms time constant instead of
+jumping. A change that is part of a stream, or a small one, is followed with a
+45 ms time constant, near-literally, so an animated click or a trackpad is
+never smoothed twice and a flick never trails. A jump of more than 60 frames
+(an anchor, Home, a scrollbar drag) snaps. At 1440×900 the scrub runs over
+1516 px, so a still every 3.4 px; on a 390 px phone every 2.1 px.
 
 The top and bottom dissolve of the film's box is two gradient bands
 (`.hero__screen::before/::after`) laid over it, **not** a `mask-image` on the

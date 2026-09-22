@@ -188,24 +188,35 @@ test('reduced motion takes the stills down and shows the final frame', () => {
     assert.equal(p.film.src, '');
 });
 
-test('a notched wheel glides where a trackpad follows', () => {
-    const glide = (wheel) => {
+test('a lone click glides where a stream of small steps follows', () => {
+    const first = (drive) => {
         const p = heroFrames();
-        for (let i = 0; i < 450; i++) { const img = new p.context.Image(); }
+        for (let i = 0; i < 450; i++) new p.context.Image();
         // every still is present, so the draw is exactly what the follow decides
         for (const img of p.images) if (img.src) img.load();
-        p.advance(100);
-        p.event('wheel', wheel);
-        p.context.scrollY = 42;  // 15 frames in
-        p.event('scroll');
+        p.advance(300);
+        drive(p);
         p.frame();
         return p.draws[p.draws.length - 1];
     };
-    const notched = glide({ deltaY: 100, deltaMode: 0, wheelDeltaY: -120 });
-    const precise = glide({ deltaY: 3.5, deltaMode: 0 });
-    assert.ok(notched >= 1 && notched <= 4, `a click's first frame moved ${notched}`);
-    assert.ok(precise >= 4, `a trackpad's first frame moved ${precise}`);
-    assert.ok(precise > notched);
+    // one isolated step of 15 frames, the way an unanimated wheel click
+    // arrives: the first frame after it moves a little of the way
+    const click = first((p) => { p.context.scrollY = 42; p.event('scroll'); });
+    // the same distance as a stream of small steps with a frame between
+    // each, the way a trackpad or an animated click arrives: the frame
+    // stays within a few frames of the page all the way
+    const stream = first((p) => { for (let y = 3; y <= 42; y += 3) { p.context.scrollY = y; p.event('scroll'); p.advance(8); p.frame(); } });
+    assert.ok(click >= 1 && click <= 4, `a click's first frame moved to ${click}`);
+    assert.ok(stream >= 12, `a stream's frame reached ${stream} of 15`);
+});
+
+test('coming back to the tab draws the frame again', () => {
+    const p = heroFrames();
+    p.image(0).load();
+    assert.deepEqual(p.draws, [0]);
+    p.doc.hidden = true; p.doc.emit('visibilitychange');
+    p.doc.hidden = false; p.doc.emit('visibilitychange');
+    assert.deepEqual(p.draws, [0, 0], 'redrawn without waiting for a new frame');
 });
 
 test('an anchor jump snaps instead of gliding through the film', () => {

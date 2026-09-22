@@ -64,38 +64,23 @@
     }
 
     // ------------------------------------------------------------------
-    // What the scroll is coming from. Every mouse is a different speed: a
-    // trackpad or Magic Mouse sends a dense stream of small, fractional
-    // deltas; a notched wheel sends one whole-number step of 53, 100 or 120
-    // px per click (browsers animate the click over ~150 ms, but not all of
-    // them, and not on every setting); a touch screen sends its own momentum;
-    // keys and anchors jump. The frame follows the scroll through a short
-    // exponential lag whose time constant depends on which of these it is:
-    // near-literal for precise input, long enough on a notched wheel that a
-    // 100 px click becomes a glide across its 15 frames rather than a jump.
-    const TAU = { precise: .045, touch: .045, keys: .06, notched: .11, unknown: .07 };
-    let kind = 'unknown', lastWheel = 0;
-    function classify(event) {
-        const now = performance.now();
-        const gap = now - lastWheel;
-        lastWheel = now;
-        const d = Math.abs(event.deltaY);
-        if (!d) return;
-        // lines or pages: a notched wheel in a browser that does not convert
-        if (event.deltaMode !== 0) { kind = 'notched'; return; }
-        // the legacy wheelDelta is a multiple of 120 for a notched click in
-        // Chrome and Safari; a trackpad's is not
-        const legacy = event.wheelDeltaY;
-        const notch = (legacy && legacy % 120 === 0 && Math.abs(legacy) >= 120)
-            || (d >= 40 && Number.isInteger(d) && gap > 30);
-        if (notch) kind = 'notched';
-        else if (d < 40 || !Number.isInteger(d) || gap < 20) kind = 'precise';
-    }
-    addEventListener('wheel', classify, { passive: true });
-    addEventListener('touchstart', () => { kind = 'touch'; }, { passive: true });
-    addEventListener('keydown', (event) => {
-        if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(event.key)) kind = 'keys';
-    });
+    // Every mouse is a different speed. A trackpad or Magic Mouse moves the
+    // page in a dense stream of small steps; a notched wheel moves it 53,
+    // 100 or 120 px per click, which most browsers spread over ~150 ms of
+    // small steps too, but not all of them and not on every setting; touch
+    // has its own momentum; keys and anchors jump. The wheel events
+    // themselves are no guide (their deltas depend on the OS, the browser
+    // and the mouse's own driver), so the follow reads the scroll position
+    // instead: a change that arrives as one isolated step of many frames
+    // is a click that nobody animated, and the frame glides across it over
+    // ~110 ms rather than jumping; a change that is part of a stream, or a
+    // small one, is followed near-literally, so an animated click or a
+    // trackpad is never smoothed twice and a flick never trails.
+    const TAU_FOLLOW = .045, TAU_GLIDE = .11;
+    // a step of this many frames or more, on its own, is a click to glide
+    const STEP = 8;
+    // scroll events closer together than this are one stream
+    const STREAM_MS = 80;
 
     // ------------------------------------------------------------------
     // Engine one: the frames. One still per scroll position, drawn on the
@@ -130,6 +115,7 @@
         const decoded = new Uint8Array(N);
         let inflight = 0, ready = 0, failed = 0, live = false, on = false;
         let target = 0, shown = 0, drawn = -1, direction = 1;
+        let tau = TAU_FOLLOW, lastMove = 0;
         let frameId = 0, running = false, lastTick = 0, firstTimer = 0;
         let ctxW = 0, ctxH = 0;
 
@@ -232,7 +218,7 @@
             lastTick = now;
             const gap = target - shown;
             if (Math.abs(gap) > JUMP) shown = target;
-            else shown += gap * (1 - Math.exp(-dt / (TAU[kind] || TAU.unknown)));
+            else shown += gap * (1 - Math.exp(-dt / tau));
             if (Math.abs(target - shown) < .35) shown = target;
             paint();
             if (shown !== target) frameId = requestAnimationFrame(tick);
@@ -246,9 +232,24 @@
         }
         function onScroll(p) {
             const next = clamp(p / SCRUB_END, 0, 1) * (N - 1);
-            if (next !== target) direction = next > target ? 1 : -1;
-            target = next;
+            if (next !== target) {
+                const now = performance.now();
+                const isolated = now - lastMove > STREAM_MS;
+                lastMove = now;
+                direction = next > target ? 1 : -1;
+                // one lone step of a click's worth glides; anything in a
+                // stream, or small, is followed
+                tau = isolated && Math.abs(next - target) >= STEP ? TAU_GLIDE : TAU_FOLLOW;
+                target = next;
+            }
             pump();
+            start();
+        }
+        // Back from a hidden tab or the bfcache: the canvas may have been
+        // purged (iOS does), so the frame is drawn again whatever changed.
+        function resume() {
+            drawn = -1;
+            paint();
             start();
         }
         function fail() {
@@ -281,7 +282,7 @@
             request(0, 'high');
             pump();
         }
-        return { begin, stop, pause, onScroll, resume: start, kind: 'frames' };
+        return { begin, stop, pause, onScroll, resume, kind: 'frames' };
     }
 
     // ------------------------------------------------------------------
@@ -464,7 +465,7 @@
     // That is true for EVERY visitor, so it is wired up before the film is.
     // pageshow and load as well as resize: Chrome restores the scroll position
     // on a reload and on back/forward without firing a scroll event.
-    const resync = () => { measureGeometry(); onScroll(); syncNav(); };
+    const resync = () => { measureGeometry(); onScroll(); if (engine) engine.resume(); syncNav(); };
     measureGeometry();
     syncNav();
     addEventListener('scroll', syncNav, { passive: true });
