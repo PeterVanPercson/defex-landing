@@ -1,6 +1,29 @@
+import re
+
 from django import forms
 
 from .jobs import ROLE_CHOICES
+
+# The honeypot misses bots that fill only visible fields. The 2026-09-21 one
+# sold "Google Search Index" listings from search-defexrobotics.com.
+SEO_PITCH = re.compile(
+    r"search[\s-]*index|google'?s? search|search results|search engine|\bseo\b|"
+    r"backlinks?|rank(ing)? (higher|first|#?1)|searchindex|submit your (site|website)",
+    re.I,
+)
+LOOKALIKE = re.compile(r"[\w.-]*defex[\w-]*\.[a-z]{2,}", re.I)
+OWN_DOMAINS = {"defexrobotics.com", "www.defexrobotics.com", "defex.app"}
+
+
+def looks_like_pitch(*fields: str) -> bool:
+    text = " ".join(f or "" for f in fields)
+    if SEO_PITCH.search(text):
+        return True
+    for m in LOOKALIKE.finditer(text):
+        domain = m.group(0).lower().split("@")[-1]
+        if domain not in OWN_DOMAINS:
+            return True
+    return False
 
 
 class ContactForm(forms.Form):
@@ -19,7 +42,9 @@ class ContactForm(forms.Form):
     website = forms.CharField(max_length=200, required=False)
 
     def is_spam(self) -> bool:
-        return bool(self.cleaned_data.get("website"))
+        d = self.cleaned_data
+        return bool(d.get("website")) or looks_like_pitch(
+            d.get("name"), d.get("factory"), d.get("contact"), d.get("product"))
 
 
 class ApplicationForm(forms.Form):

@@ -139,6 +139,25 @@ class SiteTests(SimpleTestCase):
             response = self.client.post("/contact/", payload, follow=True)
         self.assertIn("We reply within one working day", response.content.decode())
 
+    def test_contact_drops_seo_pitches_without_telling_the_bot(self):
+        from unittest.mock import patch
+        spam = {"name": "Don Landale", "factory": "Web Search Index",
+                "contact": "domains@search-defexrobotics.com",
+                "product": "Greetings Feature defexrobotics.com in Google's Search Index "
+                           "and have it show up in Google search results! searchindex.net"}
+        real = {"name": "A Buyer", "factory": "Acme Wire", "contact": "buyer@acme.com",
+                "product": "12-pin connector, see acme.com/parts; we emailed hello@defexrobotics.com"}
+        with patch("landing.views.rate_limited", return_value=False), \
+                patch("landing.views.send", return_value=(True, "sent")) as sent:
+            response = self.client.post("/contact/", spam, follow=True)
+            self.assertFalse(sent.called)
+            self.assertIn("We reply within one working day", response.content.decode())
+            spoof = dict(spam, factory="Acme", product="12-pin connector")
+            self.client.post("/contact/", spoof, follow=True)
+            self.assertFalse(sent.called)
+            self.client.post("/contact/", real, follow=True)
+            self.assertTrue(sent.called)
+
     def test_one_clear_way_in_for_a_factory(self):
         """Husan's call, 2026-09-20: a factory buyer gets one path. "Test our
         product" sits under the hero film and opens the pitch; the pitch shows
