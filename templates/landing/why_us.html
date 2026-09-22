@@ -50,12 +50,10 @@
                     </div>
                 </div>
             </div>
+            <!-- The cover: black with WHY US cut out, drawn by portal.js. It is
+                 what makes the letters windows; the field under it never repaints. -->
+            <canvas class="portal__cover" aria-hidden="true"></canvas>
             <svg class="portal__art" aria-hidden="true" focusable="false">
-                <defs>
-                    <clipPath id="portal-clip" clipPathUnits="userSpaceOnUse">
-                        <text class="portal__glyph" x="0" y="0">WHY US</text>
-                    </clipPath>
-                </defs>
                 <g class="portal__marks"><path class="portal__dims"/><path class="portal__cross"/></g>
             </svg>
             <div class="portal__choices" role="radiogroup" aria-label="Choose the letter to fly into" inert>

@@ -177,17 +177,27 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    rather than cutting against it, whatever frame is on screen. */
 .hero { position: relative; }
 .hero__sticky { position: relative; display: grid; place-items: center; align-content: center; gap: var(--hero-gap); }
-.hero__film { display: block; width: 100%; height: auto; margin-inline: auto; background: var(--bg);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 26%, #000 76%, transparent 100%);
-            mask-image: linear-gradient(to bottom, transparent 0, #000 26%, #000 76%, transparent 100%); }
+/* The film's box. The dissolve at its top and bottom edges is two gradient
+   bands laid over it, not a mask on the element: a mask on a <video> or a
+   <canvas> makes the browser paint the element itself through the mask on
+   the main thread for every new frame, which was most of what the page did
+   while the hero scrolled. The bands are two layers that never change. */
+.hero__screen { position: relative; display: block; width: 100%; margin-inline: auto; background: var(--bg); }
+.hero__screen::before, .hero__screen::after { content: ""; position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none; }
+.hero__screen::before { top: 0; height: 26%; background: linear-gradient(to bottom, var(--bg), transparent); }
+.hero__screen::after { bottom: 0; height: 24%; background: linear-gradient(to top, var(--bg), transparent); }
+.hero__film { display: block; width: 100%; height: auto; background: var(--bg); }
+/* the stills are drawn at the film's own size and scaled by CSS, as the video was */
+.hero__film--frames { image-rendering: auto; }
 .scroll-cue { display: none; }
 
 .has-scroll-film .hero { height: 280svh; }
 .has-scroll-film .hero__sticky { position: sticky; top: var(--nav); height: calc(100svh - var(--nav)); overflow: clip; }
-.has-scroll-film .hero__film { width: min(100%, calc((100svh - var(--nav) - var(--lede-space)) * 16 / 9)); }
+.has-scroll-film .hero__screen { width: min(100%, calc((100svh - var(--nav) - var(--lede-space)) * 16 / 9)); }
 @media (min-aspect-ratio: 13/10) {
     .has-scroll-film .hero__sticky { grid-template-rows: minmax(0, 1fr) auto; padding-block: 12px 28px; }
-    .has-scroll-film .hero__film { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+    .has-scroll-film .hero__screen { width: 100%; height: 100%; min-height: 0; }
+    .has-scroll-film .hero__film { height: 100%; object-fit: contain; }
 }
 /* the headline now sits in the frame, so the cue moves out of its way */
 .has-scroll-film .scroll-cue { display: block; position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; margin: 0; font-size: 12px; color: var(--mute); opacity: var(--cue-opacity, 1); pointer-events: none; }
@@ -606,7 +616,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
     .lede h1 br { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .hero__film { -webkit-mask-image: none; mask-image: none; }
+    .hero__screen::before, .hero__screen::after { display: none; }
     .link, .field input, .field textarea, .sound, .navlink { transition: none; }
     .reveal [data-reveal] { opacity: 1; transform: none; filter: none; transition: none; }
     .flash.is-on { animation-duration: .5s; }
@@ -1004,15 +1014,16 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 .portal[data-motion="on"] .portal__pin { position: sticky; top: var(--nav); }
 .portal__field { position: absolute; inset: 0; background: var(--gp-field); opacity: 0; pointer-events: none; }
 .portal[data-ready] .portal__field { opacity: 1; }
-.portal__stage { position: absolute; inset: 0; transform: scale(var(--gp-field-scale, 1)); }
+.portal__stage { position: absolute; inset: 0; transform: scale(var(--gp-field-scale, 1)); will-change: transform; }
 /* The parts are separate layers on a box that covers the field the way
    background-size: cover would, so each one moves on the compositor and
    nothing repaints the field while they drift. */
 .parts { position: absolute; left: 50%; top: 50%; width: max(100%, calc(var(--gp-height, 100svh) * 1.6)); aspect-ratio: 16 / 10; transform: translate(-50%, -50%); }
 .part { position: absolute; left: var(--x); top: var(--y); width: var(--w); transform: translate(-50%, -50%); will-change: transform; }
 .part svg { display: block; width: 100%; height: auto; overflow: visible; }
+/* the cover sits over the field and under the marks, the letter buttons and the title */
+.portal__cover { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .portal__art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.portal__glyph { font-size: 100px; font-weight: 900; font-kerning: none; font-variant-ligatures: none; letter-spacing: 0; }
 .portal__marks { transition: opacity .2s linear; }
 .portal__dims { fill: none; stroke: rgba(244, 244, 240, .35); }
 .portal__cross { fill: none; stroke: #0A0A0A; }

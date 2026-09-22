@@ -98,6 +98,126 @@ function hero(options) {
     return { ...p, film };
 }
 
+// The stills engine: a canvas, an Image class the test can resolve by hand,
+// and the data attributes home.html carries. innerHeight is 720, so the
+// narrow set is chosen, as it is on a phone.
+function heroFrames(options) {
+    const p = page(options), film = new Element(), hero = new Element(), sticky = new Element(), canvas = new Element();
+    const images = [], draws = [];
+    class Img {
+        constructor() { images.push(this); this.attrs = {}; }
+        set src(v) { this._src = v; }
+        get src() { return this._src || ''; }
+        get frame() { return Number((this.src.match(/f(\d+)\.avif/) || [])[1]); }
+        decode() { return Promise.resolve(); }
+        load() { this.onload && this.onload(); }
+        fail() { this.onerror && this.onerror(); }
+    }
+    p.context.Image = Img;
+    canvas.hidden = true;
+    canvas.getContext = () => ({ drawImage: (img) => draws.push(img.frame) });
+    film.dataset = { fps: '60', src: '/film.mp4', srcSm: '/small.mp4', posterFinal: '/final.webp', type: 'video/mp4',
+        frames: '/f/', framesSm: '/fs/', frameCount: '450', frameExt: 'avif', frameSize: '1920x1080', frameSizeSm: '1440x810', frameV: '1' };
+    hero.offsetHeight = 2100;
+    hero.querySelector = () => sticky;
+    p.selectors['.hero'] = hero;
+    p.ids.film = film;
+    p.ids.frames = canvas;
+    p.run('hero-film.js');
+    const image = (frame) => images.find(i => i.frame === frame);
+    // run the follow loop until it settles, resolving nothing
+    const settle = () => { for (let i = 0; i < 200 && p.frames.size; i++) p.frame(); };
+    return { ...p, film, canvas, images, draws, image, settle };
+}
+
+test('the hero draws stills and never asks for the video', () => {
+    const p = heroFrames();
+    assert.equal(p.film.src, '');
+    assert.equal(p.root.classList.contains('has-scroll-film'), true);
+    assert.equal(p.canvas.hidden, true);
+    assert.equal(p.images[0].src, '/fs/f0000.avif?v=1');
+    assert.ok(p.images.length <= 7, 'six in flight at most');
+    p.image(0).load();
+    assert.equal(p.canvas.hidden, false);
+    assert.equal(p.film.hidden, true);
+    assert.deepEqual(p.draws, [0]);
+    assert.equal(p.canvas.width, 1440);
+});
+
+test('a scroll shows the nearest loaded still until the exact one arrives', () => {
+    const p = heroFrames();
+    p.image(0).load();
+    // the scroll asks for frame 200; the coarse stills have not arrived yet
+    p.context.scrollY = 560;
+    p.event('scroll');
+    p.settle();
+    assert.equal(p.draws[p.draws.length - 1], 0, 'frame 0 stands in');
+    const wanted = p.images.find(i => i.frame === 200);
+    assert.ok(wanted, 'the frame under the scroll is requested first');
+    const near = p.images.find(i => i.frame === 192) || p.images.find(i => i.frame === 208) || p.images.find(i => i.frame === 201);
+    near.load();
+    assert.equal(p.draws[p.draws.length - 1], near.frame, 'a neighbour stands in');
+    wanted.load();
+    assert.equal(p.draws[p.draws.length - 1], 200);
+});
+
+test('a still that will not decode falls back to the video scrub', () => {
+    const p = heroFrames();
+    p.image(0).fail();
+    assert.equal(p.canvas.hidden, true);
+    assert.equal(p.film.hidden, false);
+    assert.equal(p.film.src, '/small.mp4');
+    assert.equal(p.film.preload, 'auto');
+    assert.equal(p.root.classList.contains('has-scroll-film'), true);
+});
+
+test('no still within ten seconds falls back to the video scrub', () => {
+    const p = heroFrames();
+    p.advance(10000);
+    assert.equal(p.film.src, '/small.mp4');
+});
+
+test('reduced motion takes the stills down and shows the final frame', () => {
+    const p = heroFrames();
+    p.image(0).load();
+    p.motion(true);
+    assert.equal(p.canvas.hidden, true);
+    assert.equal(p.film.hidden, false);
+    assert.equal(p.film.poster, '/final.webp');
+    assert.equal(p.root.classList.contains('has-scroll-film'), false);
+    assert.equal(p.film.src, '');
+});
+
+test('a notched wheel glides where a trackpad follows', () => {
+    const glide = (wheel) => {
+        const p = heroFrames();
+        for (let i = 0; i < 450; i++) { const img = new p.context.Image(); }
+        // every still is present, so the draw is exactly what the follow decides
+        for (const img of p.images) if (img.src) img.load();
+        p.advance(100);
+        p.event('wheel', wheel);
+        p.context.scrollY = 42;  // 15 frames in
+        p.event('scroll');
+        p.frame();
+        return p.draws[p.draws.length - 1];
+    };
+    const notched = glide({ deltaY: 100, deltaMode: 0, wheelDeltaY: -120 });
+    const precise = glide({ deltaY: 3.5, deltaMode: 0 });
+    assert.ok(notched >= 1 && notched <= 4, `a click's first frame moved ${notched}`);
+    assert.ok(precise >= 4, `a trackpad's first frame moved ${precise}`);
+    assert.ok(precise > notched);
+});
+
+test('an anchor jump snaps instead of gliding through the film', () => {
+    const p = heroFrames();
+    for (const img of p.images) img.load();
+    p.context.scrollY = 1260;  // straight to the end of the scrub
+    p.event('scroll');
+    for (const img of p.images) if (img.src && !img.done) { img.done = true; img.load(); }
+    p.frame();
+    assert.ok(p.draws[p.draws.length - 1] >= 440, `snapped to ${p.draws[p.draws.length - 1]}`);
+});
+
 test('reduced motion and data saver load the hero still without a video request', () => {
     for (const options of [{ reduced: true }, { saveData: true }]) {
         const p = hero(options);

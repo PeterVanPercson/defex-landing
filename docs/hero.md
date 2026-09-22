@@ -2,12 +2,86 @@
 
 ## Hero film
 
-The hero is a plain `<video>` that is **never played**. It is pinned with
-`position: sticky` for the height of `.hero` (280svh, 220svh in portrait) and
-`static/js/hero-film.js` maps the page's scroll position onto `video.currentTime`.
-Scrolling is watching, so the whole fifteen seconds is visible however fast
-someone moves. This replaces the earlier autoplay, where the film finished before
-a visitor had scrolled far enough to see it.
+The hero is pinned with `position: sticky` for the height of `.hero` (280svh,
+220svh in portrait) and `static/js/hero-film.js` maps the page's scroll position
+onto a frame of the film. Scrolling is watching, so the whole fifteen seconds is
+visible however fast someone moves. This replaces the earlier autoplay, where the
+film finished before a visitor had scrolled far enough to see it.
+
+### The stills (what every current browser gets)
+
+Since asset version 132 the film is **450 AVIF stills** drawn on a `<canvas>`
+(`#frames`), one for every second frame of the 60 fps master, under
+`static/defex/frames/1920/f0000.avif … f0449.avif` (1920×1080, 9.3 MB) and
+`static/defex/frames/1440/` (1440×810, for anything whose short side is 820px or
+less). The frame shown is a pure function of the scroll position, computed on
+every animation frame: nothing is seeked, nothing is buffered, nothing waits on
+a decoder. The old `<video>` scrub is still in the file as the fallback for a
+browser that cannot decode AVIF (the first still failing to load is the probe),
+and is what the mock-DOM tests exercise.
+
+Why the change. Traced on the real GPU (`--use-angle=metal`, headless Chromium
+1243, 1440×900 at 2×), the video scrub landed each seek in 6 ms, which sounds
+fine, but:
+
+| | seek-scrubbed `<video>` | stills on a canvas |
+|---|---|---|
+| main-thread `Paint` events in a 15 s trackpad scroll of the hero | 505 (the masked video repainted on every seek) | 4 |
+| distinct frames shown for 1357 px of trackpad travel | ~80 | 190, one per display frame |
+| film frames per 100 px mouse click | one jump of ~31 | steps of ≤ 8, glided over ~110 ms |
+| CLS on load | 0.099 (`.hero` grew to 280svh when the deferred script ran) | 0 (the class is set by an inline script in `<head>`) |
+| a fast flick past the film | seeks into an unbuffered range stall up to 400 ms | the nearest loaded still stands in |
+| Safari, Firefox | seek latency and GOP decode differ per engine | identical everywhere |
+
+The stills stream in coarse to fine (every 32nd frame, then the 16ths, the 8ths
+and so on, six in flight, the frames just ahead of the scroll first), so a fast
+first scroll finds a frame every few hundred pixels within a second and the gaps
+fill as it goes. Only the window around the shown frame is decoded
+(`img.decode()` ahead of time); the browser's own image cache holds the rest
+compressed, about 9 MB, which is less than the MP4 was.
+
+**Every mouse is a different speed.** A trackpad or Magic Mouse sends a dense
+stream of small fractional deltas; a notched wheel sends one whole step of 53,
+100 or 120 px per click, which most browsers animate over ~150 ms but not all,
+and not on every setting; touch has its own momentum; keys and anchors jump.
+`hero-film.js` classifies the input from the `wheel` events it sees
+(`deltaMode`, whole-number deltas of 40 px or more with 30 ms or more between
+them, `wheelDeltaY` in multiples of 120) and from `touchstart`/`keydown`, and
+follows the scroll through an exponential lag whose time constant depends on
+the class: 45 ms for precise input (near-literal), 110 ms for a notched wheel
+(so one click's 15 frames glide rather than jump), 60 ms for keys. A jump of
+more than 60 frames (an anchor, Home, a scrollbar drag) snaps instead of
+gliding through two seconds of film.
+
+The top and bottom dissolve of the film's box is two gradient bands
+(`.hero__screen::before/::after`) laid over it, **not** a `mask-image` on the
+element: a mask on a `<video>` or a `<canvas>` makes Chrome paint the element
+itself through the mask on the main thread for every new frame, and that was
+most of what the page did while the hero scrolled.
+
+Encoding the stills, from the master, never from a shipped file:
+
+```bash
+SRC=~/Downloads/defex-intro.mp4
+mkdir -p png1920 png1440
+ffmpeg -i "$SRC" -vf "select='not(mod(n\,2))',scale=1920:1080" -vsync vfr -start_number 0 png1920/f%04d.png
+ffmpeg -i "$SRC" -vf "select='not(mod(n\,2))',scale=1440:810:flags=lanczos" -vsync vfr -start_number 0 png1440/f%04d.png
+for f in png1920/*.png; do b=$(basename "$f" .png); ffmpeg -y -i "$f" -c:v libsvtav1 -crf 33 -preset 5 -svtav1-params tune=0:film-grain=0 -pix_fmt yuv420p -f avif static/defex/frames/1920/$b.avif; done
+for f in png1440/*.png; do b=$(basename "$f" .png); ffmpeg -y -i "$f" -c:v libsvtav1 -crf 35 -preset 5 -svtav1-params tune=0:film-grain=0 -pix_fmt yuv420p -f avif static/defex/frames/1440/$b.avif; done
+```
+
+Measured on this footage (decoded by Chrome, scored by ffmpeg against the PNG
+source, the same path for every row, so the numbers compare with each other
+and not with the SSIM table below): AVIF at crf 30 scored 0.934–0.967 SSIM and
+42–45 dB at ~29 KB a frame; WebP at q75 scored 0.888–0.924 and 33 dB at ~58 KB.
+At crf 33 the 1920 set is 9.3 MB. `landing/tests.py::test_hero_stills_stay_within_budget`
+caps the two sets at 11 MB and 8 MB and pins the count at 450.
+
+`data-frame-count`, `data-frame-size`, `data-frame-size-sm`, `data-frames` and
+`data-frames-sm` on the `<video>` tell the script what is there. The count is
+what maps scroll to frame, so it must match the files.
+
+### The video (the fallback)
 
 | Path | What |
 |---|---|
@@ -69,7 +143,7 @@ hold at seconds 7 to 12. Do not drop the resolution or the frame rate.
 
 ### Frame rate
 
-`data-fps` on the video element must match the file (60). The scrub seeks to
+`data-fps` on the video element must match the file (60). The video scrub seeks to
 multiples of `1/FPS`; a value below the file's real rate lands between frames and
 most of them never render. At 60 fps over the 280svh of travel the scrub advances
 a frame roughly every 4px of scroll, which is what keeps a slow drag smooth. `hero-film.js` seeks to `(frame + .5) / FPS` because
@@ -128,7 +202,10 @@ could not decode the file read the whole page through a dark bar sitting on the
 paper ground.
 
 Reduced-motion visitors get the final-frame poster, no sticky section and **no
-film download**: `.hero` only becomes 280svh when JS adds `has-scroll-film`.
+film download**: `.hero` only becomes 280svh with `has-scroll-film`, which an
+inline script in `home.html`'s head adds before first paint (so the page does
+not shift when the deferred script gets round to it) and which `hero-film.js`
+removes again if the film cannot run.
 
 ### Seeking
 
@@ -178,4 +255,6 @@ pinned to an old number silently serves stale assets. The share card
 (`static/img/og.jpg`) carries it too, because Telegram, LinkedIn and X cache
 `og:image` hard and will otherwise keep showing the previous card.
 
-Range requests must stay enabled on the hero MP4s.
+Range requests must stay enabled on the hero MP4s. The stills sit under
+`static/defex/`, so the second header route covers them too (a day at the
+browser, a year at the edge).
