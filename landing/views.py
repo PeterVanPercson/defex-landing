@@ -232,7 +232,11 @@ def contact(request):
         referer = request.META.get("HTTP_REFERER", "/")
         return redirect(referer.split("#")[0] + "#contact")
     form = ContactForm(request.POST)
-    if form.is_valid() and not form.is_spam():
+    if form.is_valid() and form.is_spam():
+        # Same reply as a real send, so the bot has nothing to tune against.
+        log.info("contact spam dropped: %s", form.cleaned_data.get("contact"))
+        messages.success(request, "Got it. We reply within one working day.")
+    elif form.is_valid():
         data = form.cleaned_data
         data["wants"] = dict(ContactForm.OPTIONS).get(data.get("option"), "")
         # Admin notification → NOTIFY_TO (safe: only ever emails the owner).
