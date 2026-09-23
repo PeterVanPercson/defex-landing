@@ -2,7 +2,11 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="preload" as="image" href="{% static 'defex/assets/defex-poster-v4.webp' %}?v={{ asset_v }}">
+<link rel="preload" as="image" fetchpriority="high" href="{% static 'defex/assets/defex-poster-v4.webp' %}?v={{ asset_v }}">
+<!-- The hero is 280svh only while it has a film. Set before first paint, so
+     the page does not shift when the deferred script gets round to it;
+     hero-film.js takes the class off again if the film cannot run. -->
+<script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !(navigator.connection && navigator.connection.saveData)) document.documentElement.classList.add('has-scroll-film');</script>
 {% endblock %}
 
 {% block content %}
@@ -17,13 +21,23 @@
          pill in the nav. The page still ends on the booker. -->
     <section class="hero" id="top" aria-labelledby="hero-title">
         <div class="hero__sticky">
-            <video class="hero__film" id="film" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"
-                   width="1920" height="1080"
-                   poster="{% static 'defex/assets/defex-poster-v4.webp' %}?v={{ asset_v }}"
-                   data-poster-final="{% static 'defex/assets/defex-poster-final-v4.webp' %}?v={{ asset_v }}"
-                   data-fps="60" data-type="video/mp4"
-                   data-src="{% static 'defex/assets/defex-intro-v4.mp4' %}?v={{ asset_v }}"
-                   data-src-sm="{% static 'defex/assets/defex-intro-v4-sm.mp4' %}?v={{ asset_v }}"></video>
+            <!-- The film as 450 stills (static/defex/frames), drawn on the canvas by
+                 hero-film.js: the frame is a function of the scroll position, at
+                 whatever rate the page moves, with nothing to seek and nothing to
+                 buffer. The <video> holds the poster and is the fallback scrubber
+                 where the browser cannot decode the stills. -->
+            <div class="hero__screen">
+                <video class="hero__film" id="film" muted playsinline preload="none" disablepictureinpicture aria-hidden="true"
+                       width="1920" height="1080"
+                       poster="{% static 'defex/assets/defex-poster-v4.webp' %}?v={{ asset_v }}"
+                       data-poster-final="{% static 'defex/assets/defex-poster-final-v4.webp' %}?v={{ asset_v }}"
+                       data-fps="60" data-type="video/mp4"
+                       data-src="{% static 'defex/assets/defex-intro-v4.mp4' %}?v={{ asset_v }}"
+                       data-src-sm="{% static 'defex/assets/defex-intro-v4-sm.mp4' %}?v={{ asset_v }}"
+                       data-frames="{% static 'defex/frames/1920/' %}" data-frames-sm="{% static 'defex/frames/1200/' %}"
+                       data-frame-count="450" data-frame-ext="avif" data-frame-size="1920x1080" data-frame-size-sm="1200x960" data-frame-v="{{ asset_v }}"></video>
+                <canvas class="hero__film hero__film--frames" id="frames" width="1920" height="1080" aria-hidden="true" hidden></canvas>
+            </div>
             <div class="lede">
                 <h1 class="cut" id="hero-title"><span class="cut__face engraved">Self-teaching robots<br>for <em>manufacturing</em>.</span><span class="cut__mask" aria-hidden="true">Self-teaching robots<br>for <em>manufacturing</em>.</span></h1>
                 <div class="lede__actions">
@@ -211,7 +225,7 @@
 
 {% block extra_scripts %}
 
-<script src="{% static 'js/hero-film.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/hero-film.js' %}?v={{ asset_v }}" defer fetchpriority="high"></script>
 <script src="{% static 'js/origin.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/gridpulse.js' %}?v={{ asset_v }}" defer></script>

@@ -11,7 +11,7 @@
 {% block twitter_description %}It tests every part, learns from every miss and resets itself. 21 factories are in line.{% endblock %}
 
 {% block extra_head %}
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..900&display=swap" rel="stylesheet">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/geist-400-900-normal.woff2' %}">
 <noscript><style>.portal__fallback { display: grid; }</style></noscript>
 {% endblock %}
 
@@ -50,12 +50,10 @@
                     </div>
                 </div>
             </div>
+            <!-- The cover: black with WHY US cut out, drawn by portal.js. It is
+                 what makes the letters windows; the field under it never repaints. -->
+            <canvas class="portal__cover" aria-hidden="true"></canvas>
             <svg class="portal__art" aria-hidden="true" focusable="false">
-                <defs>
-                    <clipPath id="portal-clip" clipPathUnits="userSpaceOnUse">
-                        <text class="portal__glyph" x="0" y="0">WHY US</text>
-                    </clipPath>
-                </defs>
                 <g class="portal__marks"><path class="portal__dims"/><path class="portal__cross"/></g>
             </svg>
             <div class="portal__choices" role="radiogroup" aria-label="Choose the letter to fly into" inert>

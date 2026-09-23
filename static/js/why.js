@@ -14,6 +14,19 @@
         outBack: (t, s = 1.70158) => 1 + (s + 1) * (t - 1) ** 3 + s * (t - 1) ** 2,
     };
 
+    // A path sampled once, so no frame ever asks the browser where a point
+    // on it is: getPointAtLength after a style write in the same frame
+    // forces a layout, and the tries and the loop did that 1400 times in
+    // six seconds on a phone.
+    const sample = (path, len, n = 256) => {
+        const pts = [];
+        for (let j = 0; j <= n; j++) { const q = path.getPointAtLength(len * j / n); pts.push(q.x, q.y); }
+        return (t) => {
+            const x = clamp(t) * n, i = Math.floor(x), u = x - i, k = Math.min(i + 1, n);
+            return { x: lerp(pts[i * 2], pts[k * 2], u), y: lerp(pts[i * 2 + 1], pts[k * 2 + 1], u) };
+        };
+    };
+
     // ------------------------------------------------------------------
     // One clock for every drawing on the page. Each keeps its own time, and
     // that time only runs while the drawing is on screen, so nothing jumps
@@ -91,7 +104,9 @@
             lookX += (aimX - lookX) * follow;
             lookY += (aimY - lookY) * follow;
             const y = scrollY;
-            speed += ((y - lastY) / dt - speed) * (1 - Math.exp(-10 * dt));
+            // a wheel click that nobody animated lands as one 100 px step;
+            // read as speed it would jerk every part, so a step is capped
+            speed += (clamp(y - lastY, -40, 40) / dt - speed) * (1 - Math.exp(-10 * dt));
             lastY = y;
             lag += (clamp(-speed * 0.03, -44, 44) - lag) * (1 - Math.exp(-6 * dt));
             const after = parseFloat(portal.style.getPropertyValue('--gp-after')) || 0;
@@ -235,7 +250,8 @@
             }
             scrub(CUTS[n] + (CUTS[n + 1] - CUTS[n]) * clamp(p * steps.length - n));
         };
-        const ask = () => { if (!queued) { queued = true; requestAnimationFrame(sync); } };
+        let nearby = false;
+        const ask = () => { if (nearby && !queued) { queued = true; requestAnimationFrame(sync); } };
         motion.addEventListener('change', () => {
             if (!motion.matches) return;
             clearTimeout(watchdog);
@@ -269,6 +285,11 @@
                 video.load();
             }, { rootMargin: '800px 0px' });
             near.observe(story);
+            // the scrub only runs while the window is on or near the screen
+            new IntersectionObserver(([entry]) => {
+                nearby = entry.isIntersecting;
+                if (nearby) ask();
+            }, { rootMargin: '100% 0px' }).observe(story);
             const unlock = () => {
                 if (reduced || !video.hasAttribute('src')) return;
                 const played = video.play();
@@ -326,7 +347,7 @@
             end: g.querySelector('.tries__end'),
             label: g.querySelector('.tries__label'),
         }));
-        items.forEach((it) => { it.len = it.path.getTotalLength(); });
+        items.forEach((it) => { it.len = it.path.getTotalLength(); it.at = sample(it.path, it.len); });
         const ripples = [...tries.querySelectorAll('.tries__ripple')];
         const head = tries.querySelector('.tries__head');
         const ring = tries.querySelector('.tries__ring'), bull = tries.querySelector('.tries__bull');
@@ -347,7 +368,7 @@
                 if (it.end) it.end.style.transform = `scale(${t >= s + DRAW ? E.outBack(seg(t, s + DRAW, s + DRAW + 0.3), 2.2).toFixed(3) : 0})`;
                 if (it.end) it.end.style.opacity = String(landed);
                 if (it.label) it.label.style.opacity = String(landed * seg(t, s + DRAW + 0.1, s + DRAW + 0.4));
-                if (t >= s && t < s + DRAW) at = it.path.getPointAtLength(f * it.len);
+                if (t >= s && t < s + DRAW) at = it.at(f);
                 const r = seg(t, s + DRAW, s + DRAW + 0.7);
                 const rp = ripples[i];
                 if (r > 0 && r < 1) {
@@ -386,11 +407,12 @@
         const press = document.getElementById('loop-tool');
         const lamp = document.getElementById('loop-lamp');
         const L = track.getTotalLength();
+        const along = sample(track, L, 1024);
         const N = 12, PITCH = L / N, S0 = 40;
         const MOVE = 0.75, DWELL = 1.05, CYCLE = MOVE + DWELL;
         const IN = 0, BUILD = 2, TEST = 4, OUT = 6, ASIDE = 8;
         const BINS = { out: [400, 338], aside: [210, 338] };
-        const point = (stop) => track.getPointAtLength((((S0 + stop * PITCH) % L) + L) % L);
+        const point = (stop) => along(((((S0 + stop * PITCH) % L) + L) % L) / L);
         const make = (tag, attrs, parent) => {
             const el = document.createElementNS(NS, tag);
             for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);

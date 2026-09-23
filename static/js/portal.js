@@ -10,6 +10,14 @@
  * the letters is a world of factory parts drawn in SVG, and once the camera
  * is through, --gp-after tells the parts how far the copy has scrolled past
  * them so they can drift at their own depths.
+ *
+ * The letters are windows because a black cover with the word cut out of it
+ * sits over the field, drawn on a canvas. The component clips the field with
+ * an SVG <clipPath> of the text instead; transformed on every scroll frame,
+ * that clip made Chrome repaint the field and each of the eighteen parts
+ * under it on every frame (1806 paints in a 15 s scroll, traced). The cover
+ * is one layer that redraws itself when the camera moves and nothing under
+ * it ever repaints.
  */
 (() => {
     const section = document.querySelector('[data-portal]');
@@ -29,8 +37,9 @@
     const pin = section.querySelector('.portal__pin');
     const field = section.querySelector('.portal__field');
     const art = section.querySelector('.portal__art');
-    const clip = section.querySelector('#portal-clip');
-    const glyph = section.querySelector('.portal__glyph');
+    const cover = section.querySelector('.portal__cover');
+    const cctx = cover && cover.getContext ? cover.getContext('2d') : null;
+    if (!cctx) return;
     const dims = section.querySelector('.portal__dims');
     const cross = section.querySelector('.portal__cross');
     const choices = section.querySelector('.portal__choices');
@@ -84,7 +93,8 @@
         .catch(() => mount(FALLBACK));
 
     function mount(font) {
-        glyph.style.fontFamily = font;
+        const black = getComputedStyle(section).backgroundColor || '#050505';
+        let coverOff = false, lastCover = '', marksOn = true;
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d', { willReadFrequently: true });
         let raf = 0, dirty = true, active = true, ready = false, seen = false;
@@ -155,13 +165,43 @@
         function stickyTop() {
             return parseFloat(getComputedStyle(pin).top) || 0;
         }
+        // how far the section has scrolled under the pin, in px
+        function travelled() {
+            return stickyTop() - section.getBoundingClientRect().top;
+        }
         function position() {
-            return clamp((stickyTop() - section.getBoundingClientRect().top) / travel);
+            return clamp(travelled() / travel);
+        }
+        // The camera follows the scroll through a short lag, the way the
+        // hero's stills do (static/js/hero-film.js): a lone step of a wheel
+        // click's worth, which a browser has not animated, glides over
+        // ~110 ms instead of zooming a whole click in one frame (x2 mid
+        // dive, traced); a stream of steps is followed at 20 ms; one lone
+        // leap of more than 300 px is an anchor and is taken at once.
+        const TAU_FOLLOW = .02, TAU_GLIDE = .11, STEP_PX = 30, JUMP_PX = 300, STREAM_MS = 50;
+        let wantY = 0, haveY = null, tau = TAU_FOLLOW, lastMove = 0, lastTime = 0;
+        function follow(time) {
+            const y = travelled();
+            if (haveY === null) { haveY = wantY = y; }
+            if (y !== wantY) {
+                const now = performance.now();
+                const isolated = now - lastMove > STREAM_MS;
+                const step = Math.abs(y - wantY);
+                lastMove = now;
+                wantY = y;
+                if (isolated && step > JUMP_PX) haveY = y;
+                tau = isolated && step >= STEP_PX ? TAU_GLIDE : TAU_FOLLOW;
+            }
+            const dt = lastTime && time ? Math.min(.05, (time - lastTime) / 1000) : 1 / 60;
+            lastTime = time || 0;
+            haveY += (wantY - haveY) * (1 - Math.exp(-dt / tau));
+            if (Math.abs(wantY - haveY) < .05) haveY = wantY;
+            return haveY;
         }
 
-        function paint(progress) {
+        function paint(y) {
             const still = motion.matches || !seen || !target;
-            const p = still ? 0 : progress;
+            const p = still ? 0 : clamp(y / travel);
             const t = clamp(p / 0.78);
             const eased = t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
             const scale = Math.exp(Math.log(startScale) + Math.log(endScale / startScale) * eased);
@@ -170,26 +210,55 @@
             const cy = center.y + ((target ? target.y : center.y) - center.y) * blend;
             const roll = -4 * smooth(0.06, 0.5, t) * (1 - smooth(0.62, 0.92, t));
             const transform = `translate(${W / 2} ${H * 0.46 + H * 0.04 * eased}) scale(${scale}) rotate(${roll}) translate(${-cx} ${-cy})`;
-            // Scale stays on the clip to avoid text paint limits. Text-local
-            // translation follows page zoom in WebKit; translation on an HTML
-            // clip reference does not.
-            const radians = roll * Math.PI / 180;
-            const dx = W / 2 / scale, dy = (H * 0.46 + H * 0.04 * eased) / scale;
-            clip.setAttribute('transform', `scale(${scale}) rotate(${roll})`);
-            glyph.setAttribute('transform', `translate(${Math.cos(radians) * dx + Math.sin(radians) * dy - cx} ${-Math.sin(radians) * dx + Math.cos(radians) * dy - cy})`);
-            dims.parentNode.setAttribute('transform', transform);
-            dims.parentNode.style.opacity = String(1 - smooth(0.015, 0.17, p));
+            // The cover, redrawn only when the camera has moved: the page's
+            // black over the whole field, the word cut out of it with the
+            // same camera the marks use. Once the camera is through the cover
+            // is taken off altogether rather than drawn empty.
+            if (t >= 1) {
+                if (!coverOff) { coverOff = true; cover.style.visibility = 'hidden'; }
+            } else {
+                const key = `${scale}|${roll}|${cx}|${cy}|${eased}|${W}|${H}`;
+                if (coverOff) { coverOff = false; cover.style.visibility = ''; }
+                if (key !== lastCover) {
+                    lastCover = key;
+                    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                    const pw = Math.round(W * dpr), ph = Math.round(H * dpr);
+                    if (cover.width !== pw || cover.height !== ph) { cover.width = pw; cover.height = ph; }
+                    cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                    cctx.globalCompositeOperation = 'source-over';
+                    cctx.fillStyle = black;
+                    cctx.fillRect(0, 0, W, H);
+                    cctx.globalCompositeOperation = 'destination-out';
+                    cctx.translate(W / 2, H * 0.46 + H * 0.04 * eased);
+                    cctx.scale(scale, scale);
+                    cctx.rotate(roll * Math.PI / 180);
+                    cctx.translate(-cx, -cy);
+                    cctx.font = `${WEIGHT} 100px ${font}`;
+                    cctx.fontKerning = 'none';
+                    cctx.textBaseline = 'alphabetic';
+                    cctx.textAlign = 'left';
+                    cctx.fillStyle = '#000';
+                    cctx.fillText(text, 0, 0);
+                    cctx.globalCompositeOperation = 'source-over';
+                }
+            }
+            // the dimension line and the cross fade out early; once gone they
+            // are left alone, so the SVG stops repainting for them
+            const marks = 1 - smooth(0.015, 0.17, p);
+            if (marks > 0 || marksOn) {
+                marksOn = marks > 0;
+                dims.parentNode.setAttribute('transform', transform);
+                dims.parentNode.style.opacity = String(marks);
+            }
             choosing = !still && p < 0.04;
             choices.inert = !choosing;
             section.dataset.choosing = String(choosing);
-            // Drop the clip only once the camera has already filled the view with ink.
-            field.style.clipPath = t >= 1 ? 'none' : 'url(#portal-clip)';
             section.style.setProperty('--gp-caption', String(1 - smooth(0.01, 0.16, p)));
             section.style.setProperty('--gp-field-scale', String(1 + 0.12 * smooth(0, 0.82, p)));
             section.dataset.entered = String(p >= 0.9);
             section.style.setProperty('--gp-reveal', String(still ? 1 : smooth(0.78, 0.9, p)));
             // past the dive, how far the copy has scrolled over the parts
-            const past = stickyTop() - section.getBoundingClientRect().top - travel;
+            const past = y - travel;
             section.style.setProperty('--gp-after', still ? '0' : clamp(past / Math.max(1, section.offsetHeight - travel - H)).toFixed(4));
         }
 
@@ -232,7 +301,11 @@
             // until then the page stays in reading flow.
             if (time !== undefined && !seen) { seen = true; dirty = true; }
             if (dirty) { dirty = false; layout(); }
-            if (ready) paint(position());
+            if (!ready) return;
+            const y = follow(time);
+            paint(y);
+            // still catching up with the page: another frame
+            if (y !== wantY) schedule();
         }
         const schedule = () => { if (!raf && active) raf = requestAnimationFrame(frame); };
         const resize = () => { cancelAnimationFrame(raf); raf = 0; dirty = true; frame(); };
@@ -243,7 +316,7 @@
             const next = button && candidates.find((c) => c.index === Number(button.dataset.letter));
             if (!next || next === target) return;
             select(next);
-            paint(position());
+            paint(haveY === null ? travelled() : haveY);
         }
         function navigate(event) {
             if (!choosing || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;

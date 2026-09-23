@@ -164,7 +164,7 @@ WHITENOISE_SKIP_COMPRESS_EXTENSIONS = (
     'jpg', 'jpeg', 'png', 'gif', 'webp', 'zip', 'gz', 'tgz', 'bz2', 'tbz', 'xz', 'br',
     'swf', 'flv', 'woff', 'woff2', 'mp4', 'webm', 'm4v', 'glb',
 )
-WHITENOISE_MIMETYPES = {'.wasm': 'application/wasm'}
+WHITENOISE_MIMETYPES = {'.wasm': 'application/wasm', '.avif': 'image/avif'}
 
 # The templates append ?v=DEFEX_ASSET_VERSION to every asset URL, so bump this
 # whenever a file changes, AND any DEFEX_ASSET_VERSION override set in the Vercel
@@ -174,7 +174,7 @@ WHITENOISE_MIMETYPES = {'.wasm': 'application/wasm'}
 # static/** through @vercel/static, so /static/ is answered at the edge and never
 # reaches Django. Production cache headers live in vercel.json. This hook still
 # runs under gunicorn and in the tests, and is what they assert against.
-DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "131")
+DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "132")
 
 # Vercel Web Analytics: cookie-free page views. The script is served by
 # Vercel only once Web Analytics is switched on for the project, so the tag is

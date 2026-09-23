@@ -380,6 +380,40 @@ class SiteTests(SimpleTestCase):
         shipped = {p.name for p in assets.iterdir() if p.is_file()}
         self.assertEqual(shipped, set(budget))
 
+    def test_hero_stills_stay_within_budget(self):
+        """The film is 450 AVIF stills a size, drawn on a canvas; the count is
+        what maps the scroll to a frame, so it is pinned, and the two sets get
+        a byte budget like the MP4s they replace. The 1920 set is encoded at
+        the CRF that matches the MP4's own measured quality (0.9951 against
+        its 0.9955 mean SSIM, docs/hero.md), which lands near the MP4's bytes;
+        the way to stay under the cap is a denser encode, not a smaller frame.
+        The phone set is the 5:4 crop the phone shows, pixel for pixel at 3x
+        on a 390px screen."""
+        frames = Path(settings.BASE_DIR) / "static" / "defex" / "frames"
+        totals = {}
+        for size, cap in (("1920", 15 * 1024 * 1024), ("1200", 10 * 1024 * 1024)):
+            files = sorted(p for p in (frames / size).iterdir() if p.is_file())
+            self.assertEqual(len(files), 450, size)
+            self.assertEqual(files[0].name, "f0000.avif")
+            self.assertEqual(files[-1].name, "f0449.avif")
+            totals[size] = sum(p.stat().st_size for p in files)
+            self.assertLessEqual(totals[size], cap, f"{size}: {totals[size] / 1048576:.1f}MB")
+        self.assertLess(totals["1200"], totals["1920"])
+        self.assertEqual({p.name for p in frames.iterdir()}, {"1920", "1200"})
+        home = self.client.get("/").content.decode()
+        for chunk in ('data-frames="/static/defex/frames/1920/"', 'data-frames-sm="/static/defex/frames/1200/"',
+                      'data-frame-count="450"', 'data-frame-size="1920x1080"', 'data-frame-size-sm="1200x960"',
+                      '<canvas class="hero__film hero__film--frames" id="frames"', 'preload="none"',
+                      "classList.add('has-scroll-film')"):
+            self.assertIn(chunk, home, chunk)
+        # the film is no longer masked: a mask on the element repainted it on every frame
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertNotIn("mask-image: linear-gradient(to bottom, transparent 0, #000 26%", css)
+        still = self.client.get("/static/defex/frames/1920/f0000.avif?v=1")
+        self.assertEqual(still.status_code, 200)
+        self.assertEqual(still["Content-Type"], "image/avif")
+        self.assertIn("s-maxage", still["Cache-Control"])
+
     def test_share_card_is_current(self):
         """Every page's og:image is the same file, it is what a link pastes
         into Telegram or LinkedIn, and it stayed on the superseded 'ultra

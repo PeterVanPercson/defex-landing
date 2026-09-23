@@ -1,7 +1,9 @@
 {% load static %}
 {% comment %}The companies that registered, rolling (landing/discovery.py IN_LINE). The row is
 laid out four times so it never runs dry on a wide screen; only the first set is
-read out. With reduced motion it stands still and the copies are hidden.{% endcomment %}
+read out. With reduced motion it stands still and the copies are hidden. The files
+are lazy: 800 KB of logos two screens down were loading ahead of the hero's poster
+and the deferred scripts; the copies share URLs, so they fill from the first.{% endcomment %}
 {% comment %}Lightness becomes transparency, scaled by the alpha that is already there, so
 the empty margin a filter adds around an image stays empty instead of turning solid.{% endcomment %}
 <svg class="roll__defs" width="0" height="0" aria-hidden="true" focusable="false">
@@ -12,8 +14,8 @@ the empty margin a filter adds around an image stays empty instead of turning so
 </svg>
 <div class="roll">
     <ul class="roll__track">
-        {% for factory in in_line %}<li class="roll__i"><img class="roll__logo" src="{% static factory.logo %}?v={{ asset_v }}" alt="{{ factory.name }}" width="{{ factory.width }}" height="{{ factory.height }}" decoding="async"{% if factory.opaque %} data-opaque{% endif %}{% if factory.trim %} data-trim{% endif %}></li>
-        {% endfor %}{% for copy in "abc" %}{% for factory in in_line %}<li class="roll__i roll__i--copy" aria-hidden="true"><img class="roll__logo" src="{% static factory.logo %}?v={{ asset_v }}" alt="" width="{{ factory.width }}" height="{{ factory.height }}" decoding="async"{% if factory.opaque %} data-opaque{% endif %}{% if factory.trim %} data-trim{% endif %}></li>
+        {% for factory in in_line %}<li class="roll__i"><img class="roll__logo" src="{% static factory.logo %}?v={{ asset_v }}" alt="{{ factory.name }}" width="{{ factory.width }}" height="{{ factory.height }}" loading="lazy" decoding="async"{% if factory.opaque %} data-opaque{% endif %}{% if factory.trim %} data-trim{% endif %}></li>
+        {% endfor %}{% for copy in "abc" %}{% for factory in in_line %}<li class="roll__i roll__i--copy" aria-hidden="true"><img class="roll__logo" src="{% static factory.logo %}?v={{ asset_v }}" alt="" width="{{ factory.width }}" height="{{ factory.height }}" loading="lazy" decoding="async"{% if factory.opaque %} data-opaque{% endif %}{% if factory.trim %} data-trim{% endif %}></li>
         {% endfor %}{% endfor %}
     </ul>
 </div>
