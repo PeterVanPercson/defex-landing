@@ -29,25 +29,25 @@ jobs:
           pip install -r requirements.txt
           npm install -g agent-browser@0.38.1
           agent-browser install --with-deps
-      - name: Verify company page at desktop and mobile sizes
+      - name: Verify the Why us page at desktop and mobile sizes
         run: |
           mkdir -p browser-artifacts
           python manage.py runserver 127.0.0.1:8000 --noreload >browser-artifacts/server.log 2>&1 &
           server_pid=$!
           trap 'agent-browser close || true; kill "$server_pid"' EXIT
           for i in $(seq 1 30); do
-            curl -sf -o /dev/null http://127.0.0.1:8000/company/ && break
+            curl -sf -o /dev/null http://127.0.0.1:8000/why-us/ && break
             sleep 1
           done
           agent-browser set viewport 1440 1000
-          agent-browser open http://127.0.0.1:8000/company/
+          agent-browser open http://127.0.0.1:8000/why-us/
           agent-browser wait --load networkidle
-          agent-browser snapshot -i >browser-artifacts/company-desktop.txt
-          agent-browser eval 'if (document.querySelectorAll("h1").length !== 1) throw new Error("Expected one h1"); if (document.documentElement.scrollWidth > innerWidth) throw new Error("Horizontal overflow"); if (!document.body.innerText.includes("21 factories")) throw new Error("Waitlist missing"); if (!document.body.innerText.includes("Hasan Mavlonov")) throw new Error("Founder missing"); if (document.querySelector("link[rel=canonical]").href !== "https://defexrobotics.com/company/") throw new Error("Wrong canonical"); Array.from(document.querySelectorAll("script[type=\"application/ld+json\"]")).forEach(n => JSON.parse(n.textContent)); "desktop: pass"' | tee browser-artifacts/desktop-check.txt
-          agent-browser screenshot browser-artifacts/company-desktop.png --full
+          agent-browser snapshot -i >browser-artifacts/why-us-desktop.txt
+          agent-browser eval 'if (document.querySelectorAll("h1").length !== 1) throw new Error("Expected one h1"); if (document.documentElement.scrollWidth > innerWidth) throw new Error("Horizontal overflow"); if (!document.body.innerText.includes("Hasan Mavlonov")) throw new Error("Founder missing"); if (document.querySelector("link[rel=canonical]").href !== "https://defexrobotics.com/why-us/") throw new Error("Wrong canonical"); Array.from(document.querySelectorAll("script[type=\"application/ld+json\"]")).forEach(n => JSON.parse(n.textContent)); "desktop: pass"' | tee browser-artifacts/desktop-check.txt
+          agent-browser screenshot browser-artifacts/why-us-desktop.png --full
           agent-browser set viewport 390 844
           agent-browser eval 'if (document.documentElement.scrollWidth > innerWidth) throw new Error("Mobile horizontal overflow"); "mobile: pass"' | tee browser-artifacts/mobile-check.txt
-          agent-browser screenshot browser-artifacts/company-mobile.png --full
+          agent-browser screenshot browser-artifacts/why-us-mobile.png --full
           agent-browser errors >browser-artifacts/browser-errors.txt
       - uses: actions/upload-artifact@v4
         if: always()

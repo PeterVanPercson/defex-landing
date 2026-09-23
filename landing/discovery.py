@@ -40,11 +40,10 @@ PUBLIC_COMPANY = {
     },
     "founders": [
         {"name": "Husan Mavlonov", "role": "Co-founder and CEO", "id": "https://husanmavlonov.com/#person", "url": "https://husanmavlonov.com/", "bio": "Hardware researcher with more than three years in electronics manufacturing and batteries, with factory operations experience across Uzbekistan, Turkiye, China and the United States."},
-        {"name": "Hasan Mavlonov", "role": "Co-founder and CTO", "id": CANONICAL_ORIGIN + "/company/#hasan-mavlonov", "bio": "Building a personality layer for AI, after publishing more than 10 research papers on it. Built an AI question-generation pipeline for a government education platform with more than 60,000 students."},
+        {"name": "Hasan Mavlonov", "role": "Co-founder and CTO", "id": CANONICAL_ORIGIN + "/#hasan-mavlonov", "bio": "Building a personality layer for AI, after publishing more than 10 research papers on it. Built an AI question-generation pipeline for a government education platform with more than 60,000 students."},
     ],
     "contact": "husan@defexrobotics.com",
     "links": {
-        "company": CANONICAL_ORIGIN + "/company/",
         "technical_note": CANONICAL_ORIGIN + "/blog/the-cost-of-the-next-attempt/",
         "inspection_demo": CANONICAL_ORIGIN + "/#origin",
         "blog": CANONICAL_ORIGIN + "/blog/",
@@ -116,11 +115,6 @@ def organization_jsonld():
     return json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=True, indent=2).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
 
 
-@require_safe
-def company(request):
-    return render(request, "landing/company.html", {"company": PUBLIC_COMPANY, "updated": COMPANY_UPDATED})
-
-
 # The practice field on /why-us/: 36 attempts, the misses thinning out as a
 # candidate improves. Illustrative only; the page labels the figure a schematic.
 PRACTICE = "..x.x..x.xx." "x.xx.xxx.xxx" "xxxx.xxxxxxx"
@@ -140,7 +134,7 @@ def company_json(request):
     revision = os.environ.get("VERCEL_GIT_COMMIT_SHA", "")
     if revision:
         response["X-Defex-Revision"] = revision
-    response["Link"] = '<' + CANONICAL_ORIGIN + '/company/>; rel="canonical"'
+    response["Link"] = '<' + CANONICAL_ORIGIN + '/>; rel="canonical"'
     return response
 
 
@@ -156,9 +150,8 @@ def llms_txt(request):
         + ", with offices in " + " and ".join(office["city"] for office in PUBLIC_COMPANY["offices"][1:]) + ". "
         + husan["name"] + " is " + husan["role"] + "; " + hasan["name"] + " is " + hasan["role"] + ". "
         "Canonical domain: defexrobotics.com (defex.app redirects here).", "",
-        "## Company",
-        "- [Company facts](" + PUBLIC_COMPANY["links"]["company"] + "): product stage, paid waitlist, founders, contact",
-        "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robots do and the inspection prototype",
+        "## Pages",
+        "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robots do, the founders and the inspection prototype",
         "- [Why us](" + CANONICAL_ORIGIN + reverse("why_us") + "): why robots that test every part they build: built-in testing, self-reset, new parts, and where we are today",
         "- [Careers](" + CANONICAL_ORIGIN + reverse("careers") + "): open roles", "",
         "## Writing",
@@ -191,8 +184,7 @@ def sitemap(request):
 
     # Do not manufacture lastmod=date.today(). Omit unknown modification dates.
     pages = [(reverse("home"), None), (reverse("careers"), None),
-             (reverse("blog"), None), (reverse("company"), COMPANY_UPDATED),
-             (reverse("why_us"), None)]
+             (reverse("blog"), None), (reverse("why_us"), None)]
     pages.extend((job_path(job), JOBS_UPDATED) for job in JOBS)
     for post in POSTS:
         path = reverse("blog_post", kwargs={"slug": post["slug"]})

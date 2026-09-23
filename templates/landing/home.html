@@ -147,7 +147,7 @@
                     <img class="founder__color" src="{% static 'img/team/hasan-mavlonov-color-720.webp' %}?v={{ asset_v }}" srcset="{% static 'img/team/hasan-mavlonov-color-360.webp' %}?v={{ asset_v }} 360w, {% static 'img/team/hasan-mavlonov-color-720.webp' %}?v={{ asset_v }} 720w" sizes="(max-width: 719px) 44vw, 340px" width="720" height="900" alt="" loading="lazy" decoding="async">
                 </div>
                 <div class="founder__id">
-                    <h3 class="founder__name" data-grid-avoid>Hasan Mavlonov</h3>
+                    <h3 id="hasan-mavlonov" class="founder__name" data-grid-avoid>Hasan Mavlonov</h3>
                     <p class="founder__role" data-grid-avoid>Co-founder &amp; CTO</p>
                 </div>
                 <p class="founder__bio" data-grid-avoid>Hasan is <strong>building a personality layer for AI</strong>, after publishing over 10 research papers on it. He also built an AI question-generation pipeline for a government education platform with 60k+ students.</p>
@@ -218,7 +218,7 @@
         <span>defex<span class="dot">.</span></span>
     </a>
     <span class="footer__fine">&copy; {% now "Y" %} Defex. All rights reserved.</span>
-    <span class="footer__links"><a class="footer__blog link" href="{% url 'blog' %}">Blog</a> <a class="footer__company link" href="{% url 'company' %}">Company</a></span>
+    <span class="footer__links"><a class="footer__blog link" href="{% url 'blog' %}">Blog</a></span>
     <span class="footer__line">San Francisco &middot; Hong Kong &middot; Shanghai</span>
 </footer>
 {% endblock %}

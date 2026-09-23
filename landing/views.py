@@ -125,6 +125,12 @@ def where_it_started(request):
     return redirect("/", permanent=True)
 
 
+def company_moved(request):
+    """The company page is gone (Husan: "so cringe"). Its facts live on the home
+    page and in /company.json; it was live and indexed, so it redirects."""
+    return redirect("/", permanent=True)
+
+
 # Blog. One registry, so the index, the sitemap and the article page cannot
 # disagree about what is published. Each post's body is its own template under
 # templates/landing/blog/, named by slug; the shell around it is _article.html.

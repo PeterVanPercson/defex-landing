@@ -2,7 +2,7 @@
 
 Self-teaching robots for manufacturing, starting with connector assembly.
 
-[Website](https://defexrobotics.com/) · [Company](https://defexrobotics.com/company/) · [Engineering notes](https://defexrobotics.com/blog/)
+[Website](https://defexrobotics.com/) · [Why us](https://defexrobotics.com/why-us/) · [Engineering notes](https://defexrobotics.com/blog/)
 
 Defex is developing assembly robots around a physical learning loop: attempt an assembly, test the connection, and reset for the next try. The aim is less setup effort for the next supported part variant.
 
@@ -12,7 +12,7 @@ Founded by twin brothers Husan Mavlonov (CEO) and Hasan Mavlonov (CTO), building
 
 ## Public information
 
-- [Company facts](https://defexrobotics.com/company/) and the matching [JSON export](https://defexrobotics.com/company.json)
+- [Public company facts, as JSON](https://defexrobotics.com/company.json)
 - [The Cost of the Next Attempt](https://defexrobotics.com/blog/the-cost-of-the-next-attempt/)
 - [Inspection prototype](https://defexrobotics.com/#origin)
 - [Engineering RSS feed](https://defexrobotics.com/blog/feed.xml)
