@@ -327,7 +327,7 @@ class SiteTests(SimpleTestCase):
         # reachable from the nav on every page, and from the home page's claims
         # "Why us" is out of the nav for now: the pitch is reached through
         # "Test our product" under the hero film, and from the home page's claims
-        for path in ("/", "/careers/", "/blog/", "/company/", "/why-us/"):
+        for path in ("/", "/careers/", "/blog/", "/why-us/"):
             header = self.client.get(path).content.decode().split("<header", 1)[1].split("</header>", 1)[0]
             self.assertNotIn("Why us", header, path)
             self.assertNotIn('href="/why-us/"', header, path)
@@ -352,7 +352,7 @@ class SiteTests(SimpleTestCase):
     def test_hasan_leads_with_the_personality_layer(self):
         """Husan's call: Hasan is presented first for building a personality
         layer for AI, on every page that describes him."""
-        for path in ("/", "/why-us/", "/company/"):
+        for path in ("/", "/why-us/"):
             body = self.client.get(path).content.decode()
             self.assertIn("personality layer for AI", body, path)
             self.assertNotIn("robot software and hardware integration", body, path)
@@ -451,16 +451,16 @@ class SiteTests(SimpleTestCase):
 
     def test_the_three_offices_are_named_across_the_site(self):
         """His three offices: San Francisco, Hong Kong, Shanghai. In the
-        footer of every page, in the company copy, and as three
+        footer of every page, in the public facts, and as three
         live clocks at the end of Why us."""
         footer = 'class="footer__line">San Francisco &middot; Hong Kong &middot; Shanghai</span>'
-        for path in ("/", "/why-us/", "/company/", "/careers/", "/blog/",
+        for path in ("/", "/why-us/", "/careers/", "/blog/",
                      "/blog/the-cost-of-the-next-attempt/"):
             self.assertIn(footer, self.client.get(path).content.decode(), path)
         why = self.client.get("/why-us/").content.decode()
         for city, zone in (("San Francisco", "America/Los_Angeles"), ("Hong Kong", "Asia/Hong_Kong"), ("Shanghai", "Asia/Shanghai")):
             self.assertIn(f'<span class="city__n">{city}</span><span class="city__t" data-tz="{zone}">', why)
-        self.assertIn("offices in Hong Kong and Shanghai", self.client.get("/company/").content.decode())
+        self.assertIn("offices in Hong Kong and Shanghai", self.client.get("/llms.txt").content.decode())
 
     def test_stylesheet_braces_balance(self):
         """A stray closing brace after the last media query made browsers
@@ -546,8 +546,10 @@ class SiteTests(SimpleTestCase):
             page = self.client.get(path).content.decode()
             header = page.split("<header", 1)[1].split("</header>", 1)[0]
             self.assertIn('href="/blog/" class="glass-button-wrap glass-button-wrap--nav"', header, path)
-            footer_path = "/company/" if path == "/blog/" else "/blog/"
-            self.assertIn(f'class="footer__blog link" href="{footer_path}"', page, path)
+            if path == "/blog/":
+                self.assertNotIn('href="/company/"', page)
+            else:
+                self.assertIn('class="footer__blog link" href="/blog/"', page, path)
         home = self.client.get("/").content.decode()
         # the hero carries one button, the product; the blog's way in is the
         # pill in the nav, which replaced the square "Get in touch"

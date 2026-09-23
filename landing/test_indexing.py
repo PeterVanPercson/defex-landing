@@ -27,5 +27,5 @@ class IndexNowTests(SimpleTestCase):
         with patch.dict("os.environ", {"VERCEL_GIT_COMMIT_SHA": revision}):
             self.assertEqual(self.client.get("/company.json")["X-Defex-Revision"], revision)
 
-    def test_blog_links_to_company_without_touching_homepage(self):
-        self.assertContains(self.client.get("/blog/"), 'href="/company/">Company</a>')
+    def test_blog_footer_no_longer_links_to_the_company_page(self):
+        self.assertNotContains(self.client.get("/blog/"), 'href="/company/"')
