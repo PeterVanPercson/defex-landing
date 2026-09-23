@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="preload" as="image" href="{% static 'defex/assets/defex-poster-v4.webp' %}?v={{ asset_v }}">
+<link rel="preload" as="image" fetchpriority="high" href="{% static 'defex/assets/defex-poster-v4.webp' %}?v={{ asset_v }}">
 <!-- The hero is 280svh only while it has a film. Set before first paint, so
      the page does not shift when the deferred script gets round to it;
      hero-film.js takes the class off again if the film cannot run. -->
@@ -34,8 +34,8 @@
                        data-fps="60" data-type="video/mp4"
                        data-src="{% static 'defex/assets/defex-intro-v4.mp4' %}?v={{ asset_v }}"
                        data-src-sm="{% static 'defex/assets/defex-intro-v4-sm.mp4' %}?v={{ asset_v }}"
-                       data-frames="{% static 'defex/frames/1920/' %}" data-frames-sm="{% static 'defex/frames/1440/' %}"
-                       data-frame-count="450" data-frame-ext="avif" data-frame-size="1920x1080" data-frame-size-sm="1440x810" data-frame-v="{{ asset_v }}"></video>
+                       data-frames="{% static 'defex/frames/1920/' %}" data-frames-sm="{% static 'defex/frames/1200/' %}"
+                       data-frame-count="450" data-frame-ext="avif" data-frame-size="1920x1080" data-frame-size-sm="1200x960" data-frame-v="{{ asset_v }}"></video>
                 <canvas class="hero__film hero__film--frames" id="frames" width="1920" height="1080" aria-hidden="true" hidden></canvas>
             </div>
             <div class="lede">
@@ -225,7 +225,7 @@
 
 {% block extra_scripts %}
 
-<script src="{% static 'js/hero-film.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/hero-film.js' %}?v={{ asset_v }}" defer fetchpriority="high"></script>
 <script src="{% static 'js/origin.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/gridpulse.js' %}?v={{ asset_v }}" defer></script>

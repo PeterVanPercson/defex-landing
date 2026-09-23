@@ -165,13 +165,43 @@
         function stickyTop() {
             return parseFloat(getComputedStyle(pin).top) || 0;
         }
+        // how far the section has scrolled under the pin, in px
+        function travelled() {
+            return stickyTop() - section.getBoundingClientRect().top;
+        }
         function position() {
-            return clamp((stickyTop() - section.getBoundingClientRect().top) / travel);
+            return clamp(travelled() / travel);
+        }
+        // The camera follows the scroll through a short lag, the way the
+        // hero's stills do (static/js/hero-film.js): a lone step of a wheel
+        // click's worth, which a browser has not animated, glides over
+        // ~110 ms instead of zooming a whole click in one frame (x2 mid
+        // dive, traced); a stream of steps is followed at 20 ms; one lone
+        // leap of more than 300 px is an anchor and is taken at once.
+        const TAU_FOLLOW = .02, TAU_GLIDE = .11, STEP_PX = 30, JUMP_PX = 300, STREAM_MS = 50;
+        let wantY = 0, haveY = null, tau = TAU_FOLLOW, lastMove = 0, lastTime = 0;
+        function follow(time) {
+            const y = travelled();
+            if (haveY === null) { haveY = wantY = y; }
+            if (y !== wantY) {
+                const now = performance.now();
+                const isolated = now - lastMove > STREAM_MS;
+                const step = Math.abs(y - wantY);
+                lastMove = now;
+                wantY = y;
+                if (isolated && step > JUMP_PX) haveY = y;
+                tau = isolated && step >= STEP_PX ? TAU_GLIDE : TAU_FOLLOW;
+            }
+            const dt = lastTime && time ? Math.min(.05, (time - lastTime) / 1000) : 1 / 60;
+            lastTime = time || 0;
+            haveY += (wantY - haveY) * (1 - Math.exp(-dt / tau));
+            if (Math.abs(wantY - haveY) < .05) haveY = wantY;
+            return haveY;
         }
 
-        function paint(progress) {
+        function paint(y) {
             const still = motion.matches || !seen || !target;
-            const p = still ? 0 : progress;
+            const p = still ? 0 : clamp(y / travel);
             const t = clamp(p / 0.78);
             const eased = t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
             const scale = Math.exp(Math.log(startScale) + Math.log(endScale / startScale) * eased);
@@ -228,7 +258,7 @@
             section.dataset.entered = String(p >= 0.9);
             section.style.setProperty('--gp-reveal', String(still ? 1 : smooth(0.78, 0.9, p)));
             // past the dive, how far the copy has scrolled over the parts
-            const past = stickyTop() - section.getBoundingClientRect().top - travel;
+            const past = y - travel;
             section.style.setProperty('--gp-after', still ? '0' : clamp(past / Math.max(1, section.offsetHeight - travel - H)).toFixed(4));
         }
 
@@ -271,7 +301,11 @@
             // until then the page stays in reading flow.
             if (time !== undefined && !seen) { seen = true; dirty = true; }
             if (dirty) { dirty = false; layout(); }
-            if (ready) paint(position());
+            if (!ready) return;
+            const y = follow(time);
+            paint(y);
+            // still catching up with the page: another frame
+            if (y !== wantY) schedule();
         }
         const schedule = () => { if (!raf && active) raf = requestAnimationFrame(frame); };
         const resize = () => { cancelAnimationFrame(raf); raf = 0; dirty = true; frame(); };
@@ -282,7 +316,7 @@
             const next = button && candidates.find((c) => c.index === Number(button.dataset.letter));
             if (!next || next === target) return;
             select(next);
-            paint(position());
+            paint(haveY === null ? travelled() : haveY);
         }
         function navigate(event) {
             if (!choosing || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;

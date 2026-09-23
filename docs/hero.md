@@ -36,7 +36,10 @@ fine, but:
 The stills stream in coarse to fine (every 32nd frame, then the 16ths, the 8ths
 and so on, six in flight, the frames just ahead of the scroll first), so a fast
 first scroll finds a frame every few hundred pixels within a second and the gaps
-fill as it goes. Only the window around the shown frame is decoded
+fill as it goes. They are fetched with `fetch()` and drawn from object URLs, not
+loaded through `<img src>`: 450 image loads started before the window's `load`
+event held that event, and the tab's spinner, for the ten seconds the set took
+on 4G. Only the window around the shown frame is decoded
 (`img.decode()` ahead of time); the browser's own image cache holds the rest
 compressed, about 9 MB, which is less than the MP4 was.
 
@@ -62,23 +65,40 @@ element: a mask on a `<video>` or a `<canvas>` makes Chrome paint the element
 itself through the mask on the main thread for every new frame, and that was
 most of what the page did while the hero scrolled.
 
-Encoding the stills, from the master, never from a shipped file:
+Encoding the stills, from the master, never from a shipped file. `avif=1` is
+SVT-AV1's still-picture mode and is not optional: without it the same CRF
+costs half as many bytes again.
 
 ```bash
 SRC=~/Downloads/defex-intro.mp4
-mkdir -p png1920 png1440
+mkdir -p png1920 png1200
 ffmpeg -i "$SRC" -vf "select='not(mod(n\,2))',scale=1920:1080" -vsync vfr -start_number 0 png1920/f%04d.png
-ffmpeg -i "$SRC" -vf "select='not(mod(n\,2))',scale=1440:810:flags=lanczos" -vsync vfr -start_number 0 png1440/f%04d.png
-for f in png1920/*.png; do b=$(basename "$f" .png); ffmpeg -y -i "$f" -c:v libsvtav1 -crf 33 -preset 5 -svtav1-params tune=0:film-grain=0 -pix_fmt yuv420p -f avif static/defex/frames/1920/$b.avif; done
-for f in png1440/*.png; do b=$(basename "$f" .png); ffmpeg -y -i "$f" -c:v libsvtav1 -crf 35 -preset 5 -svtav1-params tune=0:film-grain=0 -pix_fmt yuv420p -f avif static/defex/frames/1440/$b.avif; done
+ffmpeg -i "$SRC" -vf "select='not(mod(n\,2))',crop=1350:1080:285:0,scale=1200:960:flags=lanczos" -vsync vfr -start_number 0 png1200/f%04d.png
+for f in png1920/*.png; do b=$(basename "$f" .png); ffmpeg -y -i "$f" -c:v libsvtav1 -crf 20 -preset 4 -svtav1-params avif=1:tune=0:film-grain=0 -pix_fmt yuv420p -f avif static/defex/frames/1920/$b.avif; done
+for f in png1200/*.png; do b=$(basename "$f" .png); ffmpeg -y -i "$f" -c:v libsvtav1 -crf 24 -preset 4 -svtav1-params avif=1:tune=0:film-grain=0 -pix_fmt yuv420p -f avif static/defex/frames/1200/$b.avif; done
 ```
 
-Measured on this footage (decoded by Chrome, scored by ffmpeg against the PNG
-source, the same path for every row, so the numbers compare with each other
-and not with the SSIM table below): AVIF at crf 30 scored 0.934–0.967 SSIM and
-42–45 dB at ~29 KB a frame; WebP at q75 scored 0.888–0.924 and 33 dB at ~58 KB.
-At crf 33 the 1920 set is 9.3 MB. `landing/tests.py::test_hero_stills_stay_within_budget`
-caps the two sets at 11 MB and 8 MB and pins the count at 450.
+The CRF was chosen against the MP4's own quality, measured the same way for
+both: ten frames spread across the film, decoded by Chrome (ffmpeg here has no
+AV1 decoder), scored by ffmpeg's SSIM in yuv444 against the PNG of the same
+frame of the master.
+
+| Encode | mean SSIM | min SSIM | set |
+|---|---|---|---|
+| **H.264 MP4 as shipped (1920)** | **0.9955** | 0.9930 | 12.4 MB |
+| **AVIF crf 20 (shipped)** | **0.9951** | 0.9928 | 14.4 MB |
+| AVIF crf 24 | 0.9947 | 0.9921 | 11.7 MB |
+| AVIF crf 27 | 0.9942 | 0.9912 | 9.9 MB |
+| AVIF crf 30 | 0.9937 | 0.9903 | 8.6 MB |
+| AVIF crf 33 | 0.9929 | 0.9891 | 7.3 MB |
+
+The set sizes in the table are projected from the ten sampled frames; the
+shipped 1920 set measures 14.4 MB. The phone set was scored the same way
+against what a phone shows today (the 1440×810 MP4 cropped to 5:4 and scaled
+up): today 0.9871; AVIF 1200×960 crf 24 0.9938, crf 27 0.9931 (shipped, 7.8 MB),
+crf 30 0.9925. WebP is not in the running: at q75 it is ~58 KB a frame (26 MB
+a set) for a lower score than any row above. `landing/tests.py::test_hero_stills_stay_within_budget`
+caps the two sets at 15 MB and 10 MB and pins the count at 450.
 
 `data-frame-count`, `data-frame-size`, `data-frame-size-sm`, `data-frames` and
 `data-frames-sm` on the `<video>` tell the script what is there. The count is

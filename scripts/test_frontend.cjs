@@ -99,10 +99,16 @@ function hero(options) {
 }
 
 // The stills engine: a canvas, an Image class the test can resolve by hand,
-// and the data attributes home.html carries. innerHeight is 720, so the
-// narrow set is chosen, as it is on a phone.
-function heroFrames(options) {
+// and the data attributes home.html carries. The mock viewport is a
+// landscape 1280x720, so the full set is chosen; portrait: true makes it a
+// 390 px phone, which gets the 5:4 crop.
+function heroFrames(options = {}) {
     const p = page(options), film = new Element(), hero = new Element(), sticky = new Element(), canvas = new Element();
+    if (options.portrait) {
+        p.context.innerWidth = 390; p.context.innerHeight = 844;
+        const media = p.context.matchMedia;
+        p.context.matchMedia = query => query.includes('aspect-ratio') ? { matches: true } : media(query);
+    }
     const images = [], draws = [];
     class Img {
         constructor() { images.push(this); this.attrs = {}; }
@@ -117,7 +123,7 @@ function heroFrames(options) {
     canvas.hidden = true;
     canvas.getContext = () => ({ drawImage: (img) => draws.push(img.frame) });
     film.dataset = { fps: '60', src: '/film.mp4', srcSm: '/small.mp4', posterFinal: '/final.webp', type: 'video/mp4',
-        frames: '/f/', framesSm: '/fs/', frameCount: '450', frameExt: 'avif', frameSize: '1920x1080', frameSizeSm: '1440x810', frameV: '1' };
+        frames: '/f/', framesSm: '/fs/', frameCount: '450', frameExt: 'avif', frameSize: '1920x1080', frameSizeSm: '1200x960', frameV: '1' };
     hero.offsetHeight = 2100;
     hero.querySelector = () => sticky;
     p.selectors['.hero'] = hero;
@@ -135,13 +141,23 @@ test('the hero draws stills and never asks for the video', () => {
     assert.equal(p.film.src, '');
     assert.equal(p.root.classList.contains('has-scroll-film'), true);
     assert.equal(p.canvas.hidden, true);
-    assert.equal(p.images[0].src, '/fs/f0000.avif?v=1');
+    assert.equal(p.images[0].src, '/f/f0000.avif?v=1');
     assert.ok(p.images.length <= 7, 'six in flight at most');
     p.image(0).load();
     assert.equal(p.canvas.hidden, false);
     assert.equal(p.film.hidden, true);
     assert.deepEqual(p.draws, [0]);
-    assert.equal(p.canvas.width, 1440);
+    assert.equal(p.canvas.width, 1920);
+});
+
+test('a portrait phone gets the 5:4 set, and the video fallback its own small film', () => {
+    const p = heroFrames({ portrait: true });
+    assert.equal(p.images[0].src, '/fs/f0000.avif?v=1');
+    p.image(0).load();
+    assert.equal(p.canvas.width, 1200);
+    assert.equal(p.canvas.height, 960);
+    p.image(1).fail(); p.image(2).fail();
+    assert.equal(p.film.src, '', 'two lost stills after the first landed do not fail over');
 });
 
 test('a scroll shows the nearest loaded still until the exact one arrives', () => {
@@ -207,7 +223,7 @@ test('a lone click glides where a stream of small steps follows', () => {
     // stays within a few frames of the page all the way
     const stream = first((p) => { for (let y = 3; y <= 42; y += 3) { p.context.scrollY = y; p.event('scroll'); p.advance(8); p.frame(); } });
     assert.ok(click >= 1 && click <= 4, `a click's first frame moved to ${click}`);
-    assert.ok(stream >= 12, `a stream's frame reached ${stream} of 15`);
+    assert.ok(stream >= 13, `a stream's frame reached ${stream} of 15`);
 });
 
 test('coming back to the tab draws the frame again', () => {
@@ -222,11 +238,24 @@ test('coming back to the tab draws the frame again', () => {
 test('an anchor jump snaps instead of gliding through the film', () => {
     const p = heroFrames();
     for (const img of p.images) img.load();
-    p.context.scrollY = 1260;  // straight to the end of the scrub
+    p.advance(300);
+    p.context.scrollY = 1260;  // straight to the end of the scrub, in one lone leap
     p.event('scroll');
     for (const img of p.images) if (img.src && !img.done) { img.done = true; img.load(); }
     p.frame();
     assert.ok(p.draws[p.draws.length - 1] >= 440, `snapped to ${p.draws[p.draws.length - 1]}`);
+});
+
+test('a leap inside a stream is followed, never snapped', () => {
+    const p = heroFrames();
+    for (let i = 0; i < 450; i++) new p.context.Image();
+    for (const img of p.images) if (img.src) img.load();
+    p.advance(300);
+    // a PageDown's animation: big steps on consecutive frames
+    const seen = [];
+    for (let y = 0, k = 0; k < 6; k++) { y += 150; p.context.scrollY = y; p.event('scroll'); p.advance(8); p.frame(); seen.push(p.draws[p.draws.length - 1]); }
+    for (let k = 1; k < seen.length; k++) assert.ok(seen[k] - seen[k - 1] < 90, `no snap: ${seen.join(' ')}`);
+    assert.ok(seen[seen.length - 1] > 200, `it kept up: ${seen.join(' ')}`);
 });
 
 test('reduced motion and data saver load the hero still without a video request', () => {

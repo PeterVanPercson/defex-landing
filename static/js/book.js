@@ -77,7 +77,11 @@
     const io = new IntersectionObserver((entries) => {
         if (!entries.some((entry) => entry.isIntersecting)) return;
         io.disconnect();
-        load();
-    }, { rootMargin: '1500px 0px' });
+        // Off the scroll's critical path: cal.com's script and its ~90
+        // requests cost 300 ms of main thread, which landed mid-scroll on
+        // the founders. Start in an idle moment, or within two seconds.
+        if ('requestIdleCallback' in window) requestIdleCallback(load, { timeout: 2000 });
+        else load();
+    }, { rootMargin: '800px 0px' });
     io.observe(mount);
 })();

@@ -1,3 +1,13 @@
+/* The site's faces, served from here rather than from Google Fonts: the
+   Google CSS was the render-blocking gate for first paint on every page,
+   and the deferred scripts waited on it. Same files, latin subset. */
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url(../fonts/ibm-plex-mono-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500; font-display: swap; src: url(../fonts/ibm-plex-mono-500-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url(../fonts/inter-600-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Source Serif 4'; font-style: italic; font-weight: 400; font-display: swap; src: url(../fonts/source-serif-4-400-italic.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Source Serif 4'; font-style: normal; font-weight: 400; font-display: swap; src: url(../fonts/source-serif-4-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Geist'; font-style: normal; font-weight: 400 900; font-display: swap; src: url(../fonts/geist-400-900-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
 :root {
     /* Warm paper set, sampled from origami-robotics.com's own custom
        properties (--cream #f3efe8, --paper #f7f4ee, --dark #1a1815).
@@ -344,6 +354,9 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    its content, so left alone it fits exactly. min-height only stops the page
    jumping before it mounts. */
 .booker__frame { width: 100%; max-width: 1000px; margin-inline: auto; min-height: 560px; }
+/* the same reserved height before, during and after the embed mounts: it used
+   to collapse to 0, then 200px, then grow, and that was every layout shift the
+   page had left below the hero */
 /* The white band under cal.com's branding. base.html declares color-scheme:
    dark; cal.com's document declares none, so it is light. When a frame's used
    colour scheme differs from its document's, Chrome paints the frame opaque with
@@ -425,6 +438,17 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .reveal [data-reveal].is-in { opacity: 1; transform: none; filter: none; }
 .reveal .feature:nth-child(2) { transition-delay: .08s; }
 .reveal .feature:nth-child(3) { transition-delay: .16s; }
+/* Where the browser can drive an animation from the scroll, the arrival is
+   bound to the scroll itself rather than to the clock: under a notched mouse
+   a timed fade was still running while its lines were being read, and read as
+   lag. Same distance, same blur; it moves when the page moves. */
+@supports (animation-timeline: view()) {
+    .reveal [data-reveal] { opacity: 1; transform: none; filter: none; transition: none; animation: reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
+    .reveal .engraved[data-reveal] { animation-name: reveal-cut; }
+    .reveal .feature:nth-child(2), .reveal .feature:nth-child(3), .reveal .founder:nth-child(2) { transition-delay: 0s; }
+    @keyframes reveal { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes reveal-cut { from { opacity: 0; transform: translateY(14px); filter: blur(3px); } to { opacity: 1; transform: none; filter: blur(0); } }
+}
 
 /* careers page */
 .page { max-width: var(--max); margin-inline: auto; padding-inline: var(--pad); }
@@ -666,15 +690,15 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .glass-button-tilt { display: block; position: relative; transform-style: preserve-3d; transition: transform var(--anim-time) var(--anim-ease); }
 .glass-button-wrap:active .glass-button-tilt { transform: rotateX(25deg); }
 .glass-button-shadow { --shadow-cutoff-fix: 2em; position: absolute; z-index: 0; width: calc(100% + var(--shadow-cutoff-fix)); height: calc(100% + var(--shadow-cutoff-fix)); top: calc(0% - var(--shadow-cutoff-fix) / 2); left: calc(0% - var(--shadow-cutoff-fix) / 2); filter: blur(clamp(2px, .125em, 12px)); transition: filter var(--anim-time) var(--anim-ease); pointer-events: none; }
-.glass-button-shadow::after { content: ""; position: absolute; inset: 0; border-radius: 9999px; background: linear-gradient(180deg, color-mix(in oklch, var(--fg) 20%, transparent), color-mix(in oklch, var(--fg) 10%, transparent)); width: calc(100% - var(--shadow-cutoff-fix) - .25em); height: calc(100% - var(--shadow-cutoff-fix) - .25em); top: calc(var(--shadow-cutoff-fix) - .5em); left: calc(var(--shadow-cutoff-fix) - .875em); padding: .125em; box-sizing: border-box; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; transition: all var(--anim-time) var(--anim-ease); opacity: 1; }
-.glass-button { all: unset; position: relative; z-index: 1; isolation: isolate; display: block; border-radius: 9999px; cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-backdrop-filter: blur(clamp(1px, .125em, 4px)); backdrop-filter: blur(clamp(1px, .125em, 4px)); transition: all var(--anim-time) var(--anim-ease); background: linear-gradient(-75deg, color-mix(in oklch, var(--bgc) 5%, transparent), color-mix(in oklch, var(--bgc) 20%, transparent), color-mix(in oklch, var(--bgc) 5%, transparent)); box-shadow: inset 0 .125em .125em color-mix(in oklch, var(--fg) 5%, transparent), inset 0 -.125em .125em color-mix(in oklch, var(--bgc) 50%, transparent), 0 .25em .125em -.125em color-mix(in oklch, var(--fg) 20%, transparent), 0 0 .1em .25em inset color-mix(in oklch, var(--bgc) 20%, transparent), 0 0 0 0 var(--bgc); }
+.glass-button-shadow::after { content: ""; position: absolute; inset: 0; border-radius: 9999px; background: linear-gradient(180deg, color-mix(in oklch, var(--fg) 20%, transparent), color-mix(in oklch, var(--fg) 10%, transparent)); width: calc(100% - var(--shadow-cutoff-fix) - .25em); height: calc(100% - var(--shadow-cutoff-fix) - .25em); top: calc(var(--shadow-cutoff-fix) - .5em); left: calc(var(--shadow-cutoff-fix) - .875em); padding: .125em; box-sizing: border-box; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; transition: none; opacity: 1; }
+.glass-button { all: unset; position: relative; z-index: 1; isolation: isolate; display: block; border-radius: 9999px; cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-backdrop-filter: blur(clamp(1px, .125em, 4px)); backdrop-filter: blur(clamp(1px, .125em, 4px)); transition: transform var(--anim-time) var(--anim-ease), -webkit-backdrop-filter var(--anim-time) var(--anim-ease), backdrop-filter var(--anim-time) var(--anim-ease), box-shadow var(--anim-time) var(--anim-ease); background: linear-gradient(-75deg, color-mix(in oklch, var(--bgc) 5%, transparent), color-mix(in oklch, var(--bgc) 20%, transparent), color-mix(in oklch, var(--bgc) 5%, transparent)); box-shadow: inset 0 .125em .125em color-mix(in oklch, var(--fg) 5%, transparent), inset 0 -.125em .125em color-mix(in oklch, var(--bgc) 50%, transparent), 0 .25em .125em -.125em color-mix(in oklch, var(--fg) 20%, transparent), 0 0 .1em .25em inset color-mix(in oklch, var(--bgc) 20%, transparent), 0 0 0 0 var(--bgc); }
 .glass-button-wrap:hover .glass-button { transform: scale(.975); -webkit-backdrop-filter: blur(.01em); backdrop-filter: blur(.01em); box-shadow: inset 0 .125em .125em color-mix(in oklch, var(--fg) 5%, transparent), inset 0 -.125em .125em color-mix(in oklch, var(--bgc) 50%, transparent), 0 .15em .05em -.1em color-mix(in oklch, var(--fg) 25%, transparent), 0 0 .05em .1em inset color-mix(in oklch, var(--bgc) 50%, transparent), 0 0 0 0 var(--bgc); }
-.glass-button-text { position: relative; display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 26px; font: 500 11px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; white-space: nowrap; user-select: none; color: color-mix(in oklch, var(--fg) 90%, transparent); text-shadow: 0 .25em .05em color-mix(in oklch, var(--fg) 10%, transparent); transition: all var(--anim-time) var(--anim-ease); }
+.glass-button-text { position: relative; display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 26px; font: 500 11px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; white-space: nowrap; user-select: none; color: color-mix(in oklch, var(--fg) 90%, transparent); text-shadow: 0 .25em .05em color-mix(in oklch, var(--fg) 10%, transparent); transition: none; }
 .glass-button-wrap:hover .glass-button-text { text-shadow: .025em .025em .025em color-mix(in oklch, var(--fg) 12%, transparent); }
 .glass-button-text::after { content: ""; display: block; position: absolute; width: calc(100% - var(--border-width)); height: calc(100% - var(--border-width)); top: calc(0% + var(--border-width) / 2); left: calc(0% + var(--border-width) / 2); box-sizing: border-box; border-radius: 9999px; overflow: clip; background: linear-gradient(var(--angle-2), transparent 0%, color-mix(in oklch, var(--bgc) 50%, transparent) 40% 50%, transparent 55%); z-index: 3; mix-blend-mode: screen; pointer-events: none; background-size: 200% 200%; background-position: 0% 50%; transition: background-position calc(var(--anim-time) * 1.25) var(--anim-ease), --angle-2 calc(var(--anim-time) * 1.25) var(--anim-ease); }
 .glass-button-wrap:hover .glass-button-text::after { background-position: 25% 50%; }
 .glass-button-wrap:active .glass-button-text::after { background-position: 50% 15%; --angle-2: -15deg; }
-.glass-button::after { content: ""; position: absolute; z-index: 1; inset: 0; border-radius: 9999px; width: calc(100% + var(--border-width)); height: calc(100% + var(--border-width)); top: calc(0% - var(--border-width) / 2); left: calc(0% - var(--border-width) / 2); padding: var(--border-width); box-sizing: border-box; background: conic-gradient(from var(--angle-1) at 50% 50%, color-mix(in oklch, var(--fg) 50%, transparent) 0%, transparent 5% 40%, color-mix(in oklch, var(--fg) 50%, transparent) 50%, transparent 60% 95%, color-mix(in oklch, var(--fg) 50%, transparent) 100%), linear-gradient(180deg, color-mix(in oklch, var(--bgc) 50%, transparent), color-mix(in oklch, var(--bgc) 50%, transparent)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; transition: all var(--anim-time) var(--anim-ease), --angle-1 500ms ease; box-shadow: inset 0 0 0 calc(var(--border-width) / 2) color-mix(in oklch, var(--bgc) 50%, transparent); pointer-events: none; }
+.glass-button::after { content: ""; position: absolute; z-index: 1; inset: 0; border-radius: 9999px; width: calc(100% + var(--border-width)); height: calc(100% + var(--border-width)); top: calc(0% - var(--border-width) / 2); left: calc(0% - var(--border-width) / 2); padding: var(--border-width); box-sizing: border-box; background: conic-gradient(from var(--angle-1) at 50% 50%, color-mix(in oklch, var(--fg) 50%, transparent) 0%, transparent 5% 40%, color-mix(in oklch, var(--fg) 50%, transparent) 50%, transparent 60% 95%, color-mix(in oklch, var(--fg) 50%, transparent) 100%), linear-gradient(180deg, color-mix(in oklch, var(--bgc) 50%, transparent), color-mix(in oklch, var(--bgc) 50%, transparent)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; transition: --angle-1 500ms ease; box-shadow: inset 0 0 0 calc(var(--border-width) / 2) color-mix(in oklch, var(--bgc) 50%, transparent); pointer-events: none; }
 .glass-button-wrap:hover .glass-button::after { --angle-1: -125deg; }
 .glass-button-wrap:active .glass-button::after { --angle-1: -75deg; }
 .glass-button-wrap:hover .glass-button-shadow { filter: blur(clamp(2px, .0625em, 6px)); }
@@ -1105,9 +1129,11 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 .window__bar i:nth-child(3) { background: var(--blue); }
 .window__bar span { margin-left: auto; }
 .window__line { display: block; height: 2px; background: #141414; }
-.window__line::after { content: ""; display: block; width: calc(var(--p, 0) * 100%); height: 100%; background: var(--yellow); }
-/* height: auto, or the element's height attribute holds it at 1080px */
-.story__video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; object-position: 44% 50%; }
+/* scaled, not sized: a width that changes every scroll frame is a layout every scroll frame */
+.window__line::after { content: ""; display: block; width: 100%; height: 100%; background: var(--yellow); transform: scaleX(var(--p, 0)); transform-origin: left; will-change: transform; }
+/* height: auto, or the element's height attribute holds it at 1080px. Its own
+   layer, so a new frame of the render repaints nothing around it. */
+.story__video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; object-position: 44% 50%; will-change: transform; }
 .story__steps { list-style: none; }
 .story__step { display: flex; flex-direction: column; justify-content: center; min-height: 66svh; opacity: 1; transition: opacity .35s ease; }
 .story[data-motion="on"] .story__step:not(.is-on) { opacity: .72; }
@@ -1371,10 +1397,8 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
 .sound { width: 44px; height: 44px; color: #EAE8E3; }
 .booker__status, .booker__fallback { margin: 12px 0; text-align: center; font: 400 12px/1.7 var(--mono); color: var(--ink-soft); }
 .booker__fallback a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
-.booker__panel:not([data-state]) .booker__frame { min-height: 0; }
 .booker__panel[data-state="failed"] .booker__frame { min-height: 0; max-height: 160px; overflow: hidden; }
 .booker__panel[data-state="ready"] :is(.booker__status, .booker__fallback) { display: none; }
-.booker__panel[data-state="loading"] .booker__frame { min-height: 200px; }
 
 @media (max-width: 380px) {
     .topbar { padding-inline: 12px; gap: 6px; }
