@@ -220,10 +220,16 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 
 .lede__backed { display: flex; align-items: center; gap: 8px; margin: 0; }
 .lede__backed-label { font: 500 9px/1 var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--mute); opacity: .8; }
-.lede__backed-mark { display: block; width: 24px; height: 24px; border-radius: 6px; opacity: .92; }
+/* a wordmark, not a square: the a16z speedrun lockup cut to the hero ink, so
+   it is sized by height and keeps its 6.75:1 shape */
+.lede__backed-mark { display: block; width: auto; height: 14px; opacity: .92; }
+/* the Google lockup has taller x-height and no italics, so it sits a hair
+   smaller and gets a rule between the two credits */
+.lede__backed-mark--gfs { height: 13px; margin-left: 6px; padding-left: 14px; border-left: 1px solid var(--rule); box-sizing: content-box; }
 @media (max-width: 720px) {
     .lede__backed { gap: 8px; margin-left: 0; }
-    .lede__backed-mark { width: 22px; height: 22px; border-radius: 5px; }
+    .lede__backed-mark { height: 12px; }
+    .lede__backed-mark--gfs { height: 11px; margin-left: 4px; padding-left: 10px; }
 }
 
 /* Hero support: the one line that says what the machine does, and the ask.

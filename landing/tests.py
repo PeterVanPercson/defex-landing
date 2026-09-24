@@ -25,13 +25,15 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, 'id="why-title" data-reveal>Robots are cheap. Setting them up is <em>not</em>.</h2>')
         self.assertNotContains(home, "the test becomes the teacher")
         page = home.content.decode()
-        self.assertEqual(page.count('alt="a16z"'), 1)
+        self.assertEqual(page.count('alt="a16z speedrun"'), 1)
+        self.assertNotIn('alt="a16z"', page)
         self.assertIn('class="lede__backed"', page)
         self.assertLess(page.index('class="lede__backed"'), page.index('id="origin"'))
         self.assertNotIn('class="marquee', page)
         self.assertNotIn("marquee__", page)
         self.assertNotIn('id="backed"', page)
-        for gone in ("NVIDIA Inception Program", "Z Fellows", "Google for Startups", "Yandex Cloud"):
+        self.assertEqual(page.count('alt="Google for Startups"'), 1)
+        for gone in ("NVIDIA Inception Program", "Z Fellows", "Yandex Cloud"):
             self.assertNotIn(f'alt="{gone}"', page)
         # the hero has to say what the machine does and ask for something
         self.assertContains(home, 'href="#contact"')
@@ -96,7 +98,7 @@ class SiteTests(SimpleTestCase):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
-        for asset in ("js/hero-film.js", "js/origin.js", "js/reveal.js", "img/backers/nvidia-inception.png", "img/backers/zfellows.png", "img/backers/zfellows-collage.png", "img/backers/google-for-startups.png", "img/backers/a16z.png", "img/backers/yandex-cloud.png", "video/origin.mp4", "video/origin-poster.jpg"):
+        for asset in ("js/hero-film.js", "js/origin.js", "js/reveal.js", "img/backers/nvidia-inception.png", "img/backers/zfellows.png", "img/backers/zfellows-collage.png", "img/backers/google-for-startups.png", "img/backers/google-for-startups-light.png", "img/backers/a16z-speedrun.png", "img/backers/yandex-cloud.png", "video/origin.mp4", "video/origin-poster.jpg"):
             self.assertEqual(self.client.get(f"/static/{asset}").status_code, 200, asset)
 
     def test_scroll_videos_support_byte_ranges(self):
