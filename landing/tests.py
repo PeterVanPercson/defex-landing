@@ -25,14 +25,12 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, 'id="why-title" data-reveal>Robots are cheap. Setting them up is <em>not</em>.</h2>')
         self.assertNotContains(home, "the test becomes the teacher")
         page = home.content.decode()
-        self.assertEqual(page.count('alt="a16z speedrun"'), 1)
-        self.assertNotIn('alt="a16z"', page)
-        self.assertIn('class="lede__backed"', page)
-        self.assertLess(page.index('class="lede__backed"'), page.index('id="origin"'))
+        # the backing credit is off the hero for now; nothing on the page names a backer
+        for gone in ("lede__backed", "Backed by", "a16z", "Google for Startups"):
+            self.assertNotIn(gone, page)
         self.assertNotIn('class="marquee', page)
         self.assertNotIn("marquee__", page)
         self.assertNotIn('id="backed"', page)
-        self.assertEqual(page.count('alt="Google for Startups"'), 1)
         for gone in ("NVIDIA Inception Program", "Z Fellows", "Yandex Cloud"):
             self.assertNotIn(f'alt="{gone}"', page)
         # the hero has to say what the machine does and ask for something
