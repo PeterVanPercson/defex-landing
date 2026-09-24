@@ -60,6 +60,10 @@ class DiscoverabilityTests(SimpleTestCase):
         self.assertNotIn("funding", org)
         self.assertNotIn("knowsAbout", org)
         self.assertIn("https://www.linkedin.com/in/husan-mavlonov", people["https://husanmavlonov.com/#person"]["sameAs"])
+        hasan = people[CANONICAL_ORIGIN + "/#hasan-mavlonov"]
+        self.assertEqual(hasan["url"], "https://hasanmavlonov.com/")
+        self.assertIn("https://github.com/hasan-mavlonov", hasan["sameAs"])
+        self.assertTrue(set(hasan["sameAs"]).isdisjoint(people["https://husanmavlonov.com/#person"]["sameAs"]))
 
     def test_every_existing_indexable_page_has_valid_jsonld_and_canonical(self):
         paths = ["/", "/careers/", "/why-us/", "/blog/", "/blog/the-cost-of-the-next-attempt/", "/blog/the-ai-inference-revolution-is-here/"]

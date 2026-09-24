@@ -39,8 +39,8 @@ PUBLIC_COMPANY = {
         "as_of": COMPANY_UPDATED.isoformat(),
     },
     "founders": [
-        {"name": "Husan Mavlonov", "role": "Co-founder and CEO", "id": "https://husanmavlonov.com/#person", "url": "https://husanmavlonov.com/", "bio": "Hardware researcher with more than three years in electronics manufacturing and batteries, with factory operations experience across Uzbekistan, Turkiye, China and the United States."},
-        {"name": "Hasan Mavlonov", "role": "Co-founder and CTO", "id": CANONICAL_ORIGIN + "/#hasan-mavlonov", "bio": "Building a personality layer for AI, after publishing more than 10 research papers on it. Built an AI question-generation pipeline for a government education platform with more than 60,000 students."},
+        {"name": "Husan Mavlonov", "role": "Co-founder and CEO", "id": "https://husanmavlonov.com/#person", "url": "https://husanmavlonov.com/", "same_as": ["https://www.linkedin.com/in/husan-mavlonov", "https://github.com/PeterVanPercson", "https://x.com/MavlonovHusan"], "bio": "Hardware researcher with more than three years in electronics manufacturing and batteries, with factory operations experience across Uzbekistan, Turkiye, China and the United States."},
+        {"name": "Hasan Mavlonov", "role": "Co-founder and CTO", "id": CANONICAL_ORIGIN + "/#hasan-mavlonov", "url": "https://hasanmavlonov.com/", "same_as": ["https://github.com/hasan-mavlonov", "https://x.com/HasanMavlonovX", "https://www.instagram.com/hasanmavlonov_/"], "bio": "Building a personality layer for AI, after publishing more than 10 research papers on it. Built an AI question-generation pipeline for a government education platform with more than 60,000 students."},
     ],
     "contact": "husan@defexrobotics.com",
     "links": {
@@ -108,7 +108,8 @@ def organization_jsonld():
                 "jobTitle": person["role"], "worksFor": {"@id": org_id}}
         if person.get("url"):
             node["url"] = person["url"]
-            node["sameAs"] = ["https://www.linkedin.com/in/husan-mavlonov", "https://github.com/PeterVanPercson", "https://x.com/MavlonovHusan"]
+        if person.get("same_as"):
+            node["sameAs"] = person["same_as"]
         graph.append(node)
     # Only trusted public constants enter this graph. Escape HTML delimiters even
     # so: JSON in a script element must not be able to terminate the element.
