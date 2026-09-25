@@ -1,3 +1,4 @@
+from datetime import date
 from pathlib import Path
 
 from django.conf import settings
@@ -437,7 +438,8 @@ class SiteTests(SimpleTestCase):
         used = set()
         for name in ("home.html", "why_us.html", "_inline.html", "_arm.html", "_topbar.html", "_scan.html", "blog/index.html",
                      "blog/_article.html", "blog/the-cost-of-the-next-attempt.html",
-                     "blog/the-ai-inference-revolution-is-here.html"):
+                     "blog/the-ai-inference-revolution-is-here.html", "_footer.html", "legal/_page.html",
+                     "legal/contact.html", "legal/press.html", "legal/privacy.html", "legal/terms.html", "legal/security.html"):
             markup = (root / "templates/landing" / name).read_text()
             for attr in re.findall(r'class="([^"]*)"', markup):
                 used |= {c for c in attr.split() if re.fullmatch(r"[a-z][a-z0-9_-]*", c)}
@@ -698,3 +700,50 @@ class SecurityTests(SimpleTestCase):
         ident = "203.0.113.7"
         allowed = sum(0 if rate_limited("t", ident, 3, 60) else 1 for _ in range(5))
         self.assertEqual(allowed, 3, "the 4th and 5th call should be limited")
+
+
+@override_settings(SECURE_SSL_REDIRECT=False)
+class OfficialPagesTests(SimpleTestCase):
+    """The pages a buyer, a journalist or a lawyer looks for, and the footer
+    that links them from every page."""
+
+    PAGES = ("/contact/", "/press/", "/privacy/", "/terms/", "/security/")
+
+    def test_the_pages_render_with_the_legal_name(self):
+        for path in self.PAGES:
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 200, path)
+            self.assertIn("Defex Robotics, Inc.", response.content.decode(), path)
+
+    def test_every_page_has_the_full_footer(self):
+        for path in ("/", "/why-us/", "/careers/", "/blog/", "/blog/the-cost-of-the-next-attempt/") + self.PAGES:
+            page = self.client.get(path).content.decode()
+            footer = page.split('<footer class="footer footer--full', 1)[1].split("</footer>", 1)[0]
+            for href in ("/privacy/", "/terms/", "/security/", "/press/", "/contact/", "/careers/",
+                         "mailto:sales@defexrobotics.com", "mailto:support@defexrobotics.com"):
+                self.assertIn(f'href="{href}"', footer, (path, href))
+            self.assertIn("&copy; 2026 Defex Robotics, Inc.", footer.replace(str(date.today().year), "2026"), path)
+
+    def test_contact_lists_every_inbox_and_still_takes_the_form(self):
+        page = self.client.get("/contact/").content.decode()
+        for box in ("sales", "support", "press", "careers", "security", "privacy", "team"):
+            self.assertIn(f'href="mailto:{box}@defexrobotics.com"', page, box)
+        self.assertEqual(self.client.post("/contact/", {}).status_code, 302)
+
+    def test_security_txt(self):
+        response = self.client.get("/.well-known/security.txt")
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
+        self.assertIn("Contact: mailto:security@defexrobotics.com", body)
+        self.assertRegex(body, r"Expires: \d{4}-\d\d-\d\dT")
+
+    def test_structured_data_names_the_company_and_its_desks(self):
+        page = self.client.get("/").content.decode()
+        self.assertIn('"legalName": "Defex Robotics, Inc."', page)
+        self.assertIn('"contactType": "customer support"', page)
+        for path in self.PAGES:
+            self.assertIn("https://defexrobotics.com" + path, self.client.get("/sitemap.xml").content.decode())
+
+    def test_no_personal_inbox_on_the_public_pages(self):
+        for path in ("/", "/why-us/", "/careers/") + self.PAGES:
+            self.assertNotIn("mailto:husan@", self.client.get(path).content.decode(), path)

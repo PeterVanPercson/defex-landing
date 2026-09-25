@@ -68,19 +68,11 @@
             <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
             <button type="submit" class="cta">Send application</button>
         </form>
-        <p class="apply__alt">or email <a class="link" href="mailto:husan@defexrobotics.com">husan@defexrobotics.com</a></p>
+        <p class="apply__alt">or email <a class="link" href="mailto:careers@defexrobotics.com">careers@defexrobotics.com</a></p>
     </section>
 </main>
 
-<footer class="footer">
-    <a href="/" class="brand brand--small" aria-label="defex home">
-        <svg viewBox="0 0 20 64" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="currentColor"/><circle cx="10" cy="32" r="7" fill="#FF5A1F"/><circle cx="10" cy="54" r="7" fill="currentColor"/></svg>
-        <span>defex<span class="dot">.</span></span>
-    </a>
-    <span class="footer__fine">&copy; {% now "Y" %} Defex. All rights reserved.</span>
-    <span class="footer__links"><a class="footer__blog link" href="{% url 'blog' %}">Blog</a></span>
-    <span class="footer__line">San Francisco &middot; Hong Kong &middot; Shanghai</span>
-</footer>
+{% include "landing/_footer.html" %}
 {% endblock %}
 
 {% block extra_scripts %}
