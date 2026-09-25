@@ -233,8 +233,7 @@ def sitemap(request):
 @require_http_methods(["GET", "HEAD", "POST"])
 def contact(request):
     if request.method != "POST":
-        from .pages import contact_page
-        return contact_page(request)
+        return redirect("/#contact")
     if rate_limited("contact", client_ident(request),
                     settings.CONTACT_RATE_LIMIT, settings.CONTACT_RATE_WINDOW):
         messages.error(request, "That is a lot of messages. Try again a little later.")
