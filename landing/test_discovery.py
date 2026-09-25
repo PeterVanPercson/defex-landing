@@ -108,9 +108,9 @@ class DiscoverabilityTests(SimpleTestCase):
         parser = RobotFileParser()
         parser.parse(self.get_page("/robots.txt").splitlines())
         for agent in ("Googlebot", "Bingbot", "YandexBot", "OAI-SearchBot", "ChatGPT-User", "ExampleBot"):
-            for path in ("/", "/why-us/", "/blog/", "/careers/"):
+            for path in ("/", "/why-us/", "/blog/", "/careers/", "/contact/", "/press/", "/privacy/", "/terms/", "/security/"):
                 self.assertTrue(parser.can_fetch(agent, CANONICAL_ORIGIN + path), (agent, path))
-            for path in ("/contact/", "/careers/apply/", "/ping/", "/admin/"):
+            for path in ("/careers/apply/", "/ping/", "/admin/"):
                 self.assertFalse(parser.can_fetch(agent, CANONICAL_ORIGIN + path), (agent, path))
         self.assertEqual(parser.site_maps(), [CANONICAL_ORIGIN + "/sitemap.xml"])
 

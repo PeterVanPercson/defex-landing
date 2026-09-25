@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+{% comment %}The shell for the plain pages: contact, press, privacy, terms, security.
+The blog's paper, its heading and reading column, and the full footer.{% endcomment %}
+
+{% block title %}{{ doc.title }} | Defex Robotics{% endblock %}
+{% block description %}{{ doc.description }}{% endblock %}
+{% block canonical %}https://defexrobotics.com{{ request.path }}{% endblock %}
+{% block page_id %}https://defexrobotics.com{{ request.path }}{% endblock %}
+{% block page_url %}https://defexrobotics.com{{ request.path }}{% endblock %}
+{% block page_name %}{{ doc.title }} | Defex Robotics{% endblock %}
+{% block theme_color %}#F3EFE8{% endblock %}
+{% block color_scheme %}light{% endblock %}
+{% block og_title %}{{ doc.title }} | Defex Robotics{% endblock %}
+{% block og_description %}{{ doc.description }}{% endblock %}
+{% block og_url %}https://defexrobotics.com{{ request.path }}{% endblock %}
+{% block twitter_title %}{{ doc.title }} | Defex Robotics{% endblock %}
+{% block twitter_description %}{{ doc.description }}{% endblock %}
+
+{% block content %}
+<a class="skip" href="#doc">Skip to the page</a>
+
+{% include "landing/_topbar.html" with page=doc.slug %}
+
+<main class="post doc" id="doc">
+    <header class="post__head">
+        <p class="eyebrow">{{ doc.eyebrow }}</p>
+        <h1 class="post__title engraved">{{ doc.heading }}</h1>
+        {% if doc.lead %}<p class="doc__lead">{{ doc.lead }}</p>{% endif %}
+        {% if doc.effective %}<p class="post__meta">Effective <time datetime="{{ doc.effective|date:'Y-m-d' }}">{{ doc.effective|date:"F j, Y" }}</time></p>{% endif %}
+    </header>
+
+    <article class="prose">
+        {% block article %}{% endblock %}
+    </article>
+</main>
+
+{% include "landing/_footer.html" %}
+{% endblock %}

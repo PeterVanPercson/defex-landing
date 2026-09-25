@@ -3,6 +3,7 @@ from django.urls import path
 from .discovery import company_json, llms_txt, robots, sitemap, why_us
 from .feeds import BlogFeed
 from .indexing import indexnow_key
+from .pages import press, privacy, security, security_txt, terms
 from .views import apply, blog, blog_post, book, careers, company_moved, contact, home, ping, where_it_started
 
 urlpatterns = [
@@ -21,6 +22,11 @@ urlpatterns = [
     path('careers/<slug:slug>/', careers, name='career_detail'),
     path('contact/', contact, name='contact'),
     path('ping/', ping, name='ping'),
+    path('press/', press, name='press'),
+    path('privacy/', privacy, name='privacy'),
+    path('terms/', terms, name='terms'),
+    path('security/', security, name='security'),
+    path('.well-known/security.txt', security_txt, name='security_txt'),
     path('llms.txt', llms_txt, name='llms_txt'),
     path('robots.txt', robots, name='robots'),
     path('sitemap.xml', sitemap, name='sitemap'),

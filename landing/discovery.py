@@ -16,6 +16,7 @@ CANONICAL_ORIGIN = "https://defexrobotics.com"
 COMPANY_UPDATED = date(2026, 9, 17)
 PUBLIC_COMPANY = {
     "name": "Defex",
+    "legal_name": "Defex Robotics, Inc.",
     "alternate_name": "Defex Robotics",
     "url": CANONICAL_ORIGIN + "/",
     "description": "Defex is developing self-teaching assembly robots for manufacturing, starting with connector assembly.",
@@ -42,7 +43,10 @@ PUBLIC_COMPANY = {
         {"name": "Husan Mavlonov", "role": "Co-founder and CEO", "id": "https://husanmavlonov.com/#person", "url": "https://husanmavlonov.com/", "same_as": ["https://www.linkedin.com/in/husan-mavlonov", "https://github.com/PeterVanPercson", "https://x.com/MavlonovHusan"], "bio": "Hardware researcher with more than three years in electronics manufacturing and batteries, with factory operations experience across Uzbekistan, Turkiye, China and the United States."},
         {"name": "Hasan Mavlonov", "role": "Co-founder and CTO", "id": CANONICAL_ORIGIN + "/#hasan-mavlonov", "url": "https://hasanmavlonov.com/", "same_as": ["https://github.com/hasan-mavlonov", "https://x.com/HasanMavlonovX", "https://www.instagram.com/hasanmavlonov_/"], "bio": "Building a personality layer for AI, after publishing more than 10 research papers on it. Built an AI question-generation pipeline for a government education platform with more than 60,000 students."},
     ],
-    "contact": "husan@defexrobotics.com",
+    "contact": "team@defexrobotics.com",
+    "contacts": {"sales": "sales@defexrobotics.com", "support": "support@defexrobotics.com",
+                 "press": "press@defexrobotics.com", "careers": "careers@defexrobotics.com",
+                 "security": "security@defexrobotics.com", "privacy": "privacy@defexrobotics.com"},
     "links": {
         "technical_note": CANONICAL_ORIGIN + "/blog/the-cost-of-the-next-attempt/",
         "inspection_demo": CANONICAL_ORIGIN + "/#origin",
@@ -97,7 +101,10 @@ def organization_jsonld():
          "alternateName": [PUBLIC_COMPANY["alternate_name"], "defex"],
          "url": PUBLIC_COMPANY["url"], "description": PUBLIC_COMPANY["description"],
          "logo": {"@type": "ImageObject", "url": CANONICAL_ORIGIN + static("img/apple-touch-icon.png"), "width": 180, "height": 180},
+         "legalName": PUBLIC_COMPANY["legal_name"],
          "email": PUBLIC_COMPANY["contact"],
+         "contactPoint": [{"@type": "ContactPoint", "contactType": kind, "email": PUBLIC_COMPANY["contacts"][key], "availableLanguage": ["English", "Russian", "Uzbek", "Chinese"]}
+                          for key, kind in (("sales", "sales"), ("support", "customer support"), ("press", "media relations"))],
          "founder": [{"@id": person["id"]} for person in PUBLIC_COMPANY["founders"]],
          "location": [office_place(office) for office in PUBLIC_COMPANY["offices"]]},
         {"@type": "WebSite", "@id": CANONICAL_ORIGIN + "/#website", "url": PUBLIC_COMPANY["url"],
@@ -147,14 +154,18 @@ def llms_txt(request):
     lines = [
         "# Defex", "",
         "> " + PUBLIC_COMPANY["description"], "",
-        "Defex (also written Defex Robotics) is based in " + PUBLIC_COMPANY["location"]
+        "Defex (legally " + PUBLIC_COMPANY["legal_name"] + ", also written Defex Robotics) is based in " + PUBLIC_COMPANY["location"]
         + ", with offices in " + " and ".join(office["city"] for office in PUBLIC_COMPANY["offices"][1:]) + ". "
         + husan["name"] + " is " + husan["role"] + "; " + hasan["name"] + " is " + hasan["role"] + ". "
         "Canonical domain: defexrobotics.com (defex.app redirects here).", "",
         "## Pages",
         "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robots do, the founders and the inspection prototype",
         "- [Why us](" + CANONICAL_ORIGIN + reverse("why_us") + "): why robots that test every part they build: built-in testing, self-reset, new parts, and where we are today",
-        "- [Careers](" + CANONICAL_ORIGIN + reverse("careers") + "): open roles", "",
+        "- [Careers](" + CANONICAL_ORIGIN + reverse("careers") + "): open roles",
+        "- [Contact](" + CANONICAL_ORIGIN + reverse("contact") + "): sales, support, press, careers, security and privacy inboxes",
+        "- [Press](" + CANONICAL_ORIGIN + reverse("press") + "): boilerplate, founders and media kit",
+        "- [Security](" + CANONICAL_ORIGIN + reverse("security") + "): data handling and vulnerability reporting",
+        "- [Privacy](" + CANONICAL_ORIGIN + reverse("privacy") + ") and [Terms](" + CANONICAL_ORIGIN + reverse("terms") + ")", "",
         "## Writing",
     ]
     for post in POSTS:
@@ -162,7 +173,8 @@ def llms_txt(request):
         if post.get("canonical_url", CANONICAL_ORIGIN + path) == CANONICAL_ORIGIN + path:
             lines.append("- [" + post["title"] + "](" + CANONICAL_ORIGIN + path + ")")
     lines += ["- [Feed](" + PUBLIC_COMPANY["links"]["feed"] + ")", "",
-              "## Contact", "- " + PUBLIC_COMPANY["contact"], ""]
+              "## Contact", "- " + PUBLIC_COMPANY["contact"]]
+    lines += ["- " + key + ": " + email for key, email in PUBLIC_COMPANY["contacts"].items()] + [""]
     return HttpResponse("\n".join(lines), content_type="text/plain; charset=utf-8")
 
 
@@ -170,7 +182,7 @@ def llms_txt(request):
 def robots(request):
     # Named crawler groups must repeat exclusions: they do not inherit the '*'
     # group. Existing public-page access, including training policy, is unchanged.
-    rules = "Disallow: /contact/\nDisallow: /careers/apply/\nDisallow: /ping/\nDisallow: /admin/\nAllow: /\n"
+    rules = "Disallow: /careers/apply/\nDisallow: /ping/\nDisallow: /admin/\nAllow: /\n"
     agents = ("*", "Googlebot", "Bingbot", "YandexBot", "OAI-SearchBot", "ChatGPT-User")
     body = "\n".join("User-agent: " + agent + "\n" + rules for agent in agents)
     body += "\nSitemap: " + CANONICAL_ORIGIN + "/sitemap.xml\n"
@@ -185,7 +197,9 @@ def sitemap(request):
 
     # Do not manufacture lastmod=date.today(). Omit unknown modification dates.
     pages = [(reverse("home"), None), (reverse("careers"), None),
-             (reverse("blog"), None), (reverse("why_us"), None)]
+             (reverse("blog"), None), (reverse("why_us"), None),
+             (reverse("contact"), None), (reverse("press"), None), (reverse("security"), None),
+             (reverse("privacy"), None), (reverse("terms"), None)]
     pages.extend((job_path(job), JOBS_UPDATED) for job in JOBS)
     for post in POSTS:
         path = reverse("blog_post", kwargs={"slug": post["slug"]})

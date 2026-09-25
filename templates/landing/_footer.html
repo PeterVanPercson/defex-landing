@@ -1,0 +1,41 @@
+{% comment %}Every page's footer. dark: the pages that close on black. top: the mark
+becomes back-to-top on the long home page. booker: the page has its own
+#contact booker, so "Test our product" stays on the page.{% endcomment %}
+<footer class="footer footer--full {{ dark|yesno:'dark,' }}">
+    <div class="footer__top">
+        <a href="{% if top %}#top{% else %}/{% endif %}" class="brand brand--small" aria-label="{% if top %}defex, back to top{% else %}defex home{% endif %}">
+            <svg viewBox="0 0 20 64" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="currentColor"/><circle cx="10" cy="32" r="7" fill="#FF5A1F"/><circle cx="10" cy="54" r="7" fill="currentColor"/></svg>
+            <span>defex<span class="dot">.</span></span>
+        </a>
+        <nav class="footer__cols" aria-label="Footer">
+            <div class="footer__col">
+                <p class="footer__h">Product</p>
+                <a class="footer__a" href="{% if booker %}#contact{% else %}/#contact{% endif %}">Test our product</a>
+                <a class="footer__a" href="{% url 'why_us' %}">Why us</a>
+                <a class="footer__a" href="{% url 'why_us' %}#pricing">Pricing</a>
+            </div>
+            <div class="footer__col">
+                <p class="footer__h">Company</p>
+                <a class="footer__a" href="{% url 'careers' %}">Careers</a>
+                <a class="footer__blog link" href="{% url 'blog' %}">Blog</a>
+                <a class="footer__a" href="{% url 'press' %}">Press</a>
+            </div>
+            <div class="footer__col">
+                <p class="footer__h">Contact</p>
+                <a class="footer__a" href="mailto:sales@defexrobotics.com">Sales</a>
+                <a class="footer__a" href="mailto:support@defexrobotics.com">Support</a>
+                <a class="footer__a" href="{% url 'contact' %}">All contacts</a>
+            </div>
+            <div class="footer__col">
+                <p class="footer__h">Legal</p>
+                <a class="footer__a" href="{% url 'privacy' %}">Privacy</a>
+                <a class="footer__a" href="{% url 'terms' %}">Terms</a>
+                <a class="footer__a" href="{% url 'security' %}">Security</a>
+            </div>
+        </nav>
+    </div>
+    <div class="footer__base">
+        <span class="footer__fine">&copy; {% now "Y" %} Defex Robotics, Inc. All rights reserved.</span>
+        <span class="footer__line">San Francisco &middot; Hong Kong &middot; Shanghai</span>
+    </div>
+</footer>

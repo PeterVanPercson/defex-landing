@@ -1,0 +1,18 @@
+{% extends "landing/legal/_page.html" %}
+
+{% block article %}
+<h2 class="engraved">Your factory data.</h2>
+<p>Before our robot goes on your floor, we agree with you in writing what data it keeps, where it is kept, who can see it and when it is deleted. Your parts, drawings and video are used to do your job, and are never shared with another customer.</p>
+
+<h2 class="engraved">This website.</h2>
+<p>defexrobotics.com is served only over HTTPS, with HSTS. Our forms are protected against forged submissions and rate limited against abuse. We collect as little as we can; our <a class="link" href="{% url 'privacy' %}">privacy policy</a> lists all of it.</p>
+
+<h2 class="engraved">Report a problem.</h2>
+<p>If you find a security problem in anything we run, email <a class="link" href="mailto:security@defexrobotics.com">security@defexrobotics.com</a> with what you found and how to reproduce it. We will reply within three working days and keep you told while we fix it.</p>
+<ul class="prose__list">
+    <li>Give us a reasonable time to fix it before you make it public.</li>
+    <li>Do not access, change or delete data that is not yours, and do not disrupt our service or our customers.</li>
+    <li>If you follow these rules and act in good faith, we will not take legal action against you, and we will thank you by name if you want us to.</li>
+</ul>
+<p>Our <a class="link" href="/.well-known/security.txt">security.txt</a> has the same details in the standard form.</p>
+{% endblock %}

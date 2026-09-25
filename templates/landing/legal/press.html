@@ -1,0 +1,25 @@
+{% extends "landing/legal/_page.html" %}
+{% load static %}
+
+{% block article %}
+<h2 class="engraved">About Defex.</h2>
+<p>Defex Robotics, Inc. builds robots for factories. Our robot tests every part it builds, learns from every failure and resets itself, so a new part is not a new project. The company is based in San Francisco.</p>
+
+<h2 class="engraved">Founders.</h2>
+<ul class="prose__list">
+    <li><a class="link" href="https://husanmavlonov.com/">Husan Mavlonov</a>, co-founder and CEO</li>
+    <li><a class="link" href="https://hasanmavlonov.com/">Hasan Mavlonov</a>, co-founder and CTO</li>
+</ul>
+
+<h2 class="engraved">Media kit.</h2>
+<ul class="prose__list">
+    <li><a class="link" href="{% static 'img/defex-mark.svg' %}" download="defex-mark.svg">The Defex mark</a> (SVG)</li>
+    <li><a class="link" href="{% static 'img/team/husan-mavlonov-color-720.webp' %}" download="husan-mavlonov.webp">Husan Mavlonov, photo</a></li>
+    <li><a class="link" href="{% static 'img/team/hasan-mavlonov-color-720.webp' %}" download="hasan-mavlonov.webp">Hasan Mavlonov, photo</a></li>
+    <li><a class="link" href="{% static 'img/og.jpg' %}" download="defex-robotics.jpg">Share image</a> (1200 &times; 630)</li>
+</ul>
+<p>Need something else, high-resolution files or an interview? Write to <a class="link" href="mailto:press@defexrobotics.com">press@defexrobotics.com</a>.</p>
+
+<h2 class="engraved">Writing.</h2>
+<p>Our notes on robots and factories are on the <a class="link" href="{% url 'blog' %}">blog</a>.</p>
+{% endblock %}
