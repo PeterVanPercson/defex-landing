@@ -439,7 +439,7 @@ class SiteTests(SimpleTestCase):
         for name in ("home.html", "why_us.html", "_inline.html", "_arm.html", "_topbar.html", "_scan.html", "blog/index.html",
                      "blog/_article.html", "blog/the-cost-of-the-next-attempt.html",
                      "blog/the-ai-inference-revolution-is-here.html", "_footer.html", "legal/_page.html",
-                     "legal/contact.html", "legal/press.html", "legal/privacy.html", "legal/terms.html", "legal/security.html"):
+                     "legal/privacy.html", "legal/terms.html", "legal/security.html"):
             markup = (root / "templates/landing" / name).read_text()
             for attr in re.findall(r'class="([^"]*)"', markup):
                 used |= {c for c in attr.split() if re.fullmatch(r"[a-z][a-z0-9_-]*", c)}
@@ -707,7 +707,7 @@ class OfficialPagesTests(SimpleTestCase):
     """The pages a buyer, a journalist or a lawyer looks for, and the footer
     that links them from every page."""
 
-    PAGES = ("/contact/", "/press/", "/privacy/", "/terms/", "/security/")
+    PAGES = ("/privacy/", "/terms/", "/security/")
 
     def test_the_pages_render_with_the_legal_name(self):
         for path in self.PAGES:
@@ -719,16 +719,17 @@ class OfficialPagesTests(SimpleTestCase):
         for path in ("/", "/why-us/", "/careers/", "/blog/", "/blog/the-cost-of-the-next-attempt/") + self.PAGES:
             page = self.client.get(path).content.decode()
             footer = page.split('<footer class="footer footer--full', 1)[1].split("</footer>", 1)[0]
-            for href in ("/privacy/", "/terms/", "/security/", "/press/", "/contact/", "/careers/",
+            for href in ("/privacy/", "/terms/", "/security/", "/careers/",
                          "mailto:sales@defexrobotics.com", "mailto:support@defexrobotics.com"):
                 self.assertIn(f'href="{href}"', footer, (path, href))
             self.assertIn("&copy; 2026 Defex Robotics, Inc.", footer.replace(str(date.today().year), "2026"), path)
 
-    def test_contact_lists_every_inbox_and_still_takes_the_form(self):
-        page = self.client.get("/contact/").content.decode()
-        for box in ("sales", "support", "press", "careers", "security", "privacy", "team"):
-            self.assertIn(f'href="mailto:{box}@defexrobotics.com"', page, box)
-        self.assertEqual(self.client.post("/contact/", {}).status_code, 302)
+    def test_press_and_the_contact_page_are_gone(self):
+        self.assertEqual(self.client.get("/press/")["Location"], "/")
+        self.assertEqual(self.client.get("/contact/")["Location"], "/#contact")
+        page = self.client.get("/").content.decode()
+        self.assertNotIn("All contacts", page)
+        self.assertNotIn(">Press<", page)
 
     def test_security_txt(self):
         response = self.client.get("/.well-known/security.txt")

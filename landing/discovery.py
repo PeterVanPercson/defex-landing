@@ -45,7 +45,7 @@ PUBLIC_COMPANY = {
     ],
     "contact": "team@defexrobotics.com",
     "contacts": {"sales": "sales@defexrobotics.com", "support": "support@defexrobotics.com",
-                 "press": "press@defexrobotics.com", "careers": "careers@defexrobotics.com",
+                 "careers": "careers@defexrobotics.com",
                  "security": "security@defexrobotics.com", "privacy": "privacy@defexrobotics.com"},
     "links": {
         "technical_note": CANONICAL_ORIGIN + "/blog/the-cost-of-the-next-attempt/",
@@ -104,7 +104,7 @@ def organization_jsonld():
          "legalName": PUBLIC_COMPANY["legal_name"],
          "email": PUBLIC_COMPANY["contact"],
          "contactPoint": [{"@type": "ContactPoint", "contactType": kind, "email": PUBLIC_COMPANY["contacts"][key], "availableLanguage": ["English", "Russian", "Uzbek", "Chinese"]}
-                          for key, kind in (("sales", "sales"), ("support", "customer support"), ("press", "media relations"))],
+                          for key, kind in (("sales", "sales"), ("support", "customer support"))],
          "founder": [{"@id": person["id"]} for person in PUBLIC_COMPANY["founders"]],
          "location": [office_place(office) for office in PUBLIC_COMPANY["offices"]]},
         {"@type": "WebSite", "@id": CANONICAL_ORIGIN + "/#website", "url": PUBLIC_COMPANY["url"],
@@ -162,8 +162,6 @@ def llms_txt(request):
         "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robots do, the founders and the inspection prototype",
         "- [Why us](" + CANONICAL_ORIGIN + reverse("why_us") + "): why robots that test every part they build: built-in testing, self-reset, new parts, and where we are today",
         "- [Careers](" + CANONICAL_ORIGIN + reverse("careers") + "): open roles",
-        "- [Contact](" + CANONICAL_ORIGIN + reverse("contact") + "): sales, support, press, careers, security and privacy inboxes",
-        "- [Press](" + CANONICAL_ORIGIN + reverse("press") + "): boilerplate, founders and media kit",
         "- [Security](" + CANONICAL_ORIGIN + reverse("security") + "): data handling and vulnerability reporting",
         "- [Privacy](" + CANONICAL_ORIGIN + reverse("privacy") + ") and [Terms](" + CANONICAL_ORIGIN + reverse("terms") + ")", "",
         "## Writing",
@@ -182,7 +180,7 @@ def llms_txt(request):
 def robots(request):
     # Named crawler groups must repeat exclusions: they do not inherit the '*'
     # group. Existing public-page access, including training policy, is unchanged.
-    rules = "Disallow: /careers/apply/\nDisallow: /ping/\nDisallow: /admin/\nAllow: /\n"
+    rules = "Disallow: /contact/\nDisallow: /careers/apply/\nDisallow: /ping/\nDisallow: /admin/\nAllow: /\n"
     agents = ("*", "Googlebot", "Bingbot", "YandexBot", "OAI-SearchBot", "ChatGPT-User")
     body = "\n".join("User-agent: " + agent + "\n" + rules for agent in agents)
     body += "\nSitemap: " + CANONICAL_ORIGIN + "/sitemap.xml\n"
@@ -198,7 +196,7 @@ def sitemap(request):
     # Do not manufacture lastmod=date.today(). Omit unknown modification dates.
     pages = [(reverse("home"), None), (reverse("careers"), None),
              (reverse("blog"), None), (reverse("why_us"), None),
-             (reverse("contact"), None), (reverse("press"), None), (reverse("security"), None),
+             (reverse("security"), None),
              (reverse("privacy"), None), (reverse("terms"), None)]
     pages.extend((job_path(job), JOBS_UPDATED) for job in JOBS)
     for post in POSTS:

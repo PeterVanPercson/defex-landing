@@ -732,21 +732,12 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .footer__col .footer__blog { border-bottom: 0; text-decoration: none; }
 .footer__base { display: flex; justify-content: space-between; align-items: center; gap: 12px 20px; flex-wrap: wrap; margin-top: clamp(36px, 6vh, 56px); padding-top: 20px; border-top: 1px solid var(--line); }
 
-/* The plain pages (contact, press, legal) on the blog's paper. */
+/* The legal pages on the blog's paper. */
 .doc { padding-bottom: clamp(24px, 4vh, 48px); }
-.doc__lead { margin-top: 22px; max-width: 34ch; font: 400 clamp(19px, 2vw, 23px)/1.45 var(--serif); color: var(--ink-soft); }
-.doc__cta { margin-top: 26px; }
-.desk { list-style: none; border-top: 1px solid var(--line); }
-.desk__row { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr) auto; gap: 8px 24px; align-items: baseline; padding: 20px 0; border-bottom: 1px solid var(--line); }
-.desk__name { font: 400 clamp(19px, 2vw, 23px)/1.2 var(--serif); color: var(--ink); }
-.desk__what { color: var(--ink-soft); }
-.desk__mail { justify-self: end; }
 @media (max-width: 720px) {
     .footer__top { grid-template-columns: minmax(0, 1fr); gap: 32px; }
     .footer__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 20px; }
     .footer__base { flex-direction: column; align-items: flex-start; }
-    .desk__row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
-    .desk__mail { justify-self: start; }
 }
 
 /* Reading progress: a hairline of the accent along the top edge, above the
