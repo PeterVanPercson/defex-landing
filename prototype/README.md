@@ -1,0 +1,88 @@
+# Defex connector lab
+
+An interactive software prototype with MuJoCo contact dynamics and a Three.js workcell. It uses illustrative geometry. No physical robot, sensor measurement, factory validation or neural policy is represented.
+
+## Run
+
+Tested with Node 25.4.0 and npm. Dependencies are pinned in `package-lock.json`.
+
+```sh
+cd prototype
+npm ci
+npm run dev
+```
+
+Open the printed localhost URL. The simulation runs in a Web Worker, in the visitor's browser. No API keys or cloud GPU are needed. The initial WASM download is about 10.3 MB before compression, about 2.6 MB with gzip. The renderer is about 153 KB gzipped.
+
+## Build for the existing Django website
+
+```sh
+npm run build:site
+```
+
+This compiles TypeScript and bundles the app, copies the hashed assets to `../static/prototype/assets/`, and writes `../templates/landing/prototype.html`. Both generated outputs are included in the repository because the existing Vercel configuration serves static files directly. Do not hand-edit generated files.
+
+The app is served at `/prototype/`; `?embed=1` is its compact homepage mode. Restart a running Django preview after rebuilding: its template loader can cache an older generated HTML document pointing at a replaced asset hash. Deploy HTML and assets together.
+
+Use `/prototype/?view=schematic` for a lightweight 2D view. It runs the same physics and controls with a live X/Z diagram. The app also selects this view if WebGL cannot initialize. Camera controls and video capture require the 3D view.
+
+## Demonstration
+
+1. Click **Watch the experiment**. Four actual simulation runs execute at 2× playback: shifted fixed path, contact search, reused correction, and open-circuit rejection.
+2. Change the connector variant or socket offsets. Try **No latch** to see why continuity alone is insufficient.
+3. **See inside** makes the housings transparent. Camera buttons and drag/zoom inspect the geometry.
+4. **Export run data** saves configuration, samples, outcomes and the current model XML in JSON. These records stay in browser memory and are cleared on reload.
+5. **Save demo video** records that computed four-part sequence from the render canvas, with status overlays and a permanent simulation label. Keep the tab visible until the download finishes. It captures no camera or microphone. Browser support for canvas capture and MediaRecorder is required.
+
+To package a built demo with an existing recording and evaluation output:
+
+```sh
+python3 scripts/package-demo.py /path/to/defex-connector-lab.zip --evidence /path/to/evidence --video /path/to/recording.mp4
+```
+
+The ZIP includes the runtime assets, licenses, video, evidence and a Python 3 local server. Extract it, run `python3 serve.py`, and open the printed URL. It does not need the Django site or Node. It does not publish the app.
+
+## What the controller actually does
+
+The fixed controller approaches the nominal socket center. The search controller uses the same insertion controller, but retracts after blocked contact and tries 12 angles on each of four XY rings. It does not read the socket's configured translation. Once seating, continuity and retention pass, it saves that XY correction. Reuse is a single new, independently checked attempt with the saved correction. It can fail if the socket moves.
+
+This is deterministic feedback search and calibration. It is not RL, a learned neural policy, vision alignment, a competitive industrial baseline, or a demonstration of transfer to unseen connector families. Socket rotation can exceed what this XY-only search can handle.
+
+## Model boundaries
+
+- The contact model includes a rigid box plug, four socket walls and a seat. Cartesian slides and yaw are position-actuated. Gravity is disabled. Tooling, wires, pins and the grasp extension are visual details, not extra collision bodies.
+- Timestep: 0.5 ms; samples: approximately 50 Hz; browser state updates: 30 Hz. Reported time is simulation time, not measured production cycle time.
+- The displayed axial force is the absolute generalized constraint force on Z. It includes the ideal latch constraint during retention. It is not a real force-sensor reading.
+- Continuity is a depth threshold plus a manually injected open-circuit flag. No circuit is simulated.
+- Retention uses an ideal equality constraint switched on at seating, unless the no-latch fault is enabled. An upward motion checks whether the connector remains seated. No deforming snap-fit or damage model is present.
+- Reset releases the constraint and retracts the same connector. A feeder, fresh parts, wear and jam recovery are not modeled.
+- Rounded rendering geometry is an illustration of simpler box colliders. The geometry and material parameters are not manufacturer CAD or measured tolerances.
+
+## Verify and reproduce
+
+```sh
+npm test
+npm run evaluate -- /absolute/path/to/evidence
+npm run build
+```
+
+The evaluator exports five full demonstration traces and a fixed-seed, 32-case synthetic perturbation check across two variants, XY offsets, yaw and friction. The current model accepted 15/32 searches and 0/32 nominal fixed paths in that broad check. Those are software results on this chosen case set, not manufacturing reliability estimates. The default demo is a selected, reproducible example; the perturbation check includes its limitations.
+
+Nine numerical tests cover seating, blocked contact, correction reuse, a moved fixture, both fault models, both variants, search termination, finite values and reset. Django tests check route embedding, production asset availability, the WASM MIME type and honest stage labeling. CI runs the simulation tests and build before site regression tests.
+
+## Files
+
+- `src/model.ts`: model dimensions, limits, MJCF and search locations.
+- `src/engine.ts`: deterministic simulation/controller and records.
+- `src/simulation.worker.ts`: browser clock and physics isolation.
+- `src/scene.ts`: original procedural geometry and rendering.
+- `src/main.ts`: controls, guided experiment, telemetry and exports.
+- `src/recording.ts`: local video export.
+- `scripts/evaluate.ts`: repeatable software evidence.
+- `scripts/integrate.mjs`: static site integration.
+
+## Dependencies and provenance
+
+MuJoCo 3.14.0 is Apache-2.0; Three.js 0.186.1 is MIT. License copies are included in `../static/prototype/licenses/`. Geometry is original procedural code. This app includes no customer parts, proprietary factory data, company funding details or external model assets.
+
+The MuJoCo 3.14 WASM `eq_active` bool-array getter failed in this environment. `engine.ts` uses the supported `mj_setState` state API to toggle the same equality state; both latch tests cover that behavior. Vite reports that the package's Node-only `module` branch is externalized; the browser production worker was tested successfully.

@@ -23,6 +23,19 @@ jobs:
       - name: Install deps
         run: pip install -r requirements.txt
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "25"
+          cache: npm
+          cache-dependency-path: prototype/package-lock.json
+
+      - name: Build and test connector simulation
+        working-directory: prototype
+        run: |
+          npm ci
+          npm test
+          npm run build:site
+
       - name: Django system check
         run: python manage.py check
 
@@ -60,7 +73,7 @@ jobs:
             curl -sf -H "X-Forwarded-Proto: https" -o /dev/null http://127.0.0.1:8000/ && break
             sleep 1
           done
-          for route in / /careers/ /careers/founding-robotics-engineer/ /careers/robot-learning-engineer/ /careers/content-producer/ /blog/ /blog/the-cost-of-the-next-attempt/; do
+          for route in / /prototype/ /careers/ /careers/founding-robotics-engineer/ /careers/robot-learning-engineer/ /careers/content-producer/ /blog/ /blog/the-cost-of-the-next-attempt/; do
             curl --fail --silent --show-error -H "X-Forwarded-Proto: https" -o /dev/null "http://127.0.0.1:8000$route"
           done
           curl --fail --silent --show-error -H "X-Forwarded-Proto: https" -H "Range: bytes=0-1023" \
