@@ -28,11 +28,15 @@ Use `/prototype/?view=schematic` for a lightweight 2D view. It runs the same phy
 
 ## Demonstration
 
-1. Click **Watch the experiment**. Four actual simulation runs execute at 2× playback: shifted fixed path, contact search, reused correction, and open-circuit rejection.
-2. Change the connector variant or socket offsets. Try **No latch** to see why continuity alone is insufficient.
+1. Click **Play demo**. Four actual simulation runs execute at 2× playback: shifted fixed path, contact search, reused correction, and open-circuit rejection.
+2. Pick a scenario, choose **Fixed path** or **Find a fit**, and click **Run attempt**. **Adjust the setup** contains connector variants, offsets and fault settings. Try **No latch** to see why continuity alone is insufficient.
 3. **See inside** makes the housings transparent. Camera buttons and drag/zoom inspect the geometry.
-4. **Export run data** saves configuration, samples, outcomes and the current model XML in JSON. These records stay in browser memory and are cleared on reload.
-5. **Save demo video** records that computed four-part sequence from the render canvas, with status overlays and a permanent simulation label. Keep the tab visible until the download finishes. It captures no camera or microphone. Browser support for canvas capture and MediaRecorder is required.
+4. **Download data** saves configuration, samples, outcomes and the current model XML in JSON. These records stay in browser memory and are cleared on reload.
+5. **Record demo** records that computed four-part sequence from the render canvas, with status overlays and a permanent simulation label. Keep the tab visible until the download finishes. Switching away pauses the sequence and recording; resume to continue from the same step. It captures no camera or microphone. Browser support for canvas capture and MediaRecorder is required.
+
+Use **Pause / Resume** below the scene or on the demo button. Space toggles playback and R resets when focus is outside a form control. **Measurements** opens the live force plot.
+
+The renderer interpolates between computed poses with a 45 ms buffer and never extrapolates through contact. Camera damping uses elapsed time. Geometry is reused while adjusting offsets; the worker sends only new samples, and the renderer stops scheduling frames while idle.
 
 To package a built demo with an existing recording and evaluation output:
 
@@ -68,7 +72,7 @@ npm run build
 
 The evaluator exports five full demonstration traces and a fixed-seed, 32-case synthetic perturbation check across two variants, XY offsets, yaw and friction. The current model accepted 15/32 searches and 0/32 nominal fixed paths in that broad check. Those are software results on this chosen case set, not manufacturing reliability estimates. The default demo is a selected, reproducible example; the perturbation check includes its limitations.
 
-Nine numerical tests cover seating, blocked contact, correction reuse, a moved fixture, both fault models, both variants, search termination, finite values and reset. Django tests check route embedding, production asset availability, the WASM MIME type and honest stage labeling. CI runs the simulation tests and build before site regression tests.
+Thirteen tests cover display interpolation at 60/120 Hz, delayed updates, pose reset, camera damping, and numerical seating, blocked contact, correction reuse, a moved fixture, both fault models, both variants, search termination, finite values and reset. Django tests check route embedding, production asset availability, the WASM MIME type and honest stage labeling. CI runs the simulation tests and build before site regression tests.
 
 ## Files
 
@@ -76,6 +80,7 @@ Nine numerical tests cover seating, blocked contact, correction reuse, a moved f
 - `src/engine.ts`: deterministic simulation/controller and records.
 - `src/simulation.worker.ts`: browser clock and physics isolation.
 - `src/scene.ts`: original procedural geometry and rendering.
+- `src/motion.ts`: buffered pose interpolation and time-based damping.
 - `src/main.ts`: controls, guided experiment, telemetry and exports.
 - `src/recording.ts`: local video export.
 - `scripts/evaluate.ts`: repeatable software evidence.

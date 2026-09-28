@@ -10,6 +10,7 @@ export class DemoRecorder {
   title='Connector assembly, in simulation.';
   description='A computed insertion, test and reset experiment.';
   state:Snapshot|null=null;
+  speed=2;
   samples:Sample[]=[];
   source:HTMLCanvasElement;
   onFinish:(blob:Blob,extension:string)=>void;
@@ -25,6 +26,8 @@ export class DemoRecorder {
     this.recorder.onstop=()=>{cancelAnimationFrame(this.frame);this.stream.getTracks().forEach(t=>t.stop());this.onFinish(new Blob(this.chunks,{type:mime}),mime.startsWith('video/mp4')?'mp4':'webm');};
     this.draw();this.recorder.start(500);
   }
+  pause(){if(this.recorder.state==='recording')this.recorder.pause();}
+  resume(){if(this.recorder.state==='paused')this.recorder.resume();}
   stop(){if(this.recorder.state!=='inactive')this.recorder.stop();}
   draw=()=>{
     const c=this.context,s=this.state;
@@ -37,7 +40,7 @@ export class DemoRecorder {
     c.fillStyle='#e8e6df';c.fillRect(44,194,1035,585);
     const ratio=Math.min(1035/this.source.width,585/this.source.height),w=this.source.width*ratio,h=this.source.height*ratio;
     c.drawImage(this.source,44+(1035-w)/2,194+(585-h)/2,w,h);
-    c.fillStyle='#f4f3eb';c.fillRect(64,214,131,29);c.fillStyle='#65735b';c.font='11px monospace';c.fillText('SIMULATION · 2×',75,233);
+    c.fillStyle='#f4f3eb';c.fillRect(64,214,131,29);c.fillStyle='#65735b';c.font='11px monospace';c.fillText(`SIMULATION · ${this.speed}×`,75,233);
     const x=1130;
     c.fillStyle='#75806a';c.font='12px monospace';c.fillText('CURRENT ATTEMPT',x,221);
     const controllers={fixed:'Fixed path',search:'Contact search',reuse:'Reused correction'};

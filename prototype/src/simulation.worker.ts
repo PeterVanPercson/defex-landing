@@ -9,9 +9,15 @@ let speed = 1;
 let last = performance.now();
 let remainder = 0;
 let lastCompleted = 0;
+let sentSamples = 0;
+let epoch = 0;
+let sampleBuffer: ConnectorEngine['samples'] | null = null;
 
 function publish() {
-  if (engine) postMessage({type:'state', state:engine.snapshot(), samples:engine.samples.slice(-1500), playing, speed});
+  if (!engine) return;
+  if (sampleBuffer !== engine.samples) { sampleBuffer=engine.samples;sentSamples=0;epoch++; }
+  postMessage({type:'state',state:engine.snapshot(),samples:engine.samples.slice(sentSamples),epoch,playing,speed});
+  sentSamples=engine.samples.length;
 }
 
 function failure(error: unknown) {

@@ -57,14 +57,14 @@ This is an illustrative software simulation. No physical robot runs this loop. T
 
 1. Extract this ZIP.
 2. In the extracted `defex-connector-lab` folder, run `python3 serve.py`.
-3. Open **http://127.0.0.1:8200/** and click **Watch the experiment**.
+3. Open **http://127.0.0.1:8200/** and click **Play demo**.
 4. Keep the tab in view while it runs. Stop the local server with Ctrl+C.
 
 Python 3 is the only server prerequisite. If port 8200 is busy, run `python3 serve.py --port 8201` and use that port. Do not open `index.html` directly as a file: browser workers and WASM need an HTTP origin.
 
 All runtime assets are included. No Node installation, API key, Google account or cloud GPU is required. The server listens only on this computer. A localhost link cannot be opened by someone on another computer.
 
-The 3D view needs WebGL. Use **http://127.0.0.1:8200/?view=schematic** for the 2D view with the same physics. Model notes explain the assumptions. Only the documentation link opens an external website.
+The 3D view needs WebGL. Use **http://127.0.0.1:8200/?view=schematic** for the 2D view with the same physics. The **How it works** panel explains the assumptions. Only the documentation link opens an external website.
 
 ## The short demonstration
 
