@@ -7,7 +7,7 @@ The site remains server-rendered Django. The `/company/` page was removed on 202
 - `/company.json` mirrors the approved public facts only. It is not a private data room or a special search-ranking API. The home page is canonical; the JSON response is `noindex`.
 - Organization and Person identities are separate. Personal profiles belong to the founder, not Organization `sameAs`. Corporate profiles should be added only when exact live URLs have been verified.
 - Default canonical URLs use the production origin and request path, without campaign queries or preview hosts. RSS links and GUIDs also use the production origin.
-- `robots.txt` allows public search access, including OAI-SearchBot, while consistently excluding submission endpoints for every named crawler. This is not an access-control mechanism. The existing global training policy was not changed.
+- `robots.txt` allows public search access, including OAI-SearchBot, with one `*` group that excludes the submission endpoints for every crawler. This is not an access-control mechanism. The existing global training policy was not changed.
 - The sitemap uses only the canonical production origin and omits unknown modification dates instead of stamping today's date. Known company and article dates are retained.
 - Regression tests check JSON-LD, both founders, canonical URLs, sitemap destinations, crawler rules, public-data boundaries and IndexNow ownership proof.
 - A browser workflow verifies the Why us page at desktop and mobile widths and retains screenshots for three days.

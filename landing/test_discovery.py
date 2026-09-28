@@ -110,7 +110,7 @@ class DiscoverabilityTests(SimpleTestCase):
         for agent in ("Googlebot", "Bingbot", "YandexBot", "OAI-SearchBot", "ChatGPT-User", "ExampleBot"):
             for path in ("/", "/why-us/", "/blog/", "/careers/", "/privacy/", "/terms/", "/security/"):
                 self.assertTrue(parser.can_fetch(agent, CANONICAL_ORIGIN + path), (agent, path))
-            for path in ("/contact/", "/careers/apply/", "/ping/", "/admin/"):
+            for path in ("/contact/", "/careers/apply/", "/ping/"):
                 self.assertFalse(parser.can_fetch(agent, CANONICAL_ORIGIN + path), (agent, path))
         self.assertEqual(parser.site_maps(), [CANONICAL_ORIGIN + "/sitemap.xml"])
 

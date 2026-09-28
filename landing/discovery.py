@@ -178,12 +178,8 @@ def llms_txt(request):
 
 @require_safe
 def robots(request):
-    # Named crawler groups must repeat exclusions: they do not inherit the '*'
-    # group. Existing public-page access, including training policy, is unchanged.
-    rules = "Disallow: /contact/\nDisallow: /careers/apply/\nDisallow: /ping/\nDisallow: /admin/\nAllow: /\n"
-    agents = ("*", "Googlebot", "Bingbot", "YandexBot", "OAI-SearchBot", "ChatGPT-User")
-    body = "\n".join("User-agent: " + agent + "\n" + rules for agent in agents)
-    body += "\nSitemap: " + CANONICAL_ORIGIN + "/sitemap.xml\n"
+    body = ("User-agent: *\nDisallow: /contact/\nDisallow: /careers/apply/\nDisallow: /ping/\n\n"
+            "Sitemap: " + CANONICAL_ORIGIN + "/sitemap.xml\n")
     return HttpResponse(body, content_type="text/plain; charset=utf-8")
 
 
