@@ -55,6 +55,13 @@ def home(request):
     return render(request, "landing/home.html", {"form": ContactForm(), "asset_v": settings.DEFEX_ASSET_VERSION, "jobs": JOBS, "in_line": IN_LINE})
 
 
+@require_http_methods(["GET", "HEAD"])
+def prototype(request):
+    response = render(request, "landing/prototype.html")
+    response["X-Frame-Options"] = "SAMEORIGIN"
+    return response
+
+
 def _careers_context(form, job=None):
     from .discovery import CANONICAL_ORIGIN
 
