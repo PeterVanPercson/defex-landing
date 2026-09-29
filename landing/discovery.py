@@ -74,6 +74,9 @@ IN_LINE = [
 PARTNERS = [
     {"name": "NVIDIA", "logo": "img/partners/nvidia.png", "width": 576, "height": 116},
     {"name": "Google", "logo": "img/partners/google.png", "width": 743, "height": 250},
+    {"name": "AWS", "logo": "img/partners/aws.png", "width": 557, "height": 335},
+    {"name": "Microsoft Azure", "logo": "img/partners/azure.png", "width": 1280, "height": 369},
+    {"name": "Lambda", "logo": "img/partners/lambda.png", "width": 480, "height": 110},
     {"name": "OpenAI", "logo": "img/partners/openai.png", "width": 658, "height": 169},
     {"name": "Claude", "logo": "img/partners/claude.png", "width": 548, "height": 124},
     {"name": "MathWorks", "logo": "img/partners/mathworks.png", "width": 537, "height": 106},
