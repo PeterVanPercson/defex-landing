@@ -3,6 +3,7 @@ import { WorkcellScene } from './scene.ts';
 import type { Mode, View } from './scene.ts';
 import type { PartId } from './parts.ts';
 import { DemoRecorder } from './recording.ts';
+import { magnify } from './dock.ts';
 import { DEFAULT_CONFIG, modelXML } from './model.ts';
 import type { Configuration, Controller } from './model.ts';
 import type { Sample, Snapshot, Trial } from './engine.ts';
@@ -332,4 +333,5 @@ document.addEventListener('keydown',e=>{
   if(e.code==='KeyR'){e.preventDefault();reset();}
 });
 document.querySelector('.tryit')!.addEventListener('toggle',drawChart);
+magnify(document.querySelector<HTMLElement>('.dock')!);
 settingInputs.forEach(input=>input.disabled=true);syncConfig();send({type:'init',config});
