@@ -8,8 +8,8 @@
   <meta name="description" content="Explore the Defex connector lab: an interactive simulation of our robot's workcell. Shift the socket, compare two insertion methods, see inside every part, and watch the connection and pull tests." />
   <title>Connector lab — Defex</title>
   <link rel="preload" href="/static/fonts/geist-400-900-normal.woff2" as="font" type="font/woff2" crossorigin />
-  <script type="module" crossorigin src="/static/prototype/assets/index-C1NDcOu-.js"></script>
-  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-DqVIF01M.css">
+  <script type="module" crossorigin src="/static/prototype/assets/index-B4N-u0of.js"></script>
+  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-DTeJr49-.css">
 </head>
 <body>
   <main>
@@ -26,12 +26,11 @@
       </header>
 
       <div class="headline">
-        <p class="eyebrow"><span class="dot"></span> CONNECTOR LAB</p>
+        <p class="eyebrow"><span class="dot"></span> INTERACTIVE SOFTWARE PROTOTYPE</p>
         <h1>Insert. Test.<br>Try again.</h1>
-        <p class="lede">Our robot's workcell, in software. Spin it. Open it. Break it.</p>
+        <p class="lede">Watch our robot plug in a connector, test it, and try again when it misses.</p>
+        <button class="cta" data-start-tour disabled><span aria-hidden="true">▶</span> Watch it work</button>
       </div>
-      <div class="scene-heading">The robot's workcell <span>7 PARTS / 1 LOOP</span></div>
-      <div class="coordinates">PROTOTYPE 01 — INSERT · TEST · RESET</div>
 
       <div id="journey" class="journey">
         <div class="journey-icon">↓</div>
@@ -56,14 +55,13 @@
           <button data-view="side" aria-pressed="false">Side</button>
           <button data-view="top" aria-pressed="false">Top</button>
           <button data-view="connector" aria-pressed="false">Connector</button>
-          <button data-view="flight" aria-pressed="false">Flight</button>
+          <button data-view="flight" aria-pressed="false">Fly around</button>
         </nav>
       </div>
       <button id="embed-run" class="embed-run" disabled>▶ Play demo</button>
       <footer class="stage-footer">
         <span>Simulation. Not footage of a physical robot.</span>
-        <span class="footer-center">INTERACTIVE SOFTWARE PROTOTYPE</span>
-        <span class="hint"><svg width="13" height="16" viewBox="0 0 13 16" fill="none"><rect x="2" y="1" width="9" height="14" rx="4.5" stroke="currentColor"/><path d="M6.5 4v3" stroke="currentColor" stroke-linecap="round"/></svg>Drag. Zoom. Tap a part.</span>
+        <span class="hint"><svg width="13" height="16" viewBox="0 0 13 16" fill="none"><rect x="2" y="1" width="9" height="14" rx="4.5" stroke="currentColor"/><path d="M6.5 4v3" stroke="currentColor" stroke-linecap="round"/></svg>Drag to turn it. Tap a part to see what it does.</span>
       </footer>
     </section>
 
@@ -107,7 +105,6 @@
     </section>
 
     <section class="anatomy" aria-labelledby="anatomy-title">
-      <p class="eyebrow"><span class="dot"></span> THE WORKCELL</p>
       <h2 id="anatomy-title">Seven parts.<br>One loop.</h2>
       <p class="section-lede">Tap a part. The camera flies to it.</p>
       <div class="part-grid">
@@ -123,7 +120,6 @@
     </section>
 
     <section class="loop" aria-labelledby="loop-title">
-      <p class="eyebrow"><span class="dot"></span> THE LOOP</p>
       <h2 id="loop-title">Every try ends in a test.</h2>
       <ol class="loop-list">
         <li data-phase="insert"><strong>Insert.</strong><span>The robot lowers the connector. If the socket blocks it, it backs off and tries a new spot.</span></li>

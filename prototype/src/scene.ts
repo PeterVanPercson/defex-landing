@@ -72,6 +72,17 @@ function print(c: CanvasRenderingContext2D, text: string, x: number, y: number, 
   c.fillStyle = color; c.font = `${weight} ${size}px ${font}`; c.fillText(text, x, y);
 }
 
+const EXPLODE_ORDER: PartId[] = ['socket', 'tester', 'connector', 'gripper', 'zaxis', 'carriage', 'gantry'];
+const ease = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const step = (value: number, goal: number, amount: number) => value < goal ? Math.min(goal, value + amount) : Math.max(goal, value - amount);
+const toY = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 1, 0)), fromY = toY.clone().invert();
+const sa = new THREE.Spherical(), sb = new THREE.Spherical();
+function orbitBlend(a: THREE.Vector3, b: THREE.Vector3, t: number, out: THREE.Vector3) {
+  sa.setFromVector3(a.applyQuaternion(toY)); sb.setFromVector3(b.applyQuaternion(toY));
+  let turn = sb.theta - sa.theta; turn -= Math.round(turn / (Math.PI * 2)) * Math.PI * 2;
+  out.setFromSphericalCoords(Math.exp(THREE.MathUtils.lerp(Math.log(sa.radius), Math.log(sb.radius), t)), THREE.MathUtils.lerp(sa.phi, sb.phi, t), sa.theta + turn * t).applyQuaternion(fromY);
+}
+
 interface Part { id: PartId; name: string; line: string; group: THREE.Group; offset: THREE.Vector3; anchor: THREE.Vector3; box: THREE.Box3; side: 1 | -1; label: HTMLElement }
 
 export class WorkcellScene {
@@ -122,6 +133,9 @@ export class WorkcellScene {
   desiredPosition = new THREE.Vector3();
   desiredTarget = new THREE.Vector3(0, 0, 30);
   animating = false;
+  tween: { from: THREE.Vector3; fromTarget: THREE.Vector3; start: number; duration: number } | null = null;
+  autoSpin = 0;
+  shadowPose = '';
   dragging = false;
   lastInteraction = performance.now();
   flightTime = 0;
@@ -144,7 +158,7 @@ export class WorkcellScene {
     this.renderer.setPixelRatio(this.pixelRatio);
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.shadowMap.enabled = true; this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.shadowMap.enabled = true; this.renderer.shadowMap.type = THREE.PCFShadowMap; this.renderer.shadowMap.autoUpdate = false; this.renderer.shadowMap.needsUpdate = true;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.12;
     container.append(this.renderer.domElement);
     this.renderer.domElement.setAttribute('aria-label', 'Interactive 3D simulation of a connector workcell. Drag to rotate, scroll to zoom, hover a part to name it.');
@@ -153,7 +167,7 @@ export class WorkcellScene {
     Object.assign(this.controls, { enableDamping: true, dampingFactor: 0.07, enablePan: false, minDistance: 45, maxDistance: 520, maxPolarAngle: Math.PI * 0.49, minPolarAngle: 0.02, rotateSpeed: 0.55, zoomSpeed: 0.7, autoRotateSpeed: 0.35 });
     if (embed) this.controls.enableZoom = false;
     if (matchMedia('(pointer: coarse)').matches) { this.controls.touches = { ONE: -1 as THREE.TOUCH, TWO: THREE.TOUCH.DOLLY_ROTATE }; this.renderer.domElement.style.touchAction = 'pan-y'; }
-    this.controls.addEventListener('start', () => { this.dragging = true; this.animating = false; this.lastInteraction = performance.now(); });
+    this.controls.addEventListener('start', () => { this.dragging = true; this.animating = false; this.tween = null; this.autoSpin = 0; this.lastInteraction = performance.now(); });
     this.controls.addEventListener('end', () => { this.dragging = false; this.lastInteraction = performance.now(); });
 
     const env = new RoomEnvironment(), pmrem = new THREE.PMREMGenerator(this.renderer);
@@ -419,6 +433,7 @@ export class WorkcellScene {
     this.config = config;
     if (this.lastVariant !== config.variant) this.buildConnector();
     this.socket.position.set(config.offsetX, config.offsetY, 0); this.socket.rotation.z = config.yaw * Math.PI / 180;
+    this.renderer.shadowMap.needsUpdate = true;
   }
   applyCut(force = false) {
     const on = this.cut > 0.5, opacity = 1 - this.cut * 0.84;
@@ -431,18 +446,24 @@ export class WorkcellScene {
   setMode(mode: Mode) {
     this.mode = mode; this.lastInteraction = performance.now();
     if (this.viewMode !== 'part' && this.viewMode !== 'connector') this.goal();
-    this.animating = true; this.wake();
+    this.startTween(); this.wake();
   }
   setInspect(on: boolean) { this.setMode(on ? 'inside' : 'machine'); }
   view(mode: View | 'cell' | 'close') {
     this.viewMode = mode === 'cell' ? 'overview' : mode === 'close' ? 'connector' : mode;
     this.lastInteraction = performance.now(); this.flightTime = 0;
-    this.goal(); this.animating = true;
+    this.goal(); this.startTween();
     if (this.reduceMotion) this.snap();
     this.wake();
   }
   focusPart(id: PartId) { this.focus = id; this.view('part'); }
-  snap() { this.camera.position.copy(this.desiredPosition); this.controls.target.copy(this.desiredTarget); this.animating = false; }
+  snap() { this.camera.position.copy(this.desiredPosition); this.controls.target.copy(this.desiredTarget); this.animating = false; this.tween = null; }
+  startTween() {
+    this.animating = true; this.autoSpin = 0;
+    const from = this.camera.position.clone().sub(this.controls.target), to = this.desiredPosition.clone().sub(this.desiredTarget);
+    const turn = from.angleTo(to), zoom = Math.abs(Math.log(to.length() / Math.max(1, from.length())));
+    this.tween = { from: this.camera.position.clone(), fromTarget: this.controls.target.clone(), start: performance.now(), duration: this.reduceMotion ? 0 : THREE.MathUtils.clamp(750 + turn * 420 + zoom * 500, 750, 1600) };
+  }
 
   goal() {
     const expand = this.mode === 'parts' ? (this.width < 700 ? 1.75 : 1.42) : 1, d = this.baseDistance * expand;
@@ -460,7 +481,7 @@ export class WorkcellScene {
     }
     this.desiredTarget.set(0, 0, 30 + lift);
     const dir = this.viewMode === 'side' ? new THREE.Vector3(1, -0.16, 0.2) : this.viewMode === 'top' ? new THREE.Vector3(0.001, -0.08, 1) : this.direction;
-    this.desiredPosition.copy(dir).normalize().multiplyScalar(this.viewMode === 'top' ? d * 1.05 : d).add(this.desiredTarget);
+    this.desiredPosition.copy(dir).normalize().multiplyScalar(this.viewMode === 'top' ? this.baseDistance * (this.mode === 'parts' ? 1.02 : 0.92) : d).add(this.desiredTarget);
   }
 
   layout() {
@@ -476,7 +497,8 @@ export class WorkcellScene {
     const t = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)), radius = 70;
     const usableW = r.width > 900 ? 0.74 : 1.08, usableH = r.width > 900 ? 0.74 : 0.6;
     this.baseDistance = Math.max(radius / (t * this.camera.aspect * usableW), radius / (t * usableH));
-    this.goal(); this.animating = true;
+    this.goal();
+    if (this.frames || this.measured) this.startTween(); else this.snap();
     this.wake();
   }
 
@@ -539,37 +561,51 @@ export class WorkcellScene {
     this.frame = 0;
     if (!this.visible || document.hidden) return;
     const dt = Math.min(50, Math.max(1, now - this.lastFrame)); this.lastFrame = now;
-    const smooth = damping(dt, 200);
     const spreadGoal = this.mode === 'parts' ? 1 : 0, cutGoal = this.mode === 'inside' ? 1 : 0;
-    const moving = Math.abs(this.spread - spreadGoal) > 0.001 || Math.abs(this.cut - cutGoal) > 0.001;
-    this.spread = Math.abs(this.spread - spreadGoal) < 0.001 ? spreadGoal : THREE.MathUtils.lerp(this.spread, spreadGoal, smooth);
+    const moving = this.spread !== spreadGoal || this.cut !== cutGoal;
+    this.spread = step(this.spread, spreadGoal, dt / 1500);
     const cutBefore = this.cut;
-    this.cut = Math.abs(this.cut - cutGoal) < 0.001 ? cutGoal : THREE.MathUtils.lerp(this.cut, cutGoal, smooth);
+    this.cut = step(this.cut, cutGoal, dt / 520);
     if (cutBefore !== this.cut) this.applyCut();
-    for (const p of this.parts.values()) p.group.position.copy(p.offset).multiplyScalar(this.spread);
+    if (moving) {
+      EXPLODE_ORDER.forEach((id, k) => {
+        const local = THREE.MathUtils.clamp((this.spread - k * 0.07) / (1 - 0.42), 0, 1);
+        this.parts.get(id)!.group.position.copy(this.parts.get(id)!.offset).multiplyScalar(ease(local));
+      });
+      this.renderer.shadowMap.needsUpdate = true;
+    }
     const pose = this.poses.sample(now);
-    if (pose) { this.tool.position.set(pose[0] * 1000, pose[1] * 1000, pose[2] * 1000); this.tool.rotation.z = pose[3]; this.carriage.position.set(pose[0] * 1000, pose[1] * 1000, 0); }
+    if (pose) {
+      this.tool.position.set(pose[0] * 1000, pose[1] * 1000, pose[2] * 1000); this.tool.rotation.z = pose[3]; this.carriage.position.set(pose[0] * 1000, pose[1] * 1000, 0);
+      const key = pose.map(v => v.toFixed(6)).join();
+      if (key !== this.shadowPose) { this.shadowPose = key; this.renderer.shadowMap.needsUpdate = true; }
+    }
     this.trail.position.z = this.parts.get('connector')!.group.position.z;
     const running = !!this.state && this.state.phase !== 'ready' && this.state.phase !== 'complete';
     const accepted = this.state?.accepted;
-    const blink = 0.5 + 0.5 * Math.sin(now / 180);
+    const blink = 0.5 - 0.5 * Math.cos(now / 260);
     this.stack[0].emissiveIntensity = accepted === true ? 2.4 : !running ? 0.5 : 0.08;
-    this.stack[1].emissiveIntensity = running && accepted == null ? 0.6 + blink * 1.8 : 0.08;
+    this.stack[1].emissiveIntensity = running && accepted == null ? 0.25 + blink * 2 : 0.08;
     this.stack[2].emissiveIntensity = accepted === false ? 2.4 : 0.08;
 
     if (this.viewMode === 'flight' && !this.dragging && !this.reduceMotion) {
       this.flightTime += dt / 1000;
-      const a = this.flightTime * 0.16 - 0.9, d = this.baseDistance * (this.mode === 'parts' ? (this.width < 700 ? 1.75 : 1.42) : 1);
+      const a = this.flightTime * 0.14 - 0.9, d = this.baseDistance * (this.mode === 'parts' ? (this.width < 700 ? 1.75 : 1.42) : 1);
       this.desiredTarget.set(0, 0, 30 + (this.mode === 'parts' ? 34 : 0));
-      this.desiredPosition.set(Math.cos(a) * d * 0.84, Math.sin(a) * d * 0.84, d * (0.5 + Math.sin(this.flightTime * 0.11) * 0.12)).add(this.desiredTarget);
-      this.animating = true;
+      this.desiredPosition.set(Math.cos(a) * d * 0.84, Math.sin(a) * d * 0.84, d * (0.5 + Math.sin(this.flightTime * 0.1) * 0.1)).add(this.desiredTarget);
+      if (!this.tween) { this.camera.position.copy(this.desiredPosition); this.controls.target.copy(this.desiredTarget); }
     } else if (moving && this.viewMode === 'part') this.goal();
-    if (this.animating && !this.dragging) {
-      const t = damping(dt, this.viewMode === 'flight' ? 420 : 260);
-      this.camera.position.lerp(this.desiredPosition, t); this.controls.target.lerp(this.desiredTarget, t);
-      if (this.viewMode !== 'flight' && this.camera.position.distanceTo(this.desiredPosition) < 0.05 && this.controls.target.distanceTo(this.desiredTarget) < 0.05) this.animating = false;
+    if (this.tween && !this.dragging) {
+      const k = this.tween.duration ? Math.min(1, (now - this.tween.start) / this.tween.duration) : 1, e = ease(k);
+      this.controls.target.lerpVectors(this.tween.fromTarget, this.desiredTarget, e);
+      orbitBlend(this.tween.from.clone().sub(this.tween.fromTarget), this.desiredPosition.clone().sub(this.desiredTarget), e, this.camera.position);
+      this.camera.position.add(this.controls.target);
+      if (k >= 1) { this.tween = null; this.animating = false; }
     }
-    this.controls.autoRotate = !this.reduceMotion && !this.dragging && !this.animating && this.viewMode === 'overview' && now - this.lastInteraction > 7000 && !running;
+    const idle = !this.reduceMotion && !this.dragging && !this.tween && this.viewMode === 'overview' && now - this.lastInteraction > 7000 && !running;
+    this.autoSpin = idle ? Math.min(1, this.autoSpin + dt / 2500) : 0;
+    this.controls.autoRotate = this.autoSpin > 0;
+    this.controls.autoRotateSpeed = 0.3 * ease(this.autoSpin);
     this.controls.dampingFactor = damping(dt, 170);
     this.controls.update(dt / 1000);
 
@@ -586,7 +622,7 @@ export class WorkcellScene {
 
   placeLabels() {
     if (!this.hud) return;
-    const show = this.spread > 0.6, point = new THREE.Vector3();
+    const show = this.spread > 0.6, point = new THREE.Vector3(), placed: { p: Part; x: number; y: number }[] = [];
     for (const p of this.parts.values()) {
       p.label.classList.toggle('visible', show);
       if (!show) continue;
@@ -596,9 +632,16 @@ export class WorkcellScene {
         p.group.localToWorld(point); point.project(this.camera);
         const sx = (point.x * 0.5 + 0.5) * this.width; minX = Math.min(minX, sx); maxX = Math.max(maxX, sx); sumY += (-point.y * 0.5 + 0.5) * this.height;
       }
-      const narrow = this.width < 700 ? 118 : 0, x = p.side > 0 ? Math.min(maxX + 6, this.width - narrow - 8 || Infinity) : Math.max(minX - 6, narrow + 8), y = Math.min(this.height - 230, Math.max(110, sumY / 8));
-      p.label.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px) translate(${p.side > 0 ? '0' : '-100%'},-50%)`;
+      const narrow = this.width < 700 ? 118 : 0;
+      placed.push({ p, x: p.side > 0 ? Math.min(maxX + 6, this.width - narrow - 8) : Math.max(minX - 6, narrow + 8), y: sumY / 8 });
     }
+    const gap = this.width < 700 ? 32 : 42;
+    for (const side of [1, -1]) {
+      const column = placed.filter(l => l.p.side === side).sort((a, b) => a.y - b.y);
+      column.forEach((l, i) => { l.y = Math.max(l.y, 110, i ? column[i - 1].y + gap : 0); });
+      for (let i = column.length - 1; i >= 0; i--) column[i].y = Math.min(column[i].y, this.height - 230 - (column.length - 1 - i) * gap);
+    }
+    for (const { p, x, y } of placed) p.label.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(${p.side > 0 ? '0' : '-100%'},-50%)`;
   }
 
   dispose() {

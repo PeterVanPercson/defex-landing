@@ -194,6 +194,7 @@ function startTour(){
 }
 el('tour').addEventListener('click',()=>tourIndex>=0?togglePlayback():startTour());
 el('embed-run').addEventListener('click',startTour);
+all<HTMLButtonElement>('[data-start-tour]').forEach(b=>b.addEventListener('click',()=>{if(tourIndex<0)startTour();}));
 el('save-video').addEventListener('click',()=>{
   stopTour();if(!scene)return;
   try{
@@ -215,7 +216,7 @@ function refreshControls(){
   text('run-label',active?'Pause':unfinished||tourPaused?'Resume':'Run attempt');text('run-icon',active?'Ⅱ':'▶');
   el<HTMLButtonElement>('run').disabled=!ready;el<HTMLButtonElement>('reset').disabled=!ready;
   el<HTMLSelectElement>('speed').disabled=!ready;
-  el<HTMLButtonElement>('tour').disabled=!ready;el<HTMLButtonElement>('embed-run').disabled=!ready;
+  el<HTMLButtonElement>('tour').disabled=!ready;all<HTMLButtonElement>('[data-start-tour]').forEach(b=>b.disabled=!ready);el<HTMLButtonElement>('embed-run').disabled=!ready;
   el('tour').setAttribute('aria-pressed',String(tourIndex>=0));
   if(tourIndex>=0){text('tour-label',tourPaused?'Resume demo':'Pause demo');text('tour-icon',tourPaused?'▶':'Ⅱ');}
   else{text('tour-label','Play demo');text('tour-icon','▶');}
