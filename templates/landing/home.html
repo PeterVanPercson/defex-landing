@@ -53,8 +53,8 @@
                          logo loads with the page; the rest load one ahead. -->
                     <a class="flick" href="#partners">
                         <span class="flick__k">Partners</span>
-                        <span class="flick__names">: {% for p in partners %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
-                        <span class="flick__stage" aria-hidden="true">{% for p in partners %}<img class="flick__logo" {% if forloop.first %}src{% else %}data-src{% endif %}="{% static p.logo %}?v={{ asset_v }}" alt="" width="{{ p.width }}" height="{{ p.height }}" decoding="async"{% if not forloop.first %} hidden{% endif %}>{% endfor %}</span>
+                        <span class="flick__names">: {% for p in hero_partners %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+                        <span class="flick__stage" aria-hidden="true">{% for p in hero_partners %}<img class="flick__logo" {% if forloop.first %}src{% else %}data-src{% endif %}="{% static p.logo %}?v={{ asset_v }}" alt="" width="{{ p.width }}" height="{{ p.height }}" decoding="async"{% if not forloop.first %} hidden{% endif %}>{% endfor %}</span>
                     </a>
                 </div>
             </div>
