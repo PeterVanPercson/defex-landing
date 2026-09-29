@@ -3,6 +3,7 @@ import { WorkcellScene } from './scene.ts';
 import type { Mode, View } from './scene.ts';
 import type { PartId } from './parts.ts';
 import { DemoRecorder } from './recording.ts';
+import { magnify } from './dock.ts';
 import { DEFAULT_CONFIG, modelXML } from './model.ts';
 import type { Configuration, Controller } from './model.ts';
 import type { Sample, Snapshot, Trial } from './engine.ts';
@@ -26,6 +27,7 @@ const partButtons=all<HTMLButtonElement>('[data-part]');
 const presetButtons=all<HTMLButtonElement>('[data-preset]');
 const reuseButton=document.querySelector<HTMLButtonElement>('[data-controller="reuse"]')!;
 const isEmbed=new URLSearchParams(location.search).has('embed');
+const autoplay=new URLSearchParams(location.search).has('play');
 let config:Configuration={...DEFAULT_CONFIG};
 let currentView:View|'part'='overview';
 let controller:Controller='fixed';
@@ -116,7 +118,7 @@ function film(){
   const stage=document.querySelector('.stage')!;
   if(stage.getBoundingClientRect().bottom<innerHeight*0.55)stage.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
 }
-function run(){if(configTimer)commitConfig();film();send({type:'run',controller});}
+function run(){if(configTimer)commitConfig();if(tourIndex<0){el('endcard').hidden=true;document.body.classList.remove('ended');}film();send({type:'run',controller});}
 function reset(){stopTour();send({type:'reset'});}
 function pause(){
   if(tourIndex>=0){
@@ -166,15 +168,15 @@ el('export').addEventListener('click',()=>send({type:'export'}));
 el('download-model').addEventListener('click',()=>download(modelXML(config),'defex-illustrative-connector.xml','application/xml'));
 
 const stories=[
-  ['A small shift stops the fixed path.','The connector hits the socket edge and backs off.'],
-  ['Try again, a little to the side.','The search changes position after each blocked attempt.'],
-  ['Keep the fit that passed.','Use the saved position, then run both tests again.'],
-  ['A good fit can hide a bad connection.','This time, an open circuit fails the electrical test.'],
+  ['The socket is 1 mm off. A robot on a fixed path gets stuck.','It follows its program, hits the edge, and stops.'],
+  ['Ours feels its way in.','It backs off, moves a hair, and tries again until the part slides in.'],
+  ['Next time, it goes straight in.','It remembers the spot that worked. Then it tests the part again.'],
+  ['Bad parts never ship.','This one goes in, but the connection test fails. The robot flags it.'],
 ];
 function tourStep(){
   if(tourIndex<0)return;
   tourPending=false;tourTimer=null;
-  text('tour-index',`${tourIndex+1} / 4`);text('tour-title',stories[tourIndex][0]);text('tour-description',stories[tourIndex][1]);
+  text('tour-index',`${tourIndex+1} / 4`);document.querySelectorAll('.tour-dots i').forEach((d,i)=>d.classList.toggle('on',i<=tourIndex));text('tour-title',stories[tourIndex][0]);text('tour-description',stories[tourIndex][1]);
   if(recorder){recorder.title=stories[tourIndex][0];recorder.description=stories[tourIndex][1];}
   configure(preset(tourIndex===3?'open':'shifted'));
   choose((['fixed','search','reuse','fixed'] as Controller[])[tourIndex]);run();
@@ -188,17 +190,18 @@ function scheduleNext(delay:number){
     if(tourIndex<3){tourIndex++;tourStep();}
     else{
       stopTour();
-      text('tour-label','Replay demo');
-      outcome('idle','Demo complete. Your turn.','Choose a scenario and compare the two insertion methods.');
+      el('endcard').hidden=false;document.body.classList.add('ended');
+      outcome('idle','Demo complete. Your turn.','Pick a scenario below and run it yourself.');
     }
   },delay);
   refreshControls();
 }
 function startTour(){
-  stopTour();selectMode('machine');tourIndex=0;
+  stopTour();el('endcard').hidden=true;document.body.classList.remove('ended');selectMode('machine');tourIndex=0;
   el('tour-story').hidden=false;document.body.classList.add('tour-active');
   el<HTMLSelectElement>('speed').value='2';send({type:'speed',speed:2});film();tourStep();refreshControls();
 }
+el('replay').addEventListener('click',startTour);
 el('tour').addEventListener('click',()=>tourIndex>=0?togglePlayback():startTour());
 el('embed-run').addEventListener('click',startTour);
 all<HTMLButtonElement>('[data-start-tour]').forEach(b=>b.addEventListener('click',()=>{if(tourIndex<0)startTour();}));
@@ -263,7 +266,7 @@ const journeySteps:Record<string,[string,string,number]>={
 function journey(s:Snapshot){
   const box=el('journey');box.classList.toggle('visible',s.phase!=='ready');
   const [title,detail,progress]=s.phase==='complete'?[s.accepted?'Passed.':'Failed.',s.accepted?'Both tests passed. Fit saved.':s.reason,1] as [string,string,number]:journeySteps[s.phase]??['Ready','',0];
-  text('journey-title',s.phase==='move'?`Try ${s.probes + 1}.`:title);text('journey-detail',detail);
+  text('journey-title',s.phase==='move'?`Try ${s.probes + 1}.`:title);text('tour-live',s.phase==='move'?`Try ${s.probes + 1}`:title.replace(/\.$/,''));text('journey-detail',detail);
   box.dataset.status=s.accepted===true?'pass':s.accepted===false?'fail':'run';
   el('journey-progress').style.width=`${progress*100}%`;
 }
@@ -309,6 +312,7 @@ function error(message:string){
 }
 worker.onerror=e=>error(e.message||'Reload the simulation to try again.');
 worker.onmessage=({data})=>{
+  if(data.type==='ready'&&autoplay&&scene&&!matchMedia('(prefers-reduced-motion: reduce)').matches)setTimeout(()=>{if(tourIndex<0&&!playing)startTour();},900);
   if(data.type==='ready'){
     ready=true;el('loading').hidden=true;
     el<HTMLButtonElement>('save-video').disabled=!scene||typeof MediaRecorder==='undefined';refreshControls();
@@ -329,4 +333,5 @@ document.addEventListener('keydown',e=>{
   if(e.code==='Space'){e.preventDefault();togglePlayback();}
   if(e.code==='KeyR'){e.preventDefault();reset();}
 });
+magnify(document.querySelector<HTMLElement>('.dock')!);
 settingInputs.forEach(input=>input.disabled=true);syncConfig();send({type:'init',config});
