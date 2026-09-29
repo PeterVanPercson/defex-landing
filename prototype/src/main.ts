@@ -88,11 +88,13 @@ function choose(next:Controller){
   controller=next;controllerButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.controller===next)));
   text('controller-description',descriptions[next]);
 }
+function dismissEnd(){if(tourIndex<0){el('endcard').hidden=true;document.body.classList.remove('ended');}}
 function selectView(view:View){
-  currentView=view;scene?.view(view);document.body.classList.toggle('focused',view!=='overview');cameraButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
+  dismissEnd();currentView=view;scene?.view(view);document.body.classList.toggle('focused',view!=='overview');cameraButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
+  if(view==='overview'&&(tourIndex>=0||playing))scene?.direct(true);
 }
 function selectMode(mode:Mode){
-  scene?.setMode(mode);document.body.classList.toggle('exploded',mode==='parts');modeButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
+  dismissEnd();scene?.setMode(mode);document.body.classList.toggle('exploded',mode==='parts');modeButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
 }
 function showPart(id:PartId){
   if(!scene)return;
@@ -285,7 +287,7 @@ function record(trial:Trial){
   if(tourIndex>=0){
     const expected=tourIndex===1||tourIndex===2;
     if(trial.accepted!==expected){stopTour();outcome('fail','Demo stopped.',`Unexpected result: ${trial.reason}. See the attempt below.`);return;}
-    scheduleNext(tourIndex<3?1100:1700);
+    scheduleNext(tourIndex===0?2200:tourIndex<3?1400:2000);
   }
 }
 function drawChart(){

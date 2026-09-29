@@ -29,7 +29,7 @@
     <header class="masthead">
         <p class="eyebrow">Join us</p>
         <h1 class="engraved">Build the machine that proves it worked.</h1>
-        <p class="masthead__lead">We’re developing a robot that assembles connectors, physically tests each joint and learns from its attempts. Join the team building the prototype’s hardware, controls and learning software, or help document the work.</p>
+        <p class="masthead__lead">We’re developing a robot that puts connectors together, physically tests each joint and learns from its attempts. Join the team building the prototype’s hardware, controls and learning software, or help document the work.</p>
     </header>
 
     <div id="roles">
@@ -51,7 +51,7 @@
         <p class="apply__lead">Send an example of your work. No cover letter needed.</p>
         <form class="form form--apply" action="{% url 'apply' %}#application" method="post">
             {% csrf_token %}
-            {% if messages %}{% for message in messages %}<p class="form__flash form__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
+            {% if messages and not form.errors %}{% for message in messages %}<p class="form__flash form__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
             {% if form.errors %}<div class="form__flash form__flash--error" role="alert">{% for field in form %}{% for error in field.errors %}<p id="{{ field.name }}-error">{{ field.label }}: {{ error }}</p>{% endfor %}{% endfor %}</div>{% endif %}
             <div class="form__row">
                 <label class="field"><span>Name</span><input type="text" name="name" autocomplete="name" maxlength="120" value="{{ form.name.value|default_if_none:'' }}"{% if form.name.errors %} aria-invalid="true" aria-describedby="name-error"{% endif %} required></label>
@@ -64,7 +64,7 @@
             </label>
             <label class="field"><span>Best work link (or describe below)</span><input type="url" name="work" placeholder="https://" maxlength="500" value="{{ form.work.value|default_if_none:'' }}"{% if form.work.errors %} aria-invalid="true" aria-describedby="work-error"{% endif %}></label>
             <label class="field"><span>LinkedIn or site</span><input type="url" name="profile" placeholder="https://" maxlength="500" value="{{ form.profile.value|default_if_none:'' }}"{% if form.profile.errors %} aria-invalid="true" aria-describedby="profile-error"{% endif %}></label>
-            <label class="field"><span>Your part in the project</span><textarea name="note" rows="3" maxlength="1800"{% if form.note.errors %} aria-invalid="true" aria-describedby="note-error"{% endif %}>{{ form.note.value|default_if_none:'' }}</textarea></label>
+            <label class="field"><span>Your part in the project</span><textarea name="note" rows="5" maxlength="1800"{% if form.note.errors %} aria-invalid="true" aria-describedby="note-error"{% endif %}>{{ form.note.value|default_if_none:'' }}</textarea></label>
             <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
             <button type="submit" class="cta">Send application</button>
         </form>

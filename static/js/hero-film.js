@@ -126,6 +126,17 @@
         const viaFetch = typeof fetch === 'function' && typeof URL === 'function' && typeof URL.createObjectURL === 'function';
 
         const imgs = new Array(N).fill(null);
+        // Decoded stills as ImageBitmaps. createImageBitmap decodes off the
+        // main thread and drawImage of a bitmap never decodes; an <img> that
+        // img.decode() reported ready was still decoded again inside the
+        // canvas raster at commit, 30-160 ms on the main thread per still.
+        // A decoded 1920 still is 8 MB, so only the window the decode runs
+        // ahead into, plus a few behind for a turn back, is kept; the rest
+        // are closed.
+        const bitmaps = new Array(N).fill(null);
+        const blobs = new Array(N).fill(null);
+        const useBitmaps = viaFetch && typeof createImageBitmap === 'function';
+        const KEEP_AHEAD = AHEAD + 2, KEEP_BEHIND = 8;
         const state = new Uint8Array(N); // 0 idle, 1 loading, 2 ready, 3 failed
         const decoded = new Uint8Array(N);   // decode asked for
         const decodedOk = new Uint8Array(N); // decode landed
@@ -177,7 +188,18 @@
             if (viaFetch) {
                 fetch(url(i), { priority })
                     .then((response) => (response.ok ? response.blob() : Promise.reject(response.status)))
-                    .then((blob) => { if (!on) return; img.objectUrl = URL.createObjectURL(blob); img.src = img.objectUrl; })
+                    .then((blob) => {
+                    if (!on) return;
+                    if (useBitmaps) {
+                        blobs[i] = blob;
+                        imgs[i] = img;
+                        if (i === 0 || Math.abs(i - Math.round(shown)) <= AHEAD) {
+                            predecode(i, true);
+                        } else { img.onload(); }
+                        return;
+                    }
+                    img.objectUrl = URL.createObjectURL(blob); img.src = img.objectUrl;
+                })
                     .catch(() => { if (on) img.onerror(); });
             } else {
                 if ('fetchPriority' in img) img.fetchPriority = priority;
@@ -207,7 +229,21 @@
         // ahead of time it happens off the main thread, and drawImage then
         // costs nothing. Only the window around the shown frame is decoded,
         // so a full set never sits decoded in memory at once.
-        function predecode(i) {
+        function predecode(i, first) {
+            if (useBitmaps && blobs[i]) {
+                if (decoded[i] || (!first && state[i] !== 2)) return;
+                decoded[i] = 1;
+                createImageBitmap(blobs[i]).then((bm) => {
+                    if (!on || !decoded[i]) { bm.close(); return; }
+                    bitmaps[i] = bm;
+                    decodedOk[i] = 1;
+                    if (state[i] === 1) imgs[i].onload(); else paint();
+                }).catch(() => {
+                    decoded[i] = 0;
+                    if (state[i] === 1) imgs[i].onerror();
+                });
+                return;
+            }
             if (decoded[i] || state[i] !== 2) return;
             decoded[i] = 1;
             if (!imgs[i].decode) { decodedOk[i] = 1; return; }
@@ -220,12 +256,26 @@
             const ahead = Math.min(24, 8 + Math.round(Math.abs(target - shown)));
             for (let d = 1; d <= ahead; d++) { const i = f + d * direction; if (i >= 0 && i < N) predecode(i); }
             for (let d = 1; d <= 2; d++) { const i = f - d * direction; if (i >= 0 && i < N) predecode(i); }
+            if (useBitmaps) {
+                for (let i = 0; i < N; i++) {
+                    if (bitmaps[i] && i !== drawn && ((i - f) * direction > KEEP_AHEAD || (f - i) * direction > KEEP_BEHIND)) {
+                        bitmaps[i].close(); bitmaps[i] = null; decoded[i] = decodedOk[i] = 0;
+                    }
+                }
+            }
         }
         function nearest(f) {
             if (decodedOk[f]) return f;
             for (let d = 1; d <= NEAR; d++) {
                 if (f - d >= 0 && decodedOk[f - d]) return f - d;
                 if (f + d < N && decodedOk[f + d]) return f + d;
+            }
+            if (useBitmaps) {
+                for (let d = NEAR + 1; d < N; d++) {
+                    if (f - d >= 0 && decodedOk[f - d]) return f - d;
+                    if (f + d < N && decodedOk[f + d]) return f + d;
+                }
+                return -1;
             }
             if (state[f] === 2) return f;
             for (let d = 1; d < N; d++) {
@@ -242,7 +292,7 @@
             if (use < 0 || use === drawn) return;
             drawn = use;
             if (ctxW !== W || ctxH !== H) { frames.width = ctxW = W; frames.height = ctxH = H; }
-            ctx.drawImage(imgs[use], 0, 0, W, H);
+            ctx.drawImage(bitmaps[use] || imgs[use], 0, 0, W, H);
             if (!live) {
                 live = true;
                 clearTimeout(firstTimer);
@@ -306,6 +356,7 @@
             film.hidden = false;
             live = false;
             drawn = -1;
+            for (let i = 0; i < N; i++) if (bitmaps[i]) { bitmaps[i].close(); bitmaps[i] = null; decoded[i] = decodedOk[i] = 0; }
         }
         function pause() {
             cancelAnimationFrame(frameId);

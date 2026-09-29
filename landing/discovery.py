@@ -19,7 +19,7 @@ PUBLIC_COMPANY = {
     "legal_name": "Defex Robotics, Inc.",
     "alternate_name": "Defex Robotics",
     "url": CANONICAL_ORIGIN + "/",
-    "description": "Defex is developing self-teaching assembly robots for manufacturing, starting with connector assembly.",
+    "description": "Defex is developing self-teaching robots for manufacturing, starting with connectors.",
     "location": "San Francisco, California, United States",
     # headquarters first, then the other two offices, west to east
     "offices": [
@@ -29,14 +29,14 @@ PUBLIC_COMPANY = {
     ],
     "as_of": COMPANY_UPDATED.isoformat(),
     "product": {
-        "focus": "Connector assembly",
-        "stage": "Assembly cell in development",
-        "approach": "A robot attempts an assembly, a physical test scores the result, and a reset prepares the next attempt.",
+        "focus": "Connectors",
+        "stage": "Connector cell in development",
+        "approach": "A robot attempts a connection, a physical test scores the result, and a reset prepares the next attempt.",
         "prior_product": "Vision inspection prototype built on NVIDIA Jetson Orin",
     },
     "paid_waitlist": {
         "factories": 21,
-        "definition": "Factories that paid to hold a place before the first assembly cell ships.",
+        "definition": "Factories that paid to hold a place before the first connector cell ships.",
         "as_of": COMPANY_UPDATED.isoformat(),
     },
     "founders": [
@@ -213,6 +213,7 @@ def sitemap(request):
     # Do not manufacture lastmod=date.today(). Omit unknown modification dates.
     pages = [(reverse("home"), None), (reverse("careers"), None),
              (reverse("blog"), None), (reverse("why_us"), None),
+             (reverse("prototype"), None),
              (reverse("security"), None),
              (reverse("privacy"), None), (reverse("terms"), None)]
     pages.extend((job_path(job), JOBS_UPDATED) for job in JOBS)
