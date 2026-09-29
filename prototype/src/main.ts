@@ -114,7 +114,7 @@ function stopTour(){
 }
 function film(){
   if(!scene)return;
-  currentView='overview';cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));scene.direct(true);
+  if(currentView!=='flight'){currentView='overview';cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));scene.direct(true);}
   const stage=document.querySelector('.stage')!;
   if(stage.getBoundingClientRect().bottom<innerHeight*0.55)stage.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
 }
@@ -152,7 +152,7 @@ el('run').addEventListener('click',togglePlayback);
 el('reset').addEventListener('click',reset);
 el('speed').addEventListener('change',()=>send({type:'speed',speed:Number(el<HTMLSelectElement>('speed').value)}));
 el('forget').addEventListener('click',()=>{stopTour();send({type:'forget'});if(controller==='reuse')choose('fixed');});
-for(const b of cameraButtons)b.addEventListener('click',()=>selectView(b.dataset.view as View));
+for(const b of cameraButtons)b.addEventListener('click',()=>selectView(currentView===b.dataset.view?'overview':b.dataset.view as View));
 for(const b of modeButtons)b.addEventListener('click',()=>selectMode(b.dataset.mode as Mode));
 for(const b of partButtons)b.addEventListener('click',()=>showPart(b.dataset.part as PartId));
 el('retry').addEventListener('click',()=>location.reload());

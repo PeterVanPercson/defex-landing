@@ -553,6 +553,12 @@ export class WorkcellScene {
       return;
     }
     this.desiredTarget.set(0, 0, 30 + lift);
+    if (this.viewMode === 'flight') {
+      const bearing = this.camera.position.clone().sub(this.controls.target).setZ(0).normalize();
+      const flat = Math.hypot(this.direction.x, this.direction.y);
+      this.desiredPosition.set(bearing.x * flat, bearing.y * flat, this.direction.z).normalize().multiplyScalar(d).add(this.desiredTarget);
+      return;
+    }
     const dir = this.viewMode === 'side' ? new THREE.Vector3(1, -0.16, 0.2) : this.viewMode === 'top' ? new THREE.Vector3(0.001, -0.08, 1) : this.direction;
     this.desiredPosition.copy(dir).normalize().multiplyScalar(this.viewMode === 'top' ? this.baseDistance * (this.mode === 'parts' ? 1.02 : 0.92) : d).add(this.desiredTarget);
   }
@@ -667,13 +673,7 @@ export class WorkcellScene {
     this.stack[1].emissiveIntensity = running && accepted == null ? 0.3 + blink * 3.6 : 0.08;
     this.stack[2].emissiveIntensity = accepted === false ? 4.2 : 0.08;
 
-    if (this.viewMode === 'flight' && !this.dragging && !this.reduceMotion) {
-      this.flightTime += dt / 1000;
-      const a = this.flightTime * 0.14 - 0.9, d = this.baseDistance * (this.mode === 'parts' ? (this.width < 700 ? 1.75 : 1.42) : 1);
-      this.desiredTarget.set(0, 0, 30 + (this.mode === 'parts' ? 34 : 0));
-      this.desiredPosition.set(Math.cos(a) * d * 0.84, Math.sin(a) * d * 0.84, d * (0.5 + Math.sin(this.flightTime * 0.1) * 0.1)).add(this.desiredTarget);
-      if (!this.tween) { this.camera.position.copy(this.desiredPosition); this.controls.target.copy(this.desiredTarget); }
-    } else if (moving && this.viewMode === 'part') this.goal();
+    if (moving && this.viewMode === 'part') this.goal();
     if (this.director && !this.dragging) {
       this.tween = null;
       this.directorGoal(now);
@@ -689,10 +689,11 @@ export class WorkcellScene {
       this.camera.position.add(this.controls.target);
       if (k >= 1) { this.tween = null; this.animating = false; }
     }
+    const flying = this.viewMode === 'flight' && !this.reduceMotion && !this.dragging && !this.tween && !this.director;
     const idle = !this.reduceMotion && !this.dragging && !this.tween && !this.director && this.viewMode === 'overview' && now - this.lastInteraction > 7000 && !running;
-    this.autoSpin = idle ? Math.min(1, this.autoSpin + dt / 2500) : 0;
+    this.autoSpin = flying || idle ? Math.min(1, this.autoSpin + dt / (flying ? 1400 : 2500)) : 0;
     this.controls.autoRotate = this.autoSpin > 0;
-    this.controls.autoRotateSpeed = 0.3 * ease(this.autoSpin);
+    this.controls.autoRotateSpeed = (flying ? 1.6 : 0.3) * ease(this.autoSpin);
     this.controls.dampingFactor = damping(dt, 170);
     this.controls.update(dt / 1000);
 
