@@ -10,7 +10,7 @@
     if (!stage || !stage.animate) return;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    const STRIPS = 6, STAGGER = 35, HOLD = 2600, SAMPLES = 26;
+    const STRIPS = 6, STAGGER = 25, HOLD = 1400, SAMPLES = 26;
 
     const spring = ((stiffness, damping) => {
         const dt = 1 / 240;
@@ -26,7 +26,7 @@
         const values = [];
         for (let i = 0; i < SAMPLES; i++) values.push(raw[Math.round(i / (SAMPLES - 1) * (raw.length - 1))]);
         return { values, ms: Math.max(180, Math.round(t * 1000)) };
-    })(210, 15);
+    })(340, 20);
 
     const last = spring.values.length - 1;
     const OUT = spring.values.map((p, i) => ({
