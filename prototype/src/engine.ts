@@ -2,6 +2,8 @@ import type loadMujoco from '@mujoco/mujoco';
 import { DEFAULT_CONFIG, DT, MODEL_VERSION, PLUG_HALF_Z, SEATED_Z, START_Z, TOP_Z, modelXML, probePoints, validConfig } from './model.ts';
 import type { Configuration, Controller } from './model.ts';
 
+const APPROACH_Z = 0.028, CLEAR_Z = 0.0268;
+
 type Module = Awaited<ReturnType<typeof loadMujoco>>;
 type Phase = 'ready' | 'approach' | 'insert' | 'backoff' | 'move' | 'electrical' | 'retention' | 'reset' | 'complete';
 export interface Sample { t: number; x: number; y: number; z: number; force: number; phase: Phase }
@@ -44,6 +46,7 @@ export class ConnectorEngine {
   latchEngaged = false;
   blockedTime = 0;
   completedTrial: Trial | null = null;
+  plan: { from: number[]; to: number[]; start: number; duration: number } | null = null;
 
   constructor(mj: Module, config = DEFAULT_CONFIG) {
     this.mj = mj;
@@ -78,11 +81,29 @@ export class ConnectorEngine {
     this.resetState();
     this.controller = controller;
     this.points = controller === 'reuse' ? [this.calibration!.slice() as [number, number]] : probePoints();
-    this.target[0] = this.points[0][0]; this.target[1] = this.points[0][1];
+    this.target[0] = this.data.qpos[0]; this.target[1] = this.data.qpos[1];
     this.enter('approach');
   }
 
-  enter(phase: Phase) { this.phase = phase; this.entered = this.clock; this.blockedTime = 0; }
+  enter(phase: Phase) {
+    this.phase = phase; this.entered = this.clock; this.blockedTime = 0; this.plan = null;
+    const [x, y] = this.target, q = this.data.qpos;
+    if (phase === 'approach') this.glide([this.points[0][0], this.points[0][1], APPROACH_Z], 1.1);
+    if (phase === 'backoff') this.glide([x, y, CLEAR_Z], 0.24);
+    if (phase === 'move') this.glide([this.points[this.probe][0], this.points[this.probe][1], CLEAR_Z], 0.3);
+    if (phase === 'retention') this.glide([x, y, SEATED_Z + 0.001], 0.2);
+    if (phase === 'reset') this.glide([x, y, START_Z], 1.05);
+    if (phase === 'insert') this.target[2] = Math.min(this.target[2], q[2] + 0.0002);
+  }
+
+  // Minimum-jerk moves: the velocity profile of a relaxed human reach.
+  glide(to: number[], duration: number) { this.plan = { from: this.target.slice(0, 3), to, start: this.clock, duration }; }
+  follow() {
+    if (!this.plan) return true;
+    const t = Math.min(1, (this.clock - this.plan.start) / this.plan.duration), s = t * t * t * (10 - 15 * t + 6 * t * t);
+    for (let i = 0; i < 3; i++) this.target[i] = this.plan.from[i] + (this.plan.to[i] - this.plan.from[i]) * s;
+    return t >= 1;
+  }
 
   setLatch(active: boolean) {
     // The 3.14 WASM bool-array getter is unbound; the state API writes the same field.
@@ -112,47 +133,45 @@ export class ConnectorEngine {
     const toward = (v: number, to: number, speed: number) => v + Math.sign(to - v) * Math.min(Math.abs(to - v), speed * DT);
     switch (this.phase) {
       case 'approach':
-        this.target[2] = toward(this.target[2], 0.028, 0.014);
-        if (Math.abs(q[2] - 0.028) < 0.00015 && elapsed > 0.7) this.enter('insert');
+        if (this.follow() && elapsed > 1.3) this.enter('insert');
         break;
-      case 'insert':
-        this.target[2] = toward(this.target[2], SEATED_Z, 0.008);
+      case 'insert': {
+        const ramp = Math.min(1, elapsed / 0.3), speed = 0.008 * ramp * ramp * (3 - 2 * ramp);
+        this.target[2] = toward(this.target[2], SEATED_Z, Math.max(speed, 0.0005));
         this.blockedTime = this.force > 4 ? this.blockedTime + DT : 0;
         if (q[2] < SEATED_Z + 0.00025) {
           this.target[2] = SEATED_Z;
           if (this.config.fault !== 'latch') this.setLatch(true);
           this.enter('electrical');
-        } else if (this.blockedTime > 0.015 || elapsed > 2.7) {
+        } else if (this.blockedTime > 0.015 || elapsed > 3.2) {
           if (this.controller === 'search' && this.probe < this.points.length - 1) {
             this.enter('backoff');
           } else this.finish(this.controller === 'search' ? 'Search range exhausted' : 'Contact stopped insertion');
         }
         break;
+      }
       case 'backoff':
-        this.target[2] = toward(this.target[2], 0.028, 0.026);
-        if (q[2] > 0.0278) { this.probe++; this.enter('move'); }
+        if (this.follow() && q[2] > CLEAR_Z - 0.0003) { this.probe++; this.enter('move'); }
         break;
       case 'move':
-        this.target[0] = toward(this.target[0], this.points[this.probe][0], 0.006);
-        this.target[1] = toward(this.target[1], this.points[this.probe][1], 0.006);
-        if (Math.abs(q[0] - this.points[this.probe][0]) < 0.00003 && Math.abs(q[1] - this.points[this.probe][1]) < 0.00003 && elapsed > 0.12) this.enter('insert');
+        if (this.follow() && Math.abs(q[0] - this.target[0]) < 0.00003 && Math.abs(q[1] - this.target[1]) < 0.00003) this.enter('insert');
         break;
       case 'electrical':
-        if (elapsed > 0.4) {
+        this.target[2] = elapsed < 0.14 ? SEATED_Z - 0.00025 * Math.sin(Math.PI * elapsed / 0.14) : SEATED_Z;
+        if (elapsed > 0.45) {
           this.continuity = this.config.fault !== 'open' && q[2] < SEATED_Z + 0.0003;
           this.enter('retention');
         }
         break;
       case 'retention':
-        this.target[2] = SEATED_Z + 0.001;
-        if (elapsed > 0.45) {
+        this.follow();
+        if (elapsed > 0.5) {
           this.retention = Math.abs(q[2] - SEATED_Z) < 0.0003;
           this.finish(!this.continuity ? 'Electrical check failed' : !this.retention ? 'Retention check failed' : 'Both checks passed');
         }
         break;
       case 'reset':
-        this.target[2] = toward(this.target[2], START_Z, 0.020);
-        if (q[2] > START_Z - 0.0001 && elapsed > 0.5) {
+        if (this.follow() && q[2] > START_Z - 0.0001) {
           this.enter('complete');
           this.completedTrial = {
             id: this.trials.length + 1, controller: this.controller, config: {...this.config}, model: MODEL_VERSION,
