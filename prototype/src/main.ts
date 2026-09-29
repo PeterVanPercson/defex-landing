@@ -27,6 +27,7 @@ const presetButtons=all<HTMLButtonElement>('[data-preset]');
 const reuseButton=document.querySelector<HTMLButtonElement>('[data-controller="reuse"]')!;
 const isEmbed=new URLSearchParams(location.search).has('embed');
 let config:Configuration={...DEFAULT_CONFIG};
+let currentView:View|'part'='overview';
 let controller:Controller='fixed';
 let ready=false,playing=false;
 let state:Snapshot|null=null;
@@ -43,7 +44,7 @@ const worker=new Worker(new URL('./simulation.worker.ts',import.meta.url),{type:
 if(isEmbed)document.body.classList.add('embed');
 
 if(new URLSearchParams(location.search).get('view')!=='schematic'){
-  try{scene=new WorkcellScene(el('scene'),config,{labels:el('labels'),tooltip:el('tooltip'),onPick:()=>{document.body.classList.add('focused');cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));}},isEmbed);}
+  try{scene=new WorkcellScene(el('scene'),config,{labels:el('labels'),tooltip:el('tooltip'),onDirector:on=>document.body.classList.toggle('focused',on||currentView!=='overview'),onPick:()=>{currentView='part';document.body.classList.add('focused');cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));}},isEmbed);}
   catch(error){console.warn('3D renderer unavailable',error);}
 }else text('fallback-title','Live side view of the simulation.');
 if(!scene){el('fallback').hidden=false;[...cameraButtons,...modeButtons].forEach(b=>b.disabled=true);}
@@ -86,14 +87,14 @@ function choose(next:Controller){
   text('controller-description',descriptions[next]);
 }
 function selectView(view:View){
-  scene?.view(view);document.body.classList.toggle('focused',view!=='overview');cameraButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
+  currentView=view;scene?.view(view);document.body.classList.toggle('focused',view!=='overview');cameraButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
 }
 function selectMode(mode:Mode){
   scene?.setMode(mode);document.body.classList.toggle('exploded',mode==='parts');modeButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
 }
 function showPart(id:PartId){
   if(!scene)return;
-  scene.focusPart(id);document.body.classList.add('focused');cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));
+  currentView='part';scene.focusPart(id);document.body.classList.add('focused');cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));
   const stage=document.querySelector('.stage')!;
   if(stage.getBoundingClientRect().bottom<innerHeight*0.6)stage.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
 }
@@ -109,7 +110,13 @@ function stopTour(){
   el('tour-story').hidden=true;document.body.classList.remove('tour-active');
   finishRecording();refreshControls();
 }
-function run(){if(configTimer)commitConfig();send({type:'run',controller});}
+function film(){
+  if(!scene)return;
+  currentView='overview';cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));scene.direct(true);
+  const stage=document.querySelector('.stage')!;
+  if(stage.getBoundingClientRect().bottom<innerHeight*0.55)stage.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+}
+function run(){if(configTimer)commitConfig();film();send({type:'run',controller});}
 function reset(){stopTour();send({type:'reset'});}
 function pause(){
   if(tourIndex>=0){
@@ -190,7 +197,7 @@ function scheduleNext(delay:number){
 function startTour(){
   stopTour();selectMode('machine');tourIndex=0;
   el('tour-story').hidden=false;document.body.classList.add('tour-active');
-  el<HTMLSelectElement>('speed').value='2';send({type:'speed',speed:2});selectView('connector');tourStep();refreshControls();
+  el<HTMLSelectElement>('speed').value='2';send({type:'speed',speed:2});film();tourStep();refreshControls();
 }
 el('tour').addEventListener('click',()=>tourIndex>=0?togglePlayback():startTour());
 el('embed-run').addEventListener('click',startTour);

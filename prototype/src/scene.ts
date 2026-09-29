@@ -2,6 +2,11 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { dimensions } from './model.ts';
 import type { Configuration } from './model.ts';
 import type { Snapshot, Sample } from './engine.ts';
@@ -11,23 +16,25 @@ import type { PartId } from './parts.ts';
 
 export type View = 'overview' | 'side' | 'top' | 'connector' | 'flight' | 'part';
 export type Mode = 'machine' | 'inside' | 'parts';
-export interface Hud { labels: HTMLElement; tooltip: HTMLElement; onPick?: (id: PartId) => void }
+export interface Hud { labels: HTMLElement; tooltip: HTMLElement; onPick?: (id: PartId) => void; onDirector?: (on: boolean) => void }
 
 const FONT = "Geist, 'Helvetica Neue', Arial, sans-serif";
 const MONO = "'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace";
 const mat = (color: number, metalness: number, roughness: number, extra: THREE.MeshStandardMaterialParameters = {}) =>
   new THREE.MeshStandardMaterial({ color, metalness, roughness, ...extra });
+const paint = (color: number, metalness: number, roughness: number, clearcoat: number) =>
+  new THREE.MeshPhysicalMaterial({ color, metalness, roughness, clearcoat, clearcoatRoughness: 0.22 });
 const M = {
-  base: mat(0x262b32, 0.85, 0.34),
-  body: mat(0x30363f, 0.75, 0.3),
+  base: paint(0x262b32, 0.8, 0.36, 0.35),
+  body: paint(0x30363f, 0.7, 0.32, 0.45),
   edge: mat(0x707986, 0.85, 0.24),
   silver: mat(0xc3cad0, 0.9, 0.2),
   dark: mat(0x12171d, 0.45, 0.4),
   rubber: mat(0x0b1015, 0.1, 0.65),
-  ivory: mat(0xe3e1d6, 0.2, 0.32),
+  ivory: paint(0xe6e4d9, 0.05, 0.4, 0.25),
   gold: mat(0xd2ad68, 0.9, 0.22),
   amber: mat(0xff7a1a, 0.5, 0.3),
-  glow: mat(0xff7a1a, 0.2, 0.25, { emissive: 0xff7a1a, emissiveIntensity: 1.6 }),
+  glow: mat(0xff7a1a, 0.2, 0.25, { emissive: 0xff7a1a, emissiveIntensity: 3.2 }),
 };
 const shared = new Set<THREE.Material>(Object.values(M));
 
@@ -150,6 +157,19 @@ export class WorkcellScene {
   measured = 0;
   raycaster = new THREE.Raycaster();
   direction = new THREE.Vector3(0.62, -0.78, 0.5).normalize();
+  composer: EffectComposer | null = null;
+  gtao: GTAOPass | null = null;
+  director = false;
+  dirPos = new THREE.Vector3();
+  dirTarget = new THREE.Vector3();
+  phase = 'ready';
+  phaseStart = performance.now();
+  clickAt = -1e9;
+  resultAt = -1e9;
+  latched = false;
+  latchParts: { mesh: THREE.Mesh; y: number }[] = [];
+  flex = 0;
+  pulses: THREE.Mesh[] = [];
 
   constructor(container: HTMLElement, config: Configuration, hud: Hud | null = null, embed = false) {
     this.container = container; this.config = config; this.hud = hud; this.embed = embed;
@@ -167,7 +187,7 @@ export class WorkcellScene {
     Object.assign(this.controls, { enableDamping: true, dampingFactor: 0.07, enablePan: false, minDistance: 45, maxDistance: 520, maxPolarAngle: Math.PI * 0.49, minPolarAngle: 0.02, rotateSpeed: 0.55, zoomSpeed: 0.7, autoRotateSpeed: 0.35 });
     if (embed) this.controls.enableZoom = false;
     if (matchMedia('(pointer: coarse)').matches) { this.controls.touches = { ONE: -1 as THREE.TOUCH, TWO: THREE.TOUCH.DOLLY_ROTATE }; this.renderer.domElement.style.touchAction = 'pan-y'; }
-    this.controls.addEventListener('start', () => { this.dragging = true; this.animating = false; this.tween = null; this.autoSpin = 0; this.lastInteraction = performance.now(); });
+    this.controls.addEventListener('start', () => { this.direct(false); this.dragging = true; this.animating = false; this.tween = null; this.autoSpin = 0; this.lastInteraction = performance.now(); });
     this.controls.addEventListener('end', () => { this.dragging = false; this.lastInteraction = performance.now(); });
 
     const env = new RoomEnvironment(), pmrem = new THREE.PMREMGenerator(this.renderer);
@@ -180,8 +200,9 @@ export class WorkcellScene {
     const warm = new THREE.PointLight(0xffbd42, 2.4, 0, 0); warm.position.set(-60, -30, 70); this.scene.add(warm);
     const front = new THREE.DirectionalLight(0xffffff, 1); front.position.set(90, -120, 40); this.scene.add(front);
 
+    if (!embed && !matchMedia('(pointer: coarse)').matches && container.clientWidth > 900) this.setupFx();
     this.scene.add(this.cell);
-    this.buildGround(); this.buildTable(); this.buildGantry(); this.buildTool(); this.buildTester(); this.buildConnector();
+    this.buildGround(); this.buildTable(); this.buildGantry(); this.buildTool(); this.buildTester(); this.buildConnector(); this.buildPulses();
     this.trail = line(this.cell, [new THREE.Vector3(0, 0, 27)], 0xff8a3a, 0.8);
     this.trail.geometry.setAttribute('position', new THREE.BufferAttribute(this.trailPositions, 3).setUsage(THREE.DynamicDrawUsage));
     this.trail.geometry.setDrawRange(0, 0); this.trail.frustumCulled = false;
@@ -202,6 +223,40 @@ export class WorkcellScene {
     this.layout();
     this.camera.position.copy(this.desiredPosition); this.controls.target.copy(this.desiredTarget); this.controls.update();
     this.wake();
+  }
+
+  setupFx() {
+    const composer = new EffectComposer(this.renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }));
+    composer.addPass(new RenderPass(this.scene, this.camera));
+    const gtao = new GTAOPass(this.scene, this.camera, 1, 1);
+    gtao.output = GTAOPass.OUTPUT.Default; gtao.blendIntensity = 0.9;
+    gtao.updateGtaoMaterial({ radius: 6, distanceExponent: 1.5, thickness: 3, scale: 1.25, samples: 16 });
+    gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });
+    composer.addPass(gtao);
+    composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), 0.28, 0.45, 2.4));
+    composer.addPass(new OutputPass());
+    this.composer = composer; this.gtao = gtao; this.renderer.toneMappingExposure = 1.0;
+    const bg = canvasTexture(1280, 800), g = bg.ctx.createRadialGradient(704, 440, 0, 704, 440, 900);
+    g.addColorStop(0, '#171b21'); g.addColorStop(0.55, '#08090b'); g.addColorStop(1, '#000');
+    bg.ctx.fillStyle = g; bg.ctx.fillRect(0, 0, 1280, 800);
+    const pixels = bg.ctx.getImageData(0, 0, 1280, 800);
+    for (let i = 0; i < pixels.data.length; i += 4) { const n = (Math.random() - 0.5) * 3; pixels.data[i] += n; pixels.data[i + 1] += n; pixels.data[i + 2] += n; }
+    bg.ctx.putImageData(pixels, 0, 0); bg.texture.needsUpdate = true;
+    this.scene.background = bg.texture;
+  }
+
+  sizeFx() {
+    if (!this.composer) return;
+    const ratio = Math.min(this.pixelRatio, 1.5);
+    this.composer.setPixelRatio(ratio); this.composer.setSize(this.width, this.height);
+    this.gtao?.setSize(Math.round(this.width * ratio / 2), Math.round(this.height * ratio / 2));
+  }
+
+  buildPulses() {
+    for (let i = 0; i < 2; i++) {
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 96), new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, side: THREE.DoubleSide }));
+      ring.visible = false; this.cell.add(ring); this.pulses.push(ring);
+    }
   }
 
   part(id: PartId) {
@@ -405,8 +460,7 @@ export class WorkcellScene {
     this.plugCover.push(box(this.plug, 'Connector housing', [d.halfX * 2000, d.halfY * 2000, 8], [0, 0, 0], housing, 0.38));
     box(this.plug, 'Grasp extension', [11.2, 4.4, 6.5], [0, 0, 7.25], M.ivory, 0.3);
     for (const x of [-d.halfX * 1000 + .6, d.halfX * 1000 - .6]) box(this.plug, 'Mold rib', [.5, .55, 6], [x, -d.halfY * 1000 - .1, 0], M.ivory, .14);
-    box(this.plug, 'Latch tab', [2, .7, 5], [0, -d.halfY * 1000 - .45, -.3], M.ivory, .15);
-    box(this.plug, 'Latch hook', [2.3, 1, 1], [0, -d.halfY * 1000 - .55, -2.6], M.ivory, .2);
+    this.latchParts = [box(this.plug, 'Latch tab', [2, .7, 5], [0, -d.halfY * 1000 - .45, -.3], M.ivory, .15), box(this.plug, 'Latch hook', [2.3, 1, 1], [0, -d.halfY * 1000 - .55, -2.6], M.ivory, .2)].map(mesh => ({ mesh, y: mesh.position.y }));
     for (const group of [this.socket, this.plug]) group.traverse(object => {
       if (object instanceof THREE.Mesh) for (const m of [object.material].flat()) if (!shared.has(m)) this.connectorMaterials.add(m);
     });
@@ -450,11 +504,30 @@ export class WorkcellScene {
   }
   setInspect(on: boolean) { this.setMode(on ? 'inside' : 'machine'); }
   view(mode: View | 'cell' | 'close') {
+    this.direct(false);
     this.viewMode = mode === 'cell' ? 'overview' : mode === 'close' ? 'connector' : mode;
     this.lastInteraction = performance.now(); this.flightTime = 0;
     this.goal(); this.startTween();
     if (this.reduceMotion) this.snap();
     this.wake();
+  }
+  direct(on: boolean) {
+    const next = on && !this.reduceMotion;
+    if (next && !this.director) { this.viewMode = 'overview'; this.tween = null; this.dirPos.copy(this.camera.position); this.dirTarget.copy(this.controls.target); }
+    if (next !== this.director) { this.director = next; this.hud?.onDirector?.(next); }
+    this.wake();
+  }
+  directorGoal(now: number) {
+    const age = (now - this.phaseStart) / 1000, k = this.width < 700 ? 1.95 : 1, socket = this.socket.getWorldPosition(new THREE.Vector3());
+    let az = 0, el = 0.5, dist = this.baseDistance, target = new THREE.Vector3(0, 0, 30);
+    if (this.phase === 'approach') { target.set(socket.x, socket.y, 27); dist = (235 - Math.min(1, age / 1.4) * 40) * k; az = -0.34; el = 0.44; }
+    else if (['insert', 'backoff', 'move'].includes(this.phase)) { target.set(socket.x, socket.y, 25); dist = 200 * k; az = -0.34 + Math.sin(now / 5200) * 0.07; el = 0.33; }
+    else if (this.phase === 'electrical' || this.phase === 'retention') { target.set(socket.x * 0.55 + 45 * 0.45, socket.y * 0.55 - 27 * 0.45, 17); dist = 215 * k; az = -0.1; el = 0.36; }
+    else { this.desiredTarget.copy(target); this.desiredPosition.copy(this.direction).multiplyScalar(dist).add(target); return; }
+    if (this.width < 700) target.z -= 14;
+    const b = Math.atan2(this.direction.y, this.direction.x) + az;
+    this.desiredTarget.copy(target);
+    this.desiredPosition.set(Math.cos(b) * Math.cos(el), Math.sin(b) * Math.cos(el), Math.sin(el)).multiplyScalar(dist).add(target);
   }
   focusPart(id: PartId) { this.focus = id; this.view('part'); }
   snap() { this.camera.position.copy(this.desiredPosition); this.controls.target.copy(this.desiredTarget); this.animating = false; this.tween = null; }
@@ -489,6 +562,7 @@ export class WorkcellScene {
     if (!r.width || !r.height) return;
     this.width = r.width; this.height = r.height;
     this.renderer.setSize(r.width, r.height);
+    this.sizeFx();
     this.camera.aspect = r.width / r.height;
     const wide = r.width > 1100 && !this.embed;
     this.shift = wide ? -r.width * 0.07 : 0;
@@ -503,6 +577,11 @@ export class WorkcellScene {
   }
 
   update(state: Snapshot, samples: Sample[], epoch: number) {
+    const now0 = performance.now();
+    if (state.phase !== this.phase) { this.phase = state.phase; this.phaseStart = now0; }
+    if (state.latchEngaged && !this.latched) this.clickAt = now0;
+    if (state.accepted !== null && this.state?.accepted == null && state.phase !== 'ready') this.resultAt = now0;
+    this.latched = state.latchEngaged;
     this.state = state;
     if (epoch !== this.poses.epoch) { this.trailStart = -1; this.trailCount = 0; }
     this.poses.push(state.pose, performance.now(), epoch);
@@ -584,9 +663,9 @@ export class WorkcellScene {
     const running = !!this.state && this.state.phase !== 'ready' && this.state.phase !== 'complete';
     const accepted = this.state?.accepted;
     const blink = 0.5 - 0.5 * Math.cos(now / 260);
-    this.stack[0].emissiveIntensity = accepted === true ? 2.4 : !running ? 0.5 : 0.08;
-    this.stack[1].emissiveIntensity = running && accepted == null ? 0.25 + blink * 2 : 0.08;
-    this.stack[2].emissiveIntensity = accepted === false ? 2.4 : 0.08;
+    this.stack[0].emissiveIntensity = accepted === true ? 4.2 : !running ? 0.9 : 0.08;
+    this.stack[1].emissiveIntensity = running && accepted == null ? 0.3 + blink * 3.6 : 0.08;
+    this.stack[2].emissiveIntensity = accepted === false ? 4.2 : 0.08;
 
     if (this.viewMode === 'flight' && !this.dragging && !this.reduceMotion) {
       this.flightTime += dt / 1000;
@@ -595,6 +674,14 @@ export class WorkcellScene {
       this.desiredPosition.set(Math.cos(a) * d * 0.84, Math.sin(a) * d * 0.84, d * (0.5 + Math.sin(this.flightTime * 0.1) * 0.1)).add(this.desiredTarget);
       if (!this.tween) { this.camera.position.copy(this.desiredPosition); this.controls.target.copy(this.desiredTarget); }
     } else if (moving && this.viewMode === 'part') this.goal();
+    if (this.director && !this.dragging) {
+      this.tween = null;
+      this.directorGoal(now);
+      const a = damping(dt, 420);
+      this.dirPos.lerp(this.desiredPosition, a); this.dirTarget.lerp(this.desiredTarget, a);
+      this.camera.position.lerp(this.dirPos, a); this.controls.target.lerp(this.dirTarget, a);
+      if (this.phase === 'complete' && now - this.phaseStart > 2600) { this.direct(false); this.viewMode = 'overview'; this.goal(); this.startTween(); }
+    }
     if (this.tween && !this.dragging) {
       const k = this.tween.duration ? Math.min(1, (now - this.tween.start) / this.tween.duration) : 1, e = ease(k);
       this.controls.target.lerpVectors(this.tween.fromTarget, this.desiredTarget, e);
@@ -602,7 +689,7 @@ export class WorkcellScene {
       this.camera.position.add(this.controls.target);
       if (k >= 1) { this.tween = null; this.animating = false; }
     }
-    const idle = !this.reduceMotion && !this.dragging && !this.tween && this.viewMode === 'overview' && now - this.lastInteraction > 7000 && !running;
+    const idle = !this.reduceMotion && !this.dragging && !this.tween && !this.director && this.viewMode === 'overview' && now - this.lastInteraction > 7000 && !running;
     this.autoSpin = idle ? Math.min(1, this.autoSpin + dt / 2500) : 0;
     this.controls.autoRotate = this.autoSpin > 0;
     this.controls.autoRotateSpeed = 0.3 * ease(this.autoSpin);
@@ -611,14 +698,36 @@ export class WorkcellScene {
 
     if (this.pointerMoved && !this.dragging && this.pointer) { this.pointerMoved = false; this.setHover(this.pick(this.pointer.x, this.pointer.y)); }
     this.placeLabels();
-    this.renderer.render(this.scene, this.camera);
+    this.animateMoments(now, dt);
+    if (this.composer) this.composer.render(dt / 1000); else this.renderer.render(this.scene, this.camera);
     this.frames++; this.measured += dt;
     if (this.measured > 4000) {
-      if (this.frames / (this.measured / 1000) < 42 && this.pixelRatio > 1) { this.pixelRatio = Math.max(1, this.pixelRatio - 0.25); this.renderer.setPixelRatio(this.pixelRatio); this.renderer.setSize(this.width, this.height); }
+      if (this.frames / (this.measured / 1000) < 54) {
+        if (this.gtao?.enabled) this.gtao.enabled = false;
+        else if (this.pixelRatio > 1) { this.pixelRatio = Math.max(1, this.pixelRatio - 0.25); this.renderer.setPixelRatio(this.pixelRatio); this.renderer.setSize(this.width, this.height); this.sizeFx(); }
+      }
       this.frames = 0; this.measured = 0;
     }
     this.frame = requestAnimationFrame(this.animate);
   };
+
+  animateMoments(now: number, dt: number) {
+    const socket = this.socket.getWorldPosition(new THREE.Vector3());
+    const moments: [number, number, number, number, number][] = [[this.clickAt, 900, 9, 26, 0xff9a3c], [this.resultAt, 1300, 12, 44, this.state?.accepted ? 0x4fd08a : 0xff4b3a]];
+    moments.forEach(([at, length, from, to, color], i) => {
+      const ring = this.pulses[i], t = (now - at) / length;
+      ring.visible = t >= 0 && t < 1;
+      if (!ring.visible) return;
+      const out = 1 - Math.pow(1 - t, 3);
+      ring.position.set(socket.x, socket.y, i ? 4.4 : 22.3);
+      ring.scale.setScalar(from + (to - from) * out);
+      const m = ring.material as THREE.MeshBasicMaterial; m.color.setHex(color); m.opacity = 0.95 * (1 - t) * (1 - t);
+    });
+    const depth = this.state?.depth ?? 0, since = now - this.clickAt;
+    if (this.latched && since < 700) this.flex = Math.exp(-since / 90) * Math.cos(since / 26);
+    else this.flex += ((depth > 0.4 && !this.latched ? 1 : 0) - this.flex) * damping(dt, 60);
+    for (const { mesh, y } of this.latchParts) mesh.position.y = y - 0.4 * this.flex;
+  }
 
   placeLabels() {
     if (!this.hud) return;
