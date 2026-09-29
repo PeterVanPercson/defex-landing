@@ -115,6 +115,11 @@
         {% include "landing/_inline.html" %}
     </section>
 
+    <section class="inline sheet" id="partners" aria-labelledby="partners-title">
+        <h2 class="inline__k" id="partners-title">Partners</h2>
+        {% include "landing/_inline.html" with in_line=partners nodefs=1 %}
+    </section>
+
     <!-- The founders, on graph paper. The grid is 21st.dev's grid pulse in the
          site's own colours (static/js/gridpulse.js): cells take ink where the
          pointer passes. Its hairlines are CSS, so without JS the sheet is

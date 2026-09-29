@@ -71,6 +71,14 @@ IN_LINE = [
     {"name": "Texnopark", "logo": "img/factories/texnopark.webp", "width": 3719, "height": 577},
 ]
 
+PARTNERS = [
+    {"name": "NVIDIA Inception", "logo": "img/backers/nvidia-inception.png", "width": 402, "height": 143},
+    {"name": "Google for Startups", "logo": "img/backers/google-for-startups.png", "width": 900, "height": 111},
+    {"name": "MathWorks", "logo": "img/partners/mathworks.png", "width": 537, "height": 106},
+    {"name": "Ansys", "logo": "img/partners/ansys.png", "width": 792, "height": 256},
+    {"name": "Onshape", "logo": "img/partners/onshape.png", "width": 1556, "height": 347},
+]
+
 # Kept out of PUBLIC_COMPANY on purpose: that dict is dumped whole into /company.json.
 PRICING = {
     "robot": {"price": "$65,000", "what": "One robot, taught your part, running on your floor.",

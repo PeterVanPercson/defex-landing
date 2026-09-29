@@ -27,7 +27,7 @@ class SiteTests(SimpleTestCase):
         self.assertNotContains(home, "the test becomes the teacher")
         page = home.content.decode()
         # the backing credit is off the hero for now; nothing on the page names a backer
-        for gone in ("lede__backed", "Backed by", "a16z", "Google for Startups"):
+        for gone in ("lede__backed", "Backed by", "a16z"):
             self.assertNotIn(gone, page)
         self.assertNotIn('class="marquee', page)
         self.assertNotIn("marquee__", page)
@@ -225,6 +225,20 @@ class SiteTests(SimpleTestCase):
         self.assertRegex(css, r"@keyframes roll \{ to \{ transform: translateX\(-25%\); \} \}")
         self.assertRegex(css, r"prefers-reduced-motion: reduce\) \{\s*\.roll__track \{ animation: none;")
         self.assertNotIn("in_line", self.client.get("/company.json").content.decode())
+
+    def test_partners_roll_under_registered(self):
+        from landing.discovery import PARTNERS
+        home = self.client.get("/").content.decode()
+        self.assertLess(home.index('id="in-line"'), home.index('id="partners"'))
+        self.assertLess(home.index('id="partners"'), home.index('id="team"'))
+        row = home.split('id="partners"', 1)[1].split("</ul>", 1)[0]
+        self.assertIn(">Partners<", row)
+        self.assertNotIn("roll__defs", row)
+        self.assertEqual(row.count('class="roll__i"'), len(PARTNERS))
+        for partner in PARTNERS:
+            self.assertEqual(row.count(f'alt="{partner["name"]}"'), 1)
+            self.assertTrue((Path(settings.BASE_DIR) / "static" / partner["logo"]).exists(), partner["logo"])
+        self.assertEqual(home.count('id="roll-ink"'), 1)
 
     def test_booker_is_on_the_home_page(self):
         """It lives at #contact, not on a page of its own: that is where someone
