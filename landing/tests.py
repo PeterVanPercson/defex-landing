@@ -17,8 +17,8 @@ class SiteTests(SimpleTestCase):
         # superseded vision-inspection positioning they replaced
         self.assertContains(home, "Self-teaching robots")
         # the case in the pitch's own words: what it does for a factory, as ruled rows
-        for claim in ("Practice needs a result.", "A connection needs two checks.",
-                      "Make another attempt.", "Measure the next setup."):
+        for claim in ("Our robot teaches itself.", "Bad parts never ship.",
+                      "No one stands over it.", "A new part is not a new project."):
             self.assertContains(home, f'class="feature__t engraved">{claim}</h3>')
         for slop in ("walk away from", "feel what", "A new way, not a new project", "harder to fixture"):
             self.assertNotContains(home, slop)
@@ -62,8 +62,7 @@ class SiteTests(SimpleTestCase):
         header = home.content.decode().split("<header", 1)[1].split("</header>", 1)[0]
         self.assertNotIn(">defex<", header)
         self.assertIn(">defex<", home.content.decode())   # present in the footer
-        self.assertContains(home, 'src="/prototype/?embed=1"')
-        self.assertNotContains(home, 'id="film"')
+        self.assertContains(home, 'id="film"')
         # nothing plays before the hero: the starting page (the mark on black) is gone
         self.assertNotContains(home, 'id="intro"')
         self.assertNotContains(home, "is-intro")
@@ -81,8 +80,9 @@ class SiteTests(SimpleTestCase):
         origin = self.client.get("/where-it-started/")
         self.assertEqual(origin.status_code, 301)
         self.assertEqual(origin["Location"], "/")
-        self.assertNotContains(home, 'has-scroll-film')
-        self.assertContains(home, 'Interactive software prototype.')
+        self.assertContains(home, 'data-fps="60"')
+        self.assertContains(home, "defex-intro-v4.mp4")
+        self.assertContains(home, "defex-poster-v4.webp")
         # every superseded hero asset, so a revert to one of them is caught
         for gone in ("defex-intro-scroll-v2.webm", "defex-intro-scroll.mp4",
                      "defex-intro-scroll-1080.mp4", "defex-first-frame.webp",
@@ -166,9 +166,8 @@ class SiteTests(SimpleTestCase):
         page, and that sign-up is a founder's calendar or the form. Nobody is
         sent back to the home page to book."""
         home = self.client.get("/").content.decode()
-        actions = home.split('class="connector-hero__actions"', 1)[1].split("</div>", 1)[0]
-        self.assertIn('href="/why-us/"', actions)
-        self.assertIn('href="/prototype/"', actions)
+        actions = home.split('class="lede__actions"', 1)[1].split("</div>", 1)[0]
+        self.assertIn('class="glass-button-wrap" href="/why-us/"', actions)
         self.assertIn("Test our product", actions)
         pitch = self.client.get("/why-us/").content.decode()
         main = pitch.split("<main", 1)[1]
@@ -403,8 +402,11 @@ class SiteTests(SimpleTestCase):
         self.assertLess(totals["1200"], totals["1920"])
         self.assertEqual({p.name for p in frames.iterdir()}, {"1920", "1200"})
         home = self.client.get("/").content.decode()
-        self.assertNotIn('data-frames=', home)
-        self.assertIn('src="/prototype/?embed=1"', home)
+        for chunk in ('data-frames="/static/defex/frames/1920/"', 'data-frames-sm="/static/defex/frames/1200/"',
+                      'data-frame-count="450"', 'data-frame-size="1920x1080"', 'data-frame-size-sm="1200x960"',
+                      '<canvas class="hero__film hero__film--frames" id="frames"', 'preload="none"',
+                      "classList.add('has-scroll-film')"):
+            self.assertIn(chunk, home, chunk)
         # the film is no longer masked: a mask on the element repainted it on every frame
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
         self.assertNotIn("mask-image: linear-gradient(to bottom, transparent 0, #000 26%", css)
@@ -430,7 +432,7 @@ class SiteTests(SimpleTestCase):
         still returns 200, so nothing else here catches it. This does."""
         import re
         root = Path(settings.BASE_DIR)
-        css = (root / "static/css/site.css").read_text() + (root / "static/css/connector-home.css").read_text()
+        css = (root / "static/css/site.css").read_text()
         # rules inside a media query do not style the default (desktop) case
         top = re.sub(r"@media[^{]*\{(?:[^{}]|\{[^{}]*\})*\}", "", css, flags=re.S)
         used = set()

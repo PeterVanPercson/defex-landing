@@ -25,11 +25,3 @@ class PrototypeTests(SimpleTestCase):
         self.assertEqual(wasm_response.status_code, 200)
         self.assertEqual(wasm_response['Content-Type'], 'application/wasm')
         self.assertIn(wasm[0].name, worker[0].read_text())
-
-    def test_home_identifies_software_stage_and_exposes_the_lab(self):
-        response = self.client.get('/')
-        self.assertContains(response, 'src="/prototype/?embed=1"')
-        self.assertContains(response, 'no physical robot is shown')
-        self.assertNotContains(response, 'Bad parts never ship')
-        self.assertNotContains(response, 'gets better every time')
-        self.assertNotContains(response, 'js/hero-film.js')
