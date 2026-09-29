@@ -684,6 +684,26 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 @property --angle-1 { syntax: "<angle>"; inherits: false; initial-value: -75deg; }
 @property --angle-2 { syntax: "<angle>"; inherits: false; initial-value: -45deg; }
 .lede__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: clamp(18px, 3vh, 28px); }
+/* The partners in the hero's bottom right corner, one at a time (flick.js).
+   The marks are white silhouettes on the dark, as one set; the list reads out
+   whole, the moving part is hidden from screen readers. */
+.flick { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 10px; margin-left: auto; padding-block: 4px; color: var(--ink); -webkit-tap-highlight-color: transparent; }
+.flick__k { display: inline-flex; margin-right: -.34em; font: 500 10px/1.4 var(--mono); letter-spacing: .34em; text-transform: uppercase; color: var(--mute); transition: color .3s ease; }
+.flick__names { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.flick__stage { position: relative; display: block; width: clamp(128px, 12.5vw, 180px); height: clamp(36px, 3.2vw, 46px); filter: brightness(0) invert(1); opacity: .84; transition: opacity .3s ease; }
+.flick:hover .flick__stage { opacity: 1; }
+.flick:hover .flick__k { color: var(--ink); }
+.flick__logo { position: absolute; right: 0; top: 50%; width: auto; height: auto; max-width: 100%; max-height: 62%; translate: 0 -50%; }
+.flick__stage.is-live .flick__logo { display: none; }
+.flick__card { position: absolute; right: 0; top: 50%; translate: 0 -50%; }
+.flick__lens { position: absolute; inset: 0; perspective: 480px; }
+.flick__whole { position: absolute; inset: 0; width: 100%; height: 100%; visibility: hidden; -webkit-user-drag: none; }
+.flick__card.is-rest .flick__whole { visibility: visible; }
+.flick__card.is-rest .flick__lens { visibility: hidden; }
+.flick__strip { position: absolute; inset: 0; width: 100%; height: 100%; transform-origin: 50% 100%; backface-visibility: hidden; -webkit-user-drag: none; }
+.flick__slot { position: relative; display: inline-flex; white-space: pre; perspective: 480px; }
+.flick__face { display: inline-block; transform-origin: 50% 100%; backface-visibility: hidden; }
+.flick__twin { position: absolute; inset: 0; display: inline-block; backface-visibility: hidden; }
 /* The link is the outer element and never moves: the hover scale and the
    press tilt sit on layers inside it. While the link itself moved, a press
    that ended a pixel outside its box was dropped and the button read as
