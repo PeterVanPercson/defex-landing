@@ -3,7 +3,6 @@ import { WorkcellScene } from './scene.ts';
 import type { Mode, View } from './scene.ts';
 import type { PartId } from './parts.ts';
 import { DemoRecorder } from './recording.ts';
-import { magnify } from './dock.ts';
 import { DEFAULT_CONFIG, modelXML } from './model.ts';
 import type { Configuration, Controller } from './model.ts';
 import type { Sample, Snapshot, Trial } from './engine.ts';
@@ -155,7 +154,6 @@ el('forget').addEventListener('click',()=>{stopTour();send({type:'forget'});if(c
 for(const b of cameraButtons)b.addEventListener('click',()=>selectView(b.dataset.view as View));
 for(const b of modeButtons)b.addEventListener('click',()=>selectMode(b.dataset.mode as Mode));
 for(const b of partButtons)b.addEventListener('click',()=>showPart(b.dataset.part as PartId));
-el('anatomy-title').closest('section')!.querySelector('[data-explode]')!.addEventListener('click',()=>{selectMode('parts');selectView('overview');document.querySelector('.stage')!.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});});
 el('retry').addEventListener('click',()=>location.reload());
 
 const notes=el<HTMLDialogElement>('notes');
@@ -168,10 +166,10 @@ el('export').addEventListener('click',()=>send({type:'export'}));
 el('download-model').addEventListener('click',()=>download(modelXML(config),'defex-illustrative-connector.xml','application/xml'));
 
 const stories=[
-  ['The socket is 1 mm off. A robot on a fixed path gets stuck.','It follows its program, hits the edge, and stops.'],
-  ['Ours feels its way in.','It backs off, moves a hair, and tries again until the part slides in.'],
-  ['Next time, it goes straight in.','It remembers the spot that worked. Then it tests the part again.'],
-  ['Bad parts never ship.','This one goes in, but the connection test fails. The robot flags it.'],
+  ['1 mm off. A fixed robot gets stuck.','It follows its program, hits the edge, and stops.'],
+  ['Ours feels its way in.','It backs off, moves a hair, and tries again.'],
+  ['Next time, straight in.','It remembers the spot that worked.'],
+  ['Bad parts never ship.','The connection test fails. The robot flags it.'],
 ];
 function tourStep(){
   if(tourIndex<0)return;
@@ -228,8 +226,8 @@ function refreshControls(){
   el<HTMLSelectElement>('speed').disabled=!ready;
   el<HTMLButtonElement>('tour').disabled=!ready;all<HTMLButtonElement>('[data-start-tour]').forEach(b=>b.disabled=!ready);el<HTMLButtonElement>('embed-run').disabled=!ready;
   el('tour').setAttribute('aria-pressed',String(tourIndex>=0));
-  if(tourIndex>=0){text('tour-label',tourPaused?'Resume demo':'Pause demo');text('tour-icon',tourPaused?'▶':'Ⅱ');}
-  else{text('tour-label','Play demo');text('tour-icon','▶');}
+  if(tourIndex>=0){text('tour-label',tourPaused?'Resume':'Pause');text('tour-icon',tourPaused?'▶':'Ⅱ');}
+  else{text('tour-label','Watch');text('tour-icon','▶');}
   for(const input of settingInputs)input.disabled=!ready||unfinished||tourIndex>=0;
   reuseButton.disabled=!ready||unfinished||tourIndex>=0||!state?.calibration;
   reuseButton.title=state?.calibration?'Use the last accepted correction':'Run a successful search to save a fit';
@@ -333,5 +331,5 @@ document.addEventListener('keydown',e=>{
   if(e.code==='Space'){e.preventDefault();togglePlayback();}
   if(e.code==='KeyR'){e.preventDefault();reset();}
 });
-magnify(document.querySelector<HTMLElement>('.dock')!);
+document.querySelector('.tryit')!.addEventListener('toggle',drawChart);
 settingInputs.forEach(input=>input.disabled=true);syncConfig();send({type:'init',config});
