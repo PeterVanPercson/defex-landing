@@ -254,7 +254,9 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .roll__i { --roll-h: 58px; flex: none; display: grid; place-items: center; width: clamp(128px, 12vw, 176px); height: var(--roll-h); margin-right: var(--roll-gap); }
 .roll__i--copy { pointer-events: none; }
 /* a length, not 100%: the grid row is sized by its content, so a percentage here caps nothing */
-.roll__logo { display: block; width: auto; height: auto; max-width: 100%; max-height: var(--roll-h); filter: grayscale(1) contrast(.82); opacity: .42; }
+.roll__logo { display: block; width: auto; height: auto; max-width: 100%; max-height: var(--roll-h); filter: grayscale(1) contrast(.82); opacity: .42; transition: filter .35s ease, opacity .35s ease, transform .35s ease; }
+.roll[data-color] .roll__i--copy { pointer-events: auto; }
+.roll[data-color] .roll__i:hover .roll__logo { filter: none; opacity: 1; transform: scale(1.06); }
 .roll__logo[data-opaque] { filter: url(#roll-ink); }
 .roll__logo[data-trim] { clip-path: inset(0 0 3% 0); }
 @keyframes roll { to { transform: translateX(-25%); } }
