@@ -4,62 +4,144 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#f3f1eb" />
-  <meta name="description" content="Explore Defex's interactive connector assembly simulation. Change alignment, compare controllers, and inspect modeled electrical and retention checks." />
-  <title>Assembly prototype — Defex</title>
-  <script type="module" crossorigin src="/static/prototype/assets/index-V1DV6453.js"></script>
-  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-kuDBvj4H.css">
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="Explore the Defex connector lab: an interactive simulation of our robot's workcell. Shift the socket, compare two insertion methods, see inside every part, and watch the connection and pull tests." />
+  <title>Connector lab — Defex</title>
+  <link rel="preload" href="/static/fonts/geist-400-900-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <script type="module" crossorigin src="/static/prototype/assets/index-B4N-u0of.js"></script>
+  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-DTeJr49-.css">
 </head>
 <body>
-  <header class="topbar"><a class="brand" href="/" aria-label="Defex home">defex<span>●</span></a><span class="topbar-label">ASSEMBLY PROTOTYPE</span><button class="text-button" data-open-notes>How it works <span>↗</span></button></header>
   <main>
-    <section class="intro">
-      <div><p class="eyebrow"><span class="dot"></span> INTERACTIVE SOFTWARE PROTOTYPE</p><h1>Insert. Test. Try again.</h1></div>
-      <div class="intro-right"><p>Shift the socket. See how a fixed path and a contact search handle it.</p><button class="tour-button" id="tour" disabled><span id="tour-icon" aria-hidden="true">▶</span> <span id="tour-label">Play demo</span> <span class="tour-duration">4 STEPS</span></button></div>
-    </section>
-    <section class="lab" aria-label="Connector assembly experiment">
-      <div class="workbench">
-        <div class="stage">
-          <div id="scene"></div>
-          <div class="stage-top"><span class="stage-title">ILLUSTRATIVE CONNECTOR</span><span class="simulation-badge"><span class="dot"></span> SIMULATION</span></div>
-          <div id="loading" class="loading"><span class="loading-spinner"></span><p>Loading the simulation<span>This takes a moment on the first visit.</span></p></div>
-          <div id="fallback" class="fallback" hidden><svg viewBox="0 0 420 300" role="img" aria-label="Live X/Z schematic of the simulated connector"><rect x="100" y="237" width="220" height="18" rx="2" fill="#a8aea3"/><g id="schematic-socket" fill="#39463e"><rect id="schematic-wall-left" x="160" y="160" width="20" height="63" rx="2"/><rect id="schematic-wall-right" x="240" y="160" width="20" height="63" rx="2"/><rect id="schematic-seat" x="160" y="215" width="100" height="20" rx="2"/></g><g id="schematic-plug" transform="translate(210 60)"><rect id="schematic-housing" x="-28" y="-20" width="56" height="40" rx="2" fill="#f5f0dd" stroke="#84917c" stroke-width="1.5"/><rect x="-18" y="-50" width="36" height="30" fill="#c6cdbb" stroke="#84917c"/><path d="M-17 0v19 M0 0v19 M17 0v19" stroke="#b58e42" stroke-width="3"/></g><text x="25" y="285" fill="#84917c" font-size="9" font-family="monospace">X/Z SCHEMATIC · ILLUSTRATIVE GEOMETRY</text></svg><p id="fallback-title">3D unavailable; showing a live side view.</p><span>Physics and acceptance checks still run in your browser.</span></div>
-          <div class="stage-bottom"><div class="camera-controls" aria-label="Camera view"><button data-view="close" aria-pressed="false">Connector</button><button data-view="cell" aria-pressed="true">Workcell</button><button data-view="top" aria-pressed="false">Top</button></div><label class="cutaway"><input type="checkbox" id="inspect"> See inside</label></div>
-          <button id="embed-run" class="embed-run" disabled>▶ Play demo</button><div class="scene-hint">DRAG TO ROTATE · SCROLL TO ZOOM</div>
-          <div class="tour-story" id="tour-story" hidden><span id="tour-index">01 / 04</span><div><strong id="tour-title"></strong><p id="tour-description"></p></div><button id="stop-tour" aria-label="Exit demo">×</button></div>
-        </div>
-        <div class="transport">
-          <div class="run-controls"><button id="run" class="run-button" disabled><span id="run-icon" aria-hidden="true">▶</span><span id="run-label">Run attempt</span></button><button id="reset" class="reset-button" aria-label="Reset attempt" title="Reset attempt (R)" disabled>↺</button></div>
-          <span id="engine-status">Loading…</span>
-          <label class="speed-control" for="speed">Speed <select id="speed" disabled><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
-        </div>
-        <div class="cycle" aria-label="Assembly sequence"><span data-phase="insert"><i>01</i> Insert</span><b>→</b><span data-phase="electrical"><i>02</i> Connect</span><b>→</b><span data-phase="retention"><i>03</i> Pull test</span><b>→</b><span data-phase="reset"><i>04</i> Reset</span></div>
-        <details class="measurements"><summary>Measurements <span>Force, depth & timing</span></summary><div class="telemetry">
-          <div class="force-panel"><div class="chart-label"><span>CONTACT FORCE</span><b><span id="force">0.0</span> <small>N</small></b></div><canvas id="force-chart" aria-label="Computed axial force versus simulation time"></canvas><div class="chart-axis"><span id="chart-zero">0 s</span><span>SIMULATION TIME</span><span id="chart-end">0 s</span></div></div>
-          <div class="readouts"><div><span>Insertion depth</span><strong><span id="depth">0.0</span><small> mm</small></strong></div><div><span>Search probes</span><strong id="probes">—</strong></div><div><span>Elapsed</span><strong><span id="elapsed">0.0</span><small> s</small></strong></div></div>
-        </div></details>
+    <section class="stage" aria-label="Connector lab: 3D workcell">
+      <div id="scene"></div>
+      <div class="vignette"></div>
+      <div id="labels"></div>
+      <div id="tooltip" class="tooltip" role="tooltip"><strong></strong><p></p></div>
+
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Defex home">defex<span>●</span></a>
+        <div class="status" id="status"><i></i><span id="hud-status">Loading</span><span class="status-sim">SIMULATION</span></div>
+        <button class="text-button" data-open-notes>How it works <span>↗</span></button>
+      </header>
+
+      <div class="headline">
+        <p class="eyebrow"><span class="dot"></span> INTERACTIVE SOFTWARE PROTOTYPE</p>
+        <h1>Insert. Test.<br>Try again.</h1>
+        <p class="lede">Watch our robot plug in a connector, test it, and try again when it misses.</p>
+        <button class="cta" data-start-tour disabled><span aria-hidden="true">▶</span> Watch it work</button>
       </div>
-      <aside class="controls">
-        <div class="section-label"><span>Try a scenario</span></div>
-        <div class="presets" aria-label="Experiment presets"><button data-preset="aligned">Aligned</button><button data-preset="shifted" aria-pressed="true">Misaligned</button><button data-preset="open">Open circuit</button><button data-preset="latch">No latch</button></div>
-        <div class="controller-section"><div class="section-label"><span>Insertion method</span></div><div class="controllers" role="group" aria-label="Controller"><button data-controller="fixed" aria-pressed="true">Fixed path</button><button data-controller="search" aria-pressed="false">Find a fit</button><button data-controller="reuse" aria-pressed="false" disabled>Reuse fit</button></div><p id="controller-description">Follow the original path. Stop if the socket blocks it.</p><div class="memory" id="memory" hidden><span>Saved correction <b id="memory-value"></b></span><button id="forget" aria-label="Forget saved correction">×</button></div></div>
-        <div class="checks" aria-label="Modeled acceptance checks"><div><span>Connection</span><strong id="electrical-check">—</strong></div><div><span>Lock</span><strong id="retention-check">—</strong></div></div>
-        <div class="outcome" id="outcome" role="status" aria-live="polite"><span class="outcome-symbol">↗</span><div><strong id="outcome-title">Ready when you are.</strong><p id="outcome-copy">Start an attempt or play the four-step demo.</p></div></div>
-        <button id="retry" class="retry-button" hidden>Reload simulation ↻</button>
-        <details class="advanced"><summary>Adjust the setup <span>+</span></summary>
-        <label class="field-label" for="variant">Connector variant <select id="variant"><option value="six">6 contacts</option><option value="eight">8 contacts</option></select></label>
-        <div class="range-field"><label for="offsetX">Socket shift X <output id="offsetX-value">+1.20 mm</output></label><input id="offsetX" type="range" min="-2" max="2" step="0.05" value="1.2"></div>
-        <div class="range-field"><label for="offsetY">Socket shift Y <output id="offsetY-value">+0.65 mm</output></label><input id="offsetY" type="range" min="-2" max="2" step="0.05" value="0.65"></div>
-        <div class="range-field"><label for="yaw">Socket rotation <output id="yaw-value">+1.5°</output></label><input id="yaw" type="range" min="-5" max="5" step="0.5" value="1.5"></div>
-        <label class="field-label" for="fault">Injected fault<select id="fault"><option value="none">None</option><option value="open">Open circuit</option><option value="latch">No latch</option></select></label><div class="range-field"><label for="friction">Contact friction <output id="friction-value">0.35</output></label><input id="friction" type="range" min="0.1" max="0.8" step="0.05" value="0.35"></div>
-        </details>
-        <p class="keyboard-hint"><kbd>Space</kbd> play / pause <span>·</span> <kbd>R</kbd> reset</p>
-      </aside>
+
+      <div id="journey" class="journey">
+        <div class="journey-icon">↓</div>
+        <div><strong id="journey-title">Insert</strong><small id="journey-detail">The robot lowers the connector.</small></div>
+        <div class="track"><i id="journey-progress"></i></div>
+      </div>
+      <div class="tour-story" id="tour-story" hidden><span id="tour-index">1 / 4</span><div><strong id="tour-title"></strong><p id="tour-description"></p></div><button id="stop-tour" aria-label="Exit demo">×</button></div>
+
+      <div id="loading" class="loading"><i></i><span>Loading the simulation</span></div>
+      <div id="fallback" class="fallback" hidden><svg viewBox="0 0 420 300" role="img" aria-label="Live X/Z schematic of the simulated connector"><rect x="100" y="237" width="220" height="18" rx="2" fill="#3a4148"/><g id="schematic-socket" fill="#59616b"><rect id="schematic-wall-left" x="160" y="160" width="20" height="63" rx="2"/><rect id="schematic-wall-right" x="240" y="160" width="20" height="63" rx="2"/><rect id="schematic-seat" x="160" y="215" width="100" height="20" rx="2"/></g><g id="schematic-plug" transform="translate(210 60)"><rect id="schematic-housing" x="-28" y="-20" width="56" height="40" rx="2" fill="#e3e1d6" stroke="#8e969d" stroke-width="1.5"/><rect x="-18" y="-50" width="36" height="30" fill="#707986" stroke="#8e969d"/><path d="M-17 0v19 M0 0v19 M17 0v19" stroke="#d2ad68" stroke-width="3"/></g><text x="25" y="285" fill="#707986" font-size="9" font-family="monospace">X/Z SCHEMATIC · ILLUSTRATIVE GEOMETRY</text></svg><p id="fallback-title">3D unavailable; showing a live side view.</p><span>Physics and tests still run in your browser.</span></div>
+
+      <div class="hud-controls">
+        <nav class="mode-bar" aria-label="Workcell mode">
+          <button data-mode="machine" aria-pressed="true"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1.5l6 3.3v6.4l-6 3.3-6-3.3V4.8L8 1.5zM2 4.8l6 3.4 6-3.4M8 8.2v6.3" stroke="currentColor" stroke-linejoin="round"/></svg>Machine</button>
+          <button data-mode="inside" aria-pressed="false"><svg viewBox="0 0 16 16" fill="none"><path d="M3 2h10v12H3zM8 2v12M10.5 4l2.5 2.5m-2.5 0L13 9m-2.5 0 2.5 2.5" stroke="currentColor" stroke-linejoin="round"/></svg>See inside</button>
+          <button data-mode="parts" aria-pressed="false"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1.5l6 3-6 3-6-3 6-3zM2 8l6 3 6-3M2 11.5l6 3 6-3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>Parts</button>
+          <button id="tour" class="demo" aria-pressed="false" disabled><span id="tour-icon" aria-hidden="true">▶</span><span id="tour-label">Play demo</span></button>
+        </nav>
+        <nav class="camera-row" aria-label="Camera">
+          <span class="caption">VIEW</span>
+          <button data-view="overview" aria-pressed="true">Overview</button>
+          <button data-view="side" aria-pressed="false">Side</button>
+          <button data-view="top" aria-pressed="false">Top</button>
+          <button data-view="connector" aria-pressed="false">Connector</button>
+          <button data-view="flight" aria-pressed="false">Fly around</button>
+        </nav>
+      </div>
+      <button id="embed-run" class="embed-run" disabled>▶ Play demo</button>
+      <footer class="stage-footer">
+        <span>Simulation. Not footage of a physical robot.</span>
+        <span class="hint"><svg width="13" height="16" viewBox="0 0 13 16" fill="none"><rect x="2" y="1" width="9" height="14" rx="4.5" stroke="currentColor"/><path d="M6.5 4v3" stroke="currentColor" stroke-linecap="round"/></svg>Drag to turn it. Tap a part to see what it does.</span>
+      </footer>
     </section>
-    <section class="records" aria-labelledby="records-title"><div class="records-heading"><div><h2 id="records-title">Attempts <span id="record-count">00</span></h2></div><div class="record-actions"><button id="save-video" class="text-button" disabled>Record demo <span>↓</span></button><button id="export" class="text-button" disabled>Download data <span>↓</span></button></div></div><div class="table-scroll"><table><thead><tr><th>Run</th><th>Controller</th><th>Conditions</th><th>Probes</th><th>Sim. time</th><th>Peak force</th><th>Result</th></tr></thead><tbody id="records-body"><tr class="empty-row"><td colspan="7">Your results appear here after each attempt.</td></tr></tbody></table></div></section>
+
+    <section class="console" aria-label="Run the connector test">
+      <div class="transport">
+        <div class="run-controls"><button id="run" class="run-button" disabled><span id="run-icon" aria-hidden="true">▶</span><span id="run-label">Run attempt</span></button><button id="reset" class="reset-button" aria-label="Reset attempt" title="Reset attempt (R)" disabled>↺</button></div>
+        <span id="engine-status">Loading…</span>
+        <div class="cycle" aria-label="The loop"><span data-phase="insert"><i>01</i> Insert</span><b></b><span data-phase="electrical"><i>02</i> Connect</span><b></b><span data-phase="retention"><i>03</i> Pull test</span><b></b><span data-phase="reset"><i>04</i> Reset</span></div>
+        <label class="speed-control" for="speed">Speed <select id="speed" disabled><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+      </div>
+      <div class="console-grid">
+        <div class="panel">
+          <div class="section-label">Try a scenario</div>
+          <div class="presets" aria-label="Scenarios"><button data-preset="aligned">Aligned</button><button data-preset="shifted" aria-pressed="true">Misaligned</button><button data-preset="open">Open circuit</button><button data-preset="latch">No latch</button></div>
+          <div class="section-label">How the robot goes in</div>
+          <div class="controllers" role="group" aria-label="Insertion method"><button data-controller="fixed" aria-pressed="true">Fixed path</button><button data-controller="search" aria-pressed="false">Find a fit</button><button data-controller="reuse" aria-pressed="false" disabled>Reuse fit</button></div>
+          <p id="controller-description">Follow the original path. Stop if the socket blocks it.</p>
+          <div class="memory" id="memory" hidden><span>Saved fit <b id="memory-value"></b></span><button id="forget" aria-label="Forget saved fit">×</button></div>
+        </div>
+        <div class="panel">
+          <div class="outcome" id="outcome" role="status" aria-live="polite"><span class="outcome-symbol">↗</span><div><strong id="outcome-title">Ready when you are.</strong><p id="outcome-copy">Run one attempt, or play the four-step demo.</p></div></div>
+          <div class="checks" aria-label="Tests"><div><span>Connection</span><strong id="electrical-check">—</strong></div><div><span>Lock</span><strong id="retention-check">—</strong></div></div>
+          <button id="retry" class="retry-button" hidden>Reload simulation ↻</button>
+          <details class="advanced"><summary>Adjust the setup <span>+</span></summary>
+            <label class="field-label" for="variant">Connector <select id="variant"><option value="six">6 contacts</option><option value="eight">8 contacts</option></select></label>
+            <div class="range-field"><label for="offsetX">Socket shift X <output id="offsetX-value">+1.20 mm</output></label><input id="offsetX" type="range" min="-2" max="2" step="0.05" value="1.2"></div>
+            <div class="range-field"><label for="offsetY">Socket shift Y <output id="offsetY-value">+0.65 mm</output></label><input id="offsetY" type="range" min="-2" max="2" step="0.05" value="0.65"></div>
+            <div class="range-field"><label for="yaw">Socket rotation <output id="yaw-value">+1.5°</output></label><input id="yaw" type="range" min="-5" max="5" step="0.5" value="1.5"></div>
+            <label class="field-label" for="fault">Injected fault <select id="fault"><option value="none">None</option><option value="open">Open circuit</option><option value="latch">No latch</option></select></label>
+            <div class="range-field"><label for="friction">Contact friction <output id="friction-value">0.35</output></label><input id="friction" type="range" min="0.1" max="0.8" step="0.05" value="0.35"></div>
+          </details>
+        </div>
+        <div class="panel telemetry">
+          <div class="chart-label"><span>CONTACT FORCE</span><b><span id="force">0.0</span> <small>N</small></b></div>
+          <canvas id="force-chart" aria-label="Computed push force over simulation time"></canvas>
+          <div class="chart-axis"><span id="chart-zero">0 s</span><span>SIMULATION TIME</span><span id="chart-end">0 s</span></div>
+          <div class="readouts"><div><span>Depth</span><strong><span id="depth">0.0</span><small> mm</small></strong></div><div><span>Tries</span><strong id="probes">—</strong></div><div><span>Time</span><strong><span id="elapsed">0.0</span><small> s</small></strong></div></div>
+        </div>
+      </div>
+      <p class="keyboard-hint"><kbd>Space</kbd> run / pause <span>·</span> <kbd>R</kbd> reset</p>
+    </section>
+
+    <section class="anatomy" aria-labelledby="anatomy-title">
+      <h2 id="anatomy-title">Seven parts.<br>One loop.</h2>
+      <p class="section-lede">Tap a part. The camera flies to it.</p>
+      <div class="part-grid">
+        <button data-part="gantry"><i>01</i><strong>Gantry</strong><span>The frame. Carries the robot over the part.</span></button>
+        <button data-part="carriage"><i>02</i><strong>Carriage</strong><span>Moves the tool left, right, in and out.</span></button>
+        <button data-part="zaxis"><i>03</i><strong>Z axis</strong><span>Lowers the connector and feels the push back.</span></button>
+        <button data-part="gripper"><i>04</i><strong>Gripper</strong><span>Holds the connector straight on the way down.</span></button>
+        <button data-part="connector"><i>05</i><strong>Connector</strong><span>The part. Six or eight contacts.</span></button>
+        <button data-part="socket"><i>06</i><strong>Socket</strong><span>Where it goes. Shift it and watch what happens.</span></button>
+        <button data-part="tester"><i>07</i><strong>Tester</strong><span>Checks the connection, then pulls on the lock.</span></button>
+        <button data-explode class="explode-card"><i>ALL</i><strong>Pull it apart.</strong><span>Every part at once, labelled, in the 3D view.</span></button>
+      </div>
+    </section>
+
+    <section class="loop" aria-labelledby="loop-title">
+      <h2 id="loop-title">Every try ends in a test.</h2>
+      <ol class="loop-list">
+        <li data-phase="insert"><strong>Insert.</strong><span>The robot lowers the connector. If the socket blocks it, it backs off and tries a new spot.</span></li>
+        <li data-phase="electrical"><strong>Connect.</strong><span>Is every contact in? The connection test says yes or no.</span></li>
+        <li data-phase="retention"><strong>Pull.</strong><span>A pull on the part. The lock holds, or the try fails.</span></li>
+        <li data-phase="reset"><strong>Reset.</strong><span>Back to the start. The fit that passed is saved for next time.</span></li>
+      </ol>
+    </section>
+
+    <section class="real" aria-labelledby="real-title">
+      <h2 id="real-title">What's real.</h2>
+      <div class="real-grid">
+        <div><p class="eyebrow">BUILT</p><strong>The physics.</strong><span>MuJoCo runs in your browser. Every force on this page is computed, live.</span></div>
+        <div><p class="eyebrow">SIMULATED</p><strong>The tests.</strong><span>Connection and lock are simple models. No real wires, no real latch.</span></div>
+        <div><p class="eyebrow">NEXT</p><strong>The real cell.</strong><span>A physical robot running this loop on customer parts.</span></div>
+      </div>
+    </section>
+
+    <section class="records" aria-labelledby="records-title"><div class="records-heading"><h2 id="records-title">Attempts <span id="record-count">00</span></h2><div class="record-actions"><button id="save-video" class="text-button" disabled>Record demo <span>↓</span></button><button id="export" class="text-button" disabled>Download data <span>↓</span></button></div></div><div class="table-scroll"><table><thead><tr><th>Run</th><th>Method</th><th>Conditions</th><th>Tries</th><th>Sim. time</th><th>Peak force</th><th>Result</th></tr></thead><tbody id="records-body"><tr class="empty-row"><td colspan="7">Your results show up here after each attempt.</td></tr></tbody></table></div></section>
     <footer class="model-footer"><p>Software simulation with simplified connector tests. The search saves an offset; it is not a trained robot policy.</p><button class="text-button" data-open-notes>About this model <span>↗</span></button></footer>
   </main>
-  <dialog id="notes"><div class="dialog-heading"><p class="eyebrow">MODEL NOTES / V1</p><button id="close-notes" aria-label="Close model notes">×</button></div><h2>Inside the simulation.</h2><p>A cartesian tool inserts an illustrative connector into a socket. MuJoCo computes the motion and contact forces in your browser. The 3D view follows those positions.</p><dl><dt>The search</dt><dd>A deterministic controller retracts after blocked contact and tries a ring of XY offsets. A successful, tested offset can be reused. It does not read the socket’s offset. This is calibration from feedback, not reinforcement learning.</dd><dt>The checks</dt><dd>Connection is a seating-depth check with an injectable open-circuit fault. Retention uses an ideal latch constraint and a simulated upward pull. There are no conductive materials or deforming latch mechanics in this model.</dd><dt>The limits</dt><dd>Geometry, friction and forces are illustrative. Only the plug housing and socket participate in contact. Tooling details are visual. The model omits vision, flexible wires, wear, damage, manufacturing tolerances and real robot dynamics. Reset releases the ideal latch and retracts the same plug; it does not model a fresh-part feeder.</dd><dt>The next proof</dt><dd>Build the physical insertion, test and reset loop, then compare setup effort and accepted output on customer parts. This page is not evidence of factory performance, learned skill transfer or manufacturing readiness.</dd></dl><div class="dialog-actions"><button id="download-model" class="tour-button">Download physics model <span>↓</span></button><a href="?view=schematic">Use 2D view ↗</a><a href="https://github.com/google-deepmind/mujoco/tree/main/wasm" target="_blank" rel="noopener">MuJoCo WASM ↗</a></div></dialog>
-  <noscript><div class="noscript">This interactive prototype needs JavaScript. It models connector insertion and acceptance checks; it is not footage of a physical robot.</div></noscript>
+  <dialog id="notes"><div class="dialog-heading"><p class="eyebrow">MODEL NOTES / V1</p><button id="close-notes" aria-label="Close model notes">×</button></div><h2>Inside the simulation.</h2><p>A cartesian tool inserts an illustrative connector into a socket. MuJoCo computes the motion and contact forces in your browser. The 3D view follows those positions.</p><dl><dt>The search</dt><dd>A deterministic controller retracts after blocked contact and tries a ring of XY offsets. A successful, tested offset can be reused. It does not read the socket’s offset. This is calibration from feedback, not reinforcement learning.</dd><dt>The checks</dt><dd>Connection is a seating-depth check with an injectable open-circuit fault. Retention uses an ideal latch constraint and a simulated upward pull. There are no conductive materials or deforming latch mechanics in this model.</dd><dt>The limits</dt><dd>Geometry, friction and forces are illustrative. Only the plug housing and socket participate in contact. The gantry, tester, screen and light tower are visual. The model omits vision, flexible wires, wear, damage, manufacturing tolerances and real robot dynamics. Reset releases the ideal latch and retracts the same plug; it does not model a fresh-part feeder.</dd><dt>The next proof</dt><dd>Build the physical insertion, test and reset loop, then compare setup effort and accepted output on customer parts. This page is not evidence of factory performance, learned skill transfer or manufacturing readiness.</dd></dl><div class="dialog-actions"><button id="download-model" class="tour-button">Download physics model <span>↓</span></button><a href="?view=schematic">Use 2D view ↗</a><a href="https://github.com/google-deepmind/mujoco/tree/main/wasm" target="_blank" rel="noopener">MuJoCo WASM ↗</a></div></dialog>
+  <noscript><div class="noscript">This interactive prototype needs JavaScript. It models connector insertion and two tests; it is not footage of a physical robot.</div></noscript>
 </body>
 </html>

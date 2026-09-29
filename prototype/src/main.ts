@@ -1,5 +1,7 @@
 import './style.css';
 import { WorkcellScene } from './scene.ts';
+import type { Mode, View } from './scene.ts';
+import type { PartId } from './parts.ts';
 import { DemoRecorder } from './recording.ts';
 import { DEFAULT_CONFIG, modelXML } from './model.ts';
 import type { Configuration, Controller } from './model.ts';
@@ -15,10 +17,12 @@ const descriptions:Record<Controller,string>={
   search:'Back off on contact, try a new position, and save the fit when both tests pass.',
   reuse:'Use the last successful position. Test the connection and lock again.',
 };
-const settingInputs=all<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('.controls input,.controls select,[data-preset],[data-controller],#forget');
+const settingInputs=all<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('.console input,.console select,[data-preset],[data-controller],#forget');
 const controllerButtons=all<HTMLButtonElement>('[data-controller]');
 const phaseLabels=all('[data-phase]');
 const cameraButtons=all<HTMLButtonElement>('[data-view]');
+const modeButtons=all<HTMLButtonElement>('[data-mode]');
+const partButtons=all<HTMLButtonElement>('[data-part]');
 const presetButtons=all<HTMLButtonElement>('[data-preset]');
 const reuseButton=document.querySelector<HTMLButtonElement>('[data-controller="reuse"]')!;
 const isEmbed=new URLSearchParams(location.search).has('embed');
@@ -39,10 +43,10 @@ const worker=new Worker(new URL('./simulation.worker.ts',import.meta.url),{type:
 if(isEmbed)document.body.classList.add('embed');
 
 if(new URLSearchParams(location.search).get('view')!=='schematic'){
-  try{scene=new WorkcellScene(el('scene'),config);scene.view('cell');}
+  try{scene=new WorkcellScene(el('scene'),config,{labels:el('labels'),tooltip:el('tooltip'),onPick:()=>{document.body.classList.add('focused');cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));}},isEmbed);}
   catch(error){console.warn('3D renderer unavailable',error);}
 }else text('fallback-title','Live side view of the simulation.');
-if(!scene){el('fallback').hidden=false;cameraButtons.forEach(b=>b.disabled=true);el<HTMLInputElement>('inspect').disabled=true;}
+if(!scene){el('fallback').hidden=false;[...cameraButtons,...modeButtons].forEach(b=>b.disabled=true);}
 
 function updateSchematic(s:Snapshot){
   el('schematic-socket').setAttribute('transform',`translate(${s.config.offsetX*5} 0)`);
@@ -81,8 +85,17 @@ function choose(next:Controller){
   controller=next;controllerButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.controller===next)));
   text('controller-description',descriptions[next]);
 }
-function selectView(view:'cell'|'close'|'top'){
-  scene?.view(view);cameraButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
+function selectView(view:View){
+  scene?.view(view);document.body.classList.toggle('focused',view!=='overview');cameraButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
+}
+function selectMode(mode:Mode){
+  scene?.setMode(mode);document.body.classList.toggle('exploded',mode==='parts');modeButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
+}
+function showPart(id:PartId){
+  if(!scene)return;
+  scene.focusPart(id);document.body.classList.add('focused');cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));
+  const stage=document.querySelector('.stage')!;
+  if(stage.getBoundingClientRect().bottom<innerHeight*0.6)stage.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
 }
 function finishRecording(){
   if(!recorder)return;
@@ -130,8 +143,10 @@ el('run').addEventListener('click',togglePlayback);
 el('reset').addEventListener('click',reset);
 el('speed').addEventListener('change',()=>send({type:'speed',speed:Number(el<HTMLSelectElement>('speed').value)}));
 el('forget').addEventListener('click',()=>{stopTour();send({type:'forget'});if(controller==='reuse')choose('fixed');});
-el('inspect').addEventListener('change',()=>scene?.setInspect(el<HTMLInputElement>('inspect').checked));
-for(const b of cameraButtons)b.addEventListener('click',()=>selectView(b.dataset.view as 'cell'|'close'|'top'));
+for(const b of cameraButtons)b.addEventListener('click',()=>selectView(b.dataset.view as View));
+for(const b of modeButtons)b.addEventListener('click',()=>selectMode(b.dataset.mode as Mode));
+for(const b of partButtons)b.addEventListener('click',()=>showPart(b.dataset.part as PartId));
+el('anatomy-title').closest('section')!.querySelector('[data-explode]')!.addEventListener('click',()=>{selectMode('parts');selectView('overview');document.querySelector('.stage')!.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});});
 el('retry').addEventListener('click',()=>location.reload());
 
 const notes=el<HTMLDialogElement>('notes');
@@ -173,12 +188,13 @@ function scheduleNext(delay:number){
   refreshControls();
 }
 function startTour(){
-  stopTour();tourIndex=0;
+  stopTour();selectMode('machine');tourIndex=0;
   el('tour-story').hidden=false;document.body.classList.add('tour-active');
-  el<HTMLSelectElement>('speed').value='2';send({type:'speed',speed:2});selectView('close');tourStep();refreshControls();
+  el<HTMLSelectElement>('speed').value='2';send({type:'speed',speed:2});selectView('connector');tourStep();refreshControls();
 }
 el('tour').addEventListener('click',()=>tourIndex>=0?togglePlayback():startTour());
 el('embed-run').addEventListener('click',startTour);
+all<HTMLButtonElement>('[data-start-tour]').forEach(b=>b.addEventListener('click',()=>{if(tourIndex<0)startTour();}));
 el('save-video').addEventListener('click',()=>{
   stopTour();if(!scene)return;
   try{
@@ -200,7 +216,8 @@ function refreshControls(){
   text('run-label',active?'Pause':unfinished||tourPaused?'Resume':'Run attempt');text('run-icon',active?'Ⅱ':'▶');
   el<HTMLButtonElement>('run').disabled=!ready;el<HTMLButtonElement>('reset').disabled=!ready;
   el<HTMLSelectElement>('speed').disabled=!ready;
-  el<HTMLButtonElement>('tour').disabled=!ready;el<HTMLButtonElement>('embed-run').disabled=!ready;
+  el<HTMLButtonElement>('tour').disabled=!ready;all<HTMLButtonElement>('[data-start-tour]').forEach(b=>b.disabled=!ready);el<HTMLButtonElement>('embed-run').disabled=!ready;
+  el('tour').setAttribute('aria-pressed',String(tourIndex>=0));
   if(tourIndex>=0){text('tour-label',tourPaused?'Resume demo':'Pause demo');text('tour-icon',tourPaused?'▶':'Ⅱ');}
   else{text('tour-label','Play demo');text('tour-icon','▶');}
   for(const input of settingInputs)input.disabled=!ready||unfinished||tourIndex>=0;
@@ -208,7 +225,10 @@ function refreshControls(){
   reuseButton.title=state?.calibration?'Use the last accepted correction':'Run a successful search to save a fit';
   el('memory').hidden=!state?.calibration;
   if(state?.calibration)text('memory-value',`X ${signed(state.calibration[0]*1000)} / Y ${signed(state.calibration[1]*1000)} mm`);
-  text('engine-status',!ready?'Loading…':tourPaused?'Paused':tourPending?'Next step…':playing?'Running':unfinished?'Paused':state?.phase==='complete'?'Complete':'Ready');
+  const status=!ready?'Loading…':tourPaused?'Paused':tourPending?'Next step…':playing?'Running':unfinished?'Paused':state?.phase==='complete'?'Complete':'Ready';
+  text('engine-status',status);
+  text('hud-status',!ready?'Loading':tourIndex>=0&&!tourPaused?'Demo running':playing?'Robot running':unfinished||tourPaused?'Robot paused':'Robot ready');
+  el('status').classList.toggle('paused',!playing);
 }
 function renderState(s:Snapshot,isPlaying:boolean,speed:number){
   state=s;playing=isPlaying;
@@ -216,6 +236,7 @@ function renderState(s:Snapshot,isPlaying:boolean,speed:number){
   scene?.update(s,samples,sampleEpoch);if(!scene)updateSchematic(s);
   text('force',s.force.toFixed(1));text('depth',s.depth.toFixed(1));text('probes',s.phase==='ready'?'—':String(s.probes));text('elapsed',s.time.toFixed(1));
   const phase=['approach','backoff','move'].includes(s.phase)?'insert':s.phase;
+  journey(s);
   phaseLabels.forEach(n=>n.classList.toggle('active',n.dataset.phase===phase));
   checks('electrical-check',s.continuity,s.phase==='electrical');checks('retention-check',s.retention,s.phase==='retention');
   refreshControls();
@@ -226,6 +247,18 @@ function renderState(s:Snapshot,isPlaying:boolean,speed:number){
   else if(s.phase==='retention')outcome('idle','Give it a pull.','Checking whether the lock holds.');
   else outcome('idle',controller==='search'?`Trying position ${s.probes}.`:'Inserting the connector.','Watching for contact with the socket.');
   if(performance.now()-lastChartDraw>80||!playing)drawChart();
+}
+const journeySteps:Record<string,[string,string,number]>={
+  approach:['Insert','The robot lowers the connector.',.2],insert:['Insert','The robot lowers the connector.',.25],
+  backoff:['Blocked. Backing off.','The socket edge stopped it.',.25],move:['Trying a new spot.','Small step to the side.',.25],
+  electrical:['Connection test','Is every contact in?',.5],retention:['Pull test','Does the lock hold?',.75],reset:['Reset','Back to the start.',.92],
+};
+function journey(s:Snapshot){
+  const box=el('journey');box.classList.toggle('visible',s.phase!=='ready');
+  const [title,detail,progress]=s.phase==='complete'?[s.accepted?'Passed.':'Failed.',s.accepted?'Both tests passed. Fit saved.':s.reason,1] as [string,string,number]:journeySteps[s.phase]??['Ready','',0];
+  text('journey-title',s.phase==='move'?`Try ${s.probes + 1}.`:title);text('journey-detail',detail);
+  box.dataset.status=s.accepted===true?'pass':s.accepted===false?'fail':'run';
+  el('journey-progress').style.width=`${progress*100}%`;
 }
 function outcome(status:string,title:string,copy:string){
   el('outcome').dataset.status=status;text('outcome-title',title);text('outcome-copy',copy);
@@ -248,19 +281,18 @@ function record(trial:Trial){
 }
 function drawChart(){
   lastChartDraw=performance.now();
-  if(isEmbed||!document.querySelector<HTMLDetailsElement>('.measurements')!.open)return;
+  if(isEmbed)return;
   const canvas=el<HTMLCanvasElement>('force-chart'),r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;
   const ratio=Math.min(devicePixelRatio,2);
   if(canvas.width!==Math.round(r.width*ratio)||canvas.height!==Math.round(r.height*ratio)){canvas.width=Math.round(r.width*ratio);canvas.height=Math.round(r.height*ratio);}
   const ctx=canvas.getContext('2d')!;ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,r.width,r.height);
   const width=r.width,height=r.height-6,max=samples.reduce((v,p)=>Math.max(v,p.force),6),end=Math.max(2,samples.at(-1)?.t??0),start=samples[0]?.t??0;
-  ctx.lineWidth=1;ctx.strokeStyle='#dcdfd3';ctx.setLineDash([2,4]);
+  ctx.lineWidth=1;ctx.strokeStyle='#2a3036';ctx.setLineDash([2,4]);
   for(let i=0;i<3;i++){const y=5+i*(height-5)/2;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke();}ctx.setLineDash([]);
-  if(samples.length>1){ctx.beginPath();samples.forEach((p,i)=>{const x=(p.t-start)/(end-start)*width,y=height-p.force/max*(height-7);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.strokeStyle='#d75c30';ctx.lineWidth=1.4;ctx.stroke();}
+  if(samples.length>1){ctx.beginPath();samples.forEach((p,i)=>{const x=(p.t-start)/(end-start)*width,y=height-p.force/max*(height-7);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.strokeStyle='#ff7a1a';ctx.lineWidth=1.6;ctx.stroke();}
   text('chart-zero',`${start.toFixed(0)} s`);text('chart-end',`${(samples.at(-1)?.t??0).toFixed(1)} s`);
 }
 new ResizeObserver(drawChart).observe(el('force-chart'));
-document.querySelector('.measurements')!.addEventListener('toggle',drawChart);
 function error(message:string){
   ready=false;playing=false;stopTour();el('loading').hidden=true;el('retry').hidden=false;
   el<HTMLButtonElement>('save-video').disabled=true;
