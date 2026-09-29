@@ -2,7 +2,11 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/connector-home.css' %}?v={{ asset_v }}">
+<link rel="preload" as="image" fetchpriority="high" href="{% static 'defex/assets/defex-poster-v4.webp' %}?v={{ asset_v }}">
+<!-- The hero is 280svh only while it has a film. Set before first paint, so
+     the page does not shift when the deferred script gets round to it;
+     hero-film.js takes the class off again if the film cannot run. -->
+<script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !(navigator.connection && navigator.connection.saveData)) document.documentElement.classList.add('has-scroll-film');</script>
 {% endblock %}
 
 {% block content %}
@@ -11,24 +15,42 @@
 {% include "landing/_topbar.html" %}
 
 <main>
-    <section class="connector-hero" id="top" aria-labelledby="hero-title">
-        <div class="connector-hero__intro">
-            <div>
-                <p class="connector-hero__eyebrow">Self-teaching robots · Starting with electrical connectors</p>
-                <h1 id="hero-title">Teaching robots<br>to assemble <em>connectors.</em></h1>
+    <!-- The film is pinned and advances with the scroll. It never plays on its own.
+         Under the headline sits one button, the product's way in: Husan asked
+         for it here, under the robot, and it opens the pitch. The blog took the
+         pill in the nav. The page still ends on the booker. -->
+    <section class="hero" id="top" aria-labelledby="hero-title">
+        <div class="hero__sticky">
+            <!-- The film as 450 stills (static/defex/frames), drawn on the canvas by
+                 hero-film.js: the frame is a function of the scroll position, at
+                 whatever rate the page moves, with nothing to seek and nothing to
+                 buffer. The <video> holds the poster and is the fallback scrubber
+                 where the browser cannot decode the stills. -->
+            <div class="hero__screen">
+                <video class="hero__film" id="film" muted playsinline preload="none" disablepictureinpicture aria-hidden="true"
+                       width="1920" height="1080"
+                       poster="{% static 'defex/assets/defex-poster-v4.webp' %}?v={{ asset_v }}"
+                       data-poster-final="{% static 'defex/assets/defex-poster-final-v4.webp' %}?v={{ asset_v }}"
+                       data-fps="60" data-type="video/mp4"
+                       data-src="{% static 'defex/assets/defex-intro-v4.mp4' %}?v={{ asset_v }}"
+                       data-src-sm="{% static 'defex/assets/defex-intro-v4-sm.mp4' %}?v={{ asset_v }}"
+                       data-frames="{% static 'defex/frames/1920/' %}" data-frames-sm="{% static 'defex/frames/1200/' %}"
+                       data-frame-count="450" data-frame-ext="avif" data-frame-size="1920x1080" data-frame-size-sm="1200x960" data-frame-v="{{ asset_v }}"></video>
+                <canvas class="hero__film hero__film--frames" id="frames" width="1920" height="1080" aria-hidden="true" hidden></canvas>
             </div>
-            <div class="connector-hero__copy">
-                <p>We’re building robotic workcells that learn assembly tasks from their test results. Explore the insertion and testing loop in our software prototype.</p>
-                <div class="connector-hero__actions">
-                    <a href="{% url 'prototype' %}">Open connector lab ↗</a>
-                    <a href="{% url 'why_us' %}">Test our product →</a>
+            <div class="lede">
+                <h1 class="cut" id="hero-title"><span class="cut__face engraved">Self-teaching robots<br>for <em>manufacturing</em>.</span><span class="cut__mask" aria-hidden="true">Self-teaching robots<br>for <em>manufacturing</em>.</span></h1>
+                <div class="lede__actions">
+                    <a class="glass-button-wrap" href="{% url 'why_us' %}">
+                        <span class="glass-button-tilt">
+                            <span class="glass-button"><span class="glass-button-text">Test our product<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
+                            <span class="glass-button-shadow" aria-hidden="true"></span>
+                        </span>
+                    </a>
                 </div>
             </div>
+            <p class="scroll-cue" aria-hidden="true">Scroll <span>&#8595;</span></p>
         </div>
-        <div class="connector-hero__frame">
-            <iframe src="{% url 'prototype' %}?embed=1" title="Interactive connector assembly simulation" loading="eager"></iframe>
-        </div>
-        <p class="connector-hero__caption"><span>Interactive software prototype. Illustrative geometry and modeled tests; no physical robot is shown.</span><a href="{% url 'prototype' %}">Controls, run records &amp; model notes ↗</a></p>
     </section>
 
     <!-- First thing under the hero. The camera lesson is the reason the rest of
@@ -61,20 +83,20 @@
 
         <ol class="features">
             <li class="feature" data-reveal>
-                <h3 class="feature__t engraved">Practice needs a result.</h3>
-                <p class="feature__d">Our goal is a cell that uses assembly test results to improve its motion. The software prototype demonstrates a contact search and a reusable alignment correction.</p>
+                <h3 class="feature__t engraved">Our robot teaches itself.</h3>
+                <p class="feature__d">Show it the job. It practices, tests its own work and gets better every time. No engineer programming every move.</p>
             </li>
             <li class="feature" data-reveal>
-                <h3 class="feature__t engraved">A connection needs two checks.</h3>
-                <p class="feature__d">Electrical continuity and mechanical retention answer different questions. Our prototype models both checks, including failures that a seated part alone cannot reveal.</p>
+                <h3 class="feature__t engraved">Bad parts never ship.</h3>
+                <p class="feature__d">Is it connected? Is it locked? Every part gets tested on the spot, with vision and touch.</p>
             </li>
             <li class="feature" data-reveal>
-                <h3 class="feature__t engraved">Make another attempt.</h3>
-                <p class="feature__d">The simulated tool retracts after each attempt. Physical part loading, recovery and unattended operation are still work ahead.</p>
+                <h3 class="feature__t engraved">No one stands over it.</h3>
+                <p class="feature__d">Good parts out. Bad parts aside. Next parts in. It resets itself.</p>
             </li>
             <li class="feature" data-reveal>
-                <h3 class="feature__t engraved">Measure the next setup.</h3>
-                <p class="feature__d">We aim to reduce the engineering needed for related connector variants. Demonstrating that on customer parts is a future validation step.</p>
+                <h3 class="feature__t engraved">A new part is not a new project.</h3>
+                <p class="feature__d">What it learns on one part carries to the next. Teach it what changed, not the whole job.</p>
             </li>
         </ol>
         <p class="features__more">
@@ -191,6 +213,7 @@
 
 {% block extra_scripts %}
 
+<script src="{% static 'js/hero-film.js' %}?v={{ asset_v }}" defer fetchpriority="high"></script>
 <script src="{% static 'js/origin.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/gridpulse.js' %}?v={{ asset_v }}" defer></script>
