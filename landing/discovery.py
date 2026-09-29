@@ -80,6 +80,7 @@ PARTNERS = [
     {"name": "Ansys", "logo": "img/partners/ansys.png", "width": 792, "height": 256},
     {"name": "Onshape", "logo": "img/partners/onshape.png", "width": 1556, "height": 347},
     {"name": "University of Michigan", "logo": "img/partners/michigan.png", "width": 1865, "height": 374},
+    {"name": "GMI Cloud", "logo": "img/partners/gmi-cloud.png", "width": 2991, "height": 672},
 ]
 
 # Kept out of PUBLIC_COMPANY on purpose: that dict is dumped whole into /company.json.
