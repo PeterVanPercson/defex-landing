@@ -112,7 +112,7 @@ a { color: inherit; text-decoration: none; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 [hidden] { display: none !important; }
 h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em; text-wrap: balance; }
-section[id], h1[id], h2[id] { scroll-margin-top: calc(var(--nav) + 16px); }
+section[id], h1[id], h2[id], details[id], .form--apply { scroll-margin-top: calc(var(--nav) + 16px); }
 .dot { color: var(--accent); }
 
 /* Falls back to plain ink where background-clip:text is unsupported, because
@@ -207,7 +207,11 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .has-scroll-film .hero__screen { width: min(100%, calc((100svh - var(--nav) - var(--lede-space)) * 16 / 9)); }
 @media (min-aspect-ratio: 13/10) {
     .has-scroll-film .hero__sticky { grid-template-rows: minmax(0, 1fr) auto; padding-block: 12px 28px; }
-    .has-scroll-film .hero__screen { width: 100%; height: 100%; min-height: 0; }
+    /* The box is the film's own 16:9, so its side edges are the frame's edges
+       and dissolve like the top and bottom; frames that reach the edge were
+       cut off there in a hard vertical line. */
+    .has-scroll-film .hero__screen { width: auto; max-width: 100%; height: 100%; min-height: 0; aspect-ratio: 16 / 9; }
+    .has-scroll-film .hero__screen::before { bottom: 0; height: auto; background: linear-gradient(to bottom, var(--bg), transparent 26%), linear-gradient(to right, var(--bg), transparent 7%, transparent 93%, var(--bg)); }
     .has-scroll-film .hero__film { height: 100%; object-fit: contain; }
 }
 /* the headline now sits in the frame, so the cue moves out of its way */
@@ -357,7 +361,9 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    taller than the card shows white around it. The embed resizes the iframe to
    its content, so left alone it fits exactly. min-height only stops the page
    jumping before it mounts. */
-.booker__frame { width: 100%; max-width: 1000px; margin-inline: auto; min-height: 560px; }
+.booker__frame { width: 100%; max-width: 1000px; margin-inline: auto; min-height: 570px; }
+/* under ~770px of frame cal.com stacks the card over the calendar */
+@media (min-width: 721px) and (max-width: 880px) { .booker__frame { min-height: 1400px; } }
 /* the same reserved height before, during and after the embed mounts: it used
    to collapse to 0, then 200px, then grow, and that was every layout shift the
    page had left below the hero */
@@ -370,6 +376,10 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    win. Scoped to this iframe on purpose: dropping the meta also fixes it, but
    turns native form controls light across the whole site. */
 .booker__frame iframe { color-scheme: light !important; background: transparent !important; border-radius: 12px; }
+/* cal.com centres its iframe in the reserved box with auto margins, so the
+   calendar slid up as it grew; pinned to the top it only grows downward */
+.booker__frame cal-inline { align-items: flex-start; align-content: flex-start; }
+.booker__frame iframe { margin-block: 0 !important; }
 /* The note is the second path, for people who will not book a slot. Closed,
    it is one quiet line under the calendar; open, it is the form. */
 .note { margin-top: clamp(30px, 4.5vh, 48px); }
@@ -442,6 +452,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .reveal [data-reveal].is-in { opacity: 1; transform: none; filter: none; }
 .reveal .feature:nth-child(2) { transition-delay: .08s; }
 .reveal .feature:nth-child(3) { transition-delay: .16s; }
+.reveal .feature:nth-child(4) { transition-delay: .24s; }
 /* Where the browser can drive an animation from the scroll, the arrival is
    bound to the scroll itself rather than to the clock: under a notched mouse
    a timed fade was still running while its lines were being read, and read as
@@ -449,7 +460,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 @supports (animation-timeline: view()) {
     .reveal [data-reveal] { opacity: 1; transform: none; filter: none; transition: none; animation: reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
     .reveal .engraved[data-reveal] { animation-name: reveal-cut; }
-    .reveal .feature:nth-child(2), .reveal .feature:nth-child(3), .reveal .founder:nth-child(2) { transition-delay: 0s; }
+    .reveal .feature:nth-child(2), .reveal .feature:nth-child(3), .reveal .feature:nth-child(4), .reveal .founder:nth-child(2) { transition-delay: 0s; }
     @keyframes reveal { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
     @keyframes reveal-cut { from { opacity: 0; transform: translateY(14px); filter: blur(3px); } to { opacity: 1; transform: none; filter: blur(0); } }
 }
@@ -468,6 +479,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .apply__lead { margin-top: 16px; max-width: 52ch; font: 400 13px/1.8 var(--mono); color: var(--ink-soft); }
 .form--apply { max-width: 620px; margin-top: 36px; }
 .form--apply .cta { justify-self: start; margin-top: 12px; }
+.form--apply select { text-overflow: ellipsis; }
 .field select { width: 100%; height: 48px; padding: 0 14px; border: 1px solid var(--rule); border-radius: 0; background: var(--surface); font: 16px/1.5 var(--font); color: var(--ink); letter-spacing: 0; text-transform: none; }
 .apply__alt { margin-top: 24px; font: 400 12px/1.6 var(--mono); color: var(--mute); }
 
@@ -620,7 +632,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 :root { --hero-fade: clamp(120px, 20vh, 200px); }
     .about, .band--first, .origin--home { padding-top: calc(24px + var(--hero-fade)); }
     /* stacked on a phone, so it needs more room before it mounts */
-    .booker__frame { min-height: 1080px; }
+    .booker__frame { min-height: 1100px; }
     .contact { padding-top: 80px; padding-bottom: 80px; }
     .contact h2 { font-size: clamp(32px, 9vw, 40px); }
     .form__row { grid-template-columns: 1fr; }
@@ -741,7 +753,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    every page. */
 .glass-button-wrap--nav { flex-shrink: 0; }
 .glass-button-wrap--nav .glass-button-shadow { --shadow-cutoff-fix: 1em; }
-.glass-button-wrap--nav .glass-button-text { min-height: 44px; padding: 0 18px; gap: 8px; font-size: 10.5px; letter-spacing: .16em; }
+.glass-button-wrap--nav .glass-button-text { min-height: 44px; padding: 0 18px; gap: 8px; font-size: 10.5px; letter-spacing: .16em; text-shadow: none; }
+.glass-button-wrap--nav:active .glass-button-text { text-shadow: none; }
 .glass-button-wrap--nav .glass-button-arrow { width: 12px; height: 12px; }
 /* Phone sizes, declared after the button's own rules so they win. */
 @media (max-width: 720px) {
@@ -844,8 +857,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .figure--wide .figure__cap { margin-left: max(0px, calc((100% - 600px) / 2)); }
 .panel { position: relative; padding: clamp(24px, 3vw, 40px) 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .article-image { isolation: isolate; }
-.article-image__panel { padding: 0; overflow: hidden; background: #121417; }
-.article-image__panel img { display: block; width: 100%; height: auto; max-height: min(72vh, 720px); object-fit: contain; }
+.article-image__panel { padding: 0; overflow: hidden; background: none; border: 0; }
+.article-image__panel img { display: block; width: auto; max-width: 100%; height: auto; max-height: min(72vh, 720px); margin-inline: auto; }
 .article-image__credit { display: block; margin-top: 5px; color: var(--ink-soft); }
 
 /* the swatches: shared by the bench's controls and its bar */
@@ -1025,16 +1038,20 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .spline { position: relative; margin: 0 0 calc(-1 * var(--hero-pad-b)); width: min(100%, 520px); aspect-ratio: 1; justify-self: end; align-self: end; }
 .spline__canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: pan-y; opacity: 0; transition: opacity .45s ease; -webkit-mask-image: linear-gradient(to bottom, #000 76%, transparent 97%); mask-image: linear-gradient(to bottom, #000 76%, transparent 97%); }
 .spline.is-ready .spline__canvas { opacity: 1; }
+/* the still of the same robot while the scene loads, cross-faded out once it is live */
+.spline::before { content: ""; position: absolute; inset: 0; background: url("../img/robot-still.webp") center / contain no-repeat; -webkit-mask-image: linear-gradient(to bottom, #000 76%, transparent 97%); mask-image: linear-gradient(to bottom, #000 76%, transparent 97%); transition: opacity .45s ease; }
+.spline.is-ready::before { opacity: 0; }
 /* where the scene cannot run, a still of the same robot, captured from it */
 .spline.is-failed { background: url("../img/robot-still.webp") center / contain no-repeat; }
+.spline.is-failed::before { opacity: 0; }
 .spline__loader { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 9px; opacity: 0; transition: opacity .4s ease; }
-.spline.is-loading .spline__loader { opacity: 1; }
+.spline.is-loading .spline__loader { opacity: 0; }
 .spline__loader i { width: 9px; height: 9px; border-radius: 50%; background: var(--ink); animation: spline-wait 1.2s ease-in-out infinite; }
 .spline__loader i:nth-child(2) { background: var(--accent); animation-delay: .15s; }
 .spline__loader i:nth-child(3) { animation-delay: .3s; }
 @keyframes spline-wait { 0%, 100% { opacity: .35; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-4px); } }
 .bloghero__t { margin-top: 20px; max-width: 18ch; font-size: clamp(38px, 6vw, 68px); line-height: 1.04; letter-spacing: -.015em; }
-.bloghero .masthead__lead { max-width: 56ch; }
+.bloghero .masthead__lead { max-width: 56ch; text-wrap: pretty; }
 /* .post is full bleed, with the text kept on the column by the same padding
    the nav and the sheets use; everything on top of it is lifted a layer. */
 .post { max-width: none; margin: 0; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); position: relative; }
@@ -1090,6 +1107,9 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 .parts { position: absolute; left: 50%; top: 50%; width: max(100%, calc(var(--gp-height, 100svh) * 1.6)); aspect-ratio: 16 / 10; transform: translate(-50%, -50%); }
 .part { position: absolute; left: var(--x); top: var(--y); width: var(--w); transform: translate(-50%, -50%); will-change: transform; }
 .part svg { display: block; width: 100%; height: auto; overflow: visible; }
+/* on a portrait screen the biggest parts sit behind the copy: once inside
+   the letter they go tonal */
+@media (max-width: 900px) { .parts { transition: opacity .6s ease; } .portal[data-entered="true"] .parts { opacity: .4; } }
 /* the cover sits over the field and under the marks, the letter buttons and the title */
 .portal__cover { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .portal__art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
@@ -1108,7 +1128,7 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
    parts while they drift at their own depths. A halo in the yellow keeps the
    words clear of any part passing behind them. */
 .portal__content { position: relative; z-index: 1; padding: 0 var(--gutter) clamp(90px, 16vh, 180px); color: #0A0A0A; background: var(--gp-field); }
-.portal[data-motion="on"] .portal__content { margin-top: calc((var(--gp-length, 1.9) - 1) * var(--gp-height)); background: transparent; opacity: var(--gp-reveal, 0); }
+.portal[data-motion="on"] .portal__content { margin-top: calc((var(--gp-length, 1.9) - 1.46) * var(--gp-height)); background: transparent; opacity: var(--gp-reveal, 0); will-change: opacity; }
 .beat { display: flex; align-items: center; min-height: 62svh; max-width: 11ch; font: 700 clamp(56px, 9vw, 150px)/.92 var(--sans); letter-spacing: -.05em; text-shadow: 0 0 28px var(--gp-field), 0 0 56px var(--gp-field), 0 0 90px var(--gp-field); }
 .beat--small { max-width: 21ch; font-size: clamp(30px, 3.6vw, 58px); font-weight: 600; line-height: 1.08; letter-spacing: -.035em; }
 .beat__not { display: inline-block; margin-left: .06em; padding: 0 .16em .04em; border-radius: .14em; background: #0A0A0A; color: var(--gp-field); text-shadow: none; }
@@ -1132,6 +1152,7 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 
 /* the turn: text and the arm */
 .wy-promise, .wy-feat { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); align-items: center; gap: clamp(36px, 5vw, 100px); }
+@media (min-width: 901px) { .wy-promise { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
 .wy-feat--flip .wy-feat__text { order: 2; }
 .arm__svg { display: block; width: 100%; height: auto; overflow: visible; }
 .arm__floor { fill: none; stroke: rgba(244, 244, 240, .18); stroke-width: 2; }
@@ -1440,7 +1461,14 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
 .is-off *, .is-off *::before, .is-off *::after { animation-play-state: paused; }
 
 .sound { width: 44px; height: 44px; color: #EAE8E3; }
-.booker__status, .booker__fallback { margin: 12px 0; text-align: center; font: 400 12px/1.7 var(--mono); color: var(--ink-soft); }
+/* laid over the frame's reserved space, not above and below it: they go
+   when the booker is ready, and taking them out of the flow moved the
+   calendar and everything under it */
+.booker__panel { position: relative; }
+.booker__status, .booker__fallback { position: absolute; left: 0; right: 0; margin: 0; padding-inline: var(--pad); text-align: center; font: 400 12px/1.7 var(--mono); color: var(--ink-soft); }
+.booker__status { top: min(30%, 200px); }
+.booker__fallback { top: calc(min(30%, 200px) + 34px); }
+.booker__panel[data-state="failed"] :is(.booker__status, .booker__fallback) { position: static; margin: 12px 0; }
 .booker__fallback a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
 .booker__panel[data-state="failed"] .booker__frame { min-height: 0; max-height: 160px; overflow: hidden; }
 .booker__panel[data-state="ready"] :is(.booker__status, .booker__fallback) { display: none; }

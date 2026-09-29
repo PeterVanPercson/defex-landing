@@ -8,7 +8,7 @@ export function magnify(root: HTMLElement) {
     item.classList.add('show-tip');
     setTimeout(() => item.classList.remove('show-tip'), 1400);
   }));
-  if (!matchMedia('(hover: hover) and (pointer: fine)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!matchMedia('(hover: hover) and (pointer: fine) and (min-width: 901px)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const items = Array.from(root.querySelectorAll<HTMLElement>('.dock-item'));
   const springs = items.map(() => ({ size: BASE, velocity: 0 }));
   let pointer = Infinity, frame = 0;

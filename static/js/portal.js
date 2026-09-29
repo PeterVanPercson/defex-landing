@@ -255,8 +255,8 @@
             section.dataset.choosing = String(choosing);
             section.style.setProperty('--gp-caption', String(1 - smooth(0.01, 0.16, p)));
             section.style.setProperty('--gp-field-scale', String(1 + 0.12 * smooth(0, 0.82, p)));
-            section.dataset.entered = String(p >= 0.9);
-            section.style.setProperty('--gp-reveal', String(still ? 1 : smooth(0.78, 0.9, p)));
+            section.dataset.entered = String(p >= 0.66);
+            section.style.setProperty('--gp-reveal', String(still ? 1 : smooth(0.54, 0.66, p)));
             // past the dive, how far the copy has scrolled over the parts
             const past = y - travel;
             section.style.setProperty('--gp-after', still ? '0' : clamp(past / Math.max(1, section.offsetHeight - travel - H)).toFixed(4));

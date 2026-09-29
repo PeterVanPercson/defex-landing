@@ -2,11 +2,6 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { dimensions } from './model.ts';
 import type { Configuration } from './model.ts';
 import type { Snapshot, Sample } from './engine.ts';
@@ -34,7 +29,7 @@ const M = {
   ivory: paint(0xe6e4d9, 0.05, 0.4, 0.25),
   gold: mat(0xd2ad68, 0.9, 0.22),
   amber: mat(0xff7a1a, 0.5, 0.3),
-  glow: mat(0xff7a1a, 0.2, 0.25, { emissive: 0xff7a1a, emissiveIntensity: 3.2 }),
+  glow: new THREE.MeshBasicMaterial({ color: 0xff7a1a, toneMapped: false }),
 };
 const shared = new Set<THREE.Material>(Object.values(M));
 
@@ -146,6 +141,8 @@ export class WorkcellScene {
   dragging = false;
   lastInteraction = performance.now();
   flightTime = 0;
+  flightBlend = 0;
+  overviewDir: THREE.Vector3 | null = null;
   hovered: PartId | null = null;
   pointer: { x: number; y: number } | null = null;
   pointerMoved = false;
@@ -155,10 +152,12 @@ export class WorkcellScene {
   pixelRatio: number;
   frames = 0;
   measured = 0;
+  slow = 0;
   raycaster = new THREE.Raycaster();
   direction = new THREE.Vector3(0.62, -0.78, 0.5).normalize();
-  composer: EffectComposer | null = null;
-  gtao: GTAOPass | null = null;
+  halos: THREE.Sprite[] = [];
+  labelWidths = new Map<PartId, number>();
+  labelMeshes: Map<PartId, THREE.Mesh[]> | null = null;
   director = false;
   dirPos = new THREE.Vector3();
   dirTarget = new THREE.Vector3();
@@ -187,7 +186,7 @@ export class WorkcellScene {
     Object.assign(this.controls, { enableDamping: true, dampingFactor: 0.07, enablePan: false, minDistance: 45, maxDistance: 520, maxPolarAngle: Math.PI * 0.49, minPolarAngle: 0.02, rotateSpeed: 0.55, zoomSpeed: 0.7, autoRotateSpeed: 0.35 });
     if (embed) this.controls.enableZoom = false;
     if (matchMedia('(pointer: coarse)').matches) { this.controls.touches = { ONE: -1 as THREE.TOUCH, TWO: THREE.TOUCH.DOLLY_ROTATE }; this.renderer.domElement.style.touchAction = 'pan-y'; }
-    this.controls.addEventListener('start', () => { this.direct(false); this.dragging = true; this.animating = false; this.tween = null; this.autoSpin = 0; this.lastInteraction = performance.now(); });
+    this.controls.addEventListener('start', () => { this.direct(false); this.flightBlend = 0; this.dragging = true; this.animating = false; this.tween = null; this.autoSpin = 0; this.lastInteraction = performance.now(); });
     this.controls.addEventListener('end', () => { this.dragging = false; this.lastInteraction = performance.now(); });
 
     const env = new RoomEnvironment(), pmrem = new THREE.PMREMGenerator(this.renderer);
@@ -200,7 +199,7 @@ export class WorkcellScene {
     const warm = new THREE.PointLight(0xffbd42, 2.4, 0, 0); warm.position.set(-60, -30, 70); this.scene.add(warm);
     const front = new THREE.DirectionalLight(0xffffff, 1); front.position.set(90, -120, 40); this.scene.add(front);
 
-    if (!embed && !matchMedia('(pointer: coarse)').matches && container.clientWidth > 900) this.setupFx();
+    if (!embed && !matchMedia('(pointer: coarse)').matches && container.clientWidth > 900) { this.renderer.toneMappingExposure = 1.0; this.backdrop(); }
     this.scene.add(this.cell);
     this.buildGround(); this.buildTable(); this.buildGantry(); this.buildTool(); this.buildTester(); this.buildConnector(); this.buildPulses();
     this.trail = line(this.cell, [new THREE.Vector3(0, 0, 27)], 0xff8a3a, 0.8);
@@ -210,6 +209,7 @@ export class WorkcellScene {
     this.drawPlate(); this.drawHmi();
     document.fonts?.ready.then(() => { this.drawPlate(); this.drawHmi(); });
     this.measureAnchors();
+    this.cut = 1; this.applyCut(true); this.renderer.compile(this.scene, this.camera); this.cut = 0; this.applyCut(true);
 
     this.resizeObserver = new ResizeObserver(() => this.layout()); this.resizeObserver.observe(container);
     this.intersection = new IntersectionObserver(([entry]) => { this.visible = entry.isIntersecting; this.wake(); }, { threshold: 0.01 });
@@ -225,17 +225,7 @@ export class WorkcellScene {
     this.wake();
   }
 
-  setupFx() {
-    const composer = new EffectComposer(this.renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }));
-    composer.addPass(new RenderPass(this.scene, this.camera));
-    const gtao = new GTAOPass(this.scene, this.camera, 1, 1);
-    gtao.output = GTAOPass.OUTPUT.Default; gtao.blendIntensity = 0.9;
-    gtao.updateGtaoMaterial({ radius: 6, distanceExponent: 1.5, thickness: 3, scale: 1.25, samples: 16 });
-    gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });
-    composer.addPass(gtao);
-    composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), 0.28, 0.45, 2.4));
-    composer.addPass(new OutputPass());
-    this.composer = composer; this.gtao = gtao; this.renderer.toneMappingExposure = 1.0;
+  backdrop() {
     const bg = canvasTexture(1280, 800), g = bg.ctx.createRadialGradient(704, 440, 0, 704, 440, 900);
     g.addColorStop(0, '#171b21'); g.addColorStop(0.55, '#08090b'); g.addColorStop(1, '#000');
     bg.ctx.fillStyle = g; bg.ctx.fillRect(0, 0, 1280, 800);
@@ -243,13 +233,6 @@ export class WorkcellScene {
     for (let i = 0; i < pixels.data.length; i += 4) { const n = (Math.random() - 0.5) * 3; pixels.data[i] += n; pixels.data[i + 1] += n; pixels.data[i + 2] += n; }
     bg.ctx.putImageData(pixels, 0, 0); bg.texture.needsUpdate = true;
     this.scene.background = bg.texture;
-  }
-
-  sizeFx() {
-    if (!this.composer) return;
-    const ratio = Math.min(this.pixelRatio, 1.5);
-    this.composer.setPixelRatio(ratio); this.composer.setSize(this.width, this.height);
-    this.gtao?.setSize(Math.round(this.width * ratio / 2), Math.round(this.height * ratio / 2));
   }
 
   buildPulses() {
@@ -413,6 +396,14 @@ export class WorkcellScene {
       cylinder(tower, 2.7, 0.4, [0, 0, 26.1 + k * 4.4], M.edge, 28);
     });
     cylinder(tower, 2.7, 1.2, [0, 0, 41], M.dark, 28);
+    const glow = canvasTexture(128, 128), g = glow.ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,255,255,.45)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    glow.ctx.fillStyle = g; glow.ctx.fillRect(0, 0, 128, 128); glow.texture.needsUpdate = true;
+    [2, 1, 0].forEach((i, k) => {
+      const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow.texture, color: this.stack[i].color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0, toneMapped: false }));
+      halo.position.set(0, 0, 28.3 + k * 4.4); halo.scale.setScalar(16); tower.add(halo); this.halos[i] = halo;
+    });
+    this.stack.forEach(m => { m.toneMapped = false; });
   }
 
   drawHmi() {
@@ -421,7 +412,8 @@ export class WorkcellScene {
     print(c, 'DEFEX · CONNECTOR LAB', 30, 48, 20, '#8e9aa0', 600, MONO);
     c.fillStyle = s && s.phase !== 'ready' && s.phase !== 'complete' ? '#ff7a1a' : '#4a555c'; c.beginPath(); c.arc(600, 41, 7, 0, Math.PI * 2); c.fill();
     const phaseName: Record<string, string> = { ready: 'READY', approach: 'INSERT', insert: 'INSERT', backoff: 'BLOCKED', move: 'NEW TRY', electrical: 'CONNECTION', retention: 'PULL TEST', reset: 'RESET', complete: 'DONE' };
-    print(c, phaseName[s?.phase ?? 'ready'], 30, 128, 64, s?.phase === 'backoff' ? '#ff9b5c' : '#f1eee5', 650);
+    const done = s?.phase === 'complete', label = done ? (s!.accepted ? 'PASS' : s!.continuity === false || s!.retention === false ? 'REJECT' : 'STUCK') : phaseName[s?.phase ?? 'ready'];
+    print(c, label, 30, 128, 64, done ? (s!.accepted ? '#58d494' : '#ff5a45') : s?.phase === 'backoff' ? '#ff9b5c' : '#f1eee5', 650);
     print(c, `${(s?.force ?? 0).toFixed(1)} N`, 30, 186, 34, '#ff7a1a', 500, MONO);
     print(c, `${(s?.depth ?? 0).toFixed(1)} mm`, 250, 186, 34, '#c9ced2', 500, MONO);
     print(c, `TRY ${s && s.phase !== 'ready' ? Math.max(1, s.probes) : 0}`, 470, 186, 34, '#c9ced2', 500, MONO);
@@ -471,6 +463,7 @@ export class WorkcellScene {
 
   tagParts() {
     for (const p of this.parts.values()) p.group.traverse(o => { o.userData.part = p.id; });
+    this.labelMeshes = null;
   }
   measureAnchors() {
     this.scene.updateMatrixWorld(true);
@@ -505,15 +498,20 @@ export class WorkcellScene {
   setInspect(on: boolean) { this.setMode(on ? 'inside' : 'machine'); }
   view(mode: View | 'cell' | 'close') {
     this.direct(false);
-    this.viewMode = mode === 'cell' ? 'overview' : mode === 'close' ? 'connector' : mode;
+    const next = mode === 'cell' ? 'overview' : mode === 'close' ? 'connector' : mode;
+    if (this.viewMode === 'flight' && next === 'overview') {
+      const b = this.camera.position.clone().sub(this.controls.target).setZ(0).normalize(), flat = Math.hypot(this.direction.x, this.direction.y);
+      this.overviewDir = new THREE.Vector3(b.x * flat, b.y * flat, this.direction.z).normalize();
+    } else if (next !== 'overview') this.overviewDir = null;
+    this.viewMode = next;
     this.lastInteraction = performance.now(); this.flightTime = 0;
     this.goal(); this.startTween();
-    if (this.reduceMotion) this.snap();
+    if (this.reduceMotion && this.viewMode !== 'flight') this.snap();
     this.wake();
   }
   direct(on: boolean) {
     const next = on && !this.reduceMotion;
-    if (next && !this.director) { this.viewMode = 'overview'; this.tween = null; this.dirPos.copy(this.camera.position); this.dirTarget.copy(this.controls.target); }
+    if (next && !this.director) { this.viewMode = 'overview'; this.overviewDir = null; this.tween = null; this.dirPos.copy(this.camera.position); this.dirTarget.copy(this.controls.target); }
     if (next !== this.director) { this.director = next; this.hud?.onDirector?.(next); }
     this.wake();
   }
@@ -521,7 +519,7 @@ export class WorkcellScene {
     const age = (now - this.phaseStart) / 1000, k = this.width < 700 ? 1.95 : 1, socket = this.socket.getWorldPosition(new THREE.Vector3());
     let az = 0, el = 0.5, dist = this.baseDistance, target = new THREE.Vector3(0, 0, 30);
     if (this.phase === 'approach') { target.set(socket.x, socket.y, 27); dist = (235 - Math.min(1, age / 1.4) * 40) * k; az = -0.34; el = 0.44; }
-    else if (['insert', 'backoff', 'move'].includes(this.phase)) { target.set(socket.x, socket.y, 25); dist = 200 * k; az = -0.34 + Math.sin(now / 5200) * 0.07; el = 0.33; }
+    else if (['insert', 'backoff', 'move'].includes(this.phase)) { target.set(socket.x, socket.y, 32); dist = 250 * k; az = -0.34 + Math.sin(now / 5200) * 0.07; el = 0.33; }
     else if (this.phase === 'electrical' || this.phase === 'retention') { target.set(socket.x * 0.55 + 45 * 0.45, socket.y * 0.55 - 27 * 0.45, 17); dist = 215 * k; az = -0.1; el = 0.36; }
     else { this.desiredTarget.copy(target); this.desiredPosition.copy(this.direction).multiplyScalar(dist).add(target); return; }
     if (this.width < 700) target.z -= 14;
@@ -532,6 +530,7 @@ export class WorkcellScene {
   focusPart(id: PartId) { this.focus = id; this.view('part'); }
   snap() { this.camera.position.copy(this.desiredPosition); this.controls.target.copy(this.desiredTarget); this.animating = false; this.tween = null; }
   startTween() {
+    if (this.viewMode === 'flight' && !this.director && !this.dragging) { this.tween = null; this.animating = false; this.flightBlend = performance.now() + 1600; return; }
     this.animating = true; this.autoSpin = 0;
     const from = this.camera.position.clone().sub(this.controls.target), to = this.desiredPosition.clone().sub(this.desiredTarget);
     const turn = from.angleTo(to), zoom = Math.abs(Math.log(to.length() / Math.max(1, from.length())));
@@ -559,7 +558,7 @@ export class WorkcellScene {
       this.desiredPosition.set(bearing.x * flat, bearing.y * flat, this.direction.z).normalize().multiplyScalar(d).add(this.desiredTarget);
       return;
     }
-    const dir = this.viewMode === 'side' ? new THREE.Vector3(1, -0.16, 0.2) : this.viewMode === 'top' ? new THREE.Vector3(0.001, -0.08, 1) : this.direction;
+    const dir = this.viewMode === 'side' ? new THREE.Vector3(1, -0.16, 0.2) : this.viewMode === 'top' ? new THREE.Vector3(0.001, -0.08, 1) : this.overviewDir ?? this.direction;
     this.desiredPosition.copy(dir).normalize().multiplyScalar(this.viewMode === 'top' ? this.baseDistance * (this.mode === 'parts' ? 1.02 : 0.92) : d).add(this.desiredTarget);
   }
 
@@ -568,7 +567,7 @@ export class WorkcellScene {
     if (!r.width || !r.height) return;
     this.width = r.width; this.height = r.height;
     this.renderer.setSize(r.width, r.height);
-    this.sizeFx();
+    this.labelWidths.clear();
     this.camera.aspect = r.width / r.height;
     const wide = r.width > 1100 && !this.embed;
     this.shift = wide ? -r.width * 0.07 : 0;
@@ -672,13 +671,15 @@ export class WorkcellScene {
     this.stack[0].emissiveIntensity = accepted === true ? 4.2 : !running ? 0.9 : 0.08;
     this.stack[1].emissiveIntensity = running && accepted == null ? 0.3 + blink * 3.6 : 0.08;
     this.stack[2].emissiveIntensity = accepted === false ? 4.2 : 0.08;
+    this.stack.forEach((m, i) => { (this.halos[i].material as THREE.SpriteMaterial).opacity = Math.max(0, (m.emissiveIntensity - 0.3) / 3.9) * 0.9; m.emissiveIntensity *= 0.3; });
 
     if (moving && this.viewMode === 'part') this.goal();
     if (this.director && !this.dragging) {
       this.tween = null;
       this.directorGoal(now);
       const a = damping(dt, 420);
-      this.dirPos.lerp(this.desiredPosition, a); this.dirTarget.lerp(this.desiredTarget, a);
+      const fromOff = this.dirPos.clone().sub(this.dirTarget), toOff = this.desiredPosition.clone().sub(this.desiredTarget);
+      this.dirTarget.lerp(this.desiredTarget, a); orbitBlend(fromOff, toOff, a, this.dirPos); this.dirPos.add(this.dirTarget);
       this.camera.position.lerp(this.dirPos, a); this.controls.target.lerp(this.dirTarget, a);
       if (this.phase === 'complete' && now - this.phaseStart > 2600) { this.direct(false); this.viewMode = 'overview'; this.goal(); this.startTween(); }
     }
@@ -689,27 +690,32 @@ export class WorkcellScene {
       this.camera.position.add(this.controls.target);
       if (k >= 1) { this.tween = null; this.animating = false; }
     }
-    const flying = this.viewMode === 'flight' && !this.reduceMotion && !this.dragging && !this.tween && !this.director;
+    if (this.viewMode === 'flight' && !this.director && !this.dragging && now < this.flightBlend) {
+      this.goal();
+      const a = damping(dt, 380), off = this.camera.position.clone().sub(this.controls.target);
+      this.controls.target.lerp(this.desiredTarget, a);
+      off.lerp(this.desiredPosition.clone().sub(this.desiredTarget), a);
+      this.camera.position.copy(this.controls.target).add(off);
+    }
+    const flying = this.viewMode === 'flight' && !this.dragging && !this.tween && !this.director;
     const idle = !this.reduceMotion && !this.dragging && !this.tween && !this.director && this.viewMode === 'overview' && now - this.lastInteraction > 7000 && !running;
     this.autoSpin = flying || idle ? Math.min(1, this.autoSpin + dt / (flying ? 1400 : 2500)) : 0;
     this.controls.autoRotate = this.autoSpin > 0;
-    this.controls.autoRotateSpeed = (flying ? 1.6 : 0.3) * ease(this.autoSpin);
+    this.controls.autoRotateSpeed = (flying ? (this.reduceMotion ? 0.6 : 1.6) : 0.3) * ease(this.autoSpin);
     this.controls.dampingFactor = damping(dt, 170);
     this.controls.update(dt / 1000);
 
     if (this.pointerMoved && !this.dragging && this.pointer) { this.pointerMoved = false; this.setHover(this.pick(this.pointer.x, this.pointer.y)); }
     this.placeLabels();
     this.animateMoments(now, dt);
-    if (this.composer) this.composer.render(dt / 1000); else this.renderer.render(this.scene, this.camera);
-    this.frames++; this.measured += dt;
+    this.renderer.render(this.scene, this.camera);
+    if (this.state) { this.frames++; this.measured += dt; }
     if (this.measured > 4000) {
-      if (this.frames / (this.measured / 1000) < 54) {
-        if (this.gtao?.enabled) this.gtao.enabled = false;
-        else if (this.pixelRatio > 1) { this.pixelRatio = Math.max(1, this.pixelRatio - 0.25); this.renderer.setPixelRatio(this.pixelRatio); this.renderer.setSize(this.width, this.height); this.sizeFx(); }
-      }
+      this.slow = this.frames / (this.measured / 1000) < 50 ? this.slow + 1 : 0;
+      if (this.slow >= 2 && this.pixelRatio > 1.5) { this.pixelRatio = Math.max(1.5, this.pixelRatio - 0.25); this.renderer.setPixelRatio(this.pixelRatio); this.renderer.setSize(this.width, this.height); this.slow = 0; }
       this.frames = 0; this.measured = 0;
     }
-    this.frame = requestAnimationFrame(this.animate);
+    if (!this.frame) this.frame = requestAnimationFrame(this.animate);
   };
 
   animateMoments(now: number, dt: number) {
@@ -730,26 +736,69 @@ export class WorkcellScene {
     for (const { mesh, y } of this.latchParts) mesh.position.y = y - 0.4 * this.flex;
   }
 
+  labelRay = new THREE.Raycaster();
+  labelNdc = new THREE.Vector2();
+  // True when a screen point lands on this part and nothing else stands in front of it.
+  onPart(id: PartId, x: number, y: number) {
+    this.labelNdc.set(x / this.width * 2 - 1, -(y / this.height) * 2 + 1);
+    this.labelRay.setFromCamera(this.labelNdc, this.camera);
+    const first = this.labelRay.intersectObject(this.cell, true).find(h => (h.object as THREE.Mesh).isMesh && h.object.visible);
+    return !!first && first.object.userData.part === id;
+  }
   placeLabels() {
     if (!this.hud) return;
-    const show = this.spread > 0.6, point = new THREE.Vector3(), placed: { p: Part; x: number; y: number }[] = [];
+    const show = this.spread > 0.6, point = new THREE.Vector3(), placed: { p: Part; x: number; y: number; rects: number[][] }[] = [];
+    if (show && !this.labelMeshes) {
+      this.labelMeshes = new Map();
+      for (const p of this.parts.values()) {
+        const list: THREE.Mesh[] = [];
+        p.group.traverse(o => { if (o instanceof THREE.Mesh && o.userData.part === p.id && !(o.geometry instanceof THREE.TubeGeometry)) { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); list.push(o); } });
+        this.labelMeshes.set(p.id, list);
+      }
+    }
     for (const p of this.parts.values()) {
       p.label.classList.toggle('visible', show);
       if (!show) continue;
-      let minX = Infinity, maxX = -Infinity, sumY = 0;
-      for (let i = 0; i < 8; i++) {
-        point.set(i & 1 ? p.box.max.x : p.box.min.x, i & 2 ? p.box.max.y : p.box.min.y, i & 4 ? p.box.max.z : p.box.min.z);
-        p.group.localToWorld(point); point.project(this.camera);
-        const sx = (point.x * 0.5 + 0.5) * this.width; minX = Math.min(minX, sx); maxX = Math.max(maxX, sx); sumY += (-point.y * 0.5 + 0.5) * this.height;
+      const rects: number[][] = [];
+      let sumY = 0, count = 0;
+      for (const mesh of this.labelMeshes!.get(p.id)!) {
+        const bb = mesh.geometry.boundingBox!, r = [Infinity, -Infinity, Infinity, -Infinity];
+        for (let i = 0; i < 8; i++) {
+          point.set(i & 1 ? bb.max.x : bb.min.x, i & 2 ? bb.max.y : bb.min.y, i & 4 ? bb.max.z : bb.min.z).applyMatrix4(mesh.matrixWorld).project(this.camera);
+          const sx = (point.x * 0.5 + 0.5) * this.width, sy = (-point.y * 0.5 + 0.5) * this.height;
+          r[0] = Math.min(r[0], sx); r[1] = Math.max(r[1], sx); r[2] = Math.min(r[2], sy); r[3] = Math.max(r[3], sy);
+        }
+        rects.push(r); sumY += (r[2] + r[3]) / 2; count++;
       }
-      const narrow = this.width < 700 ? 118 : 0;
-      placed.push({ p, x: p.side > 0 ? Math.min(maxX + 6, this.width - narrow - 8) : Math.max(minX - 6, narrow + 8), y: sumY / 8 });
+      placed.push({ p, x: 0, y: sumY / Math.max(1, count), rects });
     }
-    const gap = this.width < 700 ? 32 : 42;
+    const gap = this.width < 700 ? 32 : 42, bottom = this.height - (this.width <= 900 ? 160 : 230);
     for (const side of [1, -1]) {
       const column = placed.filter(l => l.p.side === side).sort((a, b) => a.y - b.y);
       column.forEach((l, i) => { l.y = Math.max(l.y, 110, i ? column[i - 1].y + gap : 0); });
-      for (let i = column.length - 1; i >= 0; i--) column[i].y = Math.min(column[i].y, this.height - 230 - (column.length - 1 - i) * gap);
+      for (let i = column.length - 1; i >= 0; i--) column[i].y = Math.min(column[i].y, bottom - (column.length - 1 - i) * gap);
+      column.forEach((l, i) => {
+        const { p, rects } = l;
+        let w = this.labelWidths.get(p.id);
+        if (!w) { w = p.label.offsetWidth; if (w) this.labelWidths.set(p.id, w); else w = 140; }
+        const lo = Math.max(110, i ? column[i - 1].y + gap : -Infinity), hi = Math.min(bottom, i < column.length - 1 ? column[i + 1].y - gap : Infinity);
+        const candidates: { x: number; y: number; d: number }[] = [];
+        for (const r of rects) {
+          if (r[1] < 0 || r[0] > this.width || r[3] < 0 || r[2] > this.height) continue;
+          const inset = (r[1] - r[0]) * 0.25, pad = (r[3] - r[2]) * 0.2;
+          for (const raw of [side > 0 ? r[1] - inset : r[0] + inset, (r[0] + r[1]) / 2]) {
+            const x = side > 0 ? Math.min(raw, this.width - w - 8) : Math.max(raw, w + 8);
+            if (x < r[0] || x > r[1]) continue;
+            const y = THREE.MathUtils.clamp(l.y, Math.max(lo, r[2] + pad), Math.min(hi, r[3] - pad));
+            if (y < r[2] + pad - 0.5 || y > r[3] - pad + 0.5) continue;
+            candidates.push({ x, y, d: Math.abs(y - l.y) * 4 - (side > 0 ? x : -x) });
+          }
+        }
+        candidates.sort((a, b) => a.d - b.d);
+        const best = candidates.slice(0, 6).find(c => this.onPart(p.id, c.x, c.y));
+        if (best) { l.x = best.x; l.y = best.y; }
+        else p.label.classList.remove('visible');
+      });
     }
     for (const { p, x, y } of placed) p.label.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(${p.side > 0 ? '0' : '-100%'},-50%)`;
   }
