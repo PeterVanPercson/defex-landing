@@ -86,6 +86,12 @@ PARTNERS = [
     {"name": "GMI Cloud", "logo": "img/partners/gmi-cloud.png", "width": 2991, "height": 672},
 ]
 
+# The hero's flick (static/js/flick.js) opens on the specialist names and saves the
+# household ones for later, his order. Every partner, once; the tests hold it to that.
+HERO_PARTNER_ORDER = ["NVIDIA", "GMI Cloud", "MathWorks", "Ansys", "Onshape", "Lambda", "Google",
+                      "OpenAI", "Claude", "AWS", "Microsoft Azure", "University of Michigan"]
+HERO_PARTNERS = [next(p for p in PARTNERS if p["name"] == name) for name in HERO_PARTNER_ORDER]
+
 # Kept out of PUBLIC_COMPANY on purpose: that dict is dumped whole into /company.json.
 PRICING = {
     "robot": {"price": "$65,000", "what": "One robot, taught your part, running on your floor.",

@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from .discovery import IN_LINE, PARTNERS
+from .discovery import HERO_PARTNERS, IN_LINE, PARTNERS
 from .forms import ApplicationForm, ContactForm
 from .jobs import JOBS, JOB_BY_SLUG, JOBS_UPDATED, job_groups, job_path
 from .notify import application_email, autoresponder_email, client_ip, send, send_to, submission_email
@@ -52,7 +52,7 @@ def _what_to_fix(form, labels: dict) -> str:
 
 
 def home(request):
-    return render(request, "landing/home.html", {"form": ContactForm(), "asset_v": settings.DEFEX_ASSET_VERSION, "jobs": JOBS, "in_line": IN_LINE, "partners": PARTNERS})
+    return render(request, "landing/home.html", {"form": ContactForm(), "asset_v": settings.DEFEX_ASSET_VERSION, "jobs": JOBS, "in_line": IN_LINE, "partners": PARTNERS, "hero_partners": HERO_PARTNERS})
 
 
 @require_http_methods(["GET", "HEAD"])

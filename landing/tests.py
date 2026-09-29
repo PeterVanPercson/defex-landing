@@ -1,3 +1,4 @@
+import re
 from datetime import date
 from pathlib import Path
 
@@ -239,6 +240,15 @@ class SiteTests(SimpleTestCase):
             self.assertEqual(row.count(f'alt="{partner["name"]}"'), 1)
             self.assertTrue((Path(settings.BASE_DIR) / "static" / partner["logo"]).exists(), partner["logo"])
         self.assertEqual(home.count('id="roll-ink"'), 1)
+
+    def test_hero_flick_shows_every_partner_in_his_order(self):
+        from landing.discovery import HERO_PARTNER_ORDER, PARTNERS
+        self.assertCountEqual(HERO_PARTNER_ORDER, [p["name"] for p in PARTNERS])
+        home = self.client.get("/").content.decode()
+        stage = home.split('class="flick__stage"', 1)[1].split("</span>", 1)[0]
+        logos = [p["logo"] for p in PARTNERS]
+        shown = [next(l for l in logos if l in src) for src in re.findall(r'src="([^"]+)"', stage)]
+        self.assertEqual(shown, [next(p["logo"] for p in PARTNERS if p["name"] == n) for n in HERO_PARTNER_ORDER])
 
     def test_booker_is_on_the_home_page(self):
         """It lives at #contact, not on a page of its own: that is where someone
