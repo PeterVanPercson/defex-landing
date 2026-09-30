@@ -162,13 +162,14 @@ class SiteTests(SimpleTestCase):
 
     def test_one_clear_way_in_for_a_factory(self):
         """Husan's call, 2026-09-20: a factory buyer gets one path. "Test our
-        product" sits under the hero film and opens the pitch; the pitch shows
+        product" sits under the hero film and (his call, 2026-09-30) opens the
+        prototype; Why us is in the nav. The pitch shows
         the options, each one carries to the sign-up at the end of the same
         page, and that sign-up is a founder's calendar or the form. Nobody is
         sent back to the home page to book."""
         home = self.client.get("/").content.decode()
         actions = home.split('class="lede__actions"', 1)[1].split("</div>", 1)[0]
-        self.assertIn('class="glass-button-wrap" href="/why-us/"', actions)
+        self.assertIn('class="glass-button-wrap" href="/prototype/?play=1"', actions)
         self.assertIn("Test our product", actions)
         pitch = self.client.get("/why-us/").content.decode()
         main = pitch.split("<main", 1)[1]
@@ -385,7 +386,7 @@ class SiteTests(SimpleTestCase):
         for page in (home, body):
             under = page.split('id="meet"', 1)[1]
             self.assertIn('<a class="meet-cta__btn" href="/prototype/?play=1">Test our prototype', under.split("</section>", 1)[0])
-        self.assertRegex(home, r'class="features__more">\s*<a class="glass-button-wrap" href="/why-us/">')
+        self.assertRegex(home, r'class="features__more">\s*<a class="glass-button-wrap" href="/prototype/\?play=1">')
         self.assertNotIn("See why it works", home)
         self.assertIn("Test our product", home.split('class="features__more"', 1)[1].split("</p>", 1)[0])
         # the three claims are not numbered
