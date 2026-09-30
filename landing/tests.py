@@ -373,14 +373,18 @@ class SiteTests(SimpleTestCase):
         for script in ("js/portal.js", "js/why.js", "js/meet.js"):
             self.assertIn(script, body)
             self.assertEqual(self.client.get(f"/static/{script}").status_code, 200)
-        # reachable from the nav on every page, and from the home page's claims
-        # "Why us" is out of the nav for now: the pitch is reached through
-        # "Test our product" under the hero film, and from the home page's claims
+        # Husan's call (2026-09-30): Why us is in the nav on every page, in the
+        # prototype's old spot; the prototype is reached from under the robot
         for path in ("/", "/careers/", "/blog/", "/why-us/"):
             header = self.client.get(path).content.decode().split("<header", 1)[1].split("</header>", 1)[0]
-            self.assertNotIn("Why us", header, path)
-            self.assertNotIn('href="/why-us/"', header, path)
+            self.assertIn('href="/why-us/" class="glass-button-wrap glass-button-wrap--nav glass-button-wrap--why"', header, path)
+            self.assertIn(">Why us<", header, path)
+            self.assertIn('href="/blog/"', header, path)
+            self.assertNotIn("/prototype/", header, path)
         home = self.client.get("/").content.decode()
+        for page in (home, body):
+            under = page.split('id="meet"', 1)[1]
+            self.assertIn('<a class="meet-cta__btn" href="/prototype/?play=1">Test our prototype', under.split("</section>", 1)[0])
         self.assertRegex(home, r'class="features__more">\s*<a class="glass-button-wrap" href="/why-us/">')
         self.assertNotIn("See why it works", home)
         self.assertIn("Test our product", home.split('class="features__more"', 1)[1].split("</p>", 1)[0])

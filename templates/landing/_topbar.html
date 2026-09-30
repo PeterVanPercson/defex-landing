@@ -12,9 +12,10 @@
                 <span class="glass-button-shadow" aria-hidden="true"></span>
             </span>
         </a>
-        <a href="/prototype/?play=1" class="glass-button-wrap glass-button-wrap--nav glass-button-wrap--proto">
+        {# Husan's call (2026-09-30): Why us takes the top spot; the prototype is reached from under the robot #}
+        <a href="{% url 'why_us' %}" class="glass-button-wrap glass-button-wrap--nav glass-button-wrap--why"{% if page == 'why' %} aria-current="page"{% endif %}>
             <span class="glass-button-tilt">
-                <span class="glass-button"><span class="glass-button-text">Prototype<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
+                <span class="glass-button"><span class="glass-button-text">Why us<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
                 <span class="glass-button-shadow" aria-hidden="true"></span>
             </span>
         </a>

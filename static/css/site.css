@@ -170,7 +170,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .brand svg { width: 9px; height: 29px; display: block; }
 .brand--small { font-size: 16px; }
 .topbar__end { display: flex; align-items: center; gap: clamp(14px, 2vw, 26px); }
-.glass-button-wrap--proto { margin-left: clamp(4px, 1vw, 14px); }
+.glass-button-wrap--why { margin-left: clamp(4px, 1vw, 14px); }
 .navlink { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; flex-shrink: 0; white-space: nowrap; font: 400 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); transition: color .2s ease; }
 .navlink:hover, .navlink[aria-current="page"] { color: var(--ink); }
 
