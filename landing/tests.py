@@ -355,12 +355,12 @@ class SiteTests(SimpleTestCase):
             self.assertIn(f'id="meet-{key}"', body)
         self.assertEqual(body.count('class="rb"'), 1)
         # the same explorer is on home, right after the origin film, and on
-        # Prototype before the close; its sheet never blocks first paint
+        # Prototype before the experiment controls; its sheet never blocks first paint
         home = self.client.get("/").content.decode()
         self.assertLess(home.index('id="origin"'), home.index('id="meet"'))
         self.assertLess(home.index('id="meet"'), home.index('id="why"'))
         proto = self.client.get("/prototype/").content.decode()
-        self.assertLess(proto.index('id="meet"'), proto.index('class="close"'))
+        self.assertLess(proto.index('id="meet"'), proto.index('class="tryit console"'))
         for page in (body, home, proto):
             self.assertEqual(page.count('class="rb"'), 1)
             self.assertEqual(page.count('aria-controls="meet-'), 6)

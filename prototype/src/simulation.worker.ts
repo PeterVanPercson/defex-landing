@@ -5,7 +5,7 @@ import { MODEL_VERSION, modelXML } from './model.ts';
 
 let engine: ConnectorEngine | null = null;
 let playing = false;
-let speed = 1;
+let speed = 2;
 let last = performance.now();
 let remainder = 0;
 let lastCompleted = 0;

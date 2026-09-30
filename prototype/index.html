@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#000000" />
+  <meta name="theme-color" content="#161918" />
   <meta name="description" content="Explore the Defex connector lab: an interactive simulation of our robot's workcell. Shift the socket, compare two insertion methods, see inside every part, and watch the connection and pull tests." />
   <title>Prototype | Defex Robotics</title>
   <link rel="canonical" href="https://defexrobotics.com/prototype/" />
@@ -38,12 +38,19 @@
       <header class="topbar">
         <a class="brand" href="/" aria-label="Defex home">defex<span>●</span></a>
         <div class="status" id="status"><i></i><span id="hud-status">Loading</span></div>
-        <a class="buy" href="/#contact">Test our product</a>
+        <a class="buy" href="/#contact">Get in touch <span aria-hidden="true">↗</span></a>
       </header>
 
       <div class="headline">
-        <h1>Insert. Test.<br>Try again.</h1>
+        <p class="eyebrow">Design study · 001</p><h1>Connector<br>workcell.</h1><p class="headline-note">Assembly. Verification. Reset.</p>
       </div>
+      <aside class="stage-readout" aria-label="Simulated measurements">
+        <span class="readout-eyebrow">SIMULATED CYCLE</span>
+        <strong id="stage-state">Ready</strong>
+        <dl><div><dt>Axial force</dt><dd id="stage-force">0.0 N</dd></div><div><dt>Insertion</dt><dd id="stage-depth">0.0 mm</dd></div></dl>
+        <span class="readout-note">Computed values · <span id="stage-speed">2× playback</span></span>
+      </aside>
+      <div class="stage-error" id="stage-error" role="alert" hidden><strong>Simulation unavailable</strong><p id="stage-error-message"></p><button id="stage-retry">Reload simulation ↻</button></div>
 
       <div id="journey" class="journey">
         <div class="journey-icon">↓</div>
@@ -51,18 +58,24 @@
         <div class="track"><i id="journey-progress"></i></div>
       </div>
       <div class="tour-story" id="tour-story" hidden><span class="tour-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span><strong id="tour-title"></strong><button id="stop-tour" aria-label="Exit demo">×</button><span class="quiet" id="tour-index"></span><span class="quiet" id="tour-live"></span><span class="quiet" id="tour-description"></span></div>
-      <div class="endcard" id="endcard" hidden><strong>Want this on your line?</strong><div class="endcard-actions"><a class="endcard-buy" href="/#contact">Test our product</a><button id="replay" class="endcard-replay">Replay</button></div></div>
+      <div class="endcard" id="endcard" hidden><strong>Four cycles. One workcell.</strong><div class="endcard-actions"><a class="endcard-buy" href="/#contact">Discuss a pilot ↗</a><button id="replay" class="endcard-replay">Replay</button></div></div>
 
       <div id="loading" class="loading"><i></i><span>Loading the simulation</span></div>
       <div id="fallback" class="fallback" hidden><svg viewBox="0 0 420 300" role="img" aria-label="Live X/Z schematic of the simulated connector"><rect x="100" y="237" width="220" height="18" rx="2" fill="#3a4148"/><g id="schematic-socket" fill="#59616b"><rect id="schematic-wall-left" x="160" y="160" width="20" height="63" rx="2"/><rect id="schematic-wall-right" x="240" y="160" width="20" height="63" rx="2"/><rect id="schematic-seat" x="160" y="215" width="100" height="20" rx="2"/></g><g id="schematic-plug" transform="translate(210 60)"><rect id="schematic-housing" x="-28" y="-20" width="56" height="40" rx="2" fill="#e3e1d6" stroke="#8e969d" stroke-width="1.5"/><rect x="-18" y="-50" width="36" height="30" fill="#707986" stroke="#8e969d"/><path d="M-17 0v19 M0 0v19 M17 0v19" stroke="#d2ad68" stroke-width="3"/></g><text x="25" y="285" fill="#707986" font-size="9" font-family="monospace">X/Z SCHEMATIC · ILLUSTRATIVE GEOMETRY</text></svg><p id="fallback-title">3D unavailable; showing a live side view.</p><span>Physics and tests still run in your browser.</span></div>
 
       <div class="hud-controls">
         <nav class="dock" aria-label="Workcell controls">
-          <button class="dock-item" data-mode="machine" aria-pressed="true" aria-label="Whole machine" data-label="Whole machine"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg></span><span class="dock-tip" aria-hidden="true">Whole machine</span></button><button class="dock-item" data-mode="inside" aria-pressed="false" aria-label="See inside" data-label="See inside"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 3v18"/><path d="M15 7l3 3M15 11l3 3M15 15l3 3"/></svg></span><span class="dock-tip" aria-hidden="true">See inside</span></button><button class="dock-item" data-mode="parts" aria-pressed="false" aria-label="Pull it apart" data-label="Pull it apart"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 16.5L12 21l9-4.5"/></svg></span><span class="dock-tip" aria-hidden="true">Pull it apart</span></button><span class="dock-sep"></span><button class="dock-item" data-view="flight" aria-pressed="false" aria-label="Fly around" data-label="Fly around"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="12" rx="9" ry="4.5"/><circle cx="12" cy="12" r="2.2"/><circle cx="20.2" cy="10" r="1.2" fill="currentColor"/></svg></span><span class="dock-tip" aria-hidden="true">Fly around</span></button><span class="dock-sep"></span><button class="dock-item dock-demo" id="tour" aria-pressed="false" aria-label="Play demo" data-label="Play demo" disabled><span class="dock-icon"><span class="dock-play" id="tour-icon" aria-hidden="true">▶</span></span><span class="dock-tip" aria-hidden="true" id="tour-label">Watch</span></button>
+          <button class="dock-item" data-view="connector" aria-pressed="false" aria-label="Inspect connector"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle class="focus-ring" cx="12" cy="12" r="8"/><circle class="focus-core" cx="12" cy="12" r="3"/><path class="focus-ticks" d="M12 1v4m0 14v4M1 12h4m14 0h4"/></svg></span><span class="dock-tip" aria-hidden="true">Inspect connector</span></button>
+          <button class="dock-item" data-mode="machine" aria-pressed="true" aria-label="Whole machine"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="machine-icon"><path d="M12 3 21 8v9l-9 5-9-5V8Z"/><path d="m3 8 9 5 9-5M12 13v9"/></g></svg></span><span class="dock-tip" aria-hidden="true">Whole machine</span></button>
+          <button class="dock-item" data-mode="inside" aria-pressed="false" aria-label="See inside"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path class="cut-half" d="M12 3.5a8.5 8.5 0 0 0 0 17Z"/><path class="cut-lines" d="M15 6v12m3-9v6"/></svg></span><span class="dock-tip" aria-hidden="true">See inside</span></button>
+          <button class="dock-item" data-mode="parts" aria-pressed="false" aria-label="Pull it apart"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="layer-top" d="m4 9 8-4 8 4-8 4Z"/><path class="layer-bottom" d="m4 15 8 4 8-4"/></svg></span><span class="dock-tip" aria-hidden="true">Pull it apart</span></button>
+          <span class="dock-sep" aria-hidden="true"></span>
+          <button class="dock-item dock-demo" id="tour" aria-pressed="false" aria-label="Play demo" data-playing="false" disabled><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="play-shape" d="m8 5 11 7-11 7Z"/><g class="pause-shape"><path d="M8 6v12M16 6v12"/></g></svg></span><span class="dock-tip" aria-hidden="true" id="tour-label">Play demo</span></button>
         </nav>
+        <span class="control-hint">Drag to rotate · Scroll to zoom</span>
       </div>
       <button id="embed-run" class="embed-run" disabled>▶ Play demo</button>
-      <footer class="stage-footer"><span>Simulation. Not footage of a physical robot.</span></footer>
+      <footer class="stage-footer"><span>Interactive simulation</span><span class="footer-detail">DEFEX ROBOTICS / R&D</span></footer>
     </section>
 
     <section class="meet-sec" id="meet" aria-labelledby="meet-title">
@@ -70,17 +83,12 @@
       {% include "landing/_meet.html" %}
     </section>
 
-    <section class="close" aria-labelledby="close-title">
-      <h2 id="close-title">Robots are cheap.<br><span>Setting them up is not.</span></h2>
-      <a class="close-button" href="/#contact">Test our product</a>
-    </section>
-
-    <details class="tryit console"><summary>Try it yourself</summary>
+    <details class="tryit console"><summary>Experiment controls <span>Offset, faults &amp; results</span></summary>
       <div class="transport">
         <div class="run-controls"><button id="run" class="run-button" disabled><span id="run-icon" aria-hidden="true">▶</span><span id="run-label">Run attempt</span></button><button id="reset" class="reset-button" aria-label="Reset attempt" title="Reset attempt (R)" disabled>↺</button></div>
         <span id="engine-status">Loading…</span>
         <div class="cycle" aria-label="The loop"><span data-phase="insert"><i>01</i> Insert</span><b></b><span data-phase="electrical"><i>02</i> Connect</span><b></b><span data-phase="retention"><i>03</i> Pull test</span><b></b><span data-phase="reset"><i>04</i> Reset</span></div>
-        <label class="speed-control" for="speed">Speed <select id="speed" disabled><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+        <label class="speed-control" for="speed">Speed <select id="speed" disabled><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select></label>
       </div>
       <div class="console-grid">
         <div class="panel">
@@ -118,7 +126,7 @@
     <footer class="model-footer"><p>Simulation. The search saves an offset; it is not a trained robot policy.</p><button class="text-button" data-open-notes>About this model <span>↗</span></button></footer>
   </main>
   <dialog id="notes"><div class="dialog-heading"><p class="eyebrow">INTERACTIVE SOFTWARE PROTOTYPE</p><button id="close-notes" aria-label="Close model notes">×</button></div><h2>Inside the simulation.</h2><p>A cartesian tool inserts an illustrative connector into a socket. MuJoCo computes the motion and contact forces in your browser. The 3D view follows those positions.</p><dl><dt>The search</dt><dd>A deterministic controller retracts after blocked contact and tries a ring of XY offsets. A successful, tested offset can be reused. It does not read the socket’s offset. This is calibration from feedback, not reinforcement learning.</dd><dt>The checks</dt><dd>Connection is a seating-depth check with an injectable open-circuit fault. Retention uses an ideal latch constraint and a simulated upward pull. There are no conductive materials or deforming latch mechanics in this model.</dd><dt>The limits</dt><dd>Geometry, friction and forces are illustrative. Only the plug housing and socket participate in contact. The gantry, tester, screen and light tower are visual. The model omits vision, flexible wires, wear, damage, manufacturing tolerances and real robot dynamics. Reset releases the ideal latch and retracts the same plug; it does not model a fresh-part feeder.</dd><dt>The next proof</dt><dd>Build the physical insertion, test and reset loop, then compare setup effort and accepted output on customer parts. This page is not evidence of factory performance, learned skill transfer or manufacturing readiness.</dd></dl><div class="dialog-actions"><button id="download-model" class="tour-button">Download physics model <span>↓</span></button><a href="?view=schematic">Use 2D view ↗</a><a href="https://github.com/google-deepmind/mujoco/tree/main/wasm" target="_blank" rel="noopener">MuJoCo WASM ↗</a></div></dialog>
-  <noscript><div class="noscript">This interactive prototype needs JavaScript. It models connector insertion and two tests; it is not footage of a physical robot.</div></noscript>
+  <noscript><div class="noscript">This interactive simulation needs JavaScript. It models connector insertion, an electrical connection check and a pull test.</div></noscript>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
