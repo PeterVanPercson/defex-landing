@@ -144,3 +144,13 @@
 .meet p { margin: 0; }
 .meet ul { margin: 0; padding: 0; }
 .embed .meet-sec { display: none; }
+
+/* under the robot on home and Why us: the way into the prototype */
+.meet-cta { display: flex; justify-content: center; margin: clamp(28px, 5vh, 48px) 0 0; }
+.meet-cta__btn { display: inline-flex; align-items: center; gap: 14px; min-height: 64px; padding: 0 34px; border-radius: 999px; background: #FFD42A; color: #0A0A0A; font: 600 19px/1 "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: -.01em; text-decoration: none; transition: background .2s ease, transform .2s ease; }
+.meet-cta__btn span { transition: transform .3s cubic-bezier(.22, .61, .36, 1); }
+.meet-cta__btn:hover { background: #FFE366; }
+.meet-cta__btn:hover span { transform: translateX(5px); }
+.meet-cta__btn:active { transform: scale(.97); }
+.meet-cta__btn:focus-visible { outline: 2px solid #FFD42A; outline-offset: 4px; }
+
