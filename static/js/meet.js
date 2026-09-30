@@ -190,7 +190,7 @@
     // how far right the list reaches once it has settled, read before
     // any size animation starts
     const reach = (rects) => {
-        const left = stage.getBoundingClientRect().left;
+        const left = root.getBoundingClientRect().left;
         listRight = 0;
         for (const r of rects) listRight = Math.max(listRight, r.right - left);
     };
@@ -211,8 +211,8 @@
         place();
     };
     const measure = () => {
-        const r = stage.getBoundingClientRect();
-        W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height));
+        // layout size, not the drawn rect: the stage may be mid-rise (scaled) on home
+        W = Math.max(1, stage.clientWidth); H = Math.max(1, stage.clientHeight);
         svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
         svg.setAttribute('preserveAspectRatio', 'xMinYMin meet');
         // mid-spring the items are between sizes; read them once they land
