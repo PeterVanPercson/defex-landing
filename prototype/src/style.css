@@ -60,6 +60,9 @@ h1{font-weight:750;font-size:clamp(52px,6vw,104px);line-height:.92;letter-spacin
 .loading{position:absolute;left:57%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:12px;color:#9a9ea4;font-size:14px;z-index:6;pointer-events:none}.loading i{width:20px;height:20px;border-radius:50%;border:1px solid #ff7a1a30;border-top-color:var(--amber);animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
 .fallback{position:absolute;inset:200px 10% 170px;text-align:center;color:#8a9097;display:flex;align-items:center;flex-direction:column;justify-content:center;z-index:1}.fallback svg{width:min(460px,90%);max-height:80%}.fallback p{font-size:16px;margin:10px 0 6px;color:var(--white)}.fallback>span{font-size:13px}
 .embed-run{display:none}
+.stage-readout{position:absolute;right:40px;top:116px;z-index:3;min-width:184px;pointer-events:none;padding:16px 18px;border:1px solid #ffffff12;border-radius:12px;background:#11151aba;backdrop-filter:blur(12px);font-size:12px}
+.readout-eyebrow{display:block;font:10px var(--mono);letter-spacing:.12em;color:#929ba5}.stage-readout>strong{display:block;margin:12px 0 16px;font-size:18px;font-weight:550}.stage-readout dl{margin:0}.stage-readout dl>div{display:flex;justify-content:space-between;gap:24px;margin:9px 0}.stage-readout dt{color:#929ba5}.stage-readout dd{margin:0;font:12px var(--mono);color:#e6e7e8}.readout-note{display:block;border-top:1px solid #ffffff10;padding-top:12px;margin-top:14px;color:#939ba4;font-size:10px}.exploded .stage-readout{opacity:0}
+.stage-error{position:absolute;inset:35% 20% auto;padding:24px;z-index:8;border:1px solid #a15a49;border-radius:12px;background:#161719}.stage-error p{color:#aab1b8;line-height:1.5}.stage-error button{border:1px solid #777;padding:12px;border-radius:8px}
 
 /* Console */
 .console{max-width:1480px;margin:0 auto;padding:0 40px}
@@ -96,17 +99,19 @@ dialog{border:1px solid #ffffff1c;border-radius:14px;background:#0d1013;color:va
 .noscript{position:fixed;bottom:0;left:0;right:0;background:#111;color:white;padding:20px;z-index:10;font-size:16px}
 
 /* Embedded */
-.embed .headline,.embed .topbar,.embed .console,.embed .close,.embed .records,.embed .model-footer,.embed .hud-controls,.embed .stage-footer{display:none}
+.embed .headline,.embed .topbar,.embed .console,.embed .close,.embed .records,.embed .model-footer,.embed .hud-controls,.embed .stage-readout{display:none}
+.embed .stage{height:100svh;min-height:0}.embed .stage-footer{bottom:12px;left:16px;right:16px;font-size:10px;color:#a4abb2}
 .embed .embed-run{display:block;position:absolute;left:24px;top:24px;background:var(--amber);color:#1c1408;border-radius:9px;padding:13px 18px;font-size:15px;font-weight:600;z-index:5}.embed.tour-active .embed-run{display:none}
 
 @media(min-width:1600px){.topbar{inset:36px 52px auto}.headline{left:52px;top:140px}.scene-heading{right:52px;top:146px}.coordinates{right:54px;top:200px}.hud-controls{bottom:92px}.tour-story,.endcard{bottom:202px}.stage-footer{left:52px;right:52px;bottom:34px}}
 @media(max-width:1250px){.tour-active .journey{display:none}}
 @media(max-width:1100px){.console-grid{grid-template-columns:1fr 1fr}.telemetry{grid-column:1/-1;border-left:0!important;padding-left:0!important;border-top:1px solid var(--line)}.cycle{order:5;flex-basis:100%;justify-content:flex-start}.transport{flex-wrap:wrap}.speed-control{margin-left:auto}}
 @media(max-width:900px){
+  .stage-readout{top:78px;right:20px;min-width:142px;padding:12px;opacity:0;transition:opacity .25s}.focused .stage-readout,.tour-active .stage-readout{opacity:1}.stage-readout>strong{font-size:15px;margin:8px 0}.stage-readout dl>div{gap:16px}.readout-eyebrow{font-size:8px}.readout-note{font-size:9px;padding-top:8px;margin-top:8px}.stage-error{inset:30% 16px auto}
   .stage{min-height:600px}.topbar{inset:18px 20px auto}.brand{font-size:30px}.status{margin-right:0;font-size:12px}.status-sim{display:none}.topbar .text-button{display:none}
   .headline{left:20px;right:20px;top:74px}.cta{display:none}.buy{margin-left:auto;padding:9px 14px;font-size:14px}.status{display:none}.close{padding:110px 20px 20px}h1{font-size:clamp(40px,11vw,60px)}.lede{font-size:17px;margin-top:12px;max-width:320px}
   .scene-heading,.coordinates,.footer-center{display:none}
-  .hud-controls{left:8px;right:8px;bottom:54px}.dock{gap:5px;padding:7px 8px;border-radius:18px}.dock-item{--size:36px}.dock-wide{display:none}.dock-sep{height:24px;margin:0 1px}
+  .hud-controls{left:8px;right:8px;bottom:54px}.dock{gap:5px;padding:7px 8px;border-radius:18px}.dock-item{--size:44px}.dock-wide{display:none}.dock-sep{height:24px;margin:0 1px}
   
   .stage-footer{left:20px;right:20px;bottom:20px;font-size:11px}.hint{display:none}.stage-footer span:first-child{margin:0 auto}
   .tour-story,.endcard{bottom:124px;width:calc(100% - 32px)}.endcard{flex-direction:column;gap:12px;border-radius:24px;padding:18px}.endcard-actions{width:100%}.endcard-actions>*{flex:1;text-align:center;white-space:nowrap}.tour-story{border-radius:20px;gap:12px}.tour-story strong{white-space:normal;flex:1;min-width:0}.tour-dots i{width:10px}.tryit{padding:0 20px 40px}.model-footer{padding-left:20px;padding-right:20px}.journey strong{font-size:15px}.journey small{font-size:12px}
@@ -124,6 +129,6 @@ dialog{border:1px solid #ffffff1c;border-radius:14px;background:#0d1013;color:va
   dialog{padding:22px}dialog h2{font-size:34px}.dialog-actions{display:block}.dialog-actions a{display:block;margin-top:16px}
 }
 @media(max-width:700px){.part-label .label-card{padding:6px 9px}.part-label .label-title{font-size:12px;gap:6px}.part-label .stem{width:18px}.part-label.left .stem:before{margin-left:15px}}
-@media(max-width:380px){}
+@media(max-width:380px){.dock{gap:2px;padding:7px 6px}.stage-readout{right:12px}}
 @media(max-height:700px) and (min-width:901px){.headline{top:90px}h1{font-size:56px}.lede{display:none}.hud-controls{bottom:56px;gap:10px}.stage-footer{bottom:16px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;transition-duration:.001ms!important}}

@@ -44,6 +44,13 @@
       <div class="headline">
         <h1>Insert. Test.<br>Try again.</h1>
       </div>
+      <aside class="stage-readout" aria-label="Simulated measurements">
+        <span class="readout-eyebrow">CONNECTOR CELL / 01</span>
+        <strong id="stage-state">Ready</strong>
+        <dl><div><dt>Axial force</dt><dd id="stage-force">0.0 N</dd></div><div><dt>Insertion</dt><dd id="stage-depth">0.0 mm</dd></div></dl>
+        <span class="readout-note">Computed values · <span id="stage-speed">1× playback</span></span>
+      </aside>
+      <div class="stage-error" id="stage-error" role="alert" hidden><strong>Simulation unavailable</strong><p id="stage-error-message"></p><button id="stage-retry">Reload simulation ↻</button></div>
 
       <div id="journey" class="journey">
         <div class="journey-icon">↓</div>
@@ -58,6 +65,7 @@
 
       <div class="hud-controls">
         <nav class="dock" aria-label="Workcell controls">
+          <button class="dock-item" data-view="connector" aria-pressed="false" aria-label="Inspect connector"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 6 6M7 10h6M10 7v6"/></svg></span><span class="dock-tip" aria-hidden="true">Inspect connector</span></button>
           <button class="dock-item" data-mode="machine" aria-pressed="true" aria-label="Whole machine" data-label="Whole machine"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg></span><span class="dock-tip" aria-hidden="true">Whole machine</span></button><button class="dock-item" data-mode="inside" aria-pressed="false" aria-label="See inside" data-label="See inside"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 3v18"/><path d="M15 7l3 3M15 11l3 3M15 15l3 3"/></svg></span><span class="dock-tip" aria-hidden="true">See inside</span></button><button class="dock-item" data-mode="parts" aria-pressed="false" aria-label="Pull it apart" data-label="Pull it apart"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 16.5L12 21l9-4.5"/></svg></span><span class="dock-tip" aria-hidden="true">Pull it apart</span></button><span class="dock-sep"></span><button class="dock-item" data-view="flight" aria-pressed="false" aria-label="Fly around" data-label="Fly around"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="12" rx="9" ry="4.5"/><circle cx="12" cy="12" r="2.2"/><circle cx="20.2" cy="10" r="1.2" fill="currentColor"/></svg></span><span class="dock-tip" aria-hidden="true">Fly around</span></button><span class="dock-sep"></span><button class="dock-item dock-demo" id="tour" aria-pressed="false" aria-label="Play demo" data-label="Play demo" disabled><span class="dock-icon"><span class="dock-play" id="tour-icon" aria-hidden="true">▶</span></span><span class="dock-tip" aria-hidden="true" id="tour-label">Watch</span></button>
         </nav>
       </div>

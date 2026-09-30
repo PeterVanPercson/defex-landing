@@ -10,7 +10,7 @@ export class DemoRecorder {
   title='Connector insertion, in simulation.';
   description='A computed insertion, test and reset experiment.';
   state:Snapshot|null=null;
-  speed=2;
+  speed=1;
   samples:Sample[]=[];
   source:HTMLCanvasElement;
   onFinish:(blob:Blob,extension:string)=>void;
@@ -18,10 +18,11 @@ export class DemoRecorder {
 
   constructor(source:HTMLCanvasElement,onFinish:(blob:Blob,extension:string)=>void){
     this.source=source;this.onFinish=onFinish;this.canvas.width=1600;this.canvas.height=900;this.context=this.canvas.getContext('2d')!;
-    this.stream=this.canvas.captureStream(30);
     const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/mp4'].find(type=>MediaRecorder.isTypeSupported(type));
     if(!mime)throw new Error('This browser cannot export a video.');
-    this.recorder=new MediaRecorder(this.stream,{mimeType:mime,videoBitsPerSecond:5_000_000});
+    this.stream=this.canvas.captureStream(30);
+    try{this.recorder=new MediaRecorder(this.stream,{mimeType:mime,videoBitsPerSecond:8_000_000});}
+    catch(error){this.stream.getTracks().forEach(track=>track.stop());throw error;}
     this.recorder.ondataavailable=e=>{if(e.data.size)this.chunks.push(e.data);};
     this.recorder.onstop=()=>{cancelAnimationFrame(this.frame);this.stream.getTracks().forEach(t=>t.stop());this.onFinish(new Blob(this.chunks,{type:mime}),mime.startsWith('video/mp4')?'mp4':'webm');};
     this.draw();this.recorder.start(500);

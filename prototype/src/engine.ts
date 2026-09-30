@@ -74,6 +74,7 @@ export class ConnectorEngine {
     this.force = 0; this.peakForce = 0; this.continuity = null; this.retention = null;
     this.accepted = null; this.reason = ''; this.latchEngaged = false;
     this.samples = []; this.lastSample = -1; this.blockedTime = 0; this.completedTrial = null;
+    this.plan = null;
   }
 
   start(controller: Controller) {

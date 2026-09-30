@@ -35,3 +35,8 @@ export class PoseStream {
 }
 
 export const damping = (elapsed: number, timeConstant: number) => 1 - Math.exp(-elapsed / timeConstant);
+
+export function settleSpring(position: number, velocity: number, target: number, seconds: number, frequency = 20) {
+  const offset = position - target, c = velocity + frequency * offset, decay = Math.exp(-frequency * seconds);
+  return { position: target + (offset + c * seconds) * decay, velocity: (velocity - frequency * c * seconds) * decay };
+}
