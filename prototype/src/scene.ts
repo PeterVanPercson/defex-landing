@@ -12,6 +12,7 @@ import { finishes } from './finishes.ts';
 import { batchStaticMeshes } from './batching.ts';
 import { ServiceLoop, contactCenters, plugHousing, socketHousing } from './mechanism.ts';
 import type { PartId } from './parts.ts';
+import { createTooling, GANTRY_REAR_OFFSET } from './tooling.ts';
 
 export type View = 'overview' | 'side' | 'top' | 'connector' | 'part';
 export type Mode = 'machine' | 'inside' | 'parts';
@@ -92,6 +93,7 @@ export class WorkcellScene {
   ySlide = new THREE.Group();
   serviceLoop = new ServiceLoop(M.rubber);
   screwRotor = new THREE.Group();
+  rotaryGripper = new THREE.Group();
   plug = new THREE.Group();
   parts = new Map<PartId, Part>();
   trail: THREE.Line;
@@ -300,20 +302,21 @@ export class WorkcellScene {
   }
 
   buildGantry() {
-    const g = this.part('gantry'); this.cell.add(g);
+    const frame = this.part('gantry'); this.cell.add(frame);
+    const g = new THREE.Group(); g.position.y = GANTRY_REAR_OFFSET; frame.add(g);
     for (const x of [-27, 27]) {
-      box(g, 'Gantry upright', [6, 7, 65], [x, 17, 36.5], M.silver, 0.18);
-      box(g, 'Upright face', [0.2, 2.2, 59], [x - Math.sign(x) * 3.02, 17, 36.5], M.dark, 0.03);
+      box(g, 'Gantry upright', [6, 7, 61], [x, 17, 34.5], M.silver, 0.18);
+      box(g, 'Upright face', [0.2, 2.2, 55], [x - Math.sign(x) * 3.02, 17, 34.5], M.dark, 0.03);
       for (const y of [13.45, 20.55]) {
-        box(g, 'Extrusion channel', [2.1, 0.18, 59], [x, y, 36.5], M.dark, 0);
-        for (const dx of [-1.05, 1.05]) box(g, 'Channel lip', [.24, .32, 59], [x + dx, y, 36.5], M.edge, .04);
+        box(g, 'Extrusion channel', [2.1, 0.18, 55], [x, y, 34.5], M.dark, 0);
+        for (const dx of [-1.05, 1.05]) box(g, 'Channel lip', [.24, .32, 55], [x + dx, y, 34.5], M.edge, .04);
       }
       for (const zz of [14, 62]) {
         const bolt = new THREE.Group(); bolt.position.set(x, 13.3, zz); bolt.rotation.x = Math.PI / 2; g.add(bolt); screw(bolt, 0, 0, 0);
       }
-      box(g, 'Gantry foot', [11, 12, 5], [x, 17, 6.5], M.body, 0.6);
+      box(g, 'Gantry foot', [11, 12, 5], [x, 17, 3.5], M.body, 0.6);
       box(g, 'Foot plate', [13, 14, 0.8], [x, 17, 0.6], M.edge, 0.3);
-      for (const dx of [-4.2, 4.2]) screw(g, x + dx, 12.2, 9.2);
+      for (const dx of [-4.2, 4.2]) screw(g, x + dx, 12.2, 6.2);
       box(g, 'Corner bracket', [6.4, 7.4, 6], [x, 17, 64.2], M.edge, 0.4);
     }
     this.shell(box(g, 'Cross rail', [64, 9, 8], [0, 17, 69], M.body, 0.25));
@@ -331,48 +334,14 @@ export class WorkcellScene {
 
   buildTool() {
     const carriage = this.part('carriage'), z = this.part('zaxis');
-    this.cell.add(this.carriage); this.carriage.add(carriage, this.ySlide); this.ySlide.add(z);
-    box(carriage, 'X carriage', [13, 10, 11], [0, 16, 66.5], M.body, 0.6);
-    box(carriage, 'Carriage plate', [13.4, 0.6, 9], [0, 10.8, 66.5], M.edge, 0.2);
-    for (const x of [-4.5, 4.5]) for (const zz of [63, 70]) { const bolt = new THREE.Group(); bolt.position.set(x, 10.4, zz); bolt.rotation.x = Math.PI / 2; carriage.add(bolt); screw(bolt, 0, 0, 0); }
-    box(carriage, 'Y slide', [10, 25, 5], [0, 6, 63], M.silver, 0.4);
-    box(carriage, 'Y rail', [3, 22, 0.8], [0, 6, 65.8], M.dark, 0.1);
-    box(z, 'Y bearing block', [10, 9, 3], [0, 6, 66], M.body, 0.35);
-    this.shell(box(z, 'Z axis housing', [10, 5, 43], [0, 8, 48.5], M.body, 0.5));
-    for (const x of [-3.4, 3.4]) {
-      box(z, 'Z linear guide', [1.4, 1.4, 39], [x, 4.8, 48.5], M.silver, 0.12);
-      for (const height of [31, 42, 54, 66]) cylinder(z, .42, .35, [x, 4.8, height], M.dark, 12, 'x');
-    }
-    z.add(this.screwRotor); this.screwRotor.position.set(0, 6, 48.5);
-    cylinder(this.screwRotor, .8, 39, [0, 0, 0], M.silver, 20);
-    const helix: THREE.Vector3[] = [];
-    for (let i = 0; i <= 520; i++) {
-      const a = i / 20 * Math.PI * 2;
-      helix.push(new THREE.Vector3(Math.cos(a) * .9, Math.sin(a) * .9, -19.5 + i / 520 * 39));
-    }
-    line(this.screwRotor, helix, 0x3b4146);
-    cylinder(z, 3.1, 7, [0, 6, 74], M.dark, 28);
-    cylinder(z, 3.3, .7, [0, 6, 78], M.silver, 28);
-    box(z, 'Z drive end bearing', [10, 6, 2.8], [0, 7, 69.2], M.silver, .35);
-    box(z, 'Z lower end bearing', [10, 6, 2], [0, 7, 27], M.silver, .25);
-    box(z, 'Drive ID', [3, .12, 1.4], [0, 5.45, 65], M.silver, .05);
-
     const grip = this.part('gripper'), connector = this.part('connector');
+    const tooling = createTooling(M);
+    this.cell.add(this.carriage); this.carriage.add(carriage, this.ySlide); this.ySlide.add(z);
+    carriage.add(tooling.carriage); z.add(tooling.axis);
     this.cell.add(this.tool); this.tool.add(grip, connector); connector.add(this.plug);
-    box(grip, 'Tool flange', [10, 11, 4], [0, 0, 18], M.silver, 0.5);
-    box(grip, 'Parallel gripper', [16, 12, 6], [0, 0, 13], M.body, 0.6);
-    box(grip, 'Gripper rail', [15, 1.2, 1], [0, -6.1, 13.5], M.dark, 0.1);
-    for (const x of [-7.1, 7.1]) {
-      box(grip, 'Gripper finger', [2.4, 5.2, 7], [x, 0, 12], M.silver, 0.3);
-      box(grip, 'Soft jaw insert', [0.8, 4.5, 3], [x - Math.sign(x) * 1.2, 0, 9.8], M.rubber, 0.2);
-      screw(grip, x, -2.6, 13.5);
-    }
-    box(grip, 'Z moving saddle', [10.6, 3.3, 8], [0, 3.2, 19.5], M.edge, .25);
-    box(grip, 'Saddle bracket', [10.6, 8, 2], [0, 1.2, 21], M.silver, .25);
-    for (const x of [-3.4, 3.4]) box(grip, 'Linear bearing shoe', [2.1, 2.7, 6], [x, 4, 19.5], M.dark, .2);
-    cylinder(grip, 3.7, 1.4, [0, 0, 15.6], M.edge);
-    box(grip, 'Harness strain relief', [5.5, 2, 3], [0, 6, 15.5], M.rubber, .3);
-    cylinder(grip, 1, 2.4, [8, 4, 17], M.edge, 16, 'x');
+    grip.add(tooling.saddle, tooling.spindle);
+    this.rotaryGripper = tooling.spindle; this.screwRotor = tooling.screw;
+    this.shells.push(tooling.housing);
   }
 
   buildTester() {
@@ -459,7 +428,8 @@ export class WorkcellScene {
       sleeve.name = 'Female crimp contact'; sleeve.position.set(x, y, -4.05); this.plug.add(sleeve);
       cylinder(this.plug, .39, .05, [x, y, .12], M.dark, 16);
       cylinder(this.plug, 0.7, 0.3, [x, y, 4.3], M.body, 16);
-      cable(this.plug, [[x, y, 4.4], [x, y + 3, 7], [x * .7, 7.8, 10], [x * .5, 8, 13.5], [x * .35, 6, 15.5]], i % 3 === 0 ? 0xb35725 : i % 3 === 1 ? 0x343b40 : 0xbcb8a7, 0.24);
+      const side = Math.sign(y);
+      cable(this.plug, [[x, y, 4.4], [x, side * 3.1, 6.5], [x * .85, side * 5.6, 9], [x * .35, side * 5.6, 13.4]], i % 3 === 0 ? 0xb35725 : i % 3 === 1 ? 0x343b40 : 0xbcb8a7, 0.24);
     }
     const housing = M.ivory.clone();
     const plugBody = new THREE.Mesh(cached(`plug-${d.pins}`, () => plugHousing(d.halfX * 1000, d.halfY * 1000, d.pins)), housing);
@@ -484,7 +454,7 @@ export class WorkcellScene {
   }
   measureAnchors() {
     const anchors: Record<PartId, [number, number, number]> = {
-      gantry: [27, 13, 63], carriage: [-5, 10, 67], zaxis: [4, 4, 45],
+      gantry: [27, 27, 63], carriage: [-5, 21, 70], zaxis: [4, 11, 45],
       gripper: [-8, -3, 13], connector: [5, -3, 0], socket: [-9, -4, 17], tester: [47, -27, 23],
     };
     for (const p of this.parts.values()) p.anchor.set(...anchors[p.id]);
@@ -677,12 +647,13 @@ export class WorkcellScene {
     }
     const pose = this.poses.sample(now);
     if (pose) {
-      this.tool.position.set(pose[0] * 1000, pose[1] * 1000, pose[2] * 1000); this.tool.rotation.z = pose[3];
+      this.tool.position.set(pose[0] * 1000, pose[1] * 1000, pose[2] * 1000);
+      this.rotaryGripper.rotation.z = pose[3]; this.plug.rotation.z = pose[3];
       this.carriage.position.set(pose[0] * 1000, 0, 0); this.ySlide.position.y = pose[1] * 1000;
       const key = pose.map(v => v.toFixed(6)).join();
       if (key !== this.shadowPose) {
         this.shadowPose = key; this.renderer.shadowMap.needsUpdate = true;
-        this.serviceLoop.update(pose[0] * 1000, pose[1] * 1000, pose[2] * 1000);
+        this.serviceLoop.update(pose[0] * 1000, pose[1] * 1000, pose[2] * 1000, pose[3]);
         this.screwRotor.rotation.z = (42 - pose[2] * 1000) / 1.5 * Math.PI * 2;
       }
     }

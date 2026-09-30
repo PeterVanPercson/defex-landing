@@ -45,3 +45,15 @@ test('service loop stays finite over the stroke and reuses its GPU buffers',()=>
   }
   loop.geometry.dispose();material.dispose();
 });
+
+test('the socket has a relief channel for the plug latch on both variants',()=>{
+  for(const variant of ['six','eight'] as const){
+    const d=dimensions(variant), geometry=socketHousing(d.socketX*1000,d.socketY*1000);
+    const material=new THREE.MeshBasicMaterial({side:THREE.DoubleSide}), mesh=new THREE.Mesh(geometry,material);
+    for(const x of [-1.15,0,1.15]) {
+      const ray=new THREE.Raycaster(new THREE.Vector3(x,-d.socketY*1000-.65,30),new THREE.Vector3(0,0,-1));
+      assert.equal(ray.intersectObject(mesh).length,0);
+    }
+    geometry.dispose();material.dispose();
+  }
+});

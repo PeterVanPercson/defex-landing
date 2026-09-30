@@ -38,7 +38,7 @@ Use **Pause / Resume** below the scene or on the demo button. Space toggles play
 
 The renderer interpolates between computed poses with a 45 ms buffer and never extrapolates through contact. Camera damping uses elapsed time. The camera holds during pause and stays still at rest. Circular controls animate their icons with CSS transitions. Geometry is reused while adjusting offsets; the worker sends only new samples, and the renderer stops scheduling frames once the view settles. Loss of the WebGL context switches to the live 2D schematic without discarding the physics run.
 
-The illustrative machine has independent X/Y slides, a guided Z saddle and a rotating lead screw. A service loop deforms using reusable GPU buffers. The plug has bored female contacts opposite the socket pins, and its wires terminate at a strain relief. These rendered details do not add flexible-body or electrical physics. The stage shows computed force, depth and playback speed, including in close views.
+The illustrative machine has independent X/Y slides, open-backed linear bearings, a guided Z saddle and a rotating lead screw. The gripper rotates independently of the saddle. Clearance checks exercise 783 poses against the housing, motor and fixed slides; the connector has a latch relief channel, and each cable terminates at a gland. A service loop deforms using reusable GPU buffers. The plug has bored female contacts opposite the socket pins, and its wires terminate at a strain relief. These rendered details do not add flexible-body or electrical physics. The stage shows computed force, depth and playback speed, including in close views.
 
 To package a built demo with an existing recording and evaluation output:
 
@@ -61,7 +61,7 @@ This is deterministic feedback search and calibration. It is not RL, a learned n
 - The displayed axial force is the absolute generalized constraint force on Z. It includes the ideal latch constraint during retention. It is not a real force-sensor reading.
 - Continuity is a depth threshold plus a manually injected open-circuit flag. No circuit is simulated.
 - Retention uses an ideal equality constraint switched on at seating, unless the no-latch fault is enabled. An upward motion checks whether the connector remains seated. No deforming snap-fit or damage model is present.
-- Reset releases the constraint and retracts the same connector. A feeder, fresh parts, wear and jam recovery are not modeled.
+- Reset releases the constraint, lifts the same connector clear of the socket, then returns XY to the home position before the next attempt. A feeder, fresh parts, wear and jam recovery are not modeled.
 - Rounded rendering geometry is an illustration of simpler box colliders. The geometry and material parameters are not manufacturer CAD or measured tolerances.
 
 ## Verify and reproduce
@@ -74,7 +74,7 @@ npm run build
 
 The evaluator exports five full demonstration traces and a fixed-seed, 32-case synthetic perturbation check across two variants, XY offsets, yaw and friction. The current model accepted 15/32 searches and 0/32 nominal fixed paths in that broad check. Those are software results on this chosen case set, not manufacturing reliability estimates. The default demo is a selected, reproducible example; the perturbation check includes its limitations.
 
-Twenty tests cover display interpolation at 60/120 Hz, delayed updates, pose reset, camera damping, dock springs at 30/60/120 Hz, open contact bores, socket geometry, service-loop buffer reuse, static mesh batching, and numerical seating, blocked contact, correction reuse, a moved fixture, both fault models, both variants, search termination and finite values. Django tests check production asset availability, the WASM MIME type and stage labeling. CI runs the simulation tests and build before site regression tests.
+Twenty-five tests cover display interpolation at 60/120 Hz, delayed updates, pose reset, camera damping, dock springs at 30/60/120 Hz, open contact bores, socket geometry, service-loop buffer reuse, static mesh batching, and numerical seating, blocked contact, correction reuse, a moved fixture, both fault models, both variants, search termination and finite values. Django tests check production asset availability, the WASM MIME type and stage labeling. CI runs the simulation tests and build before site regression tests.
 
 ## Files
 
@@ -84,6 +84,7 @@ Twenty tests cover display interpolation at 60/120 Hz, delayed updates, pose res
 - `src/scene.ts`: original procedural geometry and rendering.
 - `src/batching.ts`: static geometry batching with selection and animation boundaries.
 - `src/finishes.ts`: procedural material microtextures.
+- `src/tooling.ts`: mechanically separated carriage, bearings, saddle and gripper geometry.
 - `src/mechanism.ts`: molded connector geometry and deforming service-loop buffers.
 - `src/motion.ts`: buffered pose interpolation and time-based damping.
 - `src/main.ts`: controls, guided experiment, telemetry and exports.

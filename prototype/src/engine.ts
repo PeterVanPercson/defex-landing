@@ -46,6 +46,8 @@ export class ConnectorEngine {
   latchEngaged = false;
   blockedTime = 0;
   completedTrial: Trial | null = null;
+  testedCorrection: [number, number] | null = null;
+  returningHome = false;
   plan: { from: number[]; to: number[]; start: number; duration: number } | null = null;
 
   constructor(mj: Module, config = DEFAULT_CONFIG) {
@@ -75,6 +77,7 @@ export class ConnectorEngine {
     this.accepted = null; this.reason = ''; this.latchEngaged = false;
     this.samples = []; this.lastSample = -1; this.blockedTime = 0; this.completedTrial = null;
     this.plan = null;
+    this.testedCorrection = null; this.returningHome = false;
   }
 
   start(controller: Controller) {
@@ -93,7 +96,10 @@ export class ConnectorEngine {
     if (phase === 'backoff') this.glide([x, y, CLEAR_Z], 0.24);
     if (phase === 'move') this.glide([this.points[this.probe][0], this.points[this.probe][1], CLEAR_Z], 0.3);
     if (phase === 'retention') this.glide([x, y, SEATED_Z + 0.001], 0.2);
-    if (phase === 'reset') this.glide([x, y, START_Z], 1.05);
+    if (phase === 'reset') {
+      this.returningHome = false;
+      this.glide([x, y, Math.max(CLEAR_Z + .001, q[2])], .36);
+    }
     if (phase === 'insert') this.target[2] = Math.min(this.target[2], q[2] + 0.0002);
   }
 
@@ -115,6 +121,7 @@ export class ConnectorEngine {
   finish(reason: string) {
     this.reason = reason;
     this.accepted = this.continuity === true && this.retention === true;
+    this.testedCorrection = this.accepted ? [this.target[0], this.target[1]] : null;
     if (this.accepted && this.controller === 'search') this.calibration = [this.target[0], this.target[1]];
     this.setLatch(false);
     this.enter('reset');
@@ -171,18 +178,23 @@ export class ConnectorEngine {
           this.finish(!this.continuity ? 'Electrical check failed' : !this.retention ? 'Retention check failed' : 'Both checks passed');
         }
         break;
-      case 'reset':
-        if (this.follow() && q[2] > START_Z - 0.0001) {
+      case 'reset': {
+        const settled = this.follow();
+        if (settled && !this.returningHome && q[2] > CLEAR_Z + .0008) {
+          this.returningHome = true;
+          this.glide([0, 0, START_Z], .72);
+        } else if (settled && this.returningHome && q[2] > START_Z - 0.0001 && Math.hypot(q[0], q[1]) < .00003) {
           this.enter('complete');
           this.completedTrial = {
             id: this.trials.length + 1, controller: this.controller, config: {...this.config}, model: MODEL_VERSION,
             accepted: this.accepted === true, reason: this.reason, probes: this.probe + 1,
             peakForce: this.peakForce, duration: this.clock, continuity: this.continuity, retention: this.retention,
-            correction: this.accepted ? [this.target[0], this.target[1]] : null, samples: this.samples.slice(),
+            correction: this.testedCorrection, samples: this.samples.slice(),
           };
           this.trials.push(this.completedTrial);
         }
         break;
+      }
     }
     this.data.ctrl.set(this.target);
     this.mj.mj_step(this.model, this.data);
