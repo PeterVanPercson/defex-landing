@@ -1,0 +1,101 @@
+{# the robot on Why us, drawn in flat shapes. static/js/meet.js runs its job on a loop and flies the camera to the part you pick. Without JS it stands in its seated pose. #}<svg class="rb" viewBox="0 0 1000 640" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
+    <defs>
+        <g id="rb-p-three"><rect x="-22" y="-30" width="44" height="30" rx="6" fill="#FFD42A"/><rect x="-14" y="-21" width="6" height="12" rx="2" fill="#0A0A0A"/><rect x="-3" y="-21" width="6" height="12" rx="2" fill="#0A0A0A"/><rect x="8" y="-21" width="6" height="12" rx="2" fill="#0A0A0A"/></g>
+        <g id="rb-p-six"><rect x="-30" y="-30" width="60" height="30" rx="6" fill="#3D63FF"/><rect x="-20" y="-24" width="7" height="8" rx="2" fill="#F4F4F0"/><rect x="-3.5" y="-24" width="7" height="8" rx="2" fill="#F4F4F0"/><rect x="13" y="-24" width="7" height="8" rx="2" fill="#F4F4F0"/><rect x="-20" y="-13" width="7" height="8" rx="2" fill="#F4F4F0"/><rect x="-3.5" y="-13" width="7" height="8" rx="2" fill="#F4F4F0"/><rect x="13" y="-13" width="7" height="8" rx="2" fill="#F4F4F0"/></g>
+        <g id="rb-p-round"><circle cx="0" cy="-16" r="16" fill="#F4F4F0"/><circle cx="0" cy="-16" r="9" fill="none" stroke="#0A0A0A" stroke-width="4"/><circle cx="0" cy="-16" r="3" fill="#3D63FF"/></g>
+    </defs>
+    <g class="rb__scene">
+        <path class="rb__floor" d="M40 600 H960"/>
+
+        <!-- the frame -->
+        <rect class="rb__frame" x="88" y="84" width="22" height="516" rx="6"/>
+        <rect class="rb__frame" x="890" y="84" width="22" height="516" rx="6"/>
+        <rect class="rb__frame" x="80" y="78" width="840" height="30" rx="10"/>
+
+        <!-- the brain: the computer under the bench, wired to the arm -->
+        <g data-part="brain">
+            <path class="rb__cable" id="rb-cable" d="M440 96 H132 Q120 96 120 108 V480 Q120 500 140 500 H176 Q190 500 190 512"/>
+            <circle class="rb__pulse" r="7" cx="440" cy="96"/>
+            <rect class="rb__brain" x="148" y="512" width="162" height="80" rx="12"/>
+            <rect class="rb__fin" x="164" y="503" width="8" height="12" rx="2"/><rect class="rb__fin" x="180" y="503" width="8" height="12" rx="2"/><rect class="rb__fin" x="196" y="503" width="8" height="12" rx="2"/><rect class="rb__fin" x="212" y="503" width="8" height="12" rx="2"/><rect class="rb__fin" x="228" y="503" width="8" height="12" rx="2"/><rect class="rb__fin" x="244" y="503" width="8" height="12" rx="2"/>
+            <rect class="rb__screen" x="162" y="526" width="116" height="52" rx="6"/>
+            <rect class="rb__bar is-lit" x="172" y="560" width="10" height="12" rx="2"/>
+            <rect class="rb__bar is-lit" x="189" y="556" width="10" height="16" rx="2"/>
+            <rect class="rb__bar is-lit" x="206" y="551" width="10" height="21" rx="2"/>
+            <rect class="rb__bar is-lit" x="223" y="545" width="10" height="27" rx="2"/>
+            <rect class="rb__bar" x="240" y="539" width="10" height="33" rx="2"/>
+            <rect class="rb__bar" x="257" y="532" width="10" height="40" rx="2"/>
+            <circle class="rb__led" cx="294" cy="578" r="5"/>
+        </g>
+
+        <!-- the bench -->
+        <rect class="rb__leg" x="140" y="488" width="16" height="112" rx="4"/>
+        <rect class="rb__leg" x="846" y="488" width="16" height="112" rx="4"/>
+        <rect class="rb__bench" x="110" y="470" width="780" height="20" rx="6"/>
+
+        <!-- the reset: parts in on the belt, good parts out, bad parts aside -->
+        <g data-part="reset">
+            <rect class="rb__belt" x="128" y="452" width="262" height="18" rx="9"/>
+            <path class="rb__tread" d="M140 452 H378"/>
+            <circle class="rb__roller" cx="140" cy="461" r="6"/><circle class="rb__roller" cx="378" cy="461" r="6"/>
+            <path class="rb__bin" d="M768 418 V470 H876 V418"/>
+            <use class="rb__binpart" href="#rb-p-three" x="800" y="468"/>
+            <use class="rb__binpart" href="#rb-p-three" x="846" y="468"/>
+            <text class="rb__label" x="822" y="404">Out</text>
+            <path class="rb__bin" d="M598 540 V594 H702 V540"/>
+            <text class="rb__label" x="650" y="528">Aside</text>
+        </g>
+
+        <!-- the tester: the socket, its screen and the light on top -->
+        <g data-part="tester">
+            <path class="rb__cable rb__cable--thin" d="M752 312 C 722 312, 730 450, 704 450"/>
+            <rect class="rb__fixture" x="596" y="430" width="108" height="40" rx="8"/>
+            <rect class="rb__socket" x="614" y="430" width="72" height="14" rx="3"/>
+            <rect class="rb__display" x="740" y="236" width="146" height="112" rx="14"/>
+            <g class="rb__check" data-check="1"><circle cx="766" cy="270" r="11"/><path class="rb__tick" d="M760 270 l4 4 l8 -8"/><path class="rb__cross" d="M762 266 l8 8 M770 266 l-8 8"/><text x="786" y="276">Connected</text></g>
+            <g class="rb__check" data-check="2"><circle cx="766" cy="310" r="11"/><path class="rb__tick" d="M760 310 l4 4 l8 -8"/><path class="rb__cross" d="M762 306 l8 8 M770 306 l-8 8"/><text x="786" y="316">Locked</text></g>
+            <rect class="rb__mast" x="856" y="58" width="16" height="22" rx="3"/>
+            <rect class="rb__lamp rb__lamp--run" x="848" y="4" width="32" height="16" rx="5"/>
+            <rect class="rb__lamp rb__lamp--pass" x="848" y="22" width="32" height="16" rx="5"/>
+            <rect class="rb__lamp rb__lamp--fail" x="848" y="40" width="32" height="16" rx="5"/>
+        </g>
+
+        <!-- vision: a camera on the post, looking down at the belt -->
+        <g data-part="vision">
+            <path class="rb__cone" d="M186 270 L262 452 H408 L196 262 Z"/>
+            <path class="rb__scan" d="M0 0"/>
+            <path class="rb__lock" d="M0 0"/>
+            <rect class="rb__bracket" x="108" y="236" width="40" height="14" rx="4"/>
+            <g transform="translate(166 248) rotate(38)">
+                <rect class="rb__cam" x="-30" y="-19" width="60" height="38" rx="9"/>
+                <circle class="rb__lens" cx="30" cy="0" r="13"/>
+                <circle class="rb__iris" cx="30" cy="0" r="5"/>
+            </g>
+        </g>
+
+        <!-- the arm hangs from the beam; the part and the gripper ride on it -->
+        <g data-part="arm">
+            <rect class="rb__carriage" x="436" y="96" width="68" height="44" rx="10"/>
+            <g class="rb__upper" transform="translate(470 150) rotate(81.76)"><rect x="-17" y="-17" width="199" height="34" rx="17"/></g>
+            <g class="rb__fore" transform="translate(493.64 313.3) rotate(18.63)"><rect x="-13" y="-13" width="191" height="26" rx="13"/></g>
+            <circle class="rb__joint" cx="470" cy="150" r="24"/><circle class="rb__pin" cx="470" cy="150" r="8"/>
+            <g class="rb__elbow" transform="translate(493.64 313.3)"><circle class="rb__joint" r="19"/><circle class="rb__pin" r="6"/></g>
+        </g>
+        <g data-part="part">
+            <use class="rb__next" href="#rb-p-three" x="0" y="0" transform="translate(220 452)"/>
+            <use class="rb__part" href="#rb-p-three" x="0" y="0" transform="translate(650 444)"/>
+        </g>
+        <g data-part="arm">
+            <g class="rb__wrist" transform="translate(650 366)">
+                <rect class="rb__grip" x="-36" y="20" width="72" height="14" rx="6"/>
+                <rect class="rb__finger rb__finger--l" x="-5" y="30" width="10" height="50" rx="4" transform="translate(-27 0)"/>
+                <rect class="rb__finger rb__finger--r" x="-5" y="30" width="10" height="50" rx="4" transform="translate(27 0)"/>
+                <circle class="rb__wj" r="12"/>
+                <g data-part="touch">
+                    <circle class="rb__ring" cy="14" r="14"/>
+                    <rect class="rb__puck" x="-22" y="7" width="44" height="14" rx="5"/>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
