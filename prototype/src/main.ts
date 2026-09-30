@@ -133,7 +133,7 @@ function stopTour(){
 function film(){
   showStage();
   if(!scene)return;
-  if(currentView!=='flight'){currentView='overview';cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));scene.direct(true);}
+  currentView='overview';cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));scene.direct(true);
 }
 function run(){if(configTimer)commitConfig();if(tourIndex<0){el('endcard').hidden=true;document.body.classList.remove('ended');}film();send({type:'run',controller});}
 function reset(){stopTour();dismissEnd();send({type:'reset'});selectView('overview');scene?.direct(false);}

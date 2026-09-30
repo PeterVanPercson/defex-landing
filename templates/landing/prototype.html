@@ -27,8 +27,10 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png" />
   <link rel="preload" href="/static/fonts/geist-400-900-normal.woff2" as="font" type="font/woff2" crossorigin />
-  <script type="module" crossorigin src="/static/prototype/assets/index-DbO_BHvy.js"></script>
-  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-RPWHe1bS.css">
+  <script type="module" crossorigin src="/static/prototype/assets/index-CTKo8_Cu.js"></script>
+  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-Bsa0vvy6.css">
+  <link rel="stylesheet" href="/static/css/meet.css?v={{ asset_v }}" />
+  <script src="/static/js/meet.js?v={{ asset_v }}" defer></script>
 </head>
 <body>
   <main>
@@ -72,14 +74,18 @@
           <button class="dock-item" data-mode="machine" aria-pressed="true" aria-label="Whole machine"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="machine-icon"><path d="M12 3 21 8v9l-9 5-9-5V8Z"/><path d="m3 8 9 5 9-5M12 13v9"/></g></svg></span><span class="dock-tip" aria-hidden="true">Whole machine</span></button>
           <button class="dock-item" data-mode="inside" aria-pressed="false" aria-label="See inside"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path class="cut-half" d="M12 3.5a8.5 8.5 0 0 0 0 17Z"/><path class="cut-lines" d="M15 6v12m3-9v6"/></svg></span><span class="dock-tip" aria-hidden="true">See inside</span></button>
           <button class="dock-item" data-mode="parts" aria-pressed="false" aria-label="Pull it apart"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="layer-top" d="m4 9 8-4 8 4-8 4Z"/><path class="layer-bottom" d="m4 15 8 4 8-4"/></svg></span><span class="dock-tip" aria-hidden="true">Pull it apart</span></button>
-          <button class="dock-item" data-view="flight" aria-pressed="false" aria-label="Fly around"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" class="orbit-core"/><g class="orbit-ring"><ellipse cx="12" cy="12" rx="10" ry="6"/><circle cx="21" cy="9.5" r="2.2" class="orbit-dot"/></g></svg></span><span class="dock-tip" aria-hidden="true">Fly around</span></button>
           <span class="dock-sep" aria-hidden="true"></span>
           <button class="dock-item dock-demo" id="tour" aria-pressed="false" aria-label="Play demo" data-playing="false" disabled><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="play-shape" d="m8 5 11 7-11 7Z"/><g class="pause-shape"><path d="M8 6v12M16 6v12"/></g></svg></span><span class="dock-tip" aria-hidden="true" id="tour-label">Play demo</span></button>
         </nav>
         <span class="control-hint">Drag to rotate · Scroll to zoom</span>
       </div>
       <button id="embed-run" class="embed-run" disabled>▶ Play demo</button>
-      <footer class="stage-footer"><span>Interactive simulation · Not physical footage</span><span class="footer-detail">DEFEX ROBOTICS / R&D</span></footer>
+      <footer class="stage-footer"><span>Interactive simulation</span><span class="footer-detail">DEFEX ROBOTICS / R&D</span></footer>
+    </section>
+
+    <section class="meet-sec" id="meet" aria-labelledby="meet-title">
+      <h2 class="meet-sec__h" id="meet-title">Meet the <em>robot</em>.</h2>
+      {% include "landing/_meet.html" %}
     </section>
 
     <details class="tryit console"><summary>Experiment controls <span>Offset, faults &amp; results</span></summary>
@@ -125,6 +131,6 @@
     <footer class="model-footer"><p>Simulation. The search saves an offset; it is not a trained robot policy.</p><button class="text-button" data-open-notes>About this model <span>↗</span></button></footer>
   </main>
   <dialog id="notes"><div class="dialog-heading"><p class="eyebrow">INTERACTIVE SOFTWARE PROTOTYPE</p><button id="close-notes" aria-label="Close model notes">×</button></div><h2>Inside the simulation.</h2><p>A cartesian tool inserts an illustrative connector into a socket. MuJoCo computes the motion and contact forces in your browser. The 3D view follows those positions.</p><dl><dt>The search</dt><dd>A deterministic controller retracts after blocked contact and tries a ring of XY offsets. A successful, tested offset can be reused. It does not read the socket’s offset. This is calibration from feedback, not reinforcement learning.</dd><dt>The checks</dt><dd>Connection is a seating-depth check with an injectable open-circuit fault. Retention uses an ideal latch constraint and a simulated upward pull. There are no conductive materials or deforming latch mechanics in this model.</dd><dt>The limits</dt><dd>Geometry, friction and forces are illustrative. Only the plug housing and socket participate in contact. The gantry, tester, screen and light tower are visual. The model omits vision, flexible wires, wear, damage, manufacturing tolerances and real robot dynamics. Reset releases the ideal latch and retracts the same plug; it does not model a fresh-part feeder.</dd><dt>The next proof</dt><dd>Build the physical insertion, test and reset loop, then compare setup effort and accepted output on customer parts. This page is not evidence of factory performance, learned skill transfer or manufacturing readiness.</dd></dl><div class="dialog-actions"><button id="download-model" class="tour-button">Download physics model <span>↓</span></button><a href="?view=schematic">Use 2D view ↗</a><a href="https://github.com/google-deepmind/mujoco/tree/main/wasm" target="_blank" rel="noopener">MuJoCo WASM ↗</a></div></dialog>
-  <noscript><div class="noscript">This interactive prototype needs JavaScript. It models connector insertion and two tests; it is not footage of a physical robot.</div></noscript>
+  <noscript><div class="noscript">This interactive simulation needs JavaScript. It models connector insertion, an electrical connection check and a pull test.</div></noscript>
 </body>
 </html>

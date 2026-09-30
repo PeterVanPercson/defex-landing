@@ -13,7 +13,7 @@ import { batchStaticMeshes } from './batching.ts';
 import { ServiceLoop, contactCenters, plugHousing, socketHousing } from './mechanism.ts';
 import type { PartId } from './parts.ts';
 
-export type View = 'overview' | 'side' | 'top' | 'connector' | 'flight' | 'part';
+export type View = 'overview' | 'side' | 'top' | 'connector' | 'part';
 export type Mode = 'machine' | 'inside' | 'parts';
 export interface Hud { labels: HTMLElement; tooltip: HTMLElement; onPick?: (id: PartId) => void; onDirector?: (on: boolean) => void }
 
@@ -131,13 +131,9 @@ export class WorkcellScene {
   desiredTarget = new THREE.Vector3(0, 0, 30);
   animating = false;
   tween: { from: THREE.Vector3; fromTarget: THREE.Vector3; start: number; duration: number } | null = null;
-  autoSpin = 0;
   shadowPose = '';
   dragging = false;
   lastInteraction = performance.now();
-  flightTime = 0;
-  flightBlend = 0;
-  overviewDir: THREE.Vector3 | null = null;
   hovered: PartId | null = null;
   pointer: { x: number; y: number } | null = null;
   pointerMoved = false;
@@ -188,10 +184,10 @@ export class WorkcellScene {
     this.renderer.domElement.setAttribute('aria-label', 'Interactive 3D simulation of a connector workcell. Drag to rotate, scroll to zoom, hover a part to name it.');
     this.camera.up.set(0, 0, 1);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    Object.assign(this.controls, { enableDamping: true, dampingFactor: 0.07, enablePan: false, minDistance: 45, maxDistance: 520, maxPolarAngle: Math.PI * 0.49, minPolarAngle: 0.02, rotateSpeed: 0.55, zoomSpeed: 0.7, autoRotateSpeed: 0.35 });
+    Object.assign(this.controls, { enableDamping: true, dampingFactor: 0.07, enablePan: false, minDistance: 45, maxDistance: 520, maxPolarAngle: Math.PI * 0.49, minPolarAngle: 0.02, rotateSpeed: 0.55, zoomSpeed: 0.7 });
     if (embed) this.controls.enableZoom = false;
     if (matchMedia('(pointer: coarse)').matches) { this.controls.touches = { ONE: -1 as THREE.TOUCH, TWO: THREE.TOUCH.DOLLY_ROTATE }; this.renderer.domElement.style.touchAction = 'pan-y'; }
-    this.controls.addEventListener('start', () => { this.direct(false); this.flightBlend = 0; this.dragging = true; this.animating = false; this.tween = null; this.autoSpin = 0; this.lastInteraction = performance.now(); });
+    this.controls.addEventListener('start', () => { this.direct(false); this.dragging = true; this.animating = false; this.tween = null; this.lastInteraction = performance.now(); });
     this.controls.addEventListener('end', () => { this.dragging = false; this.lastInteraction = performance.now(); });
     this.controls.addEventListener('change', this.wake);
 
@@ -521,21 +517,16 @@ export class WorkcellScene {
   view(mode: View | 'cell' | 'close') {
     this.direct(false);
     const next = mode === 'cell' ? 'overview' : mode === 'close' ? 'connector' : mode;
-    if (this.viewMode === 'flight' && next === 'overview') {
-      const b = this.camera.position.clone().sub(this.controls.target).setZ(0).normalize(), flat = Math.hypot(this.direction.x, this.direction.y);
-      this.overviewDir = new THREE.Vector3(b.x * flat, b.y * flat, this.direction.z).normalize();
-    } else if (next !== 'overview') this.overviewDir = null;
-    if (next === 'overview') this.overviewDir = null;
     this.viewMode = next;
-    this.lastInteraction = performance.now(); this.flightTime = 0;
+    this.lastInteraction = performance.now();
     this.goal(); this.startTween();
-    if (this.reduceMotion && this.viewMode !== 'flight') this.snap();
+    if (this.reduceMotion) this.snap();
     this.wake();
   }
   direct(on: boolean) {
     const next = on && !this.reduceMotion;
     if (next) this.directorHasRun = false;
-    if (next && !this.director) { this.viewMode = 'overview'; this.overviewDir = null; this.tween = null; this.dirPos.copy(this.camera.position); this.dirTarget.copy(this.controls.target); }
+    if (next && !this.director) { this.viewMode = 'overview'; this.tween = null; this.dirPos.copy(this.camera.position); this.dirTarget.copy(this.controls.target); }
     if (next !== this.director) { this.director = next; this.hud?.onDirector?.(next); }
     this.wake();
   }
@@ -553,8 +544,7 @@ export class WorkcellScene {
   focusPart(id: PartId) { this.focus = id; this.view('part'); }
   snap() { this.camera.position.copy(this.desiredPosition); this.controls.target.copy(this.desiredTarget); this.animating = false; this.tween = null; }
   startTween() {
-    if (this.viewMode === 'flight' && !this.director && !this.dragging) { this.tween = null; this.animating = false; this.flightBlend = performance.now() + 700; return; }
-    this.animating = true; this.autoSpin = 0;
+    this.animating = true;
     const from = this.camera.position.clone().sub(this.controls.target), to = this.desiredPosition.clone().sub(this.desiredTarget);
     const turn = from.angleTo(to), zoom = Math.abs(Math.log(to.length() / Math.max(1, from.length())));
     this.tween = { from: this.camera.position.clone(), fromTarget: this.controls.target.clone(), start: performance.now(), duration: this.reduceMotion ? 0 : THREE.MathUtils.clamp(360 + turn * 160 + zoom * 180, 360, 780) };
@@ -576,13 +566,7 @@ export class WorkcellScene {
       return;
     }
     this.desiredTarget.set(0, 0, 30 + lift);
-    if (this.viewMode === 'flight') {
-      const bearing = this.camera.position.clone().sub(this.controls.target).setZ(0).normalize();
-      const flat = Math.hypot(this.direction.x, this.direction.y);
-      this.desiredPosition.set(bearing.x * flat, bearing.y * flat, this.direction.z).normalize().multiplyScalar(d).add(this.desiredTarget);
-      return;
-    }
-    const dir = this.viewMode === 'side' ? new THREE.Vector3(1, -0.16, 0.2) : this.viewMode === 'top' ? new THREE.Vector3(0.001, -0.08, 1) : this.overviewDir ?? this.direction;
+    const dir = this.viewMode === 'side' ? new THREE.Vector3(1, -0.16, 0.2) : this.viewMode === 'top' ? new THREE.Vector3(0.001, -0.08, 1) : this.direction;
     this.desiredPosition.copy(dir).normalize().multiplyScalar(this.viewMode === 'top' ? this.baseDistance * (this.mode === 'parts' ? 1.02 : 0.92) : d).add(this.desiredTarget);
   }
 
@@ -729,17 +713,6 @@ export class WorkcellScene {
       this.camera.position.add(this.controls.target);
       if (k >= 1) { this.tween = null; this.animating = false; }
     }
-    if (this.viewMode === 'flight' && !this.director && !this.dragging && now < this.flightBlend) {
-      this.goal();
-      const a = damping(dt, 180), off = this.camera.position.clone().sub(this.controls.target);
-      this.controls.target.lerp(this.desiredTarget, a);
-      off.lerp(this.desiredPosition.clone().sub(this.desiredTarget), a);
-      this.camera.position.copy(this.controls.target).add(off);
-    }
-    const flying = this.viewMode === 'flight' && !this.dragging && !this.tween && !this.director;
-    this.autoSpin = flying ? Math.min(1, this.autoSpin + dt / 600) : 0;
-    this.controls.autoRotate = this.autoSpin > 0;
-    this.controls.autoRotateSpeed = (flying ? (this.reduceMotion ? 0.6 : 1.6) : 0.3) * ease(this.autoSpin);
     this.controls.dampingFactor = damping(dt, 170);
     const orbitChanged = this.controls.update(dt / 1000);
 
@@ -763,7 +736,7 @@ export class WorkcellScene {
       if (this.slow >= 2 && this.pixelRatio > 1.5) { this.pixelRatio = Math.max(1.5, this.pixelRatio - 0.25); this.renderer.setPixelRatio(this.pixelRatio); this.renderer.setSize(this.width, this.height); this.slow = 0; }
       this.frames = 0; this.measured = 0; this.renderCost = 0;
     }
-    if (!this.frame && (this.playing || moving || this.tween || (this.director && !paused) || flying || this.dragging || orbitChanged || this.poses.pending(now))) this.frame = requestAnimationFrame(this.animate);
+    if (!this.frame && (this.playing || moving || this.tween || (this.director && !paused) || this.dragging || orbitChanged || this.poses.pending(now))) this.frame = requestAnimationFrame(this.animate);
   };
 
   animateLatch(now: number, dt: number) {

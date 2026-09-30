@@ -27,7 +27,6 @@ h1{font-size:clamp(28px,3.3vw,48px);line-height:1.02;letter-spacing:-.04em;font-
 .machine-icon{transform:rotate(-8deg) scale(.86)}[data-mode=machine][aria-pressed=true] .machine-icon{transform:rotate(0) scale(1)}
 .cut-half{fill:currentColor;stroke:none;transform-origin:right center!important}.cut-lines{opacity:.25}[data-mode=inside][aria-pressed=true] .cut-half{transform:rotate(180deg)}[data-mode=inside][aria-pressed=true] .cut-lines{opacity:1;transform:translateX(-6px)}
 [data-mode=parts][aria-pressed=true] .layer-top{transform:translateY(-3px)}[data-mode=parts][aria-pressed=true] .layer-bottom{transform:translateY(3px)}
-.orbit-core,.orbit-dot{fill:currentColor;stroke:none}.orbit-ring{transform-origin:12px 12px!important;transform-box:view-box!important}[data-view=flight][aria-pressed=true] .orbit-ring{transform:rotate(-45deg)}
 .play-shape{fill:currentColor;stroke:none}.pause-shape{stroke-width:3;opacity:0;transform:scale(.6)}[data-playing=true] .play-shape{opacity:0;transform:scale(.6) rotate(90deg)}[data-playing=true] .pause-shape{opacity:1;transform:scale(1)}
 .dock-sep{width:1px;height:18px;background:#ffffff24;margin:0 6px}
 .dock-tip{position:absolute;left:50%;bottom:calc(100% + 14px);transform:translate(-50%,4px);padding:7px 11px;border-radius:18px;background:#e7e9e1;color:#121714;font-size:12px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .16s,transform .16s}

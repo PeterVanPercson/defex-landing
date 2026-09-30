@@ -11,6 +11,8 @@
 {% block twitter_description %}It tests every part, learns from every miss and resets itself. 21 factories are in line.{% endblock %}
 
 {% block extra_head %}
+<!-- Meet the robot sits far below the fold, so its sheet never holds up first paint -->
+<link rel="stylesheet" href="{% static 'css/meet.css' %}?v={{ asset_v }}" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="{% static 'css/meet.css' %}?v={{ asset_v }}"></noscript>
 <link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/geist-400-900-normal.woff2' %}">
 <noscript><style>.portal__fallback { display: grid; }</style></noscript>
 {% endblock %}
@@ -123,6 +125,15 @@
                 </li>
             </ol>
         </div>
+    </section>
+
+    <!-- Meet the robot: Apple's highlights explorer, drawn in our flat shapes.
+         Pick a part and the camera flies to it while the robot keeps working.
+         The first part has swatches that swap the connector; the moves stay.
+         static/js/meet.js. Without JS every card shows under the drawing. -->
+    <section class="wy-sec wy-meet" id="meet" aria-labelledby="meet-title">
+        <h2 class="wy-h" id="meet-title" data-reveal>Meet the <span class="wy-hl">robot</span>.</h2>
+        {% include "landing/_meet.html" %}
     </section>
 
     <!-- It tests every part: two checks tick, then the gauge says pass, or
@@ -422,6 +433,7 @@
 {% block extra_scripts %}
 <script src="{% static 'js/portal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/why.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/meet.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/roll.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/book.js' %}?v={{ asset_v }}" defer></script>

@@ -13,7 +13,7 @@ class PrototypeTests(SimpleTestCase):
         self.assertEqual(response['X-Frame-Options'], 'SAMEORIGIN')
         self.assertContains(response, 'INTERACTIVE SOFTWARE PROTOTYPE')
         self.assertContains(response, 'not a trained robot policy')
-        self.assertContains(response, 'not footage of a physical robot')
+        self.assertContains(response, 'Interactive simulation')
         assets = Path(settings.BASE_DIR) / 'static' / 'prototype' / 'assets'
         for path in re.findall(r'(?:src|href)="(/static/prototype/assets/[^" ]+)"', response.content.decode()):
             self.assertEqual(self.client.get(path).status_code, 200, path)

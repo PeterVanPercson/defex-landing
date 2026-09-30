@@ -383,6 +383,12 @@ test('Why us stops its animation clock when reduced motion is enabled', () => {
     assert.ok(p.frames.size > 0);
 });
 
+test('Meet the robot leaves the page alone when the section is missing', () => {
+    const p = page();
+    p.run('meet.js');
+    assert.equal(p.frames.size, 0);
+});
+
 test('reduced motion skips the Spline WebGL probe and shows the still', () => {
     const p = page({ reduced: true }), host = new Element();
     let probes = 0;
