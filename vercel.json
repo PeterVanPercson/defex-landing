@@ -3,7 +3,10 @@
   "builds": [
     {
       "src": "config/wsgi.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "excludeFiles": "{static/defex/**,static/prototype/**,static/video/**,static/vendor/**,static/why/**,static/img/**,prototype/**,docs/**,scripts/**,.github/**}"
+      }
     },
     {
       "src": "static/**",
