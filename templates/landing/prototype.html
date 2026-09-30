@@ -29,6 +29,8 @@
   <link rel="preload" href="/static/fonts/geist-400-900-normal.woff2" as="font" type="font/woff2" crossorigin />
   <script type="module" crossorigin src="/static/prototype/assets/index-Cw5SBZy6.js"></script>
   <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-DW0uY546.css">
+  <link rel="stylesheet" href="/static/css/meet.css?v={{ asset_v }}" />
+  <script src="/static/js/meet.js?v={{ asset_v }}" defer></script>
 </head>
 <body>
   <main>
@@ -66,6 +68,11 @@
       </div>
       <button id="embed-run" class="embed-run" disabled>▶ Play demo</button>
       <footer class="stage-footer"><span>Simulation. Not footage of a physical robot.</span></footer>
+    </section>
+
+    <section class="meet-sec" id="meet" aria-labelledby="meet-title">
+      <h2 class="meet-sec__h" id="meet-title">Meet the <em>robot</em>.</h2>
+      {% include "landing/_meet.html" %}
     </section>
 
     <section class="close" aria-labelledby="close-title">

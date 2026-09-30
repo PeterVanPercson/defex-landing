@@ -354,6 +354,20 @@ class SiteTests(SimpleTestCase):
             self.assertIn(f'aria-controls="meet-{key}"', body)
             self.assertIn(f'id="meet-{key}"', body)
         self.assertEqual(body.count('class="rb"'), 1)
+        # the same explorer is on home, right after the origin film, and on
+        # Prototype before the close; its sheet never blocks first paint
+        home = self.client.get("/").content.decode()
+        self.assertLess(home.index('id="origin"'), home.index('id="meet"'))
+        self.assertLess(home.index('id="meet"'), home.index('id="why"'))
+        proto = self.client.get("/prototype/").content.decode()
+        self.assertLess(proto.index('id="meet"'), proto.index('class="close"'))
+        for page in (body, home, proto):
+            self.assertEqual(page.count('class="rb"'), 1)
+            self.assertEqual(page.count('aria-controls="meet-'), 6)
+            self.assertIn("js/meet.js?v=", page)
+            self.assertIn("css/meet.css?v=", page)
+        for page in (body, home):
+            self.assertNotRegex(page, r'<link rel="stylesheet" href="[^"]*meet\.css[^"]*">(?!</noscript>)')
         for script in ("js/portal.js", "js/why.js", "js/meet.js"):
             self.assertIn(script, body)
             self.assertEqual(self.client.get(f"/static/{script}").status_code, 200)
@@ -464,11 +478,11 @@ class SiteTests(SimpleTestCase):
         still returns 200, so nothing else here catches it. This does."""
         import re
         root = Path(settings.BASE_DIR)
-        css = (root / "static/css/site.css").read_text()
+        css = (root / "static/css/site.css").read_text() + (root / "static/css/meet.css").read_text()
         # rules inside a media query do not style the default (desktop) case
         top = re.sub(r"@media[^{]*\{(?:[^{}]|\{[^{}]*\})*\}", "", css, flags=re.S)
         used = set()
-        for name in ("home.html", "why_us.html", "_inline.html", "_arm.html", "_robot.html", "_topbar.html", "_scan.html", "blog/index.html",
+        for name in ("home.html", "why_us.html", "_inline.html", "_arm.html", "_robot.html", "_meet.html", "_topbar.html", "_scan.html", "blog/index.html",
                      "blog/_article.html", "blog/the-cost-of-the-next-attempt.html",
                      "blog/the-ai-inference-revolution-is-here.html", "_footer.html", "legal/_page.html",
                      "legal/privacy.html", "legal/terms.html", "legal/security.html"):

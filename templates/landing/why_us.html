@@ -11,6 +11,8 @@
 {% block twitter_description %}It tests every part, learns from every miss and resets itself. 21 factories are in line.{% endblock %}
 
 {% block extra_head %}
+<!-- Meet the robot sits far below the fold, so its sheet never holds up first paint -->
+<link rel="stylesheet" href="{% static 'css/meet.css' %}?v={{ asset_v }}" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="{% static 'css/meet.css' %}?v={{ asset_v }}"></noscript>
 <link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/geist-400-900-normal.woff2' %}">
 <noscript><style>.portal__fallback { display: grid; }</style></noscript>
 {% endblock %}
@@ -131,61 +133,7 @@
          static/js/meet.js. Without JS every card shows under the drawing. -->
     <section class="wy-sec wy-meet" id="meet" aria-labelledby="meet-title">
         <h2 class="wy-h" id="meet-title" data-reveal>Meet the <span class="wy-hl">robot</span>.</h2>
-        <div class="meet" data-meet>
-            <div class="meet__stage">
-                {% include "landing/_robot.html" %}
-                <span class="meet__tag">Concept</span>
-            </div>
-            <ul class="meet__list" aria-label="Parts of the robot">
-                <li class="meet__item" data-key="part">
-                    <button type="button" class="meet__pill" aria-expanded="false" aria-controls="meet-part"><span class="meet__dot" aria-hidden="true"></span><span class="meet__name" id="meet-part-name">Your part</span></button>
-                    <div class="meet__card" id="meet-part" tabindex="-1" role="region" aria-labelledby="meet-part-name">
-                        <p class="meet__text"><b>Your part.</b> Connectors first. What it learns on one part carries to the next.</p>
-                        <div class="meet__swatches" role="radiogroup" aria-label="Pick a part">
-                            <button type="button" class="meet__swatch" role="radio" aria-checked="true" data-shape="three" data-name="Three-pin" aria-label="Three-pin connector" style="--c: #FFD42A;"></button>
-                            <button type="button" class="meet__swatch" role="radio" aria-checked="false" data-shape="six" data-name="Six-pin" aria-label="Six-pin connector" style="--c: #3D63FF;"></button>
-                            <button type="button" class="meet__swatch" role="radio" aria-checked="false" data-shape="round" data-name="Round" aria-label="Round connector" style="--c: #F4F4F0;"></button>
-                            <span class="meet__swname" aria-hidden="true">Three-pin</span>
-                        </div>
-                    </div>
-                </li>
-                <li class="meet__item" data-key="vision">
-                    <button type="button" class="meet__pill" aria-expanded="false" aria-controls="meet-vision"><span class="meet__plus" aria-hidden="true"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="12"/><path d="M13 8 V18 M8 13 H18"/></svg></span><span class="meet__name" id="meet-vision-name">Vision</span></button>
-                    <div class="meet__card" id="meet-vision" tabindex="-1" role="region" aria-labelledby="meet-vision-name">
-                        <p class="meet__text"><b>Vision.</b> A camera finds every part on the way in. No one lines it up.</p>
-                    </div>
-                </li>
-                <li class="meet__item" data-key="touch">
-                    <button type="button" class="meet__pill" aria-expanded="false" aria-controls="meet-touch"><span class="meet__plus" aria-hidden="true"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="12"/><path d="M13 8 V18 M8 13 H18"/></svg></span><span class="meet__name" id="meet-touch-name">Touch</span></button>
-                    <div class="meet__card" id="meet-touch" tabindex="-1" role="region" aria-labelledby="meet-touch-name">
-                        <p class="meet__text"><b>Touch.</b> Touch guides it in. It feels the part seat, so it knows when a part is really done.</p>
-                    </div>
-                </li>
-                <li class="meet__item" data-key="tester">
-                    <button type="button" class="meet__pill" aria-expanded="false" aria-controls="meet-tester"><span class="meet__plus" aria-hidden="true"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="12"/><path d="M13 8 V18 M8 13 H18"/></svg></span><span class="meet__name" id="meet-tester-name">Tester</span></button>
-                    <div class="meet__card" id="meet-tester" tabindex="-1" role="region" aria-labelledby="meet-tester-name">
-                        <p class="meet__text"><b>Tester.</b> Connected? Locked? Every part gets checked on the spot. The light says pass or fail.</p>
-                    </div>
-                </li>
-                <li class="meet__item" data-key="brain">
-                    <button type="button" class="meet__pill" aria-expanded="false" aria-controls="meet-brain"><span class="meet__plus" aria-hidden="true"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="12"/><path d="M13 8 V18 M8 13 H18"/></svg></span><span class="meet__name" id="meet-brain-name">Brain</span></button>
-                    <div class="meet__card" id="meet-brain" tabindex="-1" role="region" aria-labelledby="meet-brain-name">
-                        <p class="meet__text"><b>Brain.</b> Pass or fail, every try teaches it. No engineer rewriting code.</p>
-                    </div>
-                </li>
-                <li class="meet__item" data-key="reset">
-                    <button type="button" class="meet__pill" aria-expanded="false" aria-controls="meet-reset"><span class="meet__plus" aria-hidden="true"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="12"/><path d="M13 8 V18 M8 13 H18"/></svg></span><span class="meet__name" id="meet-reset-name">Reset</span></button>
-                    <div class="meet__card" id="meet-reset" tabindex="-1" role="region" aria-labelledby="meet-reset-name">
-                        <p class="meet__text"><b>Reset.</b> Good parts out. Bad parts aside. Next parts in. No one has to stand over it.</p>
-                    </div>
-                </li>
-            </ul>
-            <div class="meet__nav">
-                <button type="button" class="meet__btn meet__prev" aria-label="Previous part"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15 L12 9 L18 15"/></svg></button>
-                <button type="button" class="meet__btn meet__next" aria-label="Next part"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9 L12 15 L18 9"/></svg></button>
-            </div>
-            <button type="button" class="meet__btn meet__close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7 L17 17 M17 7 L7 17"/></svg></button>
-        </div>
+        {% include "landing/_meet.html" %}
     </section>
 
     <!-- It tests every part: two checks tick, then the gauge says pass, or

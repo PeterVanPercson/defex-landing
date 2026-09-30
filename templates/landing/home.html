@@ -7,6 +7,8 @@
      the page does not shift when the deferred script gets round to it;
      hero-film.js takes the class off again if the film cannot run. -->
 <script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !(navigator.connection && navigator.connection.saveData)) document.documentElement.classList.add('has-scroll-film');</script>
+<!-- Meet the robot sits far below the fold, so its sheet never holds up first paint -->
+<link rel="stylesheet" href="{% static 'css/meet.css' %}?v={{ asset_v }}" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="{% static 'css/meet.css' %}?v={{ asset_v }}"></noscript>
 {% endblock %}
 
 {% block content %}
@@ -80,6 +82,13 @@
             <span class="flash" id="flash" aria-hidden="true"></span>
             <button type="button" class="sound" id="sound" aria-pressed="false" aria-label="Turn on sound"></button>
         </figure>
+    </section>
+
+    <!-- Meet the robot: pick a part, the camera flies to it while the robot
+         keeps working. The same explorer as Why us (_meet.html). -->
+    <section class="meet-sec" id="meet" aria-labelledby="meet-title">
+        <h2 class="meet-sec__h" id="meet-title" data-reveal>Meet the <em>robot</em>.</h2>
+        {% include "landing/_meet.html" %}
     </section>
 
     <!-- The case in one screen, in the pitch's own words (why_us.html): the
@@ -229,6 +238,7 @@
 
 <script src="{% static 'js/hero-film.js' %}?v={{ asset_v }}" defer fetchpriority="high"></script>
 <script src="{% static 'js/origin.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/meet.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/roll.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/flick.js' %}?v={{ asset_v }}" defer></script>
