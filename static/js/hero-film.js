@@ -21,7 +21,7 @@
     // Geometry is cached. Reading offsetHeight or getBoundingClientRect inside
     // the scroll handler forces a synchronous layout on every event, and a
     // trackpad fires around a hundred a second. Measure on resize instead.
-    let heroTop = 0, scrubSpan = 0, navFlipAt = 0, navDarkAgainAt = Infinity;
+    let heroTop = 0, scrubSpan = 0, navFlipAt = 0, navDarkAgainAt = Infinity, darkBands = [];
     function measureGeometry() {
         heroTop = hero.offsetTop;
         scrubSpan = hero.offsetHeight - sticky.offsetHeight;
@@ -33,6 +33,17 @@
         const nav = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav')) || 64;
         const fade = parseFloat(getComputedStyle(hero, '::after').height) || 0;
         navFlipAt = heroTop + hero.offsetHeight + fade * .75 - nav;
+        // Dark bands in the middle of the page ([data-nav-dark], Meet the
+        // robot) dissolve in from the paper and back out again, so the bar
+        // goes dark three quarters of the way into the top dissolve and back
+        // to paper three quarters of the way through the bottom one: the same
+        // rule as the hero, run both ways.
+        darkBands = [...document.querySelectorAll('[data-nav-dark]')].map((band) => {
+            const top = band.getBoundingClientRect().top + scrollY;
+            const into = parseFloat(getComputedStyle(band, '::before').height) || 0;
+            const out = parseFloat(getComputedStyle(band, '::after').height) || 0;
+            return [top + into * .75 - nav, top + band.offsetHeight - out * .25 - nav];
+        });
         // The page ends on the dark again, so the bar flips back before the
         // closing block, measured from the top of that block's own dissolve.
         const close = document.querySelector('.contact.dark');
@@ -42,7 +53,8 @@
     }
     let navPast = null;
     function syncNav() {
-        const past = scrollY > navFlipAt && scrollY < navDarkAgainAt;
+        const y = scrollY;
+        const past = y > navFlipAt && y < navDarkAgainAt && !darkBands.some(([a, b]) => y > a && y < b);
         if (past === navPast) return;
         navPast = past;
         document.documentElement.classList.toggle('past-hero', past);
