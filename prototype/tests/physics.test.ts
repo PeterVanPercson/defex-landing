@@ -39,6 +39,20 @@ test('search uses trial feedback, and its accepted correction is reusable', () =
   e.dispose();
 });
 
+test('reset lifts clear before returning XY home and preserves the tested correction', () => {
+  const e = new ConnectorEngine(mj);
+  const trial = run(e, 'search');
+  assert.deepEqual(trial.correction, e.calibration);
+  const reset = trial.samples.filter(s => s.phase === 'reset');
+  for (const sample of reset.filter(s => s.z < .0268)) {
+    assert.ok(Math.hypot(sample.x - trial.correction![0], sample.y - trial.correction![1]) < .00008);
+  }
+  const completed = e.snapshot().pose;
+  e.start('reuse');
+  assert.ok(Math.hypot(...completed.slice(0, 3).map((v, i) => v - e.snapshot().pose[i])) < .00003, 'next run must not jump sideways');
+  e.dispose();
+});
+
 for (const fault of ['open','latch'] as const) test(`${fault} fault is rejected after insertion`, () => {
   const e = new ConnectorEngine(mj,{...DEFAULT_CONFIG,offsetX:0,offsetY:0,yaw:0,fault});
   const t=run(e,'fixed');

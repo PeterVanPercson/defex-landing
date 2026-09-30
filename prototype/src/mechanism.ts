@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SERVICE_FIXED, SERVICE_MOVING } from './tooling.ts';
 
 function roundedProfile(halfX: number, halfY: number, radius: number) {
   const s = new THREE.Shape(), x = halfX, y = halfY, r = radius;
@@ -13,7 +14,9 @@ export function socketHousing(halfX: number, halfY: number) {
   const shape = roundedProfile(halfX + 3.8, halfY + 3.8, .6);
   const opening = new THREE.Path();
   opening.moveTo(-halfX, -halfY); opening.lineTo(-halfX, halfY);
-  opening.lineTo(halfX, halfY); opening.lineTo(halfX, -halfY); opening.closePath();
+  opening.lineTo(halfX, halfY); opening.lineTo(halfX, -halfY);
+  opening.lineTo(1.6, -halfY); opening.lineTo(1.6, -halfY - .95);
+  opening.lineTo(-1.6, -halfY - .95); opening.lineTo(-1.6, -halfY); opening.closePath();
   shape.holes.push(opening);
   return new THREE.ExtrudeGeometry(shape, { depth: 11.6, bevelEnabled: true, bevelThickness: .2, bevelSize: .18, bevelSegments: 2, curveSegments: 6, steps: 1 });
 }
@@ -58,11 +61,12 @@ export class ServiceLoop {
     this.mesh.frustumCulled = false;
   }
 
-  update(x: number, y: number, z: number) {
-    this.curve.v0.set(x + 6, y + 8, 68);
-    this.curve.v1.set(x + 22, y + 8, 70);
-    this.curve.v2.set(x + 22, y + 4, z + 18);
-    this.curve.v3.set(x + 8, y + 4, z + 17);
+  update(x: number, y: number, z: number, yaw = 0) {
+    this.curve.v0.set(x + SERVICE_FIXED.x, y + SERVICE_FIXED.y, SERVICE_FIXED.z);
+    this.curve.v1.set(x + 28, y + SERVICE_FIXED.y, SERVICE_FIXED.z - 1);
+    const c = Math.cos(yaw), s = Math.sin(yaw);
+    this.curve.v3.set(x + SERVICE_MOVING.x * c - SERVICE_MOVING.y * s, y + SERVICE_MOVING.x * s + SERVICE_MOVING.y * c, z + SERVICE_MOVING.z);
+    this.curve.v2.set(x + 28, this.curve.v3.y, this.curve.v3.z - 1.6);
     const positions = this.geometry.attributes.position, normals = this.geometry.attributes.normal;
     for (let i = 0; i <= this.segments; i++) {
       this.curve.getPoint(i / this.segments, this.point);
