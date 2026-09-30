@@ -3,7 +3,7 @@ import { WorkcellScene } from './scene.ts';
 import type { Mode, View } from './scene.ts';
 import type { PartId } from './parts.ts';
 import { DemoRecorder } from './recording.ts';
-import { magnify } from './dock.ts';
+import { setupDock } from './dock.ts';
 import { DEFAULT_CONFIG, modelXML } from './model.ts';
 import type { Configuration, Controller } from './model.ts';
 import type { Sample, Snapshot, Trial } from './engine.ts';
@@ -119,6 +119,7 @@ function showPart(id:PartId){
 }
 function finishRecording(){
   if(!recorder)return;
+  if(scene)scene.afterRender=null;
   recorder.stop();recorder=null;
   el<HTMLButtonElement>('save-video').disabled=!ready||!scene||typeof MediaRecorder==='undefined';
   text('save-video','Record demo ↓');
@@ -186,10 +187,10 @@ el('export').addEventListener('click',()=>send({type:'export'}));
 el('download-model').addEventListener('click',()=>download(modelXML(config),'defex-illustrative-connector.xml','application/xml'));
 
 const stories=[
-  ['A shifted socket blocks the fixed path.','The tool detects contact and retracts.'],
-  ['Contact. Retract. Try a new position.','A deterministic search finds an offset that passes both checks.'],
-  ['Reuse the fit. Test it again.','The saved offset succeeds in one simulated attempt.'],
-  ['Seated does not mean connected.','The injected open circuit fails the connection check.'],
+  ['01 — The fixed path meets an offset.','The tool detects contact and retracts.'],
+  ['02 — Search using contact feedback.','A deterministic search finds an offset that passes both checks.'],
+  ['03 — Repeat with the saved offset.','The saved offset succeeds in one simulated attempt.'],
+  ['04 — Reject the open circuit.','The injected open circuit fails the connection check.'],
 ];
 function tourStep(){
   if(tourIndex<0)return;
@@ -229,6 +230,7 @@ el('save-video').addEventListener('click',()=>{
     startTour();
     recorder=new DemoRecorder(scene.renderer.domElement,(blob,ext)=>downloadBlob(blob,`defex-connector-simulation.${ext}`));
     recorder.title=stories[0][0];recorder.description=stories[0][1];
+    scene.afterRender=()=>recorder?.draw(); scene.wake();
     el<HTMLButtonElement>('save-video').disabled=true;text('save-video','Recording…');
   }catch(e){stopTour();send({type:'pause'});outcome('fail','Couldn’t record the demo.',e instanceof Error?e.message:String(e));}
 });
@@ -246,8 +248,8 @@ function refreshControls(){
   el<HTMLSelectElement>('speed').disabled=!ready;
   el<HTMLButtonElement>('tour').disabled=!ready;all<HTMLButtonElement>('[data-start-tour]').forEach(b=>b.disabled=!ready);el<HTMLButtonElement>('embed-run').disabled=!ready;
   el('tour').setAttribute('aria-pressed',String(tourIndex>=0));
-  if(tourIndex>=0){text('tour-label',tourPaused?'Resume':'Pause');text('tour-icon',tourPaused?'▶':'Ⅱ');}
-  else{text('tour-label','Watch');text('tour-icon','▶');}
+  text('tour-label',tourIndex>=0?(tourPaused?'Resume demo':'Pause demo'):'Play demo');
+  el('tour').dataset.playing=String(tourIndex>=0&&!tourPaused);
   el('tour').setAttribute('aria-label',tourIndex>=0?(tourPaused?'Resume demo':'Pause demo'):'Play demo');
   for(const input of settingInputs)input.disabled=!ready||unfinished||tourIndex>=0;
   reuseButton.disabled=!ready||unfinished||tourIndex>=0||!state?.calibration;
@@ -307,7 +309,7 @@ function record(trial:Trial){
   if(tourIndex>=0){
     const expected=tourIndex===1||tourIndex===2;
     if(trial.accepted!==expected){stopTour();outcome('fail','Demo stopped.',`Unexpected result: ${trial.reason}. See the attempt below.`);return;}
-    scheduleNext(tourIndex===0?2200:tourIndex<3?1400:2000);
+    scheduleNext(tourIndex===0?950:tourIndex<3?650:1000);
   }
 }
 function drawChart(){
@@ -357,5 +359,5 @@ document.addEventListener('keydown',e=>{
   if(e.code==='KeyR'){e.preventDefault();reset();}
 });
 document.querySelector('.tryit')!.addEventListener('toggle',drawChart);
-magnify(document.querySelector<HTMLElement>('.dock')!);
+setupDock(document.querySelector<HTMLElement>('.dock')!);
 settingInputs.forEach(input=>input.disabled=true);syncConfig();send({type:'init',config});
