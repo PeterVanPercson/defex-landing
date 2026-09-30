@@ -317,7 +317,7 @@ class SiteTests(SimpleTestCase):
         self.assertIn("<title>Why Defex | Robots that test every part they build</title>", body)
         self.assertIn('data-word="WHY US"', body)
         self.assertIn('id="why-title"><span class="wy-sr">Why us: </span>Robots that test every part', body)
-        for section in ("portal", "problem", "promise", "watch", "tests", "learns", "resets", "newpart", "proof", "pricing", "faq", "founders", "talk"):
+        for section in ("portal", "problem", "promise", "watch", "meet", "tests", "learns", "resets", "newpart", "proof", "pricing", "faq", "founders", "talk"):
             self.assertIn(f'id="{section}"', body)
         for claim in ("Concept render", "Target</span>", "factories paid to be first in line.",
                       'href="#talk"', "Book a call", "Robots are cheap."):
@@ -346,7 +346,15 @@ class SiteTests(SimpleTestCase):
         for asset, cap in (("why/story.mp4", 2 * 1024 * 1024), ("why/story-first.webp", 80 * 1024), ("why/story-lit.webp", 80 * 1024)):
             self.assertIn(asset, body)
             self.assertLessEqual((root / "static" / asset).stat().st_size, cap, asset)
-        for script in ("js/portal.js", "js/why.js"):
+        # Meet the robot: six parts, each a pill that opens its own card,
+        # after the render and before the first feature
+        self.assertLess(body.index('id="watch"'), body.index('id="meet"'))
+        self.assertLess(body.index('id="meet"'), body.index('id="tests"'))
+        for key in ("part", "vision", "touch", "tester", "brain", "reset"):
+            self.assertIn(f'aria-controls="meet-{key}"', body)
+            self.assertIn(f'id="meet-{key}"', body)
+        self.assertEqual(body.count('class="rb"'), 1)
+        for script in ("js/portal.js", "js/why.js", "js/meet.js"):
             self.assertIn(script, body)
             self.assertEqual(self.client.get(f"/static/{script}").status_code, 200)
         # reachable from the nav on every page, and from the home page's claims
@@ -460,7 +468,7 @@ class SiteTests(SimpleTestCase):
         # rules inside a media query do not style the default (desktop) case
         top = re.sub(r"@media[^{]*\{(?:[^{}]|\{[^{}]*\})*\}", "", css, flags=re.S)
         used = set()
-        for name in ("home.html", "why_us.html", "_inline.html", "_arm.html", "_topbar.html", "_scan.html", "blog/index.html",
+        for name in ("home.html", "why_us.html", "_inline.html", "_arm.html", "_robot.html", "_topbar.html", "_scan.html", "blog/index.html",
                      "blog/_article.html", "blog/the-cost-of-the-next-attempt.html",
                      "blog/the-ai-inference-revolution-is-here.html", "_footer.html", "legal/_page.html",
                      "legal/privacy.html", "legal/terms.html", "legal/security.html"):
