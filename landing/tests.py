@@ -359,6 +359,8 @@ class SiteTests(SimpleTestCase):
         home = self.client.get("/").content.decode()
         self.assertLess(home.index('id="origin"'), home.index('id="meet"'))
         self.assertLess(home.index('id="meet"'), home.index('id="why"'))
+        # the bar turns dark over it, like over the hero (hero-film.js)
+        self.assertIn('id="meet" data-nav-dark', home)
         proto = self.client.get("/prototype/").content.decode()
         self.assertLess(proto.index('id="meet"'), proto.index('class="tryit console"'))
         for page in (body, home, proto):
