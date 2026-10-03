@@ -252,7 +252,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .inline { position: relative; }
 .sheet.inline { padding-block: clamp(44px, 7vh, 76px); padding-inline: 0; border-top: 1px solid var(--line); }
 .inline__k { padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); font: 500 10px/1.4 var(--mono); letter-spacing: .34em; text-transform: uppercase; color: var(--mute); }
-.roll { --roll-gap: clamp(48px, 6.5vw, 104px); margin-top: clamp(26px, 4vh, 40px); overflow: hidden; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.roll { --roll-gap: clamp(48px, 6.5vw, 104px); --roll-room: 14px; margin-block: calc(clamp(26px, 4vh, 40px) - var(--roll-room)) calc(-1 * var(--roll-room)); padding-block: var(--roll-room); overflow: hidden; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 /* held: roll.js has stopped the clock and the row follows the pointer (static/js/roll.js) */
 .roll.is-held { cursor: grabbing; }
 .roll__logo { -webkit-user-drag: none; }
@@ -269,6 +269,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .roll__i:hover .roll__logo { filter: none; opacity: 1; transform: scale(1.06); }
 .roll__i:hover .roll__logo[data-opaque] { filter: url(#roll-colour); }
 .roll__logo[data-trim] { clip-path: inset(0 0 3% 0); }
+.roll__logo[data-tall] { max-height: calc(var(--roll-h) * 1.45); margin-block: calc(var(--roll-h) * -.225); }
 @keyframes roll { to { transform: translateX(-25%); } }
 .inline--dark { padding-bottom: clamp(20px, 4vh, 48px); }
 .inline--dark .inline__k { padding-inline: var(--gutter); font-size: 11px; }
