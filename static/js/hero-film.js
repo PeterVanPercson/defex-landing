@@ -74,22 +74,6 @@
         cueOpacity = opacity;
         (cue || hero).style.setProperty('--cue-opacity', String(opacity));
     }
-    // Where the headline sits over the film (wide screens, site.css), it
-    // fades out over 2-8% of the scrub, as the camera starts to close in and
-    // before a shoulder can slide under it, and fades back over 93-96%, when
-    // the film has pulled back to the whole robot in the dark again and
-    // before the pinned box lets go (it moves on at about 96%). The film
-    // slides to centre while it is gone (site.css), so the close-ups are
-    // framed on the eye, not off to the right.
-    const lede = hero.querySelector('.lede');
-    let ledeOpacity = null;
-    function syncLede(p) {
-        const opacity = Math.round(Math.max(1 - clamp((p - 0.02) / 0.06, 0, 1), clamp((p - 0.93) / 0.03, 0, 1)) * 100) / 100;
-        if (!lede || opacity === ledeOpacity) return;
-        ledeOpacity = opacity;
-        // on the pinned box, so the film beside the headline reads it too
-        sticky.style.setProperty('--lede-opacity', String(opacity));
-    }
 
     // ------------------------------------------------------------------
     // Every mouse is a different speed. A trackpad or Magic Mouse moves the
@@ -568,7 +552,6 @@
     function onScroll() {
         const p = scrollProgress();
         syncCue(p);
-        syncLede(p);
         if (engine) engine.onScroll(p);
     }
     function configureMotion() {

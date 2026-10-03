@@ -214,22 +214,17 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
     .has-scroll-film .hero__screen::before { bottom: 0; height: auto; background: linear-gradient(to bottom, var(--bg), transparent 26%), linear-gradient(to right, var(--bg), transparent 7%, transparent 93%, var(--bg)); }
     .has-scroll-film .hero__film { height: 100%; object-fit: contain; }
 }
-/* 3:2 and wider: on squarer screens the robot fills the width and its arm
-   would run under the headline, so those keep the stacked layout. */
+/* 3:2 and wider: the robot was a third of the screen next to the headline
+   (Husan, 2026-10-02). The film's box is 2:1 rather than 16:9, so the film
+   fills it a little wider and loses only the empty dark above the robot's
+   head and a sliver under it, and the gaps around it are tighter: about a
+   fifth bigger. Nothing moves and nothing fades; the headline, the ask and
+   the partners stay under it for the whole film (his call: an overlaid
+   headline that slid the robot about and faded out read as weird). */
 @media (min-aspect-ratio: 3/2) {
-    /* The robot was a third of the screen next to the headline (Husan,
-       2026-10-02). On screens at least 3:2 the film now takes the whole pinned box and the headline
-       sits over its dark lower edge, so the robot is about 40% bigger. */
-    .has-scroll-film .hero__sticky { grid-template: minmax(0, 1fr) / minmax(0, 1fr); padding-block: 0; }
-    .has-scroll-film .hero__screen, .has-scroll-film .lede { grid-area: 1 / 1; }
-    /* where the screen is narrower than 16:9 the film's dark sides run off
-       both edges evenly. The robot is nudged right by --hero-shift so its arm
-       clears the headline: the engraved cut needs the dark ground behind it. */
-    .has-scroll-film .hero__screen { --hero-shift: min(12vw, 260px); max-width: none; margin-inline: 0; justify-self: start; left: 50%; transform: translateX(calc(-50% + var(--hero-shift) * var(--lede-opacity, 1))); }
-    /* The headline and its ask fade out as the camera closes in on the eye
-       (hero-film.js writes --lede-opacity), so they never sit over a lit frame. */
-    .has-scroll-film .lede { position: relative; z-index: 2; align-self: end; padding-bottom: clamp(28px, 6vh, 64px); opacity: var(--lede-opacity, 1); }
-    .has-scroll-film .lede h1 { width: fit-content; }
+    .has-scroll-film .hero__sticky { padding-block: 0 20px; gap: 14px; }
+    .has-scroll-film .hero__screen { aspect-ratio: 2 / 1; }
+    .has-scroll-film .hero__film { object-fit: cover; object-position: 50% 30%; }
 }
 /* the headline now sits in the frame, so the cue moves out of its way */
 .has-scroll-film .scroll-cue { display: block; position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; margin: 0; font-size: 12px; color: var(--mute); opacity: var(--cue-opacity, 1); pointer-events: none; }
