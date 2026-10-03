@@ -71,9 +71,9 @@
     <section class="origin origin--home" id="origin" aria-label="Our start">
         <div class="origin__copy">
             <p class="engraved" data-reveal>We started off helping factory lines detect defects with <em>vision</em>.</p>
-            <p class="origin__note">That is how we learned the camera is not enough.</p>
+            <p data-reveal class="origin__note">That is how we learned the camera is not enough.</p>
         </div>
-        <figure class="origin__film">
+        <figure data-reveal class="origin__film">
             <video class="origin__video" id="origin-video" muted loop controls playsinline preload="none" disablepictureinpicture
                    width="720" height="1280"
                    poster="{% static 'video/origin-poster.jpg' %}?v={{ asset_v }}"
@@ -91,7 +91,7 @@
     <section class="meet-sec meet-sec--flow" id="meet" data-nav-dark aria-labelledby="meet-title">
         <h2 class="meet-sec__h" id="meet-title" data-reveal>Meet the <em>robot</em>.</h2>
         {% include "landing/_meet.html" %}
-        <p class="meet-cta"><a class="meet-cta__btn" href="/prototype/?play=1">Test our prototype <span aria-hidden="true">&rarr;</span></a></p>
+        <p data-reveal class="meet-cta"><a class="meet-cta__btn" href="/prototype/?play=1">Test our prototype <span aria-hidden="true">&rarr;</span></a></p>
     </section>
 
     <!-- The case in one screen, in the pitch's own words (why_us.html): the
@@ -120,7 +120,7 @@
                 <p class="feature__d">What it learns on one part carries to the next. Teach it what changed, not the whole job.</p>
             </li>
         </ol>
-        <p class="features__more">
+        <p data-reveal class="features__more">
             <a class="glass-button-wrap" href="/prototype/?play=1">
                 <span class="glass-button-tilt">
                     <span class="glass-button"><span class="glass-button-text">Test our product<svg class="glass-button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
@@ -132,22 +132,22 @@
 
     <!-- The companies that registered, by name, rolling. -->
     <section class="inline sheet" id="in-line" aria-labelledby="in-line-title">
-        <h2 class="inline__k" id="in-line-title">Registered</h2>
+        <h2 data-reveal class="inline__k" id="in-line-title">Registered</h2>
         {% include "landing/_inline.html" %}
     </section>
 
     <section class="inline sheet" id="partners" aria-labelledby="partners-title">
-        <h2 class="inline__k" id="partners-title">Partners</h2>
+        <h2 data-reveal class="inline__k" id="partners-title">Partners</h2>
         {% include "landing/_inline.html" with in_line=partners nodefs=1 %}
     </section>
 
     <section class="careers sheet" id="careers" aria-labelledby="careers-title">
         <div class="sechead">
             <h2 class="sechead__t engraved" id="careers-title" data-reveal>Build with <em>us</em></h2>
-            <p class="sechead__sub">We’re building robots that put parts together and test their own work. Help develop the prototype, teach it new tasks or document the engineering.</p>
+            <p data-reveal class="sechead__sub">We’re building robots that put parts together and test their own work. Help develop the prototype, teach it new tasks or document the engineering.</p>
         </div>
         {% for job in jobs %}
-        <a class="rolecard" href="{% url 'career_detail' job.slug %}">
+        <a data-reveal class="rolecard" href="{% url 'career_detail' job.slug %}">
             <span class="rolecard__id">
                 <span class="rolecard__title">{{ job.title }}</span>
                 <span class="rolecard__meta">{{ job.home_meta }}</span>
@@ -156,7 +156,7 @@
             <span class="rolecard__go">View role &rarr;</span>
         </a>
         {% endfor %}
-        <p class="careers__alt"><a class="link" href="{% url 'careers' %}">See all roles and apply</a></p>
+        <p data-reveal class="careers__alt"><a class="link" href="{% url 'careers' %}">See all roles and apply</a></p>
     </section>
 
     <section class="contact dark" id="contact" aria-labelledby="contact-title">

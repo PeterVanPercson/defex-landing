@@ -80,7 +80,7 @@
 ::selection { background: var(--accent); color: #1A1815; text-shadow: none; -webkit-text-fill-color: #1A1815; }
 /* No smooth scrolling. A link to a section further down jumps straight
    there; gliding would run the scroll-driven film and portal past at speed. */
-html { -webkit-text-size-adjust: 100%; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body { background: var(--grain), var(--bg); color: var(--ink); font: 15px/1.55 var(--font); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
 /* The film is baked on rgb(11,16,21) and cannot be made transparent, so the
@@ -213,6 +213,23 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
     .has-scroll-film .hero__screen { width: auto; max-width: 100%; height: 100%; min-height: 0; aspect-ratio: 16 / 9; }
     .has-scroll-film .hero__screen::before { bottom: 0; height: auto; background: linear-gradient(to bottom, var(--bg), transparent 26%), linear-gradient(to right, var(--bg), transparent 7%, transparent 93%, var(--bg)); }
     .has-scroll-film .hero__film { height: 100%; object-fit: contain; }
+}
+/* 3:2 and wider: on squarer screens the robot fills the width and its arm
+   would run under the headline, so those keep the stacked layout. */
+@media (min-aspect-ratio: 3/2) {
+    /* The robot was a third of the screen next to the headline (Husan,
+       2026-10-02). On screens at least 3:2 the film now takes the whole pinned box and the headline
+       sits over its dark lower edge, so the robot is about 40% bigger. */
+    .has-scroll-film .hero__sticky { grid-template: minmax(0, 1fr) / minmax(0, 1fr); padding-block: 0; }
+    .has-scroll-film .hero__screen, .has-scroll-film .lede { grid-area: 1 / 1; }
+    /* where the screen is narrower than 16:9 the film's dark sides run off
+       both edges evenly. The robot is nudged right by --hero-shift so its arm
+       clears the headline: the engraved cut needs the dark ground behind it. */
+    .has-scroll-film .hero__screen { --hero-shift: min(12vw, 260px); max-width: none; margin-inline: 0; justify-self: start; left: 50%; transform: translateX(calc(-50% + var(--hero-shift))); }
+    /* The headline and its ask fade out as the camera closes in on the eye
+       (hero-film.js writes --lede-opacity), so they never sit over a lit frame. */
+    .has-scroll-film .lede { position: relative; z-index: 2; align-self: end; padding-bottom: clamp(28px, 6vh, 64px); opacity: var(--lede-opacity, 1); }
+    .has-scroll-film .lede h1 { width: fit-content; }
 }
 /* the headline now sits in the frame, so the cue moves out of its way */
 .has-scroll-film .scroll-cue { display: block; position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; margin: 0; font-size: 12px; color: var(--mute); opacity: var(--cue-opacity, 1); pointer-events: none; }
@@ -445,26 +462,17 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* the last sheet has to clear the dissolve into the closing dark block */
 .careers.sheet { padding-bottom: var(--close-fade); }
 
-/* Scroll reveal, the way origami's sections arrive. Keyed on html.reveal,
-   which only static/js/reveal.js sets, so without JS nothing is hidden. A
-   heading sharpens out of a blur as it rises, as if it were being cut. */
-.reveal [data-reveal] { opacity: 0; transform: translateY(14px); transition: opacity .65s cubic-bezier(.22, .61, .36, 1), transform .65s cubic-bezier(.22, .61, .36, 1); }
+/* Scroll reveal, the way dexterity.ai/about arrives (Husan's pick,
+   2026-10-02): each block fades in and rises 20px over a slow 1.2s ease-out,
+   once, starting the moment a tenth of it is on screen, and neighbours follow
+   each other by --reveal-delay (set by static/js/reveal.js). The arrival
+   used to be bound to the scroll itself; the timed fade is softer and that
+   softness is the point. Keyed on html.reveal, which only reveal.js sets, so
+   without JS nothing is hidden. A heading sharpens out of a blur as it rises,
+   as if it were being cut. */
+.reveal [data-reveal] { opacity: 0; transform: translate3d(0, 20px, 0); transition: opacity 1.2s cubic-bezier(0, 0, .58, 1), transform 1.2s cubic-bezier(0, 0, .58, 1), filter 1.2s cubic-bezier(0, 0, .58, 1); transition-delay: var(--reveal-delay, 0s); }
 .reveal .engraved[data-reveal] { filter: blur(3px); }
 .reveal [data-reveal].is-in { opacity: 1; transform: none; filter: none; }
-.reveal .feature:nth-child(2) { transition-delay: .08s; }
-.reveal .feature:nth-child(3) { transition-delay: .16s; }
-.reveal .feature:nth-child(4) { transition-delay: .24s; }
-/* Where the browser can drive an animation from the scroll, the arrival is
-   bound to the scroll itself rather than to the clock: under a notched mouse
-   a timed fade was still running while its lines were being read, and read as
-   lag. Same distance, same blur; it moves when the page moves. */
-@supports (animation-timeline: view()) {
-    .reveal [data-reveal] { opacity: 1; transform: none; filter: none; transition: none; animation: reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
-    .reveal .engraved[data-reveal] { animation-name: reveal-cut; }
-    .reveal .feature:nth-child(2), .reveal .feature:nth-child(3), .reveal .feature:nth-child(4), .reveal .founder:nth-child(2) { transition-delay: 0s; }
-    @keyframes reveal { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-    @keyframes reveal-cut { from { opacity: 0; transform: translateY(14px); filter: blur(3px); } to { opacity: 1; transform: none; filter: blur(0); } }
-}
 
 /* careers page */
 .page { max-width: var(--max); margin-inline: auto; padding-inline: var(--pad); }
@@ -597,6 +605,9 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
        title is gone, and 63% pushed the robot visibly left of centre on the
        opening and closing shots, which are the two most-seen frames. */
     .has-scroll-film .hero__film { width: 100%; margin-left: 0; aspect-ratio: 5 / 4; object-fit: cover; object-position: 50% center; }
+    /* A square crop keeps the robot's shoulders just inside the frame and
+       makes it a quarter bigger than the 5:4 one did (Husan, 2026-10-02). */
+    @media (max-width: 720px) { .has-scroll-film .hero__film { aspect-ratio: 1 / 1; } }
     /* Centred, not top-aligned. A 16:9 film is only 312px tall on a 390x844
        phone, so film plus headline is about 500px of an 788px box. Pinned to
        the top, the remaining 343px all pooled into one black void under the
