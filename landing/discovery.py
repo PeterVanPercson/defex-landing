@@ -60,10 +60,11 @@ PUBLIC_COMPANY = {
 # on the pitch. Add one here and it joins the roll. Their files are served as they
 # were sent. "opaque" marks a file that sits on a white ground instead of a clear
 # one (the page turns that white into nothing, see .roll__logo[data-opaque]); "trim"
-# hides a stray rule along the bottom edge of a file. Kept out of PUBLIC_COMPANY,
+# hides a stray rule along the bottom edge of a file. "tall" lets a narrow
+# crest grow past the row height so it reads as big as the wordmarks. Kept out of PUBLIC_COMPANY,
 # which is dumped whole into /company.json.
 IN_LINE = [
-    {"name": "GRAND", "logo": "img/factories/grand.jpg", "width": 640, "height": 640, "opaque": True, "trim": True},
+    {"name": "GRAND", "logo": "img/factories/grand.png", "width": 309, "height": 356, "opaque": True, "tall": True},
     {"name": "UzChasys", "logo": "img/factories/uzchasys.png", "width": 159, "height": 60},
     {"name": "ATH", "logo": "img/factories/ath.png", "width": 1520, "height": 1034},
     {"name": "NOVA Solutions", "logo": "img/factories/nova.png", "width": 400, "height": 140},
