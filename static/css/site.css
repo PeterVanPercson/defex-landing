@@ -36,11 +36,11 @@
     --font: var(--mono);
     --serif: "Source Serif 4", ui-serif, "Iowan Old Style", Palatino, Georgia, serif;
     --brand: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    --pad: clamp(16px, 3vw, 32px);
+    --pad: clamp(16px, 3.6vw, 64px);
     --hero-gap: clamp(18px, 3.5vh, 40px);
     /* the headline and the blog button under it */
     --lede-space: clamp(150px, 26vh, 250px);
-    --max: 1200px;
+    --max: 2400px;
     --radius: 20px;
     --nav: 64px;
     /* how far the dark hero dissolves into the paper at each end */
@@ -1085,7 +1085,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    moves: the arm, the render, the gauge, the tries, the loop, the new part. */
 body:has(.wy) { background: #050505; }
 body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244, 240, .72); --on-accent: #F4F4F0; --rule: rgba(244, 244, 240, .3); background: rgba(5, 5, 5, .88); color: var(--ink); box-shadow: inset 0 -1px 0 rgba(244, 244, 240, .08); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
-.wy { --bg: #050505; --ink: #F4F4F0; --mute: rgba(244, 244, 240, .62); --line: rgba(244, 244, 240, .13); --yellow: #FFD42A; --blue: #3D63FF; --fail: #FF5A1F; --sans: "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; --wide: 1280px; --gutter: max(var(--pad), calc((100% - var(--wide)) / 2 + var(--pad))); display: block; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+.wy { --bg: #050505; --ink: #F4F4F0; --mute: rgba(244, 244, 240, .62); --line: rgba(244, 244, 240, .13); --yellow: #FFD42A; --blue: #3D63FF; --fail: #FF5A1F; --sans: "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; --wide: 2400px; --gutter: max(var(--pad), calc((100% - var(--wide)) / 2 + var(--pad))); display: block; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
 .wy ::selection { background: var(--yellow); color: #0A0A0A; -webkit-text-fill-color: #0A0A0A; }
 .wy :focus-visible { outline: 2px solid var(--yellow); outline-offset: 4px; }
 .wy-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
