@@ -221,7 +221,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .lede { width: 100%; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
 /* Set like the section titles below (.sechead__t): one face, one italic
    word, the same size and the same stone cut. */
-.lede h1 { max-width: 22ch; font-size: clamp(36px, 3.7vw, 54px); line-height: 1.06; letter-spacing: -.01em; }
+.lede h1 { max-width: 22ch; font-size: clamp(32px, 3.1vw, 46px); line-height: 1.06; letter-spacing: -.01em; }
 
 
 /* Hero support: the one line that says what the machine does, and the ask.
@@ -619,7 +619,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
        360px Android by a pixel. This buys it back. */
     .topbar__end { gap: 12px; }
     .navlink { font-size: 10px; letter-spacing: .06em; }
-    .lede h1 { font-size: clamp(32px, 8.6vw, 42px); max-width: 18ch; line-height: 1.1; letter-spacing: -.01em; }
+    .lede h1 { font-size: clamp(28px, 7.6vw, 36px); max-width: 18ch; line-height: 1.1; letter-spacing: -.01em; }
     .rows { grid-template-columns: 1fr; gap: 26px; margin-top: 28px; }
     .rows__row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 24px; padding-top: 22px; }
     /* the row is a two-column grid on a phone; the picture spans both */
@@ -652,7 +652,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
     :root { --grain-tile: 512px; }
 }
 @media (max-height: 540px) and (min-width: 721px) {
-    .lede h1 { font-size: 28px; }
+    .lede h1 { font-size: 25px; }
     .lede h1 br { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
