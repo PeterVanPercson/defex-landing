@@ -225,7 +225,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
     /* where the screen is narrower than 16:9 the film's dark sides run off
        both edges evenly. The robot is nudged right by --hero-shift so its arm
        clears the headline: the engraved cut needs the dark ground behind it. */
-    .has-scroll-film .hero__screen { --hero-shift: min(12vw, 260px); max-width: none; margin-inline: 0; justify-self: start; left: 50%; transform: translateX(calc(-50% + var(--hero-shift))); }
+    .has-scroll-film .hero__screen { --hero-shift: min(12vw, 260px); max-width: none; margin-inline: 0; justify-self: start; left: 50%; transform: translateX(calc(-50% + var(--hero-shift) * var(--lede-opacity, 1))); }
     /* The headline and its ask fade out as the camera closes in on the eye
        (hero-film.js writes --lede-opacity), so they never sit over a lit frame. */
     .has-scroll-film .lede { position: relative; z-index: 2; align-self: end; padding-bottom: clamp(28px, 6vh, 64px); opacity: var(--lede-opacity, 1); }
