@@ -181,7 +181,7 @@ def llms_txt(request):
         + husan["name"] + " is " + husan["role"] + "; " + hasan["name"] + " is " + hasan["role"] + ". "
         "Canonical domain: defexrobotics.com (defex.app redirects here).", "",
         "## Pages",
-        "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robots do, the founders and the inspection prototype",
+        "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robots do and the inspection prototype",
         "- [Why us](" + CANONICAL_ORIGIN + reverse("why_us") + "): why robots that test every part they build: built-in testing, self-reset, new parts, and where we are today",
         "- [Careers](" + CANONICAL_ORIGIN + reverse("careers") + "): open roles",
         "- [Security](" + CANONICAL_ORIGIN + reverse("security") + "): data handling and vulnerability reporting",

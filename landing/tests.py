@@ -208,7 +208,7 @@ class SiteTests(SimpleTestCase):
         home = self.client.get("/").content.decode()
         pitch = self.client.get("/why-us/").content.decode()
         self.assertLess(home.index('id="why"'), home.index('id="in-line"'))
-        self.assertLess(home.index('id="in-line"'), home.index('id="team"'))
+        self.assertLess(home.index('id="in-line"'), home.index('id="careers"'))
         self.assertLess(pitch.index('id="proof"'), pitch.index('id="in-line"'))
         self.assertLess(pitch.index('id="in-line"'), pitch.index('id="pricing"'))
         for page in (home, pitch):
@@ -232,7 +232,7 @@ class SiteTests(SimpleTestCase):
         from landing.discovery import PARTNERS
         home = self.client.get("/").content.decode()
         self.assertLess(home.index('id="in-line"'), home.index('id="partners"'))
-        self.assertLess(home.index('id="partners"'), home.index('id="team"'))
+        self.assertLess(home.index('id="partners"'), home.index('id="careers"'))
         row = home.split('id="partners"', 1)[1].split("</ul>", 1)[0]
         self.assertIn(">Partners<", row)
         self.assertNotIn("roll__defs", row)
@@ -280,31 +280,14 @@ class SiteTests(SimpleTestCase):
         self.assertEqual(moved["Location"], "/#contact")
         self.assertNotIn("/book/", self.client.get("/sitemap.xml").content.decode())
 
-    def test_founding_team_is_on_the_home_page(self):
-        """The two founders, between Why us and the open role: both names,
-        both titles as co-founders, the twins line, portraits that exist and
-        stay small, and the grid that inks the paper under them."""
-        home = self.client.get("/")
-        page = home.content.decode()
-        self.assertContains(home, 'id="team-title" data-reveal data-grid-avoid>Founding <em>team</em></h2>')
-        self.assertContains(home, "Founded by twin brothers who&rsquo;ve been building together for more than 20&nbsp;years.")
-        for name, role in (("Husan Mavlonov", "Co-founder &amp; CEO"), ("Hasan Mavlonov", "Co-founder &amp; CTO")):
-            self.assertContains(home, f'class="founder__name" data-grid-avoid>{name}</h3>')
-            self.assertContains(home, f'class="founder__role" data-grid-avoid>{role}</p>')
-        self.assertLess(page.index('id="why"'), page.index('id="team"'))
-        self.assertLess(page.index('id="team"'), page.index('id="careers"'))
-        self.assertContains(home, "js/gridpulse.js")
-        self.assertEqual(self.client.get("/static/js/gridpulse.js").status_code, 200)
-        photos = Path(settings.BASE_DIR) / "static" / "img" / "team"
-        # each portrait in black and white, and the colour print that develops
-        # over it under the pointer
-        for person in ("husan-mavlonov", "hasan-mavlonov", "husan-mavlonov-color", "hasan-mavlonov-color"):
-            for width in (360, 720):
-                photo = photos / f"{person}-{width}.webp"
-                self.assertIn(f"img/team/{photo.name}", page)
-                self.assertLessEqual(photo.stat().st_size, 120 * 1024, photo.name)
-        # Husan asked for this line to go from Hasan's bio
-        self.assertNotContains(home, "robot software and hardware integration")
+    def test_no_founders_section(self):
+        """Husan cut the founders sections (2026-10-02): no portraits or bios
+        on the home page or /why-us/. The people stay in the structured data."""
+        for url in ("/", "/why-us/"):
+            page = self.client.get(url).content.decode()
+            self.assertNotIn("img/team/", page)
+            self.assertNotIn('id="team"', page)
+            self.assertNotIn('id="founders"', page)
 
     def test_why_us_page(self):
         """The case for the robot, on its own dark page. It opens on WHY US
@@ -318,7 +301,7 @@ class SiteTests(SimpleTestCase):
         self.assertIn("<title>Why Defex | Robots that test every part they build</title>", body)
         self.assertIn('data-word="WHY US"', body)
         self.assertIn('id="why-title"><span class="wy-sr">Why us: </span>Robots that test every part', body)
-        for section in ("portal", "problem", "promise", "watch", "meet", "tests", "learns", "resets", "newpart", "proof", "pricing", "faq", "founders", "talk"):
+        for section in ("portal", "problem", "promise", "watch", "meet", "tests", "learns", "resets", "newpart", "proof", "pricing", "faq", "talk"):
             self.assertIn(f'id="{section}"', body)
         for claim in ("Concept render", "Target</span>", "factories paid to be first in line.",
                       'href="#talk"', "Book a call", "Robots are cheap."):
@@ -405,8 +388,9 @@ class SiteTests(SimpleTestCase):
 
     def test_hasan_leads_with_the_personality_layer(self):
         """Husan's call: Hasan is presented first for building a personality
-        layer for AI, on every page that describes him."""
-        for path in ("/", "/why-us/"):
+        layer for AI, wherever he is described (the pages no longer carry
+        founder bios, so that is the structured data)."""
+        for path in ("/company.json",):
             body = self.client.get(path).content.decode()
             self.assertIn("personality layer for AI", body, path)
             self.assertNotIn("robot software and hardware integration", body, path)
