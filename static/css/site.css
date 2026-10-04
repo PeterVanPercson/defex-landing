@@ -533,8 +533,10 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* The player he picked (Skiper's "video player 002") as an iPhone standing
    on the page: no card behind it, and the bar inside its screen, over the
    film (static/js/origin.js). The phone is as tall as the window allows,
-   less the nav, so all of it is on screen at once. */
-.origin__film { --phone-h: 640px; --spring-pop: cubic-bezier(.34, 1.56, .64, 1); --spring-snap: cubic-bezier(.34, 1.56, .64, 1); position: relative; justify-self: end; width: min(100%, calc(var(--phone-h) * .4755)); margin: 0; scroll-margin-top: calc(var(--nav) + 16px); }
+   less the nav, so all of it is on screen at once. A link that lands on it
+   leaves 36px over it, not 16: until it has revealed it sits 20px low, and
+   a landing measured then put its top under the nav. */
+.origin__film { --phone-h: 640px; --spring-pop: cubic-bezier(.34, 1.56, .64, 1); --spring-snap: cubic-bezier(.34, 1.56, .64, 1); position: relative; justify-self: end; width: min(100%, calc(var(--phone-h) * .4755)); margin: 0; scroll-margin-top: calc(var(--nav) + 36px); }
 @supports (height: 100svh) {
     .origin__film { --phone-h: clamp(420px, calc(100svh - var(--nav) - 56px), 720px); }
 }
