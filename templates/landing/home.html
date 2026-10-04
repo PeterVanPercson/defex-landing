@@ -132,32 +132,57 @@
         <p data-reveal class="meet-cta"><a class="meet-cta__btn" href="/prototype/?play=1">Test our prototype <span aria-hidden="true">&rarr;</span></a></p>
     </section>
 
-    <!-- The case in one screen, in the pitch's own words (why_us.html): the
-         problem as the headline, then what the robot does about it as ruled rows,
-         then the way in. The section is a sheet laid over the page: see .sheet. -->
+    <!-- The case in the pitch's own words (why_us.html): the problem as the
+         headline, then what the robot does about it, then the way in. -->
     <section class="sheet" id="why" aria-labelledby="why-title">
         <div class="sechead">
             <h2 class="sechead__t engraved" id="why-title" data-reveal>Robots are cheap. Setting them up is <em>not</em>.</h2>
         </div>
 
-        <ol class="features">
-            <li class="feature" data-reveal>
-                <h3 class="feature__t engraved">Our robot teaches itself.</h3>
-                <p class="feature__d">Show it the job. It practices, tests its own work and gets better every time. No engineer programming every move.</p>
-            </li>
-            <li class="feature" data-reveal>
-                <h3 class="feature__t engraved">Bad parts never ship.</h3>
-                <p class="feature__d">Is it connected? Is it locked? Every part gets tested on the spot, with vision and touch.</p>
-            </li>
-            <li class="feature" data-reveal>
-                <h3 class="feature__t engraved">No one stands over it.</h3>
-                <p class="feature__d">Good parts out. Bad parts aside. Next parts in. It resets itself.</p>
-            </li>
-            <li class="feature" data-reveal>
-                <h3 class="feature__t engraved">A new part is not a new project.</h3>
-                <p class="feature__d">What it learns on one part carries to the next. Teach it what changed, not the whole job.</p>
-            </li>
-        </ol>
+        <!-- The four claims. Stacked, each is its own card; where the screen can
+             hold one whole, static/js/steps.js pins a single card and the scroll
+             walks through them, the bars filling as each passes. The drawings
+             carry the mechanism, so the words stay the pitch's. -->
+        <div class="steps" id="steps" data-reveal>
+            <div class="steps__pin">
+                <div class="steps__bars">
+                    <button type="button" class="steps__bar" aria-label="Our robot teaches itself."></button>
+                    <button type="button" class="steps__bar" aria-label="Bad parts never ship."></button>
+                    <button type="button" class="steps__bar" aria-label="No one stands over it."></button>
+                    <button type="button" class="steps__bar" aria-label="A new part is not a new project."></button>
+                </div>
+                <ol class="features">
+                    <li class="feature">
+                        <div class="feature__art" aria-hidden="true"><svg class="art" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet"><path class="art__dim art__try" style="--i:0" pathLength="1" d="M70 232C120 120 220 90 286 186"/><path class="art__dim art__try" style="--i:1" pathLength="1" d="M70 232C110 60 300 20 356 132"/><path class="art__dim art__try" style="--i:2" pathLength="1" d="M70 232C130 100 250 40 300 62"/><path class="art__ys art__try" style="--i:3" pathLength="1" d="M70 232C120 90 250 60 322 96"/><circle class="art__w" cx="330" cy="100" r="24"/><circle class="art__y art__land" cx="330" cy="100" r="11"/><circle class="art__f" cx="70" cy="232" r="11"/></svg></div>
+                        <div class="feature__copy">
+                            <h3 class="feature__t engraved">Our robot teaches itself.</h3>
+                            <p class="feature__d">Show it the job. It practices, tests its own work and gets better every time. No engineer programming every move.</p>
+                        </div>
+                    </li>
+                    <li class="feature">
+                        <div class="feature__art" aria-hidden="true"><svg class="art" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet"><path class="art__dim" d="M28 178H372"/><rect class="art__y art__part" style="--i:0" x="40" y="122" width="44" height="44" rx="9"/><rect class="art__y art__part" style="--i:1" x="112" y="122" width="44" height="44" rx="9"/><g class="art__drop"><rect class="art__bad art__part" style="--i:2" x="184" y="122" width="44" height="44" rx="9"/></g><rect class="art__y art__part" style="--i:3" x="256" y="122" width="44" height="44" rx="9"/><rect class="art__y art__part" style="--i:4" x="328" y="122" width="44" height="44" rx="9"/><path class="art__w art__scan" d="M34 84V214"/></svg></div>
+                        <div class="feature__copy">
+                            <h3 class="feature__t engraved">Bad parts never ship.</h3>
+                            <p class="feature__d">Is it connected? Is it locked? Every part gets tested on the spot, with vision and touch.</p>
+                        </div>
+                    </li>
+                    <li class="feature">
+                        <div class="feature__art" aria-hidden="true"><svg class="art" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet"><circle class="art__dim art__orbit art__orbit--back" cx="200" cy="150" r="96" stroke-dasharray="2 14"/><g class="art__orbit"><rect class="art__y" x="187" y="41" width="26" height="26" rx="6"/><rect class="art__f" x="270" y="185" width="26" height="26" rx="6"/><rect class="art__ghost" x="104" y="185" width="26" height="26" rx="6"/></g><circle class="art__w" cx="200" cy="150" r="34"/><circle class="art__f" cx="200" cy="150" r="10"/></svg></div>
+                        <div class="feature__copy">
+                            <h3 class="feature__t engraved">No one stands over it.</h3>
+                            <p class="feature__d">Good parts out. Bad parts aside. Next parts in. It resets itself.</p>
+                        </div>
+                    </li>
+                    <li class="feature">
+                        <div class="feature__art" aria-hidden="true"><svg class="art" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet"><rect class="art__w" x="62" y="52" width="86" height="86" rx="18"/><path class="art__w" d="M295 46l43 25v48l-43 25-43-25V71z"/><rect class="art__y" x="60" y="176" width="90" height="10" rx="5"/><rect class="art__y" x="60" y="196" width="90" height="10" rx="5"/><rect class="art__y" x="60" y="216" width="90" height="10" rx="5"/><rect class="art__y" x="60" y="236" width="90" height="10" rx="5"/><rect class="art__ghost" x="250" y="176" width="90" height="10" rx="5"/><rect class="art__ghost" x="250" y="196" width="90" height="10" rx="5"/><rect class="art__ghost" x="250" y="216" width="90" height="10" rx="5"/><rect class="art__ghost" x="250" y="236" width="90" height="10" rx="5"/><rect class="art__y art__fillbar" x="250" y="176" width="90" height="10" rx="5"/><rect class="art__y art__fillbar" x="250" y="196" width="90" height="10" rx="5"/><rect class="art__y art__fillbar" x="250" y="216" width="90" height="10" rx="5"/><rect class="art__f art__fillbar" x="250" y="236" width="38" height="10" rx="5"/><circle class="art__y art__hop" cx="140" cy="181" r="5"/><circle class="art__y art__hop" cx="140" cy="201" r="5"/><circle class="art__y art__hop" cx="140" cy="221" r="5"/></svg></div>
+                        <div class="feature__copy">
+                            <h3 class="feature__t engraved">A new part is not a new project.</h3>
+                            <p class="feature__d">What it learns on one part carries to the next. Teach it what changed, not the whole job.</p>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </div>
         <p data-reveal class="features__more">
             <a class="glass-button-wrap" href="/prototype/?play=1">
                 <span class="glass-button-tilt">
@@ -244,6 +269,7 @@
 <script src="{% static 'js/hero-film.js' %}?v={{ asset_v }}" defer fetchpriority="high"></script>
 <script src="{% static 'js/origin.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/meet.js' %}?v={{ asset_v }}" defer></script>
+<script src="{% static 'js/steps.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/roll.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/flick.js' %}?v={{ asset_v }}" defer></script>
