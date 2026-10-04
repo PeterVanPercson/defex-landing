@@ -87,6 +87,19 @@ class SiteTests(SimpleTestCase):
         screen = home.content.decode().split('class="origin__screen"', 1)[1].split("</figure>", 1)[0]
         for part in ('id="origin-video"', 'class="origin__island"', 'class="origin__status"', 'id="scrub"', 'class="origin__home"', 'id="sound"'):
             self.assertIn(part, screen)
+        # and the controls are an iPhone's own player's (his call): back 10,
+        # play, forward 10 over the film, the time gone and the time left
+        # under the bar, and nothing orange
+        for part in ('id="origin-surface"', 'id="skip-back"', 'id="playpause"', 'id="skip-forward"',
+                     '<span class="scrub__time scrub__time--now">0:00</span>'):
+            self.assertIn(part, screen)
+        for gone in ("scrub__caret", "scrub__tag"):
+            self.assertNotIn(gone, screen)
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        player = css.split("/* The controls are an iPhone's own player's", 1)[1].split(".scrub:hover { --open: 1; }", 1)[0]
+        self.assertIn(".scrub__fill", player)
+        for orange in ("--accent", "#FF5A1F", "#ff5a1f"):
+            self.assertNotIn(orange, player)
         self.assertRegex(screen, r'id="sound"[^>]*></button>\s*</div>\s*</div>\s*</div>\s*$')
         self.assertContains(home, "That is how we learned the camera is not enough")
         # no example text in the part field
@@ -130,9 +143,23 @@ class SiteTests(SimpleTestCase):
         home = self.client.get("/").content.decode()
         said = float(re.search(r'id="origin-video"[^>]*data-duration="([\d.]+)"', home).group(1))
         self.assertAlmostEqual(said, seconds, delta=.05)
-        clock = f"{int(seconds) // 60:02d}:{int(seconds) % 60:02d}"
+        # the way the phone writes it: the time left, with its minus, no leading zero
+        left = f"-{int(seconds) // 60}:{int(seconds) % 60:02d}"
         self.assertIn(f'aria-valuemax="{int(seconds)}"', home)
-        self.assertIn(f'<span class="scrub__time scrub__time--end">{clock}</span>', home)
+        self.assertIn(f'<span class="scrub__time scrub__time--end">{left}</span>', home)
+
+    def test_the_stylesheets_braces_balance(self):
+        """One stray brace silently drops the rule after it: the phone lost its
+        container and everything cut in cqw came out the size of the window."""
+        for name in ("site.css", "meet.css"):
+            css = (Path(settings.BASE_DIR) / "static/css" / name).read_text()
+            css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+            css = re.sub(r"\"(?:[^\"\\]|\\.)*\"|'(?:[^'\\]|\\.)*'", "", css)
+            depth = 0
+            for at, char in enumerate(css):
+                depth += (char == "{") - (char == "}")
+                self.assertGreaterEqual(depth, 0, f"{name}: a brace closes nothing near {css[max(0, at - 80):at + 1]!r}")
+            self.assertEqual(depth, 0, f"{name}: {depth} brace(s) never close")
 
     def test_watch_it_lands_on_the_player(self):
         """The film no longer starts by itself, so the link that promises it has
