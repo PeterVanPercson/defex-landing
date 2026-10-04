@@ -1689,11 +1689,9 @@ body { font: 400 17px/1.55 var(--sans); }
 .note__open { font: 500 16px/1.6 var(--sans); }
 .contact__alt, .contact__lead, .contact__next { font: 400 16px/1.6 var(--sans); }
 
-/* Footer: the name, large, over the four columns */
+/* Footer: the mark and name at their usual size beside the four columns */
 .footer--full { padding-top: clamp(56px, 9vh, 110px); padding-bottom: 34px; }
-.footer__top { grid-template-columns: minmax(0, 1fr); gap: clamp(36px, 6vh, 64px); }
-.footer--full .brand--small { gap: .12em; min-height: 0; font-size: min(21vw, 13vw + 30px, 230px); letter-spacing: -.06em; line-height: .86; }
-.footer--full .brand--small svg { width: .19em; height: .62em; }
+.footer--full .brand--small { font-size: 22px; }
 .footer__cols { gap: 28px 20px; }
 .footer__col { gap: 9px; padding-top: 14px; border-top: 1px solid var(--line); }
 .footer__h { margin-bottom: 6px; font: 600 16px/1.4 var(--sans); letter-spacing: -.01em; text-transform: none; }
@@ -1715,7 +1713,6 @@ body { font: 400 17px/1.55 var(--sans); }
     .feature { padding: 0; gap: 0; }
     .feature__copy { padding: 26px 22px 30px; }
     .footer__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .footer--full .brand--small { font-size: 27vw; }
 }
 @media (prefers-reduced-motion: reduce) {
     .art * { animation: none; }
