@@ -72,7 +72,14 @@ class SiteTests(SimpleTestCase):
         self.assertNotContains(home, "/where-it-started/")
         self.assertNotContains(home, "Where it started")
         self.assertNotContains(home, "where it started")
-        self.assertContains(home, 'id="origin-video" muted loop')
+        # the clip has a voice: it waits on its poster for a press, with the
+        # sound on, and it has a bar to scrub with. Nothing starts or loops it.
+        clip = re.search(r'<video[^>]*id="origin-video"[^>]*>', home.content.decode()).group(0)
+        for attr in ("autoplay", "muted", "loop"):
+            self.assertNotIn(attr, clip)
+        for attr in ("controls", "playsinline", 'preload="none"'):
+            self.assertIn(attr, clip)
+        self.assertContains(home, 'id="scrub" role="slider"')
         self.assertContains(home, "That is how we learned the camera is not enough")
         # no example text in the part field
         self.assertNotContains(home, 'placeholder="e.g.')
@@ -100,6 +107,48 @@ class SiteTests(SimpleTestCase):
             self.assertIn("s-maxage", response["Cache-Control"])
         for asset in ("js/hero-film.js", "js/origin.js", "js/reveal.js", "img/backers/nvidia-inception.png", "img/backers/zfellows.png", "img/backers/zfellows-collage.png", "img/backers/google-for-startups.png", "img/backers/google-for-startups-light.png", "img/backers/a16z-speedrun.png", "img/backers/yandex-cloud.png", "video/origin.mp4", "video/origin-poster.jpg"):
             self.assertEqual(self.client.get(f"/static/{asset}").status_code, 200, asset)
+
+    def test_the_origin_clip_says_its_real_length(self):
+        """The bar shows how long the film is before a byte of it is fetched,
+        from data-duration in the markup. Replace the film and this follows."""
+        import struct
+        data = (Path(settings.BASE_DIR) / "static/video/origin.mp4").read_bytes()
+        at = data.index(b"mvhd")
+        if data[at + 4] == 1:
+            timescale, length = struct.unpack(">IQ", data[at + 24:at + 36])
+        else:
+            timescale, length = struct.unpack(">II", data[at + 16:at + 24])
+        seconds = length / timescale
+        home = self.client.get("/").content.decode()
+        said = float(re.search(r'id="origin-video"[^>]*data-duration="([\d.]+)"', home).group(1))
+        self.assertAlmostEqual(said, seconds, delta=.05)
+        clock = f"{int(seconds) // 60:02d}:{int(seconds) % 60:02d}"
+        self.assertIn(f'aria-valuemax="{int(seconds)}"', home)
+        self.assertIn(f'<span class="scrub__time scrub__time--end">{clock}</span>', home)
+
+    def test_watch_it_lands_on_the_player(self):
+        """The film no longer starts by itself, so the link that promises it has
+        to put the whole player on screen, not the top of its section."""
+        self.assertContains(self.client.get("/"), '<figure data-reveal class="origin__film" id="origin-film">')
+        self.assertContains(self.client.get("/why-us/"), 'href="/#origin-film">Watch it')
+
+    def test_past_its_edges_the_home_page_is_black(self):
+        """What shows when a page is pulled past its top or bottom is the root's
+        colour. Home opens and closes on black; with the body's paper showing
+        there instead, a pale band sat over the hero."""
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertRegex(css, r"\.hero, \.dark \{\s*--bg: #020506;")
+        self.assertIn("html:has(.hero) { background-color: #020506; }", css)
+        self.assertContains(self.client.get("/"), '<meta name="theme-color" content="#020506">')
+
+    def test_article_pictures_hold_their_place(self):
+        """A picture that arrives without its size pushes the text under it down
+        the page. Every one carries its width and height."""
+        body = self.client.get("/blog/the-ai-inference-revolution-is-here/").content.decode()
+        pictures = re.findall(r'article-image__panel"><img[^>]*>', body)
+        self.assertGreaterEqual(len(pictures), 8)
+        for picture in pictures:
+            self.assertRegex(picture, r' width="\d+" height="\d+"')
 
     def test_scroll_videos_support_byte_ranges(self):
         """Scroll seeking needs partial responses at both ends of each film."""
