@@ -536,22 +536,23 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    less the nav, so all of it is on screen at once. A link that lands on it
    leaves 36px over it, not 16: until it has revealed it sits 20px low, and
    a landing measured then put its top under the nav. */
-.origin__film { --phone-h: 640px; --spring-pop: cubic-bezier(.34, 1.56, .64, 1); --spring-snap: cubic-bezier(.34, 1.56, .64, 1); position: relative; justify-self: end; width: min(100%, calc(var(--phone-h) * .4755)); margin: 0; scroll-margin-top: calc(var(--nav) + 36px); }
+.origin__film { --phone-h: 640px; --spring-snap: cubic-bezier(.34, 1.56, .64, 1); position: relative; justify-self: end; width: min(100%, calc(var(--phone-h) * .4755)); margin: 0; scroll-margin-top: calc(var(--nav) + 36px); }
 @supports (height: 100svh) {
     .origin__film { --phone-h: clamp(420px, calc(100svh - var(--nav) - 56px), 720px); }
 }
-/* The component's two Motion springs, sampled: bounce .6 over .9s for the
-   glyph, bounce .5 over .8s for the bar. A browser without linear() gets
-   one overshoot instead. */
+/* The spring the bar comes back on when it has been pulled past an end
+   (bounce .5 over .8s, sampled). A browser without linear() gets one
+   overshoot instead. */
 @supports (transition-timing-function: linear(0, 1)) {
-    .origin__film { --spring-pop: linear(0, 0.079, 0.272, 0.519, 0.766, 0.978, 1.132, 1.222, 1.253, 1.238, 1.192, 1.13, 1.067, 1.011, 0.97, 0.946, 0.936, 0.939, 0.95, 0.965, 0.981, 0.996, 1.006, 1.013, 1.016, 1.016, 1.013, 1.009, 1.005, 1.002, 0.999, 0.997, 0.996, 0.996, 0.997, 0.997, 1); --spring-snap: linear(0, 0.069, 0.234, 0.444, 0.657, 0.844, 0.99, 1.089, 1.144, 1.163, 1.154, 1.129, 1.095, 1.06, 1.029, 1.004, 0.987, 0.977, 0.974, 0.974, 0.978, 0.984, 0.989, 0.995, 0.999, 1.002, 1.004, 1.004, 1.004, 1.004, 1.003, 1.002, 1); }
+    .origin__film { --spring-snap: linear(0, 0.069, 0.234, 0.444, 0.657, 0.844, 0.99, 1.089, 1.144, 1.163, 1.154, 1.129, 1.095, 1.06, 1.029, 1.004, 0.987, 0.977, 0.974, 0.974, 0.978, 0.984, 0.989, 0.995, 0.999, 1.002, 1.004, 1.004, 1.004, 1.004, 1.003, 1.002, 1); }
 }
 /* The phone. Everything on it is cut in cqw, a hundredth of its own width,
    so the island, the corners and the type keep their proportions at any
    size (the px before each cqw is for a browser without container units).
    .4755 is the body's width over its height: an 1180 x 2556 screen inside
-   a bezel of 2.7% of the width. */
-.origin__phone { position: relative; container-type: inline-size; }
+   a bezel of 2.7% of the width. Nothing on it can be selected: a drag on
+   the bar would otherwise paint the clock in the page's orange. */
+.origin__phone { position: relative; container-type: inline-size; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 /* the action button and the two volume keys on one side, the side button on the other */
 .origin__phone::before, .origin__phone::after { content: ""; position: absolute; width: 4px; border-radius: 2px; background: #1C1C1E; }
 .origin__phone::before { left: -2.5px; top: 18%; height: 22%; background: linear-gradient(#1C1C1E 0 15%, transparent 15% 29%, #1C1C1E 29% 61%, transparent 61% 68%, #1C1C1E 68% 100%); }
@@ -565,7 +566,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    a recording of a screen. A little shade under the status bar keeps it
    readable over a bright wall. */
 .origin__screen::before { content: ""; position: absolute; z-index: 1; inset: 0 0 auto; height: 16%; background: linear-gradient(rgba(0, 0, 0, .4), rgba(0, 0, 0, 0)); pointer-events: none; }
-.origin__screen::after { content: ""; position: absolute; z-index: 1; inset: auto 0 0; height: 30%; background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, .64)); pointer-events: none; }
+.origin__screen::after { content: ""; position: absolute; z-index: 1; inset: auto 0 0; height: 30%; background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, .6)); pointer-events: none; transition: opacity .28s ease; }
 .origin__status { position: absolute; z-index: 4; top: 9px; top: 2.75cqw; left: 0; right: 0; height: 28px; height: 8.9cqw; display: flex; align-items: center; justify-content: space-between; padding: 0 8.5% 0 11.5%; color: #fff; font: 600 13px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", Arial, sans-serif; font-size: 4.15cqw; letter-spacing: -.01em; pointer-events: none; }
 .origin__clock { font-variant-numeric: tabular-nums; }
 .origin__signal { display: block; width: auto; height: 10px; height: 3.2cqw; fill: currentColor; }
@@ -578,55 +579,65 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    so a bare p selector declared later swallows the small line too. */
 .origin--home .origin__copy p.engraved { font-size: var(--say); line-height: 1.12; }
 
-/* The whole screen is the play control: a 30% scrim and one glyph. It is up
-   while the film waits. Over a playing film it shows only while the mouse is
-   moving, so pressing play does not leave a pause sign on the picture. */
-.playpause { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; width: 100%; padding: 0; border: 0; background: rgba(0, 0, 0, .3); color: #fff; cursor: pointer; -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; transition: opacity .24s ease-out; }
-.playpause:focus-visible { outline: 2px solid var(--accent); outline-offset: -8px; border-radius: 42px; border-radius: 13.2cqw; }
-.origin__film:not(.has-controls) :is(.playpause, .sound, .origin__wait) { display: none; }
-.origin__film:not(.has-controls) .scrub { visibility: hidden; }
-.origin__film.is-playing .playpause { opacity: 0; }
-.origin__film.is-playing.is-awake .playpause, .origin__film.is-playing .playpause:focus-visible { opacity: 1; }
-.origin__film.is-scrubbing .playpause { opacity: 0; }
-/* the glyph that leaves shrinks away fast; the one that arrives lands on the spring */
-.playpause__glyph { grid-area: 1 / 1; width: 40px; width: 13cqw; height: 40px; height: 13cqw; transform: scale(0); transition: transform .18s cubic-bezier(.4, 0, 1, 1); }
+/* The controls are an iPhone's own player's, as it looks full screen: the
+   film dimmed, back 10 / play / forward 10 in the middle, a glass button for
+   the sound at the top right, and at the foot the capsule bar with the time
+   gone and the time left under it. They are up while the film waits. While
+   it plays they are away, and a move or a tap brings them back for a moment
+   (.is-awake, set by origin.js). Nothing on the phone is orange: an iPhone
+   has none. */
+.origin__dim { position: absolute; inset: 0; z-index: 2; background: rgba(0, 0, 0, .32); cursor: pointer; transition: opacity .28s ease; -webkit-tap-highlight-color: transparent; }
+.origin__transport { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; gap: 26px; gap: 8.2cqw; pointer-events: none; transition: opacity .28s ease; }
+.origin__skip, .playpause { display: grid; place-items: center; flex: none; padding: 0; border: 0; border-radius: 50%; background: none; color: #fff; cursor: pointer; pointer-events: auto; -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; transition: transform .16s ease, background-color .16s ease; }
+.origin__skip { width: 46px; width: max(42px, 14.6cqw); height: 46px; height: max(42px, 14.6cqw); }
+.origin__skip svg { display: block; width: 66%; height: 66%; overflow: visible; fill: currentColor; filter: drop-shadow(0 1px 5px rgba(0, 0, 0, .3)); }
+.origin__skip text { font: 700 7.3px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", Arial, sans-serif; letter-spacing: -.02em; }
+.playpause { width: 60px; width: max(52px, 19cqw); height: 60px; height: max(52px, 19cqw); }
+/* pressed, a glyph sinks into a soft disc, the way a tap lands on the phone */
+.origin__skip:active, .playpause:active { transform: scale(.88); background-color: rgba(255, 255, 255, .16); }
+.origin__skip:focus-visible, .playpause:focus-visible, .sound:focus-visible, .scrub:focus-visible { outline: 2px solid rgba(255, 255, 255, .92); outline-offset: 2px; }
+.playpause__glyph { grid-area: 1 / 1; width: 64%; height: 64%; opacity: 0; transform: scale(.55); filter: drop-shadow(0 1px 5px rgba(0, 0, 0, .3)); transition: opacity .18s ease, transform .18s ease; }
 .playpause__glyph svg { display: block; width: 100%; height: 100%; fill: currentColor; }
-.playpause__glyph--play { transform-origin: 31.25% 50%; }
-.playpause__glyph--pause { transform-origin: 62.5% 50%; }
-.origin__film:not(.is-playing) .playpause__glyph--play, .origin__film.is-playing .playpause__glyph--pause { transform: scale(1); transition: transform .9s var(--spring-pop); }
-/* asked to play and still fetching: a ring round the glyph, after a beat */
-.origin__wait { position: absolute; z-index: 3; inset: 0; margin: auto; width: 68px; width: 22cqw; height: 68px; height: 22cqw; border: 2px solid rgba(255, 255, 255, .26); border-top-color: #fff; border-radius: 50%; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
-.origin__film.is-waiting .origin__wait { opacity: 1; transition-delay: .35s; animation: origin-wait .8s linear infinite; }
+/* the triangle's weight sits left of its box, so it is set a touch right to look centred */
+.playpause__glyph--play { margin-left: 7%; }
+.playpause__glyph--pause { width: 58%; height: 58%; }
+.origin__film:not(.is-playing) .playpause__glyph--play, .origin__film.is-playing .playpause__glyph--pause { opacity: 1; transform: none; }
+/* asked to play and still fetching: the phone's own spinner where the play button was */
+.origin__wait { position: absolute; z-index: 4; inset: 0; margin: auto; width: 30px; width: 9.6cqw; height: 30px; height: 9.6cqw; color: #fff; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+.origin__wait svg { display: block; width: 100%; height: 100%; fill: currentColor; }
+.origin__film.is-waiting .origin__wait { opacity: 1; transition-delay: .35s; animation: origin-wait .8s steps(8) infinite; }
+.origin__film.is-waiting .origin__transport { opacity: 0; }
 @keyframes origin-wait { to { transform: rotate(360deg); } }
-.sound { position: absolute; z-index: 3; top: 46px; top: 14.6cqw; right: 14px; right: 4.6cqw; display: grid; place-items: center; width: 40px; width: max(38px, 12.6cqw); height: 40px; height: max(38px, 12.6cqw); padding: 0; border: 1px solid rgba(234, 232, 227, .18); border-radius: 999px; background: rgba(9, 15, 21, .62); color: #EAE8E3; cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: background .2s ease, border-color .2s ease, transform .2s ease; }
-.sound:hover { background: rgba(9, 15, 21, .85); border-color: rgba(234, 232, 227, .38); }
-.sound:active { transform: scale(.94); }
-.sound svg { width: 16px; height: 16px; display: block; }
+.sound { position: absolute; z-index: 3; top: 46px; top: 14.4cqw; right: 14px; right: 4.4cqw; display: grid; place-items: center; width: 40px; width: max(36px, 11.8cqw); height: 40px; height: max(36px, 11.8cqw); padding: 0; border: 0; border-radius: 30%; background: rgba(70, 70, 74, .56); color: #fff; cursor: pointer; -webkit-backdrop-filter: blur(18px) saturate(1.7); backdrop-filter: blur(18px) saturate(1.7); -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; transition: opacity .28s ease, transform .16s ease, background-color .16s ease; }
+.sound:hover { background: rgba(92, 92, 96, .66); }
+.sound:active { transform: scale(.92); }
+.sound svg { display: block; width: 54%; height: 54%; }
 
-/* The bar, inside the screen, where an iPhone's own player has it: over the
-   foot of the film, above the home bar, its two times under it. It is thin
-   until a pointer or a finger is on it; then it grows and a caret names the
-   second the pointer is over (the component's sizes: to 28px, over .3s).
-   --open is the grown state. */
-.scrub { --open: 0; position: absolute; z-index: 3; left: 7.5%; right: 7.5%; bottom: 36px; height: 40px; border-radius: 8px; cursor: grab; touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
-.scrub:active { cursor: grabbing; }
+/* The bar, where the phone's player has it: over the foot of the film, above
+   the home bar. A capsule with no knob, the time gone under its left end and
+   the time left, with its minus, under its right. A pointer or a finger on
+   it makes it thicker and a touch longer and turns the times full white.
+   Pulled past an end it stretches from the other end and thins; let go, it
+   springs back. --open is the held state. */
+.scrub { --open: 0; position: absolute; z-index: 3; left: 6.4%; right: 6.4%; bottom: 30px; height: 44px; border-radius: 10px; cursor: pointer; touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; transition: opacity .28s ease; }
 .scrub.is-held, .scrub:focus-visible { --open: 1; }
-/* the ring hugs the row: the times sit 4px under it */
-.scrub:focus-visible { outline-offset: 0; }
-.scrub__bar { position: absolute; top: 50%; left: 0; right: 0; height: calc(5px + var(--open) * 23px); opacity: calc(.85 + var(--open) * .15); transform: translateY(-50%); transition: .3s cubic-bezier(.25, .1, .35, 1); transition-property: height, opacity; }
-/* pulled past an end it stretches from the other end and thins; let go, it springs back */
-.scrub__track { position: absolute; inset: 0; border-radius: 8px; overflow: hidden; background: rgba(255, 255, 255, .32); transform: scale(var(--sx, 1), var(--sy, 1)); }
+.scrub__bar { position: absolute; top: 16px; left: calc((1 - var(--open)) * 3px); right: calc((1 - var(--open)) * 3px); height: calc(6px + var(--open) * 6px); transform: translateY(-50%); transition: .26s cubic-bezier(.3, .7, .2, 1); transition-property: left, right, height; }
+.scrub__track { position: absolute; inset: 0; border-radius: 999px; overflow: hidden; background: rgba(255, 255, 255, .3); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); transform: scale(var(--sx, 1), var(--sy, 1)); }
 .scrub[data-pull="left"] .scrub__track { transform-origin: 100% 50%; }
 .scrub[data-pull="right"] .scrub__track { transform-origin: 0 50%; }
 .scrub.is-settling .scrub__track { transition: transform .8s var(--spring-snap); }
-.scrub__fill { position: absolute; inset: 0; background: #fff; transform: scaleX(0); transform-origin: 0 50%; }
-.scrub__time { position: absolute; top: 50%; font: 500 11px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif; font-variant-numeric: tabular-nums; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .45); transform: translateY(calc(-50% + 17px + var(--open) * 13px)); transition: transform .24s ease-out; pointer-events: none; }
-.scrub__time--now { left: 0; }
-.scrub__time--end { right: 0; }
-/* the component's caret: an orange hairline, and the second it is over in orange */
-.scrub__caret { position: absolute; top: 0; left: 0; width: 1px; height: 100%; background: var(--accent); opacity: 0; transform: translateX(var(--x, 0px)); pointer-events: none; transition: opacity .2s ease; }
-.scrub.is-aiming .scrub__caret, .origin__film.is-scrubbing .scrub__caret { opacity: 1; }
-.scrub__tag { position: absolute; bottom: calc(100% - 4px); left: 50%; padding: 3px 5px; border-radius: 5px; background: rgba(0, 0, 0, .66); color: var(--accent); font: 500 10px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; transform: translateX(calc(-50% + var(--tag-shift, 0px))); }
+.scrub__fill { position: absolute; inset: 0; background: #fff; opacity: calc(.86 + var(--open) * .14); transform: scaleX(0); transform-origin: 0 50%; }
+.scrub__time { position: absolute; top: 31px; font: 600 11px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", Arial, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: .01em; color: rgba(255, 255, 255, calc(.66 + var(--open) * .34)); text-shadow: 0 1px 3px rgba(0, 0, 0, .35); transform: translateY(calc(var(--open) * 3px)); transition: transform .26s cubic-bezier(.3, .7, .2, 1), color .2s ease; pointer-events: none; }
+.scrub__time--now { left: 1px; }
+.scrub__time--end { right: 1px; }
+/* while it plays the controls are away, and nothing unseen can be pressed */
+.origin__film.is-playing:not(.is-awake) :is(.origin__dim, .origin__transport, .sound, .scrub) { opacity: 0; }
+.origin__film.is-playing:not(.is-awake) :is(.origin__skip, .playpause, .sound, .scrub) { pointer-events: none; }
+.origin__film.is-playing:not(.is-awake) .origin__screen::after { opacity: 0; }
+/* held, the bar is alone on the picture */
+.origin__film.is-scrubbing :is(.origin__dim, .origin__transport, .sound) { opacity: 0; }
+.origin__film:not(.has-controls) :is(.origin__dim, .origin__transport, .sound, .origin__wait) { display: none; }
+.origin__film:not(.has-controls) .scrub { visibility: hidden; }
 @media (hover: hover) and (pointer: fine) {
     .scrub:hover { --open: 1; }
 }
@@ -745,7 +756,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
     .hero__screen::before, .hero__screen::after { display: none; }
     .link, .field input, .field textarea, .sound, .navlink { transition: none; }
     .reveal [data-reveal] { opacity: 1; transform: none; filter: none; transition: none; }
-    .playpause, .playpause__glyph, .origin__film:not(.is-playing) .playpause__glyph--play, .origin__film.is-playing .playpause__glyph--pause, .scrub__bar, .scrub__time, .scrub.is-settling .scrub__track { transition: none; }
+    .origin__dim, .origin__transport, .origin__skip, .playpause, .playpause__glyph, .sound, .scrub, .scrub__bar, .scrub__time, .scrub.is-settling .scrub__track, .origin__screen::after { transition: none; }
 }
 @media (forced-colors: active) {
     /* backgrounds and blending are overridden here, so the mask would show as a second copy */

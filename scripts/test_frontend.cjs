@@ -324,21 +324,24 @@ test('scrolling below a settled hero does not restart its animation loop', () =>
     assert.ok(p.frames.size > 0);
 });
 
-// The origin film as a player: the screen, the sound chip and the bar under
-// it. The bar is 400px wide and starts 100px in, inside a screen with 60px to
-// spare on each side; the film is 49.63s long.
+// The origin film as an iPhone's player: the film itself (the surface), the
+// button and the two skips over it, the sound button and the bar. The bar is
+// 400px wide and starts 100px in, inside a screen with 60px to spare on each
+// side; the film is 49.63s long.
 function origin() {
-    const p = page(), video = new Element(), film = new Element(), surface = new Element(), sound = new Element(), scrub = new Element();
+    const p = page(), video = new Element(), film = new Element(), surface = new Element(), button = new Element();
+    const back = new Element(), forward = new Element(), sound = new Element(), scrub = new Element();
     const parts = {};
     video.parent = film; video.muted = false; video.duration = 49.63; video.dataset.duration = '49.63';
     scrub.querySelector = selector => parts[selector] ||= new Element();
     scrub.getBoundingClientRect = () => ({ left: 100, width: 400 });
     film.getBoundingClientRect = () => ({ left: 40, right: 560 });
     scrub.setPointerCapture = () => {};
-    p.ids['origin-video'] = video; p.ids.playpause = surface; p.ids.sound = sound; p.ids.scrub = scrub;
+    Object.assign(p.ids, { 'origin-video': video, 'origin-surface': surface, playpause: button, 'skip-back': back, 'skip-forward': forward, sound, scrub });
     p.run('origin.js');
     const near = (seconds) => assert.ok(Math.abs(video.currentTime - seconds) < .01, `${video.currentTime} is not ${seconds}`);
-    return { ...p, video, film, surface, sound, scrub, parts, near };
+    const up = () => film.classList.contains('is-awake');
+    return { ...p, video, film, surface, button, back, forward, sound, scrub, parts, near, up };
 }
 
 test('origin film waits for a press, starts with its sound on and never resumes by itself', () => {
@@ -356,16 +359,50 @@ test('origin film waits for a press, starts with its sound on and never resumes 
     assert.equal(p.video.paused, false);
     assert.equal(p.video.muted, false);
     assert.equal(p.film.classList.contains('is-playing'), true);
-    assert.equal(p.surface.getAttribute('aria-label'), 'Pause the film');
+    assert.equal(p.button.getAttribute('aria-label'), 'Pause the film');
     p.doc.hidden = true; p.doc.emit('visibilitychange');
     assert.equal(p.video.paused, true);
     p.doc.hidden = false; p.doc.emit('visibilitychange');
     assert.equal(p.video.paused, true);
-    p.surface.emit('click');
+    p.button.emit('click');
     p.observers[0].enter(p.video, false); p.observers[0].enter(p.video);
     assert.equal(p.video.paused, true);
     assert.equal(p.film.classList.contains('is-playing'), false);
     assert.equal(p.video.playCount, 2);
+});
+
+test('the controls leave a playing film; a tap brings them back, the button pauses, the skips move ten seconds', () => {
+    const p = origin();
+    p.video.readyState = 4;
+    p.button.emit('click');
+    assert.equal(p.video.paused, false);
+    // the pause button stays a moment, then the film is left alone
+    assert.equal(p.up(), true);
+    p.advance(1000);
+    assert.equal(p.up(), false);
+    // a finger's tap on the film shows the controls and does not pause; a second puts them away
+    p.surface.emit('pointerdown', { pointerType: 'touch' });
+    p.surface.emit('click');
+    assert.equal(p.video.paused, false);
+    assert.equal(p.up(), true);
+    p.surface.emit('click');
+    assert.equal(p.up(), false);
+    p.forward.emit('click'); p.forward.emit('click');
+    p.near(20);
+    assert.equal(p.up(), true);
+    p.back.emit('click');
+    p.near(10);
+    // the time gone and the time left, written the way the phone writes them
+    assert.equal(p.parts['.scrub__time--now'].textContent, '0:10');
+    assert.equal(p.parts['.scrub__time--end'].textContent, '-0:39');
+    p.button.emit('click');
+    assert.equal(p.video.paused, true);
+    // waiting, any press on the film starts it; a mouse click on a playing film pauses it
+    p.surface.emit('pointerdown', { pointerType: 'mouse' });
+    p.surface.emit('click');
+    assert.equal(p.video.paused, false);
+    p.surface.emit('click');
+    assert.equal(p.video.paused, true);
 });
 
 test('origin bar scrubs, stretches past its end and goes back to playing', () => {
@@ -380,6 +417,7 @@ test('origin bar scrubs, stretches past its end and goes back to playing', () =>
     assert.equal(p.film.classList.contains('is-scrubbing'), true);
     p.scrub.emit('pointermove', { pointerType: 'mouse', clientX: 600 });
     p.near(49.63);
+    assert.equal(p.parts['.scrub__time--end'].textContent, '-0:00');
     assert.equal(p.scrub.dataset.pull, 'right');
     assert.ok(Number(p.scrub.style['--sx']) > 1.05 && Number(p.scrub.style['--sy']) < 1);
     // a screen with no room to spare keeps the bar inside it
@@ -394,8 +432,8 @@ test('origin bar scrubs, stretches past its end and goes back to playing', () =>
     assert.equal(p.scrub.classList.contains('is-settling'), true);
     assert.equal(p.video.paused, false);
     p.near(12.4075);
-    assert.equal(p.parts['.scrub__time--now'].textContent, '00:12');
-    assert.equal(p.scrub.getAttribute('aria-valuetext'), '00:12 of 00:49');
+    assert.equal(p.parts['.scrub__time--now'].textContent, '0:12');
+    assert.equal(p.scrub.getAttribute('aria-valuetext'), '0:12 of 0:49');
     let kept = 0;
     const key = name => p.scrub.emit('keydown', { key: name, preventDefault() { kept++; } });
     key('Home'); key('ArrowRight'); key('PageUp');
@@ -406,7 +444,7 @@ test('origin bar scrubs, stretches past its end and goes back to playing', () =>
     assert.equal(kept, 4);
 });
 
-test('a finger that scrolls the page over the origin bar does not seek; a tap or a sideways drag does', () => {
+test('a finger on the origin bar: a page scroll does not seek, a tap does, and a drag moves the bar by as much as the finger', () => {
     const p = origin();
     p.video.readyState = 4; p.video.currentTime = 5;
     p.scrub.emit('pointerdown', { button: 0, pointerId: 1, pointerType: 'touch', clientX: 300 });
@@ -419,11 +457,12 @@ test('a finger that scrolls the page over the origin bar does not seek; a tap or
     p.scrub.emit('pointerdown', { button: 0, pointerId: 2, pointerType: 'touch', clientX: 200 });
     p.scrub.emit('pointerup', { pointerType: 'touch', clientX: 200 });
     p.near(12.4075);
-    p.scrub.emit('pointerdown', { button: 0, pointerId: 3, pointerType: 'touch', clientX: 200 });
-    p.scrub.emit('pointermove', { pointerType: 'touch', clientX: 400 });
+    // the finger lands 150px to the right of where the bar is and moves 100px: the bar moves 100px, it does not jump to the finger
+    p.scrub.emit('pointerdown', { button: 0, pointerId: 3, pointerType: 'touch', clientX: 350 });
+    p.scrub.emit('pointermove', { pointerType: 'touch', clientX: 450 });
     assert.equal(p.film.classList.contains('is-scrubbing'), true);
-    p.near(37.2225);
-    p.scrub.emit('pointerup', { pointerType: 'touch', clientX: 400 });
+    p.near(24.815);
+    p.scrub.emit('pointerup', { pointerType: 'touch', clientX: 450 });
     assert.equal(p.video.paused, true);
 });
 
@@ -441,7 +480,7 @@ test('a second picked on the origin bar before the film has loaded is applied on
     p.scrub.emit('pointerup', { pointerType: 'mouse', clientX: 300 });
     assert.equal(p.video.preload, 'auto');
     p.near(0);
-    assert.equal(p.parts['.scrub__time--now'].textContent, '00:24');
+    assert.equal(p.parts['.scrub__time--now'].textContent, '0:24');
     p.video.readyState = 1; p.video.emit('loadedmetadata');
     p.near(24.815);
 });

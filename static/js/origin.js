@@ -1,30 +1,36 @@
-// The origin film as the player he picked, Skiper's "video player 002": the
-// film inside an iPhone that waits on its poster until it is pressed, and a
-// bar inside the screen to scrub with. A vanilla port (motion/react there, CSS
-// transitions and a few custom properties here). The film has a voice, so
-// nothing starts it but a press.
+// The origin film inside the iPhone drawn on the home page, with the controls
+// an iPhone's own player has: the dimmed film, back 10 / play / forward 10 in
+// the middle, a glass button for the sound, and the capsule bar with the time
+// gone and the time left under it. They are up while the film waits; while it
+// plays they go away, and a move or a tap brings them back. The film has a
+// voice, so nothing starts it but a press, and it starts with its sound on.
 (() => {
     const video = document.getElementById('origin-video');
-    const surface = document.getElementById('playpause');
+    const surface = document.getElementById('origin-surface');
+    const button = document.getElementById('playpause');
     const sound = document.getElementById('sound');
     const scrub = document.getElementById('scrub');
-    if (!video || !surface || !sound || !scrub) return;
+    if (!video || !surface || !button || !sound || !scrub) return;
+    const back = document.getElementById('skip-back');
+    const forward = document.getElementById('skip-forward');
     const film = video.closest('.origin__film');
     const screen = video.closest('.origin__screen');
     const fill = scrub.querySelector('.scrub__fill');
     const nowText = scrub.querySelector('.scrub__time--now');
     const endText = scrub.querySelector('.scrub__time--end');
-    const tag = scrub.querySelector('.scrub__tag');
-    if (!film || !screen || !fill || !nowText || !endText || !tag) return;
+    if (!film || !screen || !fill || !nowText || !endText) return;
 
-    const icon = (paths) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+    // the speaker the way the phone draws it: filled, with its two waves, and struck through when it is off
+    const SPEAKER = '<path d="M3 9.6v4.8a1 1 0 0 0 1 1h2.9l4.2 3.5a.9.9 0 0 0 1.5-.7V5.8a.9.9 0 0 0-1.5-.7L6.9 8.6H4a1 1 0 0 0-1 1z"/><path d="M15.6 9.2a4 4 0 0 1 0 5.6M18.3 6.6a7.7 7.7 0 0 1 0 10.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
     const ICONS = {
-        muted: '<path d="M11 5 6 9H3v6h3l5 4Z"/><path d="m16 9 5 6M21 9l-5 6"/>',
-        loud: '<path d="M11 5 6 9H3v6h3l5 4Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>',
+        loud: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">${SPEAKER}</svg>`,
+        muted: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><mask id="origin-slash"><rect width="24" height="24" fill="#fff"/><path d="M4.3 3.4 20.7 19.8" stroke="#000" stroke-width="4.4" stroke-linecap="round"/></mask><g mask="url(#origin-slash)">${SPEAKER}</g><path d="M4.6 3.9 20.2 19.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
     };
     const STEPS = new Map([['ArrowLeft', -5], ['ArrowDown', -5], ['ArrowRight', 5], ['ArrowUp', 5], ['PageDown', -10], ['PageUp', 10]]);
     // how far the bar can be pulled past either end, in px
     const STRETCH = 50;
+    // what the two buttons beside play move by, in seconds
+    const SKIP = 10;
 
     // The length is in the markup, so the bar can say it while the film itself
     // is still unfetched (preload="none").
@@ -34,15 +40,23 @@
     let queued = null;      // the newest second asked for while the last seek is still landing
     let scrubbing = false;
     let resume = false;     // it was playing when the scrub began
-    let touch = null;       // a finger that has not yet shown whether it scrubs or scrolls the page
-    let pointer = null;     // where the mouse last woke the control
+    let touch = null;       // a finger on the bar that has not yet shown whether it scrubs or scrolls the page
+    let grip = null;        // a finger that is scrubbing: where it started, and the second the bar was on
+    let finger = false;     // the last press on the film itself came from a finger
+    let pointer = null;     // where the mouse last woke the controls
     let frame = 0, idle = 0, dwell = 0;
 
     const clamp = (value, low, high) => Math.min(Math.max(value, low), high);
 
+    // 0:07, not 00:07: the way the phone writes it
     function clock(seconds) {
         const whole = Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0;
-        return `${String(Math.floor(whole / 60)).padStart(2, '0')}:${String(whole % 60).padStart(2, '0')}`;
+        return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+    }
+
+    // the time left, on the right, counted in whole seconds like the time gone
+    function left(seconds) {
+        return `-${clock(Math.floor(duration) - Math.floor(clamp(seconds, 0, duration)))}`;
     }
 
     function paintTime(seconds) {
@@ -51,6 +65,7 @@
         const text = clock(seconds);
         if (nowText.textContent === text) return;
         nowText.textContent = text;
+        endText.textContent = left(seconds);
         scrub.setAttribute('aria-valuenow', String(Math.floor(seconds)));
         scrub.setAttribute('aria-valuetext', `${text} of ${clock(duration)}`);
     }
@@ -68,14 +83,25 @@
         const playing = scrubbing ? resume : !video.paused && !video.ended;
         film.classList.toggle('is-playing', playing);
         film.classList.toggle('is-waiting', playing && !scrubbing && video.readyState < 3);
-        surface.setAttribute('aria-label', playing ? 'Pause the film' : 'Play the film');
+        button.setAttribute('aria-label', playing ? 'Pause the film' : 'Play the film');
         if (playing && !frame) frame = requestAnimationFrame(tick);
     }
 
     function paintSound() {
-        sound.innerHTML = icon(video.muted ? ICONS.muted : ICONS.loud);
+        sound.innerHTML = video.muted ? ICONS.muted : ICONS.loud;
         sound.setAttribute('aria-pressed', String(!video.muted));
         sound.setAttribute('aria-label', video.muted ? 'Turn on sound' : 'Turn off sound');
+    }
+
+    // The controls over a playing film: up for a while, then gone again.
+    function rest() {
+        clearTimeout(idle);
+        film.classList.remove('is-awake');
+    }
+    function wake(ms) {
+        film.classList.add('is-awake');
+        clearTimeout(idle);
+        idle = setTimeout(rest, ms);
     }
 
     // Nothing of the film is fetched until someone shows they want it.
@@ -89,6 +115,8 @@
             video.currentTime = 0;
             paintTime(0);
         }
+        // the pause button stays a moment, as the phone's does, then leaves the film alone
+        wake(900);
         const started = video.play();
         if (!started) return;
         // A browser that will not give this press its sound still gets the film.
@@ -121,7 +149,7 @@
     function learn() {
         if (Number.isFinite(video.duration) && video.duration > 0) {
             duration = video.duration;
-            endText.textContent = clock(duration);
+            endText.textContent = left(shown);
             scrub.setAttribute('aria-valuemax', String(Math.floor(duration)));
             scrub.setAttribute('aria-valuetext', `${clock(shown)} of ${clock(duration)}`);
         }
@@ -133,50 +161,61 @@
         paintTime(shown);
     }
 
-    // Over a playing film the control shows only while the mouse is moving, so
-    // pressing play does not leave a pause sign sitting on the picture.
-    function rest() {
-        clearTimeout(idle);
-        film.classList.remove('is-awake');
-    }
-    surface.addEventListener('pointermove', (event) => {
+    // A mouse brings the controls up by moving; they leave when it stops or goes.
+    screen.addEventListener('pointermove', (event) => {
         if (event.pointerType !== 'mouse') return;
         if (pointer && Math.abs(event.clientX - pointer.x) + Math.abs(event.clientY - pointer.y) < 2) return;
         pointer = { x: event.clientX, y: event.clientY };
-        film.classList.add('is-awake');
-        clearTimeout(idle);
-        idle = setTimeout(rest, 1600);
+        if (!scrubbing) wake(2200);
     });
-    surface.addEventListener('pointerleave', rest);
+    screen.addEventListener('pointerleave', (event) => {
+        if (event.pointerType === 'mouse' && !scrubbing) rest();
+    });
+    // someone working it from the keyboard has to see what they are on
+    film.addEventListener('focusin', () => wake(4000));
+    film.addEventListener('keydown', () => wake(4000));
+
+    // The film itself. Waiting, any press starts it. Playing, a finger's tap
+    // shows or hides the controls, as on the phone (it is the button that
+    // pauses), and a mouse click pauses, as it does everywhere else.
+    surface.addEventListener('pointerdown', (event) => {
+        finger = event.pointerType === 'touch';
+    });
     surface.addEventListener('click', () => {
-        if (video.paused || video.ended) { rest(); play(); } else video.pause();
+        if (video.paused || video.ended) play();
+        else if (!finger) video.pause();
+        else if (film.classList.contains('is-awake')) rest();
+        else wake(3200);
     });
+    button.addEventListener('click', () => {
+        if (video.paused || video.ended) play(); else video.pause();
+    });
+    function skip(by) {
+        seek(clamp(shown + by, 0, duration));
+        wake(3200);
+    }
+    if (back) back.addEventListener('click', () => skip(-SKIP));
+    if (forward) forward.addEventListener('click', () => skip(SKIP));
 
     // Sound is a choice made on its own: it never starts or stops the film.
     sound.addEventListener('click', () => {
         video.muted = !video.muted;
         paintSound();
+        wake(3200);
     });
 
-    // The pointer's place on the bar: moves the caret, names the second and
-    // says how far past an end it is.
+    // Where the bar is being taken. A mouse is on the second it picks. A finger
+    // moves the bar by as much as it has moved, from where the bar was: an
+    // iPhone's does not jump to the touch. Past an end the bar gives, less the
+    // further it is pulled, and never past the edge of the screen it sits in.
     function aim(event) {
         const box = scrub.getBoundingClientRect();
-        const x = event.clientX - box.left;
-        const on = clamp(x, 0, box.width);
-        // The further past the end, the less the bar gives.
-        const give = (px) => 2 * (1 / (1 + Math.exp(-px / STRETCH)) - .5) * STRETCH;
-        // ...and never past the edge of the screen it sits in
         const edge = screen.getBoundingClientRect();
+        const x = grip ? (duration ? grip.from / duration : 0) * box.width + event.clientX - grip.x : event.clientX - box.left;
+        const give = (px) => 2 * (1 / (1 + Math.exp(-px / STRETCH)) - .5) * STRETCH;
         const room = (side) => Math.max(0, (side < 0 ? box.left - edge.left : edge.right - box.left - box.width) - 6);
-        const past = !scrubbing ? 0 : x < 0 ? -Math.min(give(-x), room(-1)) : x > box.width ? Math.min(give(x - box.width), room(1)) : 0;
-        const seconds = box.width ? on / box.width * duration : 0;
-        const caret = on + past;
-        scrub.style.setProperty('--x', `${caret.toFixed(1)}px`);
-        // the tag stays over the bar when the caret is at an end or past it
-        scrub.style.setProperty('--tag-shift', `${(clamp(caret, 20, Math.max(20, box.width - 20)) - caret).toFixed(1)}px`);
-        tag.textContent = clock(seconds);
-        return { seconds, past, width: box.width };
+        const past = x < 0 ? -Math.min(give(-x), room(-1)) : x > box.width ? Math.min(give(x - box.width), room(1)) : 0;
+        return { seconds: box.width ? clamp(x, 0, box.width) / box.width * duration : 0, past, width: box.width };
     }
 
     function stretch(past, width) {
@@ -188,10 +227,11 @@
     }
 
     function begin() {
-        touch = null;
         scrubbing = true;
         resume = !video.paused && !video.ended;
-        rest();
+        // the bar stays while it is held; everything else gets out of the picture's way
+        clearTimeout(idle);
+        film.classList.add('is-awake');
         film.classList.add('is-scrubbing');
         video.pause();
     }
@@ -204,7 +244,7 @@
 
     function end() {
         scrub.classList.remove('is-held');
-        touch = null;
+        touch = grip = null;
         if (!scrubbing) return;
         scrubbing = false;
         film.classList.remove('is-scrubbing');
@@ -213,9 +253,12 @@
         scrub.style.setProperty('--sx', '1');
         scrub.style.setProperty('--sy', '1');
         if (resume && !document.hidden) play();
+        wake(2600);
         paintState();
     }
 
+    // a drag on the bar is never the start of a text selection
+    scrub.addEventListener('mousedown', (event) => event.preventDefault());
     scrub.addEventListener('pointerdown', (event) => {
         if (event.button) return;
         warm('auto');
@@ -230,20 +273,19 @@
     scrub.addEventListener('pointermove', (event) => {
         if (touch) {
             if (Math.abs(event.clientX - touch.x) < 4) return;
+            grip = { x: touch.x, from: shown };
+            touch = null;
             begin();
         }
-        if (scrubbing) drag(event); else aim(event);
+        if (scrubbing) drag(event);
     });
     scrub.addEventListener('pointerup', (event) => {
-        if (touch) { begin(); drag(event); }
+        // a tap, with no drag, goes to the second it landed on
+        if (touch) { touch = null; begin(); drag(event); }
         end();
     });
     scrub.addEventListener('pointercancel', end);
     scrub.addEventListener('lostpointercapture', end);
-    scrub.addEventListener('pointerenter', (event) => {
-        if (event.pointerType === 'mouse') scrub.classList.add('is-aiming');
-    });
-    scrub.addEventListener('pointerleave', () => scrub.classList.remove('is-aiming'));
     scrub.addEventListener('keydown', (event) => {
         if (event.altKey || event.ctrlKey || event.metaKey) return;
         const step = STEPS.get(event.key);
