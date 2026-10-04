@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
 
+{# the browser's own bar takes the hero's black #}
+{% block theme_color %}#020506{% endblock %}
+
 {% block extra_head %}
 <link rel="preload" as="image" fetchpriority="high" href="{% static 'defex/assets/defex-poster-v4.webp' %}?v={{ asset_v }}">
 <!-- The hero is 280svh only while it has a film. Set before first paint, so
@@ -73,14 +76,32 @@
             <p class="engraved" data-reveal>We started off helping factory lines detect defects with <em>vision</em>.</p>
             <p data-reveal class="origin__note">That is how we learned the camera is not enough.</p>
         </div>
-        <figure data-reveal class="origin__film">
-            <video class="origin__video" id="origin-video" muted loop controls playsinline preload="none" disablepictureinpicture
-                   width="720" height="1280"
-                   poster="{% static 'video/origin-poster.jpg' %}?v={{ asset_v }}"
-                   src="{% static 'video/origin.mp4' %}?v={{ asset_v }}"></video>
-            <button type="button" class="playpause" id="playpause" aria-label="Pause the film"></button>
-            <span class="flash" id="flash" aria-hidden="true"></span>
-            <button type="button" class="sound" id="sound" aria-pressed="false" aria-label="Turn on sound"></button>
+        <!-- The clip the way an iPhone shows one: a rounded screen that waits on
+             its poster until someone presses play, and under it a bar to scrub
+             with. It has a voice, so it never starts by itself and it starts
+             with the sound on. The bar grows under the pointer, names the
+             second it is over and stretches when it is dragged past an end
+             (static/js/origin.js). Without the script the browser's own
+             controls stay. -->
+        <figure data-reveal class="origin__film" id="origin-film">
+            <div class="origin__screen">
+                <video class="origin__video" id="origin-video" controls playsinline preload="none" disablepictureinpicture
+                       width="720" height="1280" data-duration="49.63"
+                       poster="{% static 'video/origin-poster.jpg' %}?v={{ asset_v }}"
+                       src="{% static 'video/origin.mp4' %}?v={{ asset_v }}"></video>
+                <button type="button" class="playpause" id="playpause" aria-label="Play the film">
+                    <span class="playpause__glyph playpause__glyph--play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg></span>
+                    <span class="playpause__glyph playpause__glyph--pause"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="5" height="18" rx="1.5"/><rect x="14" y="3" width="5" height="18" rx="1.5"/></svg></span>
+                </button>
+                <span class="origin__wait" aria-hidden="true"></span>
+                <button type="button" class="sound" id="sound" aria-pressed="true" aria-label="Turn off sound"></button>
+            </div>
+            <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="Seek the film" aria-valuemin="0" aria-valuemax="49" aria-valuenow="0" aria-valuetext="00:00 of 00:49">
+                <span class="scrub__time scrub__time--now">00:00</span>
+                <span class="scrub__time scrub__time--end">00:49</span>
+                <span class="scrub__bar"><span class="scrub__track"><span class="scrub__fill"></span></span></span>
+                <span class="scrub__caret" aria-hidden="true"><span class="scrub__tag">00:00</span></span>
+            </div>
         </figure>
     </section>
 
