@@ -72,7 +72,7 @@ def _careers_context(form, job=None):
         "jobs": JOBS,
         "selected_job": job,
         "careers_title": f"{job['title']} | Defex Robotics" if job else "Careers | Defex Robotics",
-        "careers_description": job["pitch"] if job else "Join Defex in robotics controls, manipulation learning and technical content. Explore San Francisco roles, pay ranges and projects.",
+        "careers_description": job["pitch"] if job else "Open roles at Defex Robotics in San Francisco: robotics controls, robot learning and technical content. Pay listed on each.",
         "canonical_url": url,
     }
     if job:

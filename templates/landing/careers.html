@@ -27,9 +27,9 @@
 
 <main class="page">
     <header class="masthead">
-        <p class="eyebrow">Join us</p>
-        <h1 class="engraved">Build the machine that proves it worked.</h1>
-        <p class="masthead__lead">We’re developing a robot that puts connectors together, physically tests each joint and learns from its attempts. Join the team building the prototype’s hardware, controls and learning software, or help document the work.</p>
+        <p class="eyebrow">Careers</p>
+        <h1 class="engraved">Build with us.</h1>
+        <p class="masthead__lead">We’re building the robot now. Three roles open in San Francisco, pay listed on each.</p>
     </header>
 
     <div id="roles">
@@ -47,8 +47,8 @@
 
     <section class="apply" id="application" aria-labelledby="apply-title">
         <p class="eyebrow">Apply</p>
-        <h2 class="engraved" id="apply-title">Build with us.</h2>
-        <p class="apply__lead">Send an example of your work. No cover letter needed.</p>
+        <h2 class="engraved" id="apply-title">Apply.</h2>
+        <p class="apply__lead">Send us something you built. No cover letter.</p>
         <form class="form form--apply" action="{% url 'apply' %}#application" method="post">
             {% csrf_token %}
             {% if messages and not form.errors %}{% for message in messages %}<p class="form__flash form__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
