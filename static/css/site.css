@@ -526,17 +526,17 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* the origin block: one line and the original clip */
 /* The copy sits at the top of the clip, not centred on it: the clip is a
    portrait, and centring left 230px of empty paper above the line. */
-.origin { max-width: var(--max); margin-inline: auto; width: 100%; overflow-x: clip; padding: clamp(48px, 8vh, 104px) var(--pad); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 480px); gap: clamp(28px, 5vw, 80px); align-items: start; }
+.origin { max-width: var(--max); margin-inline: auto; width: 100%; overflow-x: clip; padding: clamp(48px, 8vh, 104px) var(--pad); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: clamp(28px, 5vw, 80px); align-items: start; }
 .origin__copy { padding-top: 0; }
 .origin__copy p { margin-top: 22px; max-width: 26ch; font-family: var(--serif); font-size: clamp(24px, 2.9vw, 36px); line-height: 1.18; letter-spacing: -.01em; font-weight: 400; }
 .origin__copy p.origin__note { max-width: 52ch; margin-top: 24px; font-family: var(--mono); font-size: 13px; line-height: 1.85; letter-spacing: 0; font-weight: 400; color: var(--ink-soft); }
-/* The player he picked (Skiper's "video player 002"), in its own white
-   card: the film inside an iPhone and, under it, a bar to scrub with
-   (static/js/origin.js). The phone is as tall as the window allows, less
-   the nav and the bar, and never wider than the card. */
-.origin__film { --phone-h: 620px; --spring-pop: cubic-bezier(.34, 1.56, .64, 1); --spring-snap: cubic-bezier(.34, 1.56, .64, 1); position: relative; display: grid; justify-items: center; justify-self: end; width: 100%; margin: 0; padding: 36px 24px 44px; border-radius: 50px; overflow: hidden; background: #fff; scroll-margin-top: calc(var(--nav) + 16px); }
+/* The player he picked (Skiper's "video player 002") as an iPhone standing
+   on the page: no card behind it, and the bar inside its screen, over the
+   film (static/js/origin.js). The phone is as tall as the window allows,
+   less the nav, so all of it is on screen at once. */
+.origin__film { --phone-h: 640px; --spring-pop: cubic-bezier(.34, 1.56, .64, 1); --spring-snap: cubic-bezier(.34, 1.56, .64, 1); position: relative; justify-self: end; width: min(100%, calc(var(--phone-h) * .4755)); margin: 0; scroll-margin-top: calc(var(--nav) + 16px); }
 @supports (height: 100svh) {
-    .origin__film { --phone-h: clamp(400px, calc(100svh - var(--nav) - 184px), 680px); }
+    .origin__film { --phone-h: clamp(420px, calc(100svh - var(--nav) - 56px), 720px); }
 }
 /* The component's two Motion springs, sampled: bounce .6 over .9s for the
    glyph, bounce .5 over .8s for the bar. A browser without linear() gets
@@ -549,7 +549,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    size (the px before each cqw is for a browser without container units).
    .4755 is the body's width over its height: an 1180 x 2556 screen inside
    a bezel of 2.7% of the width. */
-.origin__phone { position: relative; width: min(100%, calc(var(--phone-h) * .4755)); container-type: inline-size; }
+.origin__phone { position: relative; container-type: inline-size; }
 /* the action button and the two volume keys on one side, the side button on the other */
 .origin__phone::before, .origin__phone::after { content: ""; position: absolute; width: 4px; border-radius: 2px; background: #1C1C1E; }
 .origin__phone::before { left: -2.5px; top: 18%; height: 22%; background: linear-gradient(#1C1C1E 0 15%, transparent 15% 29%, #1C1C1E 29% 61%, transparent 61% 68%, #1C1C1E 68% 100%); }
@@ -563,6 +563,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    a recording of a screen. A little shade under the status bar keeps it
    readable over a bright wall. */
 .origin__screen::before { content: ""; position: absolute; z-index: 1; inset: 0 0 auto; height: 16%; background: linear-gradient(rgba(0, 0, 0, .4), rgba(0, 0, 0, 0)); pointer-events: none; }
+.origin__screen::after { content: ""; position: absolute; z-index: 1; inset: auto 0 0; height: 30%; background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, .64)); pointer-events: none; }
 .origin__status { position: absolute; z-index: 4; top: 9px; top: 2.75cqw; left: 0; right: 0; height: 28px; height: 8.9cqw; display: flex; align-items: center; justify-content: space-between; padding: 0 8.5% 0 11.5%; color: #fff; font: 600 13px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", Arial, sans-serif; font-size: 4.15cqw; letter-spacing: -.01em; pointer-events: none; }
 .origin__clock { font-variant-numeric: tabular-nums; }
 .origin__signal { display: block; width: auto; height: 10px; height: 3.2cqw; fill: currentColor; }
@@ -595,42 +596,37 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .origin__wait { position: absolute; z-index: 3; inset: 0; margin: auto; width: 68px; width: 22cqw; height: 68px; height: 22cqw; border: 2px solid rgba(255, 255, 255, .26); border-top-color: #fff; border-radius: 50%; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
 .origin__film.is-waiting .origin__wait { opacity: 1; transition-delay: .35s; animation: origin-wait .8s linear infinite; }
 @keyframes origin-wait { to { transform: rotate(360deg); } }
-.sound { position: absolute; z-index: 3; right: 14px; right: 4.6cqw; bottom: 26px; bottom: 8.4cqw; display: grid; place-items: center; width: 40px; width: max(38px, 12.6cqw); height: 40px; height: max(38px, 12.6cqw); padding: 0; border: 1px solid rgba(234, 232, 227, .18); border-radius: 999px; background: rgba(9, 15, 21, .62); color: #EAE8E3; cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: background .2s ease, border-color .2s ease, transform .2s ease; }
+.sound { position: absolute; z-index: 3; top: 46px; top: 14.6cqw; right: 14px; right: 4.6cqw; display: grid; place-items: center; width: 40px; width: max(38px, 12.6cqw); height: 40px; height: max(38px, 12.6cqw); padding: 0; border: 1px solid rgba(234, 232, 227, .18); border-radius: 999px; background: rgba(9, 15, 21, .62); color: #EAE8E3; cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: background .2s ease, border-color .2s ease, transform .2s ease; }
 .sound:hover { background: rgba(9, 15, 21, .85); border-color: rgba(234, 232, 227, .38); }
 .sound:active { transform: scale(.94); }
 .sound svg { width: 16px; height: 16px; display: block; }
 
-/* The bar. Under a mouse it is thin between its two times until the pointer
-   is on it; then it takes the full width, grows, the times drop under it and
-   a caret names the second the pointer is over. The component's sizes: 6px at
-   .8 scale to 28px, .7 to full strength, over .3s. --open is the grown state,
-   --wide is how much of the row the bar has (always all of it under a finger,
-   where there is no hover to grow it first and the bar must not move away
-   from the touch). */
-.scrub { --open: 0; --wide: var(--open); position: relative; width: min(100%, 372px); height: 40px; margin-top: 26px; border-radius: 8px; cursor: grab; touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+/* The bar, inside the screen, where an iPhone's own player has it: over the
+   foot of the film, above the home bar, its two times under it. It is thin
+   until a pointer or a finger is on it; then it grows and a caret names the
+   second the pointer is over (the component's sizes: to 28px, over .3s).
+   --open is the grown state. */
+.scrub { --open: 0; position: absolute; z-index: 3; left: 7.5%; right: 7.5%; bottom: 36px; height: 40px; border-radius: 8px; cursor: grab; touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 .scrub:active { cursor: grabbing; }
 .scrub.is-held, .scrub:focus-visible { --open: 1; }
 /* the ring hugs the row: the times sit 4px under it */
 .scrub:focus-visible { outline-offset: 0; }
-.scrub__bar { position: absolute; top: 50%; left: calc((1 - var(--wide)) * 46px); right: calc((1 - var(--wide)) * 46px); height: calc(5px + var(--open) * 23px); opacity: calc(.7 + var(--open) * .3); transform: translateY(-50%); transition: .3s cubic-bezier(.25, .1, .35, 1); transition-property: left, right, height, opacity; }
+.scrub__bar { position: absolute; top: 50%; left: 0; right: 0; height: calc(5px + var(--open) * 23px); opacity: calc(.85 + var(--open) * .15); transform: translateY(-50%); transition: .3s cubic-bezier(.25, .1, .35, 1); transition-property: height, opacity; }
 /* pulled past an end it stretches from the other end and thins; let go, it springs back */
-.scrub__track { position: absolute; inset: 0; border-radius: 8px; overflow: hidden; background: #EFEEEC; transform: scale(var(--sx, 1), var(--sy, 1)); }
+.scrub__track { position: absolute; inset: 0; border-radius: 8px; overflow: hidden; background: rgba(255, 255, 255, .32); transform: scale(var(--sx, 1), var(--sy, 1)); }
 .scrub[data-pull="left"] .scrub__track { transform-origin: 100% 50%; }
 .scrub[data-pull="right"] .scrub__track { transform-origin: 0 50%; }
 .scrub.is-settling .scrub__track { transition: transform .8s var(--spring-snap); }
-.scrub__fill { position: absolute; inset: 0; background: rgba(18, 18, 18, .8); transform: scaleX(0); transform-origin: 0 50%; }
-.scrub__time { position: absolute; top: 50%; font: 400 12px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-variant-numeric: tabular-nums; color: #121212; transform: translateY(calc(-50% + var(--wide) * (18px + var(--open) * 12px))); transition: transform .24s ease-out; pointer-events: none; }
+.scrub__fill { position: absolute; inset: 0; background: #fff; transform: scaleX(0); transform-origin: 0 50%; }
+.scrub__time { position: absolute; top: 50%; font: 500 11px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif; font-variant-numeric: tabular-nums; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .45); transform: translateY(calc(-50% + 17px + var(--open) * 13px)); transition: transform .24s ease-out; pointer-events: none; }
 .scrub__time--now { left: 0; }
 .scrub__time--end { right: 0; }
-/* the component's caret: an orange hairline, and the second it is over in orange on the card */
+/* the component's caret: an orange hairline, and the second it is over in orange */
 .scrub__caret { position: absolute; top: 0; left: 0; width: 1px; height: 100%; background: var(--accent); opacity: 0; transform: translateX(var(--x, 0px)); pointer-events: none; transition: opacity .2s ease; }
 .scrub.is-aiming .scrub__caret, .origin__film.is-scrubbing .scrub__caret { opacity: 1; }
-.scrub__tag { position: absolute; bottom: calc(100% - 4px); left: 50%; padding: 2px 4px; border-radius: 4px; background: #fff; color: var(--accent); font: 400 10px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; transform: translateX(calc(-50% + var(--tag-shift, 0px))); }
+.scrub__tag { position: absolute; bottom: calc(100% - 4px); left: 50%; padding: 3px 5px; border-radius: 5px; background: rgba(0, 0, 0, .66); color: var(--accent); font: 500 10px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; transform: translateX(calc(-50% + var(--tag-shift, 0px))); }
 @media (hover: hover) and (pointer: fine) {
     .scrub:hover { --open: 1; }
-}
-@media (hover: none), (pointer: coarse) {
-    .scrub { --wide: 1; }
 }
 
 /* contact */
@@ -694,7 +690,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 
 @media (max-width: 900px) {
     .origin { grid-template-columns: 1fr; gap: 28px; justify-items: start; }
-    .origin__film { justify-self: start; max-width: 480px; }
+    .origin__film { justify-self: start; }
 }
 
 @media (max-width: 720px) {
@@ -719,7 +715,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
        and was invisible. Shorter ramp here, and real clearance for it. */
 :root { --hero-fade: clamp(120px, 20vh, 200px); }
     .about, .band--first, .origin--home { padding-top: calc(24px + var(--hero-fade)); }
-    .origin__film { padding: 28px 20px 40px; border-radius: 40px; }
     /* stacked on a phone, so it needs more room before it mounts */
     .booker__frame { min-height: 1100px; }
     .contact { padding-top: 80px; padding-bottom: 80px; }

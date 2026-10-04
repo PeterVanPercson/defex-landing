@@ -76,15 +76,16 @@
             <p class="engraved" data-reveal>We started off helping factory lines detect defects with <em>vision</em>.</p>
             <p data-reveal class="origin__note">That is how we learned the camera is not enough.</p>
         </div>
-        <!-- The player he picked (Skiper's "video player 002"): a white card,
-             the film inside an iPhone and, under it, a bar to scrub with. His
-             film is a camera clip, not a recording of a screen, so the phone's
-             own furniture (island, status bar, home bar) is drawn over it. It
-             has a voice, so it never starts by itself and it starts with the
-             sound on. The bar grows under the pointer, names the second it is
-             over and stretches when it is dragged past an end
-             (static/js/origin.js). Without the script the browser's own
-             controls stay. -->
+        <!-- The player he picked (Skiper's "video player 002") as an iPhone on
+             the page: the film fills its screen and the bar to scrub with is
+             inside the screen too, over the home bar (his call: no card behind
+             the phone, the bar within it). His film is a camera clip, not a
+             recording of a screen, so the phone's own furniture (island,
+             status bar, home bar) is drawn over it. It has a voice, so it never
+             starts by itself and it starts with the sound on. The bar grows
+             under the pointer, names the second it is over and stretches when
+             it is dragged past an end (static/js/origin.js). Without the script
+             the browser's own controls stay. -->
         <figure data-reveal class="origin__film" id="origin-film">
             <div class="origin__phone">
                 <div class="origin__body">
@@ -103,16 +104,16 @@
                             <svg class="origin__signal" viewBox="0 0 68 12"><rect y="7.5" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6" rx="1"/><rect x="10" y="3" width="3" height="8.5" rx="1"/><rect x="15" y=".5" width="3" height="11" rx="1"/><path d="M24.35 4.56A9.2 9.2 0 0 1 36.65 4.56M26.55 7.02A5.9 5.9 0 0 1 34.45 7.02" fill="none" stroke="currentColor" stroke-width="2.1"/><path d="M30.5 11.6 28.56 9.25A2.9 2.9 0 0 1 32.44 9.25Z"/><rect x="43.5" y=".5" width="21" height="11" rx="3.4" fill="none" stroke="currentColor" stroke-opacity=".45"/><rect x="45" y="2" width="18" height="8" rx="2"/><path d="M66 4.2v3.6a2 2 0 0 0 0-3.6Z" fill-opacity=".5"/></svg>
                         </span>
                         <span class="origin__island" aria-hidden="true"></span>
+                        <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="Seek the film" aria-valuemin="0" aria-valuemax="49" aria-valuenow="0" aria-valuetext="00:00 of 00:49">
+                            <span class="scrub__time scrub__time--now">00:00</span>
+                            <span class="scrub__time scrub__time--end">00:49</span>
+                            <span class="scrub__bar"><span class="scrub__track"><span class="scrub__fill"></span></span></span>
+                            <span class="scrub__caret" aria-hidden="true"><span class="scrub__tag">00:00</span></span>
+                        </div>
                         <span class="origin__home" aria-hidden="true"></span>
                         <button type="button" class="sound" id="sound" aria-pressed="true" aria-label="Turn off sound"></button>
                     </div>
                 </div>
-            </div>
-            <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="Seek the film" aria-valuemin="0" aria-valuemax="49" aria-valuenow="0" aria-valuetext="00:00 of 00:49">
-                <span class="scrub__time scrub__time--now">00:00</span>
-                <span class="scrub__time scrub__time--end">00:49</span>
-                <span class="scrub__bar"><span class="scrub__track"><span class="scrub__fill"></span></span></span>
-                <span class="scrub__caret" aria-hidden="true"><span class="scrub__tag">00:00</span></span>
             </div>
         </figure>
     </section>

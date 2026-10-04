@@ -82,9 +82,12 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, 'id="scrub" role="slider"')
         # the player he picked: the film sits inside an iPhone, with the phone's
         # own island, status bar and home bar drawn over it
-        phone = home.content.decode().split('class="origin__phone"', 1)[1].split('class="scrub"', 1)[0]
-        for part in ('id="origin-video"', 'class="origin__island"', 'class="origin__status"', 'class="origin__home"', 'id="sound"'):
-            self.assertIn(part, phone)
+        # the bar to scrub with is inside the screen too, not under the phone,
+        # and there is no card behind the phone (his call, 2026-10-03)
+        screen = home.content.decode().split('class="origin__screen"', 1)[1].split("</figure>", 1)[0]
+        for part in ('id="origin-video"', 'class="origin__island"', 'class="origin__status"', 'id="scrub"', 'class="origin__home"', 'id="sound"'):
+            self.assertIn(part, screen)
+        self.assertRegex(screen, r'id="sound"[^>]*></button>\s*</div>\s*</div>\s*</div>\s*$')
         self.assertContains(home, "That is how we learned the camera is not enough")
         # no example text in the part field
         self.assertNotContains(home, 'placeholder="e.g.')
