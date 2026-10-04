@@ -1,6 +1,6 @@
 // The origin film as the player he picked, Skiper's "video player 002": the
 // film inside an iPhone that waits on its poster until it is pressed, and a
-// bar under it to scrub with. A vanilla port (motion/react there, CSS
+// bar inside the screen to scrub with. A vanilla port (motion/react there, CSS
 // transitions and a few custom properties here). The film has a voice, so
 // nothing starts it but a press.
 (() => {
@@ -10,11 +10,12 @@
     const scrub = document.getElementById('scrub');
     if (!video || !surface || !sound || !scrub) return;
     const film = video.closest('.origin__film');
+    const screen = video.closest('.origin__screen');
     const fill = scrub.querySelector('.scrub__fill');
     const nowText = scrub.querySelector('.scrub__time--now');
     const endText = scrub.querySelector('.scrub__time--end');
     const tag = scrub.querySelector('.scrub__tag');
-    if (!film || !fill || !nowText || !endText || !tag) return;
+    if (!film || !screen || !fill || !nowText || !endText || !tag) return;
 
     const icon = (paths) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
     const ICONS = {
@@ -165,9 +166,9 @@
         const on = clamp(x, 0, box.width);
         // The further past the end, the less the bar gives.
         const give = (px) => 2 * (1 / (1 + Math.exp(-px / STRETCH)) - .5) * STRETCH;
-        // ...and never past the edge of its card, which is close on a phone
-        const card = film.getBoundingClientRect();
-        const room = (side) => Math.max(0, (side < 0 ? box.left - card.left : card.right - box.left - box.width) - 8);
+        // ...and never past the edge of the screen it sits in
+        const edge = screen.getBoundingClientRect();
+        const room = (side) => Math.max(0, (side < 0 ? box.left - edge.left : edge.right - box.left - box.width) - 6);
         const past = !scrubbing ? 0 : x < 0 ? -Math.min(give(-x), room(-1)) : x > box.width ? Math.min(give(x - box.width), room(1)) : 0;
         const seconds = box.width ? on / box.width * duration : 0;
         const caret = on + past;
