@@ -7,7 +7,7 @@ from django.views.decorators.http import require_safe
 
 from .discovery import CANONICAL_ORIGIN
 
-LEGAL_EFFECTIVE = date(2026, 9, 24)
+LEGAL_EFFECTIVE = date(2026, 10, 3)
 # security.txt must carry an expiry (RFC 9116). Renew it before this date.
 SECURITY_TXT_EXPIRES = "2027-09-24T00:00:00Z"
 

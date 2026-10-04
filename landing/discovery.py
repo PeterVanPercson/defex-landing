@@ -13,11 +13,14 @@ from django.views.decorators.http import require_safe
 from .forms import ContactForm
 
 CANONICAL_ORIGIN = "https://defexrobotics.com"
-COMPANY_UPDATED = date(2026, 9, 17)
+COMPANY_UPDATED = date(2026, 10, 3)
 PUBLIC_COMPANY = {
     "name": "Defex",
     "legal_name": "Defex Robotics, Inc.",
     "alternate_name": "Defex Robotics",
+    "entity": "Delaware C corporation",
+    "address": {"street": "128 York Street, 2nd floor", "city": "San Francisco", "region": "California",
+                "postal_code": "94110", "country": "United States"},
     "url": CANONICAL_ORIGIN + "/",
     "description": "Defex is developing self-teaching robots for manufacturing, starting with connectors.",
     "location": "San Francisco, California, United States",
@@ -107,8 +110,16 @@ PRICING = {
 }
 
 
+def postal_address():
+    a = PUBLIC_COMPANY["address"]
+    return {"@type": "PostalAddress", "streetAddress": a["street"], "addressLocality": a["city"],
+            "addressRegion": a["region"], "postalCode": a["postal_code"], "addressCountry": a["country"]}
+
+
 def office_place(office):
     """One office as a Place, so search engines read three locations, not one."""
+    if office["city"] == PUBLIC_COMPANY["address"]["city"]:
+        return {"@type": "Place", "name": office["city"], "address": postal_address()}
     address = {"@type": "PostalAddress", "addressLocality": office["city"], "addressCountry": office["country"]}
     if office.get("region"):
         address["addressRegion"] = office["region"]
@@ -124,6 +135,7 @@ def organization_jsonld():
          "url": PUBLIC_COMPANY["url"], "description": PUBLIC_COMPANY["description"],
          "logo": {"@type": "ImageObject", "url": CANONICAL_ORIGIN + static("img/apple-touch-icon.png"), "width": 180, "height": 180},
          "legalName": PUBLIC_COMPANY["legal_name"],
+         "address": postal_address(),
          "email": PUBLIC_COMPANY["contact"],
          "contactPoint": [{"@type": "ContactPoint", "contactType": kind, "email": PUBLIC_COMPANY["contacts"][key], "availableLanguage": ["English", "Russian", "Uzbek", "Chinese"]}
                           for key, kind in (("sales", "sales"), ("support", "customer support"))],
@@ -176,7 +188,7 @@ def llms_txt(request):
     lines = [
         "# Defex", "",
         "> " + PUBLIC_COMPANY["description"], "",
-        "Defex (legally " + PUBLIC_COMPANY["legal_name"] + ", also written Defex Robotics) is based in " + PUBLIC_COMPANY["location"]
+        "Defex (legally " + PUBLIC_COMPANY["legal_name"] + ", a Delaware corporation, also written Defex Robotics) is based in " + PUBLIC_COMPANY["location"]
         + ", with offices in " + " and ".join(office["city"] for office in PUBLIC_COMPANY["offices"][1:]) + ". "
         + husan["name"] + " is " + husan["role"] + "; " + hasan["name"] + " is " + hasan["role"] + ". "
         "Canonical domain: defexrobotics.com (defex.app redirects here).", "",
