@@ -526,23 +526,48 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* the origin block: one line and the original clip */
 /* The copy sits at the top of the clip, not centred on it: the clip is a
    portrait, and centring left 230px of empty paper above the line. */
-.origin { max-width: var(--max); margin-inline: auto; width: 100%; overflow-x: clip; padding: clamp(48px, 8vh, 104px) var(--pad); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: clamp(28px, 5vw, 80px); align-items: start; }
+.origin { max-width: var(--max); margin-inline: auto; width: 100%; overflow-x: clip; padding: clamp(48px, 8vh, 104px) var(--pad); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 480px); gap: clamp(28px, 5vw, 80px); align-items: start; }
 .origin__copy { padding-top: 0; }
 .origin__copy p { margin-top: 22px; max-width: 26ch; font-family: var(--serif); font-size: clamp(24px, 2.9vw, 36px); line-height: 1.18; letter-spacing: -.01em; font-weight: 400; }
 .origin__copy p.origin__note { max-width: 52ch; margin-top: 24px; font-family: var(--mono); font-size: 13px; line-height: 1.85; letter-spacing: 0; font-weight: 400; color: var(--ink-soft); }
-/* The clip is a player, the way an iPhone shows one: a screen with the
-   phone's corners and, under it, a bar to scrub with (static/js/origin.js).
-   The screen is never taller than the window less the nav and the bar, so
-   on a short laptop the film and its bar are still on screen together. */
-.origin__film { --screen-r: 40px; --spring-pop: cubic-bezier(.34, 1.56, .64, 1); --spring-snap: cubic-bezier(.34, 1.56, .64, 1); position: relative; margin: 0; padding-bottom: 22px; justify-self: end; scroll-margin-top: calc(var(--nav) + 16px); width: 100%; width: min(100%, max(300px, calc((100svh - var(--nav) - 150px) * .5625))); }
+/* The player he picked (Skiper's "video player 002"), in its own white
+   card: the film inside an iPhone and, under it, a bar to scrub with
+   (static/js/origin.js). The phone is as tall as the window allows, less
+   the nav and the bar, and never wider than the card. */
+.origin__film { --phone-h: 620px; --spring-pop: cubic-bezier(.34, 1.56, .64, 1); --spring-snap: cubic-bezier(.34, 1.56, .64, 1); position: relative; display: grid; justify-items: center; justify-self: end; width: 100%; margin: 0; padding: 36px 24px 44px; border-radius: 50px; overflow: hidden; background: #fff; scroll-margin-top: calc(var(--nav) + 16px); }
+@supports (height: 100svh) {
+    .origin__film { --phone-h: clamp(400px, calc(100svh - var(--nav) - 184px), 680px); }
+}
 /* The component's two Motion springs, sampled: bounce .6 over .9s for the
    glyph, bounce .5 over .8s for the bar. A browser without linear() gets
    one overshoot instead. */
 @supports (transition-timing-function: linear(0, 1)) {
     .origin__film { --spring-pop: linear(0, 0.079, 0.272, 0.519, 0.766, 0.978, 1.132, 1.222, 1.253, 1.238, 1.192, 1.13, 1.067, 1.011, 0.97, 0.946, 0.936, 0.939, 0.95, 0.965, 0.981, 0.996, 1.006, 1.013, 1.016, 1.016, 1.013, 1.009, 1.005, 1.002, 0.999, 0.997, 0.996, 0.996, 0.997, 0.997, 1); --spring-snap: linear(0, 0.069, 0.234, 0.444, 0.657, 0.844, 0.99, 1.089, 1.144, 1.163, 1.154, 1.129, 1.095, 1.06, 1.029, 1.004, 0.987, 0.977, 0.974, 0.974, 0.978, 0.984, 0.989, 0.995, 0.999, 1.002, 1.004, 1.004, 1.004, 1.004, 1.003, 1.002, 1); }
 }
-.origin__screen { position: relative; border-radius: var(--screen-r); overflow: hidden; background: var(--surface); isolation: isolate; }
-.origin__video { display: block; width: 100%; height: auto; }
+/* The phone. Everything on it is cut in cqw, a hundredth of its own width,
+   so the island, the corners and the type keep their proportions at any
+   size (the px before each cqw is for a browser without container units).
+   .4755 is the body's width over its height: an 1180 x 2556 screen inside
+   a bezel of 2.7% of the width. */
+.origin__phone { position: relative; width: min(100%, calc(var(--phone-h) * .4755)); container-type: inline-size; }
+/* the action button and the two volume keys on one side, the side button on the other */
+.origin__phone::before, .origin__phone::after { content: ""; position: absolute; width: 4px; border-radius: 2px; background: #1C1C1E; }
+.origin__phone::before { left: -2.5px; top: 18%; height: 22%; background: linear-gradient(#1C1C1E 0 15%, transparent 15% 29%, #1C1C1E 29% 61%, transparent 61% 68%, #1C1C1E 68% 100%); }
+.origin__phone::after { right: -2.5px; top: 27%; height: 12%; }
+.origin__body { position: relative; z-index: 1; padding: 8px; padding: 2.7cqw; border-radius: 50px; border-radius: 15.9cqw; background: #0B0B0C; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16); }
+.origin__screen { position: relative; aspect-ratio: 1180 / 2556; border-radius: 42px; border-radius: 13.2cqw; overflow: hidden; background: #000; isolation: isolate; }
+/* the film fills the screen the way the component's does (object-cover): the
+   clip is 9:16 and the screen is narrower, so a ninth of each side is off it */
+.origin__video { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+/* The phone's own furniture, drawn over the film: it is a camera clip, not
+   a recording of a screen. A little shade under the status bar keeps it
+   readable over a bright wall. */
+.origin__screen::before { content: ""; position: absolute; z-index: 1; inset: 0 0 auto; height: 16%; background: linear-gradient(rgba(0, 0, 0, .4), rgba(0, 0, 0, 0)); pointer-events: none; }
+.origin__status { position: absolute; z-index: 4; top: 9px; top: 2.75cqw; left: 0; right: 0; height: 28px; height: 8.9cqw; display: flex; align-items: center; justify-content: space-between; padding: 0 8.5% 0 11.5%; color: #fff; font: 600 13px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", Arial, sans-serif; font-size: 4.15cqw; letter-spacing: -.01em; pointer-events: none; }
+.origin__clock { font-variant-numeric: tabular-nums; }
+.origin__signal { display: block; width: auto; height: 10px; height: 3.2cqw; fill: currentColor; }
+.origin__island { position: absolute; z-index: 4; top: 9px; top: 2.75cqw; left: 34%; width: 32%; height: 28px; height: 8.9cqw; border-radius: 999px; background: #000; pointer-events: none; }
+.origin__home { position: absolute; z-index: 4; left: 33%; right: 33%; bottom: 7px; bottom: 2.2cqw; height: 4px; height: max(3px, 1.3cqw); border-radius: 999px; background: rgba(255, 255, 255, .92); pointer-events: none; }
 /* the same block on the home page, where it is the first thing under the hero
    and has to clear the dissolve */
 .origin--home { padding-top: calc(28px + var(--hero-fade)); }
@@ -553,24 +578,24 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* The whole screen is the play control: a 30% scrim and one glyph. It is up
    while the film waits. Over a playing film it shows only while the mouse is
    moving, so pressing play does not leave a pause sign on the picture. */
-.playpause { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; width: 100%; padding: 0; border: 0; background: rgba(0, 0, 0, .3); color: #fff; cursor: pointer; -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; transition: opacity .24s ease-out; }
-.playpause:focus-visible { outline: 2px solid var(--accent); outline-offset: -8px; border-radius: var(--screen-r); }
+.playpause { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; width: 100%; padding: 0; border: 0; background: rgba(0, 0, 0, .3); color: #fff; cursor: pointer; -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; transition: opacity .24s ease-out; }
+.playpause:focus-visible { outline: 2px solid var(--accent); outline-offset: -8px; border-radius: 42px; border-radius: 13.2cqw; }
 .origin__film:not(.has-controls) :is(.playpause, .sound, .origin__wait) { display: none; }
 .origin__film:not(.has-controls) .scrub { visibility: hidden; }
 .origin__film.is-playing .playpause { opacity: 0; }
 .origin__film.is-playing.is-awake .playpause, .origin__film.is-playing .playpause:focus-visible { opacity: 1; }
 .origin__film.is-scrubbing .playpause { opacity: 0; }
 /* the glyph that leaves shrinks away fast; the one that arrives lands on the spring */
-.playpause__glyph { grid-area: 1 / 1; width: 44px; height: 44px; transform: scale(0); transition: transform .18s cubic-bezier(.4, 0, 1, 1); }
+.playpause__glyph { grid-area: 1 / 1; width: 40px; width: 13cqw; height: 40px; height: 13cqw; transform: scale(0); transition: transform .18s cubic-bezier(.4, 0, 1, 1); }
 .playpause__glyph svg { display: block; width: 100%; height: 100%; fill: currentColor; }
 .playpause__glyph--play { transform-origin: 31.25% 50%; }
 .playpause__glyph--pause { transform-origin: 62.5% 50%; }
 .origin__film:not(.is-playing) .playpause__glyph--play, .origin__film.is-playing .playpause__glyph--pause { transform: scale(1); transition: transform .9s var(--spring-pop); }
 /* asked to play and still fetching: a ring round the glyph, after a beat */
-.origin__wait { position: absolute; z-index: 2; inset: 0; margin: auto; width: 72px; height: 72px; border: 2px solid rgba(255, 255, 255, .26); border-top-color: #fff; border-radius: 50%; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+.origin__wait { position: absolute; z-index: 3; inset: 0; margin: auto; width: 68px; width: 22cqw; height: 68px; height: 22cqw; border: 2px solid rgba(255, 255, 255, .26); border-top-color: #fff; border-radius: 50%; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
 .origin__film.is-waiting .origin__wait { opacity: 1; transition-delay: .35s; animation: origin-wait .8s linear infinite; }
 @keyframes origin-wait { to { transform: rotate(360deg); } }
-.sound { position: absolute; z-index: 3; right: 14px; bottom: 14px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid rgba(234, 232, 227, .18); border-radius: 999px; background: rgba(9, 15, 21, .62); color: #EAE8E3; cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: background .2s ease, border-color .2s ease, transform .2s ease; }
+.sound { position: absolute; z-index: 3; right: 14px; right: 4.6cqw; bottom: 26px; bottom: 8.4cqw; display: grid; place-items: center; width: 40px; width: max(38px, 12.6cqw); height: 40px; height: max(38px, 12.6cqw); padding: 0; border: 1px solid rgba(234, 232, 227, .18); border-radius: 999px; background: rgba(9, 15, 21, .62); color: #EAE8E3; cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: background .2s ease, border-color .2s ease, transform .2s ease; }
 .sound:hover { background: rgba(9, 15, 21, .85); border-color: rgba(234, 232, 227, .38); }
 .sound:active { transform: scale(.94); }
 .sound svg { width: 16px; height: 16px; display: block; }
@@ -582,25 +607,25 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    --wide is how much of the row the bar has (always all of it under a finger,
    where there is no hover to grow it first and the bar must not move away
    from the touch). */
-.scrub { --open: 0; --wide: var(--open); position: relative; height: 40px; margin-top: 16px; border-radius: 8px; cursor: grab; touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+.scrub { --open: 0; --wide: var(--open); position: relative; width: min(100%, 372px); height: 40px; margin-top: 26px; border-radius: 8px; cursor: grab; touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 .scrub:active { cursor: grabbing; }
 .scrub.is-held, .scrub:focus-visible { --open: 1; }
 /* the ring hugs the row: the times sit 4px under it */
 .scrub:focus-visible { outline-offset: 0; }
 .scrub__bar { position: absolute; top: 50%; left: calc((1 - var(--wide)) * 46px); right: calc((1 - var(--wide)) * 46px); height: calc(5px + var(--open) * 23px); opacity: calc(.7 + var(--open) * .3); transform: translateY(-50%); transition: .3s cubic-bezier(.25, .1, .35, 1); transition-property: left, right, height, opacity; }
 /* pulled past an end it stretches from the other end and thins; let go, it springs back */
-.scrub__track { position: absolute; inset: 0; border-radius: 8px; overflow: hidden; background: rgba(26, 24, 21, .16); transform: scale(var(--sx, 1), var(--sy, 1)); }
+.scrub__track { position: absolute; inset: 0; border-radius: 8px; overflow: hidden; background: #EFEEEC; transform: scale(var(--sx, 1), var(--sy, 1)); }
 .scrub[data-pull="left"] .scrub__track { transform-origin: 100% 50%; }
 .scrub[data-pull="right"] .scrub__track { transform-origin: 0 50%; }
 .scrub.is-settling .scrub__track { transition: transform .8s var(--spring-snap); }
-.scrub__fill { position: absolute; inset: 0; background: rgba(26, 24, 21, .8); transform: scaleX(0); transform-origin: 0 50%; }
-.scrub__time { position: absolute; top: 50%; font: 400 11px/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-soft); transform: translateY(calc(-50% + var(--wide) * (18px + var(--open) * 12px))); transition: transform .24s ease-out; pointer-events: none; }
+.scrub__fill { position: absolute; inset: 0; background: rgba(18, 18, 18, .8); transform: scaleX(0); transform-origin: 0 50%; }
+.scrub__time { position: absolute; top: 50%; font: 400 12px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-variant-numeric: tabular-nums; color: #121212; transform: translateY(calc(-50% + var(--wide) * (18px + var(--open) * 12px))); transition: transform .24s ease-out; pointer-events: none; }
 .scrub__time--now { left: 0; }
 .scrub__time--end { right: 0; }
-/* the orange stays a fill: a hairline, and a tag with ink on it */
+/* the component's caret: an orange hairline, and the second it is over in orange on the card */
 .scrub__caret { position: absolute; top: 0; left: 0; width: 1px; height: 100%; background: var(--accent); opacity: 0; transform: translateX(var(--x, 0px)); pointer-events: none; transition: opacity .2s ease; }
 .scrub.is-aiming .scrub__caret, .origin__film.is-scrubbing .scrub__caret { opacity: 1; }
-.scrub__tag { position: absolute; bottom: calc(100% - 2px); left: 50%; padding: 3px 5px; border-radius: 4px; background: var(--accent); color: var(--on-accent); font: 500 10px/1 var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; transform: translateX(calc(-50% + var(--tag-shift, 0px))); }
+.scrub__tag { position: absolute; bottom: calc(100% - 4px); left: 50%; padding: 2px 4px; border-radius: 4px; background: #fff; color: var(--accent); font: 400 10px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; transform: translateX(calc(-50% + var(--tag-shift, 0px))); }
 @media (hover: hover) and (pointer: fine) {
     .scrub:hover { --open: 1; }
 }
@@ -669,7 +694,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 
 @media (max-width: 900px) {
     .origin { grid-template-columns: 1fr; gap: 28px; justify-items: start; }
-    .origin__film { justify-self: start; max-width: 340px; }
+    .origin__film { justify-self: start; max-width: 480px; }
 }
 
 @media (max-width: 720px) {
@@ -694,7 +719,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
        and was invisible. Shorter ramp here, and real clearance for it. */
 :root { --hero-fade: clamp(120px, 20vh, 200px); }
     .about, .band--first, .origin--home { padding-top: calc(24px + var(--hero-fade)); }
-    .origin__film { --screen-r: 34px; }
+    .origin__film { padding: 28px 20px 40px; border-radius: 40px; }
     /* stacked on a phone, so it needs more room before it mounts */
     .booker__frame { min-height: 1100px; }
     .contact { padding-top: 80px; padding-bottom: 80px; }

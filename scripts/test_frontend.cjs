@@ -325,13 +325,15 @@ test('scrolling below a settled hero does not restart its animation loop', () =>
 });
 
 // The origin film as a player: the screen, the sound chip and the bar under
-// it. The bar is 400px wide and starts 100px in; the film is 49.63s long.
+// it. The bar is 400px wide and starts 100px in, inside a card with 60px to
+// spare on each side; the film is 49.63s long.
 function origin() {
     const p = page(), video = new Element(), film = new Element(), surface = new Element(), sound = new Element(), scrub = new Element();
     const parts = {};
     video.parent = film; video.muted = false; video.duration = 49.63; video.dataset.duration = '49.63';
     scrub.querySelector = selector => parts[selector] ||= new Element();
     scrub.getBoundingClientRect = () => ({ left: 100, width: 400 });
+    film.getBoundingClientRect = () => ({ left: 40, right: 560 });
     scrub.setPointerCapture = () => {};
     p.ids['origin-video'] = video; p.ids.playpause = surface; p.ids.sound = sound; p.ids.scrub = scrub;
     p.run('origin.js');
@@ -380,6 +382,11 @@ test('origin bar scrubs, stretches past its end and goes back to playing', () =>
     p.near(49.63);
     assert.equal(p.scrub.dataset.pull, 'right');
     assert.ok(Number(p.scrub.style['--sx']) > 1.05 && Number(p.scrub.style['--sy']) < 1);
+    // a card with no room to spare keeps the bar inside it
+    p.film.getBoundingClientRect = () => ({ left: 88, right: 512 });
+    p.scrub.emit('pointermove', { pointerType: 'mouse', clientX: 700 });
+    assert.equal(p.scrub.style['--sx'], '1.0100');
+    p.film.getBoundingClientRect = () => ({ left: 40, right: 560 });
     p.scrub.emit('pointermove', { pointerType: 'mouse', clientX: 200 });
     p.scrub.emit('pointerup', { pointerType: 'mouse', clientX: 200 });
     p.scrub.emit('lostpointercapture', {});
