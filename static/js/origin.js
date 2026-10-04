@@ -1,7 +1,8 @@
-// The origin film as a player: a screen that waits on its poster until it is
-// pressed, and a bar under it to scrub with. A vanilla port of the Skiper
-// "iPhone" player (motion/react there, CSS transitions and a few custom
-// properties here). The film has a voice, so nothing starts it but a press.
+// The origin film as the player he picked, Skiper's "video player 002": the
+// film inside an iPhone that waits on its poster until it is pressed, and a
+// bar under it to scrub with. A vanilla port (motion/react there, CSS
+// transitions and a few custom properties here). The film has a voice, so
+// nothing starts it but a press.
 (() => {
     const video = document.getElementById('origin-video');
     const surface = document.getElementById('playpause');
@@ -164,7 +165,10 @@
         const on = clamp(x, 0, box.width);
         // The further past the end, the less the bar gives.
         const give = (px) => 2 * (1 / (1 + Math.exp(-px / STRETCH)) - .5) * STRETCH;
-        const past = !scrubbing ? 0 : x < 0 ? -give(-x) : x > box.width ? give(x - box.width) : 0;
+        // ...and never past the edge of its card, which is close on a phone
+        const card = film.getBoundingClientRect();
+        const room = (side) => Math.max(0, (side < 0 ? box.left - card.left : card.right - box.left - box.width) - 8);
+        const past = !scrubbing ? 0 : x < 0 ? -Math.min(give(-x), room(-1)) : x > box.width ? Math.min(give(x - box.width), room(1)) : 0;
         const seconds = box.width ? on / box.width * duration : 0;
         const caret = on + past;
         scrub.style.setProperty('--x', `${caret.toFixed(1)}px`);
@@ -268,6 +272,19 @@
         dwell = setTimeout(() => warm('metadata'), 150);
     });
     film.addEventListener('pointerleave', () => clearTimeout(dwell));
+
+    // The phone tells the visitor's own time, the way their own phone would.
+    const dial = document.getElementById('origin-clock');
+    function tell() {
+        const parts = new Intl.DateTimeFormat([], { hour: 'numeric', minute: '2-digit' }).formatToParts(new Date());
+        const part = (type) => (parts.find((item) => item.type === type) || {}).value;
+        const text = `${part('hour')}:${part('minute')}`;
+        if (part('hour') && part('minute') && dial.textContent !== text) dial.textContent = text;
+    }
+    if (dial) {
+        tell();
+        setInterval(tell, 15000);
+    }
 
     paintTime(0);
     paintSound();
