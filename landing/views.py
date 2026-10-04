@@ -81,7 +81,7 @@ def _careers_context(form, job=None):
             "@context": "https://schema.org", "@type": "JobPosting", "@id": url + "#job", "url": url,
             "title": job["title"], "description": description,
             "datePosted": JOBS_UPDATED.isoformat(), "employmentType": job["employment_type"], "directApply": True,
-            "hiringOrganization": {"@type": "Organization", "@id": CANONICAL_ORIGIN + "/#org", "name": "Defex", "sameAs": CANONICAL_ORIGIN + "/", "logo": CANONICAL_ORIGIN + "/static/img/apple-touch-icon.png"},
+            "hiringOrganization": {"@type": "Organization", "@id": CANONICAL_ORIGIN + "/#org", "name": "Defex", "legalName": "Defex Robotics, Inc.", "sameAs": CANONICAL_ORIGIN + "/", "logo": CANONICAL_ORIGIN + "/static/img/apple-touch-icon.png"},
             "jobLocation": {"@type": "Place", "address": {"@type": "PostalAddress", "addressLocality": "San Francisco", "addressRegion": "CA", "addressCountry": "US"}},
             "baseSalary": {"@type": "MonetaryAmount", "currency": "USD", "value": {"@type": "QuantitativeValue", "minValue": job["pay_min"], "maxValue": job["pay_max"], "unitText": job["pay_unit"]}},
         }

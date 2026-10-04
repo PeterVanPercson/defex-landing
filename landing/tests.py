@@ -782,6 +782,16 @@ class OfficialPagesTests(SimpleTestCase):
         for path in self.PAGES:
             self.assertIn("https://defexrobotics.com" + path, self.client.get("/sitemap.xml").content.decode())
 
+    def test_legal_pages_name_the_delaware_corporation_and_its_office(self):
+        for path in ("/privacy/", "/terms/"):
+            page = self.client.get(path).content.decode()
+            self.assertIn("Defex Robotics, Inc.", page, path)
+            self.assertIn("a Delaware corporation", page, path)
+            self.assertIn("128 York Street, 2nd floor, San Francisco, CA 94110", page, path)
+        home = self.client.get("/").content.decode()
+        self.assertIn('"postalCode": "94110"', home)
+        self.assertIn('"entity": "Delaware C corporation"', self.client.get("/company.json").content.decode())
+
     def test_no_personal_inbox_on_the_public_pages(self):
         for path in ("/", "/why-us/", "/careers/") + self.PAGES:
             self.assertNotIn("mailto:husan@", self.client.get(path).content.decode(), path)
