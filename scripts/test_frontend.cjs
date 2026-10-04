@@ -683,3 +683,90 @@ test('duplicate application clicks are blocked and back navigation restores subm
     assert.equal(p.submit.textContent, 'Send application');
     assert.equal(p.form.hasAttribute('aria-busy'), false);
 });
+
+// The pinned claims (static/js/steps.js): four cards, four bars, a root whose
+// top the test places, and a media query the test answers.
+function steps({ roomy = true, reduced = false } = {}) {
+    const p = page({ reduced }), root = new Element();
+    const cards = [0, 1, 2, 3].map(() => new Element()), bars = [0, 1, 2, 3].map(() => new Element());
+    const media = p.context.matchMedia;
+    p.context.matchMedia = query => query.includes('min-width') ? { matches: roomy, addEventListener() {} } : media(query);
+    root.getBoundingClientRect = () => ({ top: 3000 - p.context.scrollY });
+    root.querySelectorAll = selector => selector === '.feature' ? cards : bars;
+    p.ids.steps = root;
+    p.context.scrollTo = (x, y) => { p.context.scrollY = y; };
+    p.run('steps.js');
+    const scroll = (y) => { p.context.scrollY = y; p.event('scroll'); p.frame(); };
+    const on = () => cards.findIndex(card => card.classList.contains('is-on'));
+    return { ...p, root, cards, bars, scroll, on };
+}
+
+test('the claims pin on a roomy screen and the scroll walks through them', () => {
+    const p = steps();
+    assert.equal(p.root.classList.contains('is-pinned'), true);
+    assert.equal(p.on(), 0);
+    // the pin starts a nav's height (64) above the root's top; one card is 62% of the 720 viewport
+    const start = 3000 - 64, stretch = 720 * 0.62;
+    p.scroll(start + stretch * 1.5);
+    assert.equal(p.on(), 1);
+    assert.equal(p.bars[0].style['--fill'], '1.000');
+    assert.equal(p.bars[1].style['--fill'], '0.500');
+    assert.equal(p.bars[2].style['--fill'], '0.000');
+    p.scroll(start + stretch * 9);
+    assert.equal(p.on(), 3);
+    p.bars[2].emit('click');
+    p.event('scroll'); p.frame();
+    assert.equal(p.on(), 2);
+});
+
+test('the claims stay stacked on a phone and under reduced motion', () => {
+    for (const options of [{ roomy: false }, { reduced: true }]) {
+        const p = steps(options);
+        assert.equal(p.root.classList.contains('is-pinned'), false);
+        p.scroll(4000);
+        assert.equal(p.on(), -1);
+    }
+});
+
+// The eased wheel (static/js/smooth.js).
+function smooth({ reduced = false, fine = true } = {}) {
+    const p = page({ reduced });
+    const media = p.context.matchMedia;
+    p.context.matchMedia = query => query.includes('pointer: fine') ? { matches: fine } : media(query);
+    p.doc.documentElement.scrollHeight = 10000;
+    p.doc.body = new Element();
+    const moves = [];
+    p.context.scrollTo = (x, y) => { p.context.scrollY = y; moves.push(y); };
+    p.run('smooth.js');
+    const wheel = (deltaY, more = {}) => {
+        const event = { deltaY, deltaX: 0, deltaMode: 0, target: null, prevented: false, preventDefault() { this.prevented = true; }, ...more };
+        p.event('wheel', event);
+        return event;
+    };
+    return { ...p, moves, wheel };
+}
+
+test('a wheel tick glides the page the same distance instead of stepping it', () => {
+    const p = smooth();
+    assert.equal(p.wheel(100).prevented, true);
+    p.frame();
+    assert.ok(p.context.scrollY > 0 && p.context.scrollY < 100, 'the first frame covers only part of the tick');
+    for (let i = 0; i < 200 && p.frames.size; i++) p.frame();
+    assert.equal(p.context.scrollY, 100);
+    assert.ok(p.moves.length > 20, 'the tick is spread over many frames');
+    assert.ok(p.moves.every((y, i) => i === 0 || y >= p.moves[i - 1]), 'and never runs backwards');
+});
+
+test('the eased wheel stays out of the way of pinch-zoom, reduced motion and touch', () => {
+    assert.equal(smooth().wheel(100, { ctrlKey: true }).prevented, false);
+    assert.equal(smooth({ reduced: true }).wheel(100).prevented, false);
+    assert.equal(smooth({ fine: false }).wheel(100).prevented, false);
+});
+
+test('a key press hands the page back to the browser mid-glide', () => {
+    const p = smooth();
+    p.wheel(600);
+    p.frame();
+    p.event('keydown');
+    assert.equal(p.frames.size, 0);
+});
