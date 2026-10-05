@@ -54,7 +54,8 @@
     let navPast = null;
     function syncNav() {
         const y = scrollY;
-        const past = y > navFlipAt && y < navDarkAgainAt && !darkBands.some(([a, b]) => y > a && y < b);
+        // a band's start counts as inside it, so two dark bands that touch hand over with no paper frame between them
+        const past = y > navFlipAt && y < navDarkAgainAt && !darkBands.some(([a, b]) => y >= a && y < b);
         if (past === navPast) return;
         navPast = past;
         document.documentElement.classList.toggle('past-hero', past);

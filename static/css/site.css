@@ -1721,7 +1721,25 @@ body { font: 400 17px/1.55 var(--sans); }
 
 /* Careers left the home page (his call, 2026-10-04): whichever paper band now
    comes last clears the dissolve into the closing dark block */
-.sheet:has(+ .contact.dark) { padding-bottom: calc(var(--close-fade) + clamp(28px, 5vh, 52px)); }
+.sheet:not(.inline--black):has(+ .contact.dark) { padding-bottom: calc(var(--close-fade) + clamp(28px, 5vh, 52px)); }
+
+/* Works with us on home (his call, 2026-10-04): it sits between Meet the
+   robot and the close, both black, so it is black too, with white marks and
+   a light label. Neither neighbour dissolves into paper any more: Meet ends
+   on black and the close starts on black. The band carries data-nav-dark, so
+   the bar stays dark over all three; the dissolves keep a zero height, which
+   hero-film.js still reads. A pointer or a tap brightens a mark rather than
+   showing its colours, which are too dark for this ground. */
+/* Meet's black at the top, the close's at the bottom, so neither edge shows */
+.sheet.inline--black { background: linear-gradient(#050505, #020506); padding-block: clamp(20px, 4vh, 44px) clamp(56px, 9vh, 104px); }
+.inline--black .inline__k { color: rgba(244, 244, 240, .62); }
+.inline--black .roll__logo { filter: grayscale(1) invert(1) contrast(.9); opacity: .8; }
+.inline--black .roll__logo[data-opaque] { filter: url(#roll-ink-light); }
+.inline--black .roll__i:hover .roll__logo, .inline--black .roll__i.is-touched .roll__logo { filter: grayscale(1) invert(1) contrast(.9); opacity: 1; }
+.inline--black .roll__i:hover .roll__logo[data-opaque], .inline--black .roll__i.is-touched .roll__logo[data-opaque] { filter: url(#roll-ink-light); }
+.meet-sec.meet-sec--flow:has(+ .inline--black) { padding-bottom: clamp(56px, 9vh, 104px); }
+.meet-sec.meet-sec--flow:has(+ .inline--black)::after { height: 0; }
+.inline--black + .contact.dark::before { height: 0; }
 
 @media (max-width: 900px) {
     .feature { grid-template-columns: minmax(0, 1fr); }

@@ -153,6 +153,19 @@ class SiteTests(SimpleTestCase):
         self.assertIn('<input type="text" inputmode="email" name="email" autocomplete="email"', careers)
         self.assertNotIn('type="email"', careers)
 
+    def test_works_with_us_is_black_on_home(self):
+        """His call, 2026-10-04: between Meet the robot and the close, Works with
+        us is black with white marks, not a strip of paper; the bar stays dark."""
+        home = self.client.get("/").content.decode()
+        self.assertIn('class="inline sheet inline--black" id="in-line" data-nav-dark', home)
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertIn(".inline--black .roll__logo { filter: grayscale(1) invert(1) contrast(.9);", css)
+        self.assertIn(".meet-sec.meet-sec--flow:has(+ .inline--black)::after { height: 0; }", css)
+        self.assertIn(".inline--black + .contact.dark::before { height: 0; }", css)
+        # Partners stays on paper, and /why-us/ keeps its own dark row
+        self.assertIn('class="inline sheet" id="partners"', home)
+        self.assertNotIn("inline--black", self.client.get("/why-us/").content.decode())
+
     def test_past_its_edges_the_home_page_is_black(self):
         """What shows when a page is pulled past its top or bottom is the root's
         colour. Home opens and closes on black; with the body's paper showing
