@@ -1573,6 +1573,10 @@ h1, h2, h3, h4, input, textarea, select, .wy, .cookie, .meet { text-transform: n
 /* the browser sets buttons apart (text-transform: none); here they follow
    whatever holds them */
 button { text-transform: inherit; }
+/* Meet's explorer is drawn by meet.css, which arrives after the page; until it
+   does, its text would take the page's face, and its bold card titles would
+   fetch a bold Garamond the page never shows (35 KB) */
+.meet { font-family: var(--geist); }
 ::placeholder { text-transform: lowercase; }
 .wy ::placeholder { text-transform: none; }
 
