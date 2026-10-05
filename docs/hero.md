@@ -104,6 +104,56 @@ caps the two sets at 15 MB and 10 MB and pins the count at 450.
 `data-frames-sm` on the `<video>` tell the script what is there. The count is
 what maps scroll to frame, so it must match the files.
 
+### The previews (what a slow connection sees first)
+
+The full sets are 14.4 MB (1920) and 7.8 MB (1200). On a 12 Mbps connection
+only 25 to 45 stills have arrived when a visitor first scrolls, a second or
+two in, so before asset version 191 the film froze on the last still that had
+arrived and then jumped: measured over HTTP/2 at 12 Mbps and 60 ms (the
+`emulateNetworkConditions` 4G profile, 1440×900 at 2× and 390×844 at 3×), the
+still on screen trailed the scroll by a median 39 stills and up to 287 on a
+desktop (23 and 106 on a phone), and 69% of the display frames of a two-second
+scroll showed no change at all.
+
+So every second still also ships small: `static/defex/frames/640/` (640×360,
+225 files, 1.4 MB) and `static/defex/frames/400/` (400×320, the phone crop,
+1.0 MB), AVIF via libaom (`heif-enc -A -q 45 -p speed=2 -p chroma=420`, from
+the full stills resized with ImageMagick, so the moment, crop and colour are
+the same). `data-preview`, `data-preview-sm` and `data-preview-step` on the
+`<video>` point the script at them; a set that is missing costs three requests
+and the full stills carry on alone.
+
+How `hero-film.js` uses them:
+
+- **Fetched first.** Sixteen at a time, the ones just ahead of the scroll
+  first, then the whole film coarse to fine. Until every preview has been asked
+  for, the full stills give way: none are fetched while the page is moving (one
+  asked for on the way past lands after the reader has gone), and only the two
+  under the scroll once it rests. A preview is never fetched for a still whose
+  full version is already here.
+- **Drawn only in a gap.** For each frame the order is: the full still or one
+  within three, the preview of that moment, a full still within six, then
+  whichever is nearest. A soft frame of the right moment reads as motion; a
+  sharp frame of the wrong one reads as lag. At the top of the page the poster
+  stays up until the first full still lands, so the page never opens soft.
+- **Decoded a few at a time.** Previews are decoded from the shown frame to a
+  little past where the scroll is heading, at most 96 stills ahead, and only
+  where the full still has not arrived; the rest are closed.
+
+Same profile, after:
+
+| | trail, median / 90% / max (stills) | distinct stills in a 2.2 s scroll | all previews in |
+|---|---|---|---|
+| desktop before | 39 / 238 / 287 | 32 | |
+| desktop after | 11 / 12 / 12 | 121 | 1.9 s |
+| phone before | 23 / 64 / 106 | 39 | |
+| phone after | 11 / 12 / 12 | 122 | 1.6 s |
+
+The 11 is the follow's own smoothing, the same as on a fast connection. Once
+the scroll rests the full still replaces the preview in about a quarter of a
+second at 12 Mbps. On a fast connection nothing changes: every full still is
+there before the first scroll and no preview is drawn.
+
 ### The video (the fallback)
 
 | Path | What |
@@ -278,6 +328,11 @@ pinned to an old number silently serves stale assets. The share card
 (`static/img/og.jpg`) carries it too, because Telegram, LinkedIn and X cache
 `og:image` hard and will otherwise keep showing the previous card.
 
-Range requests must stay enabled on the hero MP4s. The stills sit under
-`static/defex/`, so the second header route covers them too (a day at the
-browser, a year at the edge).
+Range requests must stay enabled on the hero MP4s. The stills and previews sit
+under `static/defex/`, which the third header route makes immutable for a year.
+
+The stills do **not** carry `DEFEX_ASSET_VERSION`. They are 15 MB a desktop
+visitor and they last changed in PR #21, but until asset version 191 their
+`?v=` moved with every deploy, so every returning visitor downloaded the whole
+set again after each release. They carry `DEFEX_FILM_VERSION` (`film_v` in the
+templates) instead, which stays at 132 until a still or a preview changes.

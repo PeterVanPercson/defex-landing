@@ -6,6 +6,7 @@ from .discovery import CANONICAL_ORIGIN, organization_jsonld
 
 def asset_version(request):
     return {"asset_v": settings.DEFEX_ASSET_VERSION,
+            "film_v": settings.DEFEX_FILM_VERSION,
             "cal_link": settings.CAL_LINK,
             "web_analytics": settings.WEB_ANALYTICS,
             "canonical_url": CANONICAL_ORIGIN + iri_to_uri(request.path),

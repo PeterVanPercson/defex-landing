@@ -29,8 +29,12 @@
             <!-- The film as 450 stills (static/defex/frames), drawn on the canvas by
                  hero-film.js: the frame is a function of the scroll position, at
                  whatever rate the page moves, with nothing to seek and nothing to
-                 buffer. The <video> holds the poster and is the fallback scrubber
-                 where the browser cannot decode the stills. -->
+                 buffer. A small preview of every second still (frames/640, frames/400)
+                 arrives first, so a scroll on a slow connection never waits on the
+                 full ones. The stills carry their own version (film_v), so a deploy
+                 that leaves them alone leaves them cached. The <video> holds the
+                 poster and is the fallback scrubber where the browser cannot decode
+                 the stills. -->
             <div class="hero__screen">
                 <video class="hero__film" id="film" muted playsinline preload="none" disablepictureinpicture aria-hidden="true"
                        width="1920" height="1080"
@@ -40,7 +44,8 @@
                        data-src="{% static 'defex/assets/defex-intro-v4.mp4' %}?v={{ asset_v }}"
                        data-src-sm="{% static 'defex/assets/defex-intro-v4-sm.mp4' %}?v={{ asset_v }}"
                        data-frames="{% static 'defex/frames/1920/' %}" data-frames-sm="{% static 'defex/frames/1200/' %}"
-                       data-frame-count="450" data-frame-ext="avif" data-frame-size="1920x1080" data-frame-size-sm="1200x960" data-frame-v="{{ asset_v }}"></video>
+                       data-preview="{% static 'defex/frames/640/' %}" data-preview-sm="{% static 'defex/frames/400/' %}" data-preview-step="2"
+                       data-frame-count="450" data-frame-ext="avif" data-frame-size="1920x1080" data-frame-size-sm="1200x960" data-frame-v="{{ film_v }}"></video>
                 <canvas class="hero__film hero__film--frames" id="frames" width="1920" height="1080" aria-hidden="true" hidden></canvas>
             </div>
             <div class="lede">
