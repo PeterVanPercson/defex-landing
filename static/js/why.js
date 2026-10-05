@@ -185,7 +185,7 @@
             seated.style.opacity = t < 4.2 ? '0' : String(1 - gone);
             ring.style.strokeDashoffset = String(1 - E.inOut3(seg(t, 4.6, 5.5)));
             ring.style.opacity = String(1 - gone);
-            lamp.style.fill = t >= 5.45 && t < 7.3 ? '#FFD42A' : '#2A2A2A';
+            lamp.style.fill = t >= 5.45 && t < 7.3 ? '#3D63FF' : '#2A2A2A';
             const pop = t < 5.5 ? 0 : t < 7.2 ? E.outBack(seg(t, 5.5, 5.85)) : 1 - E.in2(seg(t, 7.2, 7.5));
             badge.style.transform = `scale(${pop.toFixed(3)})`;
         }, Number(arm.dataset.phase) || 0);
@@ -386,8 +386,8 @@
                 head.style.opacity = '0';
             }
             const lit = t >= START[3] + DRAW && t < 8.8;
-            bull.style.fill = lit ? '#FFD42A' : 'transparent';
-            ring.style.stroke = lit ? '#FFD42A' : '#F4F4F0';
+            bull.style.fill = lit ? '#5A7CFF' : 'transparent';
+            ring.style.stroke = lit ? '#5A7CFF' : '#F4F4F0';
         });
     }
 
