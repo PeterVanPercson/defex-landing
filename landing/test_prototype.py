@@ -57,3 +57,12 @@ class PrototypeTests(SimpleTestCase):
         self.assertIn(main, page)
         self.assertNotIn('Assembly', source)
 
+    def test_the_demo_never_starts_by_itself(self):
+        """His call, 2026-10-04: the prototype is shown, not played. Nothing links
+        to ?play=1, and the prototype ignores it, so old links open it idle too."""
+        source = (Path(settings.BASE_DIR) / 'prototype/src/main.ts').read_text()
+        self.assertNotIn("has('play')", source)
+        self.assertNotIn('startTour();},900', source)
+        for path in ('/', '/why-us/', '/prototype/', '/careers/', '/blog/'):
+            self.assertNotIn('?play=1', self.client.get(path).content.decode(), path)
+

@@ -27,7 +27,6 @@ const partButtons=all<HTMLButtonElement>('[data-part]');
 const presetButtons=all<HTMLButtonElement>('[data-preset]');
 const reuseButton=document.querySelector<HTMLButtonElement>('[data-controller="reuse"]')!;
 const isEmbed=new URLSearchParams(location.search).has('embed');
-const autoplay=new URLSearchParams(location.search).has('play');
 let config:Configuration={...DEFAULT_CONFIG};
 let currentView:View|'part'='overview';
 let controller:Controller='fixed';
@@ -337,7 +336,6 @@ function error(message:string){
 }
 worker.onerror=e=>error(e.message||'Reload the simulation to try again.');
 worker.onmessage=({data})=>{
-  if(data.type==='ready'&&autoplay&&scene&&!matchMedia('(prefers-reduced-motion: reduce)').matches)setTimeout(()=>{if(tourIndex<0&&!playing)startTour();},900);
   if(data.type==='ready'){
     ready=true;el('loading').hidden=true;
     el<HTMLButtonElement>('save-video').disabled=!scene||typeof MediaRecorder==='undefined';refreshControls();
