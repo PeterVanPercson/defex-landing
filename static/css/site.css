@@ -90,7 +90,8 @@ html:has(.hero) { background-color: #020506; }
     --line: rgba(234, 232, 227, .14);
     --rule: rgba(234, 232, 227, .34);
     --on-accent: #EAE8E3;
-    --em: #FFD42A;
+    /* his call, 2026-10-04: no yellow word on the dark grounds; the emphasis is the type */
+    --em: var(--ink);
     position: relative;
     background: var(--bg);
     color: var(--ink);
@@ -1638,8 +1639,8 @@ body { font: 400 17px/1.55 var(--sans); }
 .art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .art__w { fill: none; stroke: #F4F4F0; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .art__dim { fill: none; stroke: rgba(244, 244, 240, .26); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.art__y { fill: var(--yellow); }
-.art__ys { fill: none; stroke: var(--yellow); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.art__y { fill: #F4F4F0; }
+.art__ys { fill: none; stroke: #F4F4F0; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
 .art__f { fill: #F4F4F0; }
 .art__bad { fill: none; stroke: #FF5A1F; stroke-width: 3; stroke-linejoin: round; }
 .art__ghost { fill: rgba(244, 244, 240, .12); }
@@ -1778,7 +1779,7 @@ body { font: 400 17px/1.55 var(--sans); }
    ever set by it, so without the script the browser's caret stays. Blue on
    the light pages, yellow on the dark ones, as the emphasis is. */
 :root { --field: #FFFFFF; --caret: var(--blue); }
-.dark { --field: rgba(234, 232, 227, .07); --caret: #FFD42A; }
+.dark { --field: rgba(234, 232, 227, .07); --caret: #F4F4F0; }
 .wy { --caret: var(--yellow); }
 .field input, .field textarea, .field select { border: 0; border-radius: 16px; background: var(--field); font: 400 22px/1.4 var(--sans); color: var(--ink); }
 .field input, .field select { height: 64px; padding: 0 18px; }
