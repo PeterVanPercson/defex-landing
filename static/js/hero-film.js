@@ -157,7 +157,7 @@
         // decoding, rather than decoding it on the main thread to draw it
         const NEAR = 6;
         let inflight = 0, ready = 0, failed = 0, live = false, on = false;
-        let target = 0, shown = 0, drawn = -1, direction = 1;
+        let target = 0, shown = 0, drawn = -1, drawnSrc = null, drawnSoft = false, direction = 1;
         let tau = TAU_FOLLOW, lastMove = 0;
         let frameId = 0, running = false, lastTick = 0, firstTimer = 0;
         let ctxW = 0, ctxH = 0;
@@ -171,6 +171,22 @@
         let cursor = 0;
 
         const url = (i) => `${dir}f${String(i).padStart(4, '0')}.${ext}${v}`;
+
+        // The preview: every second still at a third of the width, about 6 KB
+        // each (1.4 MB for the whole film, 1 MB on a phone). It is fetched
+        // ahead of the full stills, so the first scroll on a slow connection
+        // always has the right moment to show instead of freezing on the last
+        // still that arrived and then jumping. It is only drawn while the full
+        // still for that moment is missing, and a few are decoded at a time.
+        const pvDir = useBitmaps ? (dir === base ? film.dataset.preview : film.dataset.previewSm) : '';
+        const PV_STEP = Number(film.dataset.previewStep) || 2;
+        const PV_INFLIGHT = 16, PV_AHEAD = 48, PV_KEEP_BEHIND = 12;
+        const pvOrder = order.filter((i) => i % PV_STEP === 0);
+        const pvBlobs = new Array(N).fill(null), pvBitmaps = new Array(N).fill(null);
+        const pvState = new Uint8Array(N); // 0 idle, 1 loading, 2 here, 3 failed
+        const pvDecoding = new Uint8Array(N);
+        let pvOn = Boolean(pvDir), pvInflight = 0, pvCursor = 0, pvFailed = 0, pvDecoded = 0;
+        const pvUrl = (i) => `${pvDir}f${String(i).padStart(4, '0')}.${ext}${v}`;
 
         function request(i, priority) {
             if (state[i]) return false;
@@ -186,7 +202,7 @@
                 ready++;
                 imgs[i] = img;
                 if (Math.abs(i - Math.round(shown)) <= AHEAD) predecode(i);
-                if (!live || Math.abs(i - Math.round(shown)) < Math.abs(drawn - Math.round(shown))) paint();
+                if (!live || drawnSoft || Math.abs(i - Math.round(shown)) < Math.abs(drawn - Math.round(shown))) paint();
                 pump();
             };
             img.onerror = () => {
@@ -220,18 +236,68 @@
             }
             return true;
         }
+        function requestPreview(i) {
+            if (!pvOn || pvState[i] || blobs[i]) return;
+            pvState[i] = 1;
+            pvInflight++;
+            fetch(pvUrl(i), { priority: 'high' })
+                .then((response) => (response.ok ? response.blob() : Promise.reject(response.status)))
+                .then((blob) => {
+                    pvInflight--;
+                    if (!on) return;
+                    pvBlobs[i] = blob;
+                    pvState[i] = 2;
+                    if (Math.abs(i - Math.round(target)) <= PV_AHEAD && !blobs[i]) decodePreview(i);
+                    pump();
+                })
+                .catch(() => {
+                    pvInflight--;
+                    pvState[i] = 3;
+                    // a missing preview set costs three requests, then the full stills carry on alone
+                    if (++pvFailed >= 3) pvOn = false;
+                    if (on) pump();
+                });
+        }
+        function decodePreview(i) {
+            if (i < 0 || i >= N || !pvBlobs[i] || pvBitmaps[i] || pvDecoding[i]) return;
+            pvDecoding[i] = 1;
+            createImageBitmap(pvBlobs[i]).then((bm) => {
+                pvDecoding[i] = 0;
+                if (!on) { bm.close(); return; }
+                pvBitmaps[i] = bm;
+                pvDecoded++;
+                paint();
+            }).catch(() => { pvDecoding[i] = 0; });
+        }
         // Fill the pipe: the frames under and just ahead of where the scroll
         // is heading first (those may run a little over the cap, so a pipe
         // full of far-off stills never holds them up), a few behind, then the
-        // coarse-to-fine order for the rest of the film.
+        // coarse-to-fine order for the rest of the film. Until every preview
+        // has been asked for, the full stills give way to them: none while
+        // the page is moving (the previews carry the motion, and a full still
+        // asked for on the way past lands after the reader has gone), and
+        // only the two under the scroll once it rests.
         function pump() {
             if (!on) return;
             const f = clamp(Math.round(target), 0, N - 1);
-            for (let d = 0; d <= AHEAD; d++) {
-                if (inflight >= MAX_INFLIGHT + (d < 4 ? 4 : 0)) break;
+            const previewing = pvOn && pvCursor < pvOrder.length;
+            if (!previewing || performance.now() - lastMove > 120) for (let d = 0; d <= AHEAD; d++) {
+                if (inflight >= (previewing ? 2 : MAX_INFLIGHT) + (d < 4 ? 4 : 0)) break;
                 const i = f + d * direction;
                 if (i >= 0 && i < N) request(i, d < 8 ? 'high' : 'auto');
             }
+            if (pvOn) {
+                // the previews just ahead of the scroll (the first few over the cap,
+                // past any still in flight for where it was), then the film coarse to fine
+                const g = f - f % PV_STEP;
+                for (let d = 0; d <= PV_AHEAD; d += PV_STEP) {
+                    if (pvInflight >= PV_INFLIGHT + (d < 8 ? 4 : 0)) break;
+                    const i = g + d * direction;
+                    if (i >= 0 && i < N) requestPreview(i);
+                }
+                while (pvInflight < PV_INFLIGHT && pvCursor < pvOrder.length) requestPreview(pvOrder[pvCursor++]);
+            }
+            if (previewing) return;
             for (let d = 1; d <= BEHIND && inflight < MAX_INFLIGHT; d++) {
                 const i = f - d * direction;
                 if (i >= 0 && i < N) request(i, 'auto');
@@ -266,12 +332,24 @@
         // flick does not run out of decoded stills.
         function warm() {
             const f = Math.round(shown);
+            if (pvDecoded || pvOn) {
+                // previews from here to a little past where the scroll is heading, at
+                // most 96 stills (40 MB decoded on a desktop), only where the full
+                // still has not arrived; the rest closed
+                const lead = Math.min(96, Math.abs(Math.round(target) - f) + PV_AHEAD);
+                for (let d = 0; d <= lead; d += PV_STEP) { const i = f - f % PV_STEP + d * direction; if (!blobs[i]) decodePreview(i); }
+                for (let i = 0; i < N; i += PV_STEP) {
+                    if (pvBitmaps[i] && pvBitmaps[i] !== drawnSrc && ((i - f) * direction > lead + PV_STEP || (f - i) * direction > PV_KEEP_BEHIND)) {
+                        pvBitmaps[i].close(); pvBitmaps[i] = null; pvDecoded--;
+                    }
+                }
+            }
             const ahead = Math.min(24, 8 + Math.round(Math.abs(target - shown)));
             for (let d = 1; d <= ahead; d++) { const i = f + d * direction; if (i >= 0 && i < N) predecode(i); }
             for (let d = 1; d <= 2; d++) { const i = f - d * direction; if (i >= 0 && i < N) predecode(i); }
             if (useBitmaps) {
                 for (let i = 0; i < N; i++) {
-                    if (bitmaps[i] && i !== drawn && ((i - f) * direction > KEEP_AHEAD || (f - i) * direction > KEEP_BEHIND)) {
+                    if (bitmaps[i] && bitmaps[i] !== drawnSrc && ((i - f) * direction > KEEP_AHEAD || (f - i) * direction > KEEP_BEHIND)) {
                         bitmaps[i].close(); bitmaps[i] = null; decoded[i] = decodedOk[i] = 0;
                     }
                 }
@@ -297,15 +375,39 @@
             }
             return -1;
         }
+        // What to draw for still f, best first: its full still or one within
+        // three (a twentieth of a second of film), the preview of that moment,
+        // a full still a few further, then whichever of the two is nearest. A
+        // soft frame of the right moment reads as motion; a sharp frame of the
+        // wrong one reads as lag.
+        const fullOf = (i) => (i >= 0 && i < N && decodedOk[i] ? bitmaps[i] || imgs[i] : null);
+        const previewOf = (i) => (i >= 0 && i < N ? pvBitmaps[i] : null);
+        function choose(f) {
+            for (let d = 0; d <= 3; d++) for (const i of d ? [f - d, f + d] : [f]) if (fullOf(i)) return [i, fullOf(i), false];
+            if (pvDecoded) for (let d = 0; d <= PV_STEP; d++) for (const i of [f - d, f + d]) if (previewOf(i)) return [i, previewOf(i), true];
+            const i = nearest(f);
+            if (i >= 0 && Math.abs(i - f) <= NEAR) return [i, bitmaps[i] || imgs[i], false];
+            let p = -1;
+            if (pvDecoded) for (let d = PV_STEP + 1; d < N && p < 0; d++) p = previewOf(f - d) ? f - d : previewOf(f + d) ? f + d : -1;
+            if (p >= 0 && (i < 0 || Math.abs(p - f) < Math.abs(i - f))) return [p, previewOf(p), true];
+            return i < 0 ? null : [i, bitmaps[i] || imgs[i], false];
+        }
         function paint() {
             if (!on) return;
             const f = clamp(Math.round(shown), 0, N - 1);
             predecode(f);
-            const use = nearest(f);
-            if (use < 0 || use === drawn) return;
+            const pick = choose(f);
+            if (!pick || pick[1] === drawnSrc) return;
+            const [use, src, soft] = pick;
+            // at the top the poster is that moment, sharp; it stays until the full still is here
+            if (soft && !live && f < PV_STEP) return;
             drawn = use;
+            drawnSrc = src;
+            drawnSoft = soft;
             if (ctxW !== W || ctxH !== H) { frames.width = ctxW = W; frames.height = ctxH = H; }
-            ctx.drawImage(bitmaps[use] || imgs[use], 0, 0, W, H);
+            // a preview is a third of the size: scale it up smoothly (a resize resets this)
+            ctx.imageSmoothingQuality = soft ? 'high' : 'low';
+            ctx.drawImage(src, 0, 0, W, H);
             if (!live) {
                 live = true;
                 clearTimeout(firstTimer);
@@ -351,6 +453,7 @@
         // purged (iOS does), so the frame is drawn again whatever changed.
         function resume() {
             drawn = -1;
+            drawnSrc = null;
             paint();
             start();
         }
@@ -369,7 +472,10 @@
             film.hidden = false;
             live = false;
             drawn = -1;
+            drawnSrc = null;
             for (let i = 0; i < N; i++) if (bitmaps[i]) { bitmaps[i].close(); bitmaps[i] = null; decoded[i] = decodedOk[i] = 0; }
+            for (let i = 0; i < N; i++) if (pvBitmaps[i]) { pvBitmaps[i].close(); pvBitmaps[i] = null; }
+            pvDecoded = 0;
         }
         function pause() {
             cancelAnimationFrame(frameId);

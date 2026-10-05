@@ -566,13 +566,26 @@ class SiteTests(SimpleTestCase):
             totals[size] = sum(p.stat().st_size for p in files)
             self.assertLessEqual(totals[size], cap, f"{size}: {totals[size] / 1048576:.1f}MB")
         self.assertLess(totals["1200"], totals["1920"])
-        self.assertEqual({p.name for p in frames.iterdir()}, {"1920", "1200"})
+        # The previews: every second still, small, so a first scroll on a slow
+        # connection has the right moment to show (hero-film.js). They have to
+        # stay a small fraction of the full sets or they stop arriving first.
+        for size, full, cap in (("640", "1920", 1.6 * 1024 * 1024), ("400", "1200", 1.2 * 1024 * 1024)):
+            files = sorted(p.name for p in (frames / size).iterdir() if p.is_file())
+            self.assertEqual(files, [f"f{i:04d}.avif" for i in range(0, 450, 2)], size)
+            total = sum((frames / size / name).stat().st_size for name in files)
+            self.assertLessEqual(total, cap, f"{size}: {total / 1048576:.2f}MB")
+            self.assertLess(total * 6, totals[full], size)
+        self.assertEqual({p.name for p in frames.iterdir()}, {"1920", "1200", "640", "400"})
         home = self.client.get("/").content.decode()
         for chunk in ('data-frames="/static/defex/frames/1920/"', 'data-frames-sm="/static/defex/frames/1200/"',
+                      'data-preview="/static/defex/frames/640/"', 'data-preview-sm="/static/defex/frames/400/"',
+                      'data-preview-step="2"', f'data-frame-v="{settings.DEFEX_FILM_VERSION}"',
                       'data-frame-count="450"', 'data-frame-size="1920x1080"', 'data-frame-size-sm="1200x960"',
                       '<canvas class="hero__film hero__film--frames" id="frames"', 'preload="none"',
                       "classList.add('has-scroll-film')"):
             self.assertIn(chunk, home, chunk)
+        # a deploy must not change the stills' URLs: they are 15 MB a visitor
+        self.assertNotEqual(settings.DEFEX_FILM_VERSION, settings.DEFEX_ASSET_VERSION)
         # the film is no longer masked: a mask on the element repainted it on every frame
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
         self.assertNotIn("mask-image: linear-gradient(to bottom, transparent 0, #000 26%", css)

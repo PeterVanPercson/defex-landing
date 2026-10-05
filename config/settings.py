@@ -174,7 +174,13 @@ WHITENOISE_MIMETYPES = {'.wasm': 'application/wasm', '.avif': 'image/avif'}
 # static/** through @vercel/static, so /static/ is answered at the edge and never
 # reaches Django. Production cache headers live in vercel.json. This hook still
 # runs under gunicorn and in the tests, and is what they assert against.
-DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "190")
+DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "191")
+
+# The hero film's stills (static/defex/frames, 15 MB for a desktop visitor)
+# carry their own version instead of the asset version, so a deploy that does
+# not touch them leaves every returning visitor's copy cached. Bump it only
+# when a still changes. 132 is the version they shipped with (PR #21).
+DEFEX_FILM_VERSION = "132"
 
 # Vercel Web Analytics: cookie-free page views. The script is served by
 # Vercel only once Web Analytics is switched on for the project, so the tag is

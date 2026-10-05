@@ -258,6 +258,68 @@ test('a leap inside a stream is followed, never snapped', () => {
     assert.ok(seen[seen.length - 1] > 200, `it kept up: ${seen.join(' ')}`);
 });
 
+// The stills as every current browser loads them: fetched, decoded off the
+// main thread with createImageBitmap, with the preview set alongside. fetch
+// answers when the test says so; a drawn bitmap is recorded by its URL.
+function heroFetched() {
+    const p = heroFrames();
+    // heroFrames ran the script without fetch; run it again with the real path
+    const film = p.film, canvas = p.canvas, draws = [], pending = new Map();
+    film.dataset = { ...film.dataset, preview: '/p/', previewSm: '/ps/', previewStep: '2' };
+    canvas.getContext = () => ({ drawImage: (img) => draws.push(img.src) });
+    p.context.URL = function URL() {};
+    p.context.URL.createObjectURL = () => 'blob:'; p.context.URL.revokeObjectURL = () => {};
+    p.context.fetch = (url) => new Promise((resolve) => pending.set(url, resolve));
+    p.context.createImageBitmap = (blob) => Promise.resolve({ src: blob.url, close() { this.closed = true; } });
+    p.run('hero-film.js');
+    const flush = async () => { for (let i = 0; i < 6; i++) await new Promise((r) => setImmediate(r)); };
+    const respond = async (url, ok = true) => {
+        const resolve = pending.get(url);
+        assert.ok(resolve, `${url} was requested (asked for: ${[...pending.keys()].slice(0, 12).join(' ')})`);
+        pending.delete(url);
+        resolve({ ok, status: ok ? 200 : 404, blob: () => Promise.resolve({ url }) });
+        await flush();
+    };
+    return { ...p, draws, pending, respond, flush };
+}
+
+test('a scroll on a slow connection shows the preview of that moment, then its full still', async () => {
+    const p = heroFetched();
+    await p.respond('/f/f0000.avif?v=1');
+    assert.deepEqual(p.draws, ['/f/f0000.avif?v=1']);
+    assert.ok(p.pending.has('/p/f0000.avif?v=1') && p.pending.has('/p/f0002.avif?v=1'), 'the previews just ahead are on their way');
+    // straight to frame 200, before any of its stills have arrived
+    p.context.scrollY = 560; p.event('scroll'); p.settle();
+    await p.respond('/p/f0200.avif?v=1');
+    p.settle();
+    assert.equal(p.draws.at(-1), '/p/f0200.avif?v=1', 'the preview of that moment, not the last full still');
+    await p.respond('/f/f0200.avif?v=1');
+    p.settle();
+    assert.equal(p.draws.at(-1), '/f/f0200.avif?v=1', 'then the full still');
+});
+
+test('at the top the poster stands until the first full still, never a preview', async () => {
+    const p = heroFetched();
+    await p.respond('/p/f0000.avif?v=1');
+    assert.deepEqual(p.draws, []);
+    assert.equal(p.canvas.hidden, true);
+    await p.respond('/f/f0000.avif?v=1');
+    assert.deepEqual(p.draws, ['/f/f0000.avif?v=1']);
+    assert.equal(p.canvas.hidden, false);
+});
+
+test('a missing preview set costs three requests, then the full stills carry on alone', async () => {
+    const p = heroFetched();
+    await p.respond('/f/f0000.avif?v=1');
+    for (const url of [...p.pending.keys()].filter((u) => u.startsWith('/p/')).slice(0, 3)) await p.respond(url, false);
+    const previewsAsked = () => [...p.pending.keys()].filter((u) => u.startsWith('/p/')).length;
+    const before = previewsAsked();
+    for (const url of [...p.pending.keys()].filter((u) => u.startsWith('/f/')).slice(0, 4)) await p.respond(url);
+    assert.equal(previewsAsked(), before, 'no new preview requests');
+    assert.ok([...p.pending.keys()].filter((u) => u.startsWith('/f/')).length >= 4, 'the full stills keep coming');
+    assert.equal(p.film.src, '', 'no fallback to the video');
+});
+
 test('reduced motion and data saver load the hero still without a video request', () => {
     for (const options of [{ reduced: true }, { saveData: true }]) {
         const p = hero(options);
