@@ -74,6 +74,8 @@
     const logos = [...stage.querySelectorAll('.flick__logo')].map((img) => ({
         src: img.getAttribute('src') || img.dataset.src,
         ratio: img.width / img.height,
+        // a mark that reads large for its box is drawn smaller (discovery.PARTNERS "scale")
+        scale: parseFloat(img.dataset.scale) || 1,
     }));
     if (logos.length < 2) return;
     const loaded = new Map();
@@ -92,7 +94,7 @@
     const card = (k) => {
         const box = stage.getBoundingClientRect();
         const ratio = logos[k].ratio;
-        let w = Math.sqrt(box.width * box.height * 0.42 * ratio), h = w / ratio;
+        let w = Math.sqrt(box.width * box.height * 0.42 * ratio) * logos[k].scale, h = w / ratio;
         if (h > box.height) { h = box.height; w = h * ratio; }
         if (w > box.width) { w = box.width; h = w / ratio; }
         const el = document.createElement('span');
