@@ -24,7 +24,7 @@ class SiteTests(SimpleTestCase):
         for slop in ("walk away from", "feel what", "A new way, not a new project", "harder to fixture"):
             self.assertNotContains(home, slop)
         # the section is "Why us", not the old slogan
-        self.assertContains(home, 'id="why-title" data-reveal>Robots are cheap. Setting them up is <em>not</em>.</h2>')
+        self.assertContains(home, 'id="why-title" data-reveal>Robots are cheap.<br> Setting them up is <em>not</em>.</h2>')
         self.assertNotContains(home, "the test becomes the teacher")
         page = home.content.decode()
         # no "Backed by" credit in the hero; a16z sits in Partners by his call (2026-10-04)
