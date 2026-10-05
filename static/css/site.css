@@ -1714,8 +1714,8 @@ body { font: 400 17px/1.55 var(--sans); }
 .roll__i.is-touched .roll__logo[data-opaque] { filter: url(#roll-colour); }
 .inline--dark .roll__i.is-touched .roll__logo { filter: grayscale(1) invert(1) contrast(.9); opacity: 1; }
 .inline--dark .roll__i.is-touched .roll__logo[data-opaque] { filter: url(#roll-ink-light); }
-.sheet.inline .roll { --roll-gap: clamp(44px, 5vw, 84px); }
-.sheet.inline .roll__i { --roll-h: 38px; width: clamp(104px, 9.4vw, 140px); }
+.sheet.inline .roll { --roll-gap: clamp(48px, 5.4vw, 92px); }
+.sheet.inline .roll__i { --roll-h: 44px; width: clamp(116px, 10.6vw, 158px); }
 
 /* Careers left the home page (his call, 2026-10-04): whichever paper band now
    comes last clears the dissolve into the closing dark block */
@@ -1735,7 +1735,7 @@ body { font: 400 17px/1.55 var(--sans); }
     .feature { padding: 0; gap: 0; }
     .feature__copy { padding: 26px 22px 30px; }
     .footer__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .sheet.inline .roll__i { --roll-h: 28px; width: 96px; }
+    .sheet.inline .roll__i { --roll-h: 32px; width: 108px; }
 }
 @media (prefers-reduced-motion: reduce) {
     .art * { animation: none; }

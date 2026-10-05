@@ -301,7 +301,9 @@ class SiteTests(SimpleTestCase):
         self.assertLess(home.index('id="why"'), home.index('id="partners"'))
         self.assertLess(home.index('id="partners"'), home.index('id="in-line"'))
         row = home.split('id="partners"', 1)[1].split("</ul>", 1)[0]
-        self.assertIn(">Partners<", row)
+        # the marks alone, with no word over them (his call, 2026-10-04); the name is for screen readers
+        self.assertIn('id="partners" aria-label="Partners"', home)
+        self.assertNotIn(">Partners<", row)
         self.assertNotIn("roll__defs", row)
         self.assertEqual(row.count('class="roll__i"'), len(PARTNERS))
         for partner in PARTNERS:
