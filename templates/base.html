@@ -49,8 +49,9 @@
 
     <!-- The faces are served from static/fonts by @font-face rules at the top of
          site.css: the Google Fonts CSS was the render-blocking gate for first
-         paint on every page. Geist sets nearly every word, so it is preloaded. -->
-    <link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/geist-400-900-normal.woff2' %}">
+         paint on every page. EB Garamond sets nearly every word, so it is
+         preloaded. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/eb-garamond-400-normal.woff2' %}">
     <link rel="stylesheet" href="{% static 'css/site.css' %}?v={{ asset_v }}">
     {% block extra_head %}{% endblock %}
 </head>
