@@ -8,19 +8,20 @@
 @font-face { font-family: 'Source Serif 4'; font-style: normal; font-weight: 400; font-display: swap; src: url(../fonts/source-serif-4-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: 'Geist'; font-style: normal; font-weight: 100 900; font-display: swap; src: url(../fonts/geist-400-900-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 
-@font-face { font-family: 'Geist Mono'; font-style: normal; font-weight: 100 900; font-display: swap; src: url(../fonts/geist-mono-100-900-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 300; font-display: swap; src: url(../fonts/ibm-plex-mono-300-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 :root {
-    /* A white ground and near-black ink (2026-10-05: lighter and quieter,
-       his call after skild.ai). --mute is 56%, which still clears the 4.5:1
-       body-text floor on white. --surface is the shade a card sits in. */
-    --page: #FFFFFF;
+    /* Warm paper (his call, 2026-10-05: "use the text font and background
+       paper ish thing like origami-robotics.com"), sampled from their custom
+       properties (--cream #f3efe8, --paper #f7f4ee, --dark #1a1815). --mute is
+       62%: on this ground 58% measures 4.18:1, under the 4.5:1 floor. */
+    --page: #F3EFE8;
     --bg: var(--page);
-    --surface: #F4F4F3;
-    --ink: #0A0B0C;
-    --ink-soft: rgba(10, 11, 12, .74);
-    --mute: rgba(10, 11, 12, .56);
-    --line: rgba(10, 11, 12, .09);
-    --rule: rgba(10, 11, 12, .26);
+    --surface: #F7F4EE;
+    --ink: #1A1815;
+    --ink-soft: rgba(26, 24, 21, .74);
+    --mute: rgba(26, 24, 21, .62);
+    --line: rgba(26, 24, 21, .14);
+    --rule: rgba(26, 24, 21, .32);
     --accent: #FF5A1F;
     /* The two colours the pitch page already speaks in: factory yellow and
        electric blue. Blue carries the emphasis on the light ground, yellow on
@@ -28,9 +29,9 @@
     --yellow: #FFD42A;
     --blue: #3D63FF;
     --em: var(--ink);
-    /* the claim cards: the hero's blue-black, a step up so they read as cards */
-    --card: #0E1113;
-    --card-ink: #F2F2F0;
+    /* the claim cards: the paper's own ink, as if printed solid */
+    --card: #1A1815;
+    --card-ink: #F3EFE8;
     --panel: #0B0D10;
     /* the orange is a fill, never a text colour: it is under 3:1 on the ground */
     --on-accent: #0B0D10;
@@ -38,16 +39,19 @@
        32% over the sheet, pre-mixed and opaque, so the track under the arc
        does not show through as a second line */
     --reset: #B0AEA9;
-    /* One face. --mono and --serif are kept as names because the rules below
-       were written against them; they all resolve to Geist. Inter is kept
-       for the wordmark only, so the brand does not change shape. */
-    --sans: "Geist", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    --mono: var(--sans);
-    --font: var(--sans);
-    --serif: var(--sans);
+    /* origami-robotics.com's pair: Source Serif 4 for anything that is a
+       heading, IBM Plex Mono for every other word. --sans now means "the text
+       face" and resolves to the mono, so the rules written against it follow;
+       Why us sets its own Geist (.wy), and the cookie notice keeps the sans of
+       the component he sent (--geist). Inter is kept for the wordmark only. */
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sans: var(--mono);
+    --font: var(--mono);
+    --serif: "Source Serif 4", ui-serif, "Iowan Old Style", Palatino, Georgia, serif;
+    --geist: "Geist", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     --brand: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     /* small labels, set like the pitch deck's: mono, spaced, quiet */
-    --label: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --label: var(--mono);
     /* the column everything under the hero sits in */
     --measure: 1280px;
     --pad: clamp(16px, 3.6vw, 64px);
@@ -64,11 +68,23 @@
     /* the closing block needs less ramp than the hero: no film to blend */
     --close-fade: clamp(140px, 22vh, 240px);
 
-    /* sections below the hero share the page ground; no sheet edge, no grain */
-    --sheet: var(--page);
-    --sheet-shadow: none;
+    /* Engraved headings, as origami cuts theirs: the letterform is a gradient
+       clipped to the glyphs, with a light lip below and a dark lip above, so
+       the type reads as cut into the paper rather than printed on it. */
+    --engrave-fill-paper: linear-gradient(165deg, rgba(70, 62, 48, .85) 0%, rgba(35, 28, 15, .95) 50%, rgba(55, 47, 33, .8) 100%);
+    --engrave-fill: var(--engrave-fill-paper);
+    --engrave-lip-paper: 0 1px 2px rgba(255, 250, 242, .9), 0 -1px 1px rgba(40, 30, 15, .35), 0 0 4px rgba(60, 50, 35, .15);
+    --engrave-lip: var(--engrave-lip-paper);
+    /* Sections below the hero are sheets a shade lighter than the page, each
+       casting a soft shadow up onto the one before. */
+    --sheet: #F7F4EE;
+    --sheet-shadow: 0 -6px 30px rgba(26, 24, 21, .05);
+    /* Paper grain: a tile of warm dark noise at low alpha, laid under the
+       content as a background layer. Not origami's fixed multiply overlay,
+       which would be composited over the scroll-scrubbed film on every frame.
+       The tile is 512 device pixels either way (256 CSS px on 2x, 512 on 1x). */
     --grain-tile: 256px;
-    --grain: none;
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .09 0 0 0 0 .07 .4 0 0 0 -.15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / var(--grain-tile) var(--grain-tile);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -109,24 +125,40 @@ html:has(.hero) { background-color: #020506; }
    abutting exactly leaves an anti-aliased hairline at the seam. Stops are
    interpolated in linear light on a smoothstep, because a plain two-stop
    sRGB ramp from near-black to paper goes muddy through the middle. */
-.hero::after { content: ""; position: absolute; left: 0; right: 0; top: calc(100% - 1px); height: calc(var(--hero-fade) + 1px); background: var(--grain), linear-gradient(to bottom, var(--bg) 0%, #070A0B 10%, #121415 20%, #222526 30%, #373939 40%, #4F5152 50%, #6B6D6E 60%, #8B8D8F 70%, #ADAFB1 80%, #D5D6D8 90%, var(--page) 100%); pointer-events: none; }
+.hero::after { content: ""; position: absolute; left: 0; right: 0; top: calc(100% - 1px); height: calc(var(--hero-fade) + 1px); background: var(--grain), linear-gradient(to bottom, var(--bg) 0%, #070A0B 10%, #121415 20%, #212323 30%, #353636 40%, #4C4D4C 50%, #676765 60%, #858581 70%, #A7A5A1 80%, #CBC9C3 90%, var(--page) 100%); pointer-events: none; }
 a { color: inherit; text-decoration: none; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 [hidden] { display: none !important; }
-h1, h2, h3 { font-family: var(--sans); font-weight: 400; letter-spacing: -.025em; text-wrap: balance; }
-h1 em, h2 em, h3 em, .engraved em { font-style: normal; color: var(--em); }
+h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.01em; text-wrap: balance; }
+/* the word that carries the line is set in the serif's italic, as origami does */
+h1 em, h2 em, h3 em, .engraved em { font-style: italic; color: inherit; }
 section[id], h1[id], h2[id], details[id], .form--apply { scroll-margin-top: calc(var(--nav) + 16px); }
 .dot { color: var(--accent); }
 
-/* headings that used to be cut into the paper: now plain ink (the class is
-   still what the templates and tests name them by) */
+/* Falls back to plain ink where background-clip:text is unsupported, because
+   transparent text with no clip is invisible text. */
 .engraved { color: var(--ink); }
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+    .engraved { color: transparent; background-image: var(--engrave-fill); -webkit-background-clip: text; background-clip: text; text-shadow: var(--engrave-lip); }
+}
 
-/* A heading on the dark ground, set twice in the markup: the face shows,
-   the second copy is no longer needed. */
-.cut { position: relative; }
-.cut__face { display: block; }
-.cut__mask { display: none; }
+/* Engraved on black with the same face as on paper. The heading is set twice.
+   .cut__face is the paper engraving exactly as the section titles have it,
+   on a patch of the page's own paper. .cut__mask is the same text in white on
+   the dark ground, multiplied over it: outside the letters it leaves the dark
+   ground, inside them it leaves the paper cut untouched. The mask is stroked
+   a hair wider than the letters, so a sliver of paper rings each one. */
+.cut { position: relative; isolation: isolate; background: var(--grain), var(--page); }
+.cut__face { display: block; --engrave-fill: var(--engrave-fill-paper); --engrave-lip: var(--engrave-lip-paper); }
+.cut__mask { position: absolute; inset: 0; display: block; color: #fff; -webkit-text-stroke: .038em #fff; background: var(--bg); mix-blend-mode: multiply; pointer-events: none; user-select: none; }
+/* The cut leaves the letter faces dark, legible mainly by their lit edge.
+   Anyone who has asked their OS for more contrast gets plain type instead. */
+@media (prefers-contrast: more) {
+    .engraved { text-shadow: none; }
+    .cut { background: none; }
+    .cut__mask { display: none; }
+    .cut .cut__face { color: var(--ink); background: none; }
+}
 
 .skip { position: absolute; left: 16px; top: -60px; z-index: 20; padding: 10px 14px; background: var(--ink); color: var(--bg); border-radius: 6px; }
 .skip:focus { top: 12px; }
@@ -141,7 +173,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* Restates background and color as well as the tokens. Not strictly needed,
    the token change alone repaints, but it keeps the flip readable next to
    the rule it overrides. */
-.past-hero body:has(.hero) .topbar { --bg: var(--page); --ink: #0B0D10; --ink-soft: rgba(11, 13, 16, .78); --on-accent: #0B0D10; --rule: rgba(11, 13, 16, .3); background: var(--grain), var(--page); color: #0B0D10; box-shadow: inset 0 -1px 0 rgba(11, 13, 16, .12); }
+.past-hero body:has(.hero) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: rgba(26, 24, 21, .74); --on-accent: #1A1815; --rule: rgba(26, 24, 21, .32); background: var(--grain), var(--page); color: #0B0D10; box-shadow: inset 0 -1px 0 rgba(11, 13, 16, .12); }
 .brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-family: var(--brand); font-size: 19px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
 .topbar > .brand { justify-content: center; min-width: 44px; flex-shrink: 0; margin-left: -17.5px; }
 .brand svg { width: 9px; height: 29px; display: block; }
@@ -340,7 +372,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* above the sheets, or the careers sheet would paint over the dissolve */
 .contact.dark { max-width: none; padding-inline: 0; position: relative; z-index: 2; }
 
-.contact.dark::before { content: ""; position: absolute; left: 0; right: 0; bottom: calc(100% - 1px); height: calc(var(--close-fade) + 1px); background: var(--grain), linear-gradient(to top, var(--bg) 0%, #070A0B 10%, #121415 20%, #222526 30%, #373939 40%, #4F5152 50%, #6B6D6E 60%, #8B8D8F 70%, #ADAFB1 80%, #D5D6D8 90%, var(--sheet) 100%); pointer-events: none; }
+.contact.dark::before { content: ""; position: absolute; left: 0; right: 0; bottom: calc(100% - 1px); height: calc(var(--close-fade) + 1px); background: var(--grain), linear-gradient(to top, var(--bg) 0%, #070A0B 10%, #121415 20%, #212323 30%, #353636 40%, #4C4D4C 50%, #676765 60%, #858581 70%, #A7A5A1 80%, #CBC9C3 90%, var(--sheet) 100%); pointer-events: none; }
 /* .footer is a 1200px centred column, so a dark background on it left the
    cream page showing at both edges under the closing block. Full bleed, with
    the content still aligned to the column the way .topbar does it. */
@@ -1485,13 +1517,13 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
    ways: the paper darkens into the robot's night and comes back out to the
    sheet that follows (a shade lighter than the page), grain the whole way. The stage rises into
    place as it comes into view. */
-.meet-sec.meet-sec--flow { position: relative; --flow-in: linear-gradient(to bottom, var(--page) 0%, #D6D6D7 10%, #AFAFB0 20%, #8D8D8E 30%, #6C6C6C 40%, #515151 50%, #383839 60%, #242424 70%, #141415 80%, #0A0A0A 90%, #050505 100%);
+.meet-sec.meet-sec--flow { position: relative; --flow-in: linear-gradient(to bottom, var(--page) 0%, #CBC9C3 10%, #A7A5A1 20%, #858581 30%, #676765 40%, #4C4D4C 50%, #353636 60%, #212323 70%, #121415 80%, #070A0B 90%, #050505 100%);
     padding-block: calc(var(--hero-fade) + clamp(24px, 5vh, 64px)); background: var(--grain), #050505; isolation: isolate; }
 .meet-sec.meet-sec--flow::before, .meet-sec.meet-sec--flow::after { content: ""; position: absolute; left: 0; right: 0; z-index: -1; height: calc(var(--hero-fade) + 1px); background: var(--grain), var(--flow-in); pointer-events: none; }
 .meet-sec.meet-sec--flow::before { top: -1px; }
 /* the sheet after it has no edge to cast: the fade already hands over */
 .meet-sec--flow + .sheet { box-shadow: none; }
-.meet-sec.meet-sec--flow::after { bottom: -1px; background: var(--grain), linear-gradient(to top, var(--sheet) 0%, #D6D6D7 10%, #AFAFB0 20%, #8D8D8E 30%, #6C6C6C 40%, #515151 50%, #383839 60%, #242424 70%, #141415 80%, #0A0A0A 90%, #050505 100%); }
+.meet-sec.meet-sec--flow::after { bottom: -1px; background: var(--grain), linear-gradient(to top, var(--sheet) 0%, #CFCCC6 10%, #A9A7A3 20%, #868582 30%, #676765 40%, #4C4D4C 50%, #353636 60%, #212323 70%, #121415 80%, #070A0B 90%, #050505 100%); }
 @supports (animation-timeline: view()) {
     .meet-sec.meet-sec--flow .meet__stage { animation: meet-rise linear both; animation-timeline: view(); animation-range: entry 0% entry 70%; }
     .meet-sec.meet-sec--flow .meet__list { animation: meet-lift linear both; animation-timeline: view(); animation-range: entry 20% entry 80%; }
@@ -1501,40 +1533,41 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
 
 
 /* ------------------------------------------------------------------------
-   The 2026-10 refresh, made quieter on 2026-10-05 (his call: smaller type,
-   more expensive, not a copy of anyone): one face (Geist) set light, a white
-   ground, the claim cards in the hero's blue-black, small mono labels with
-   hairlines as in the pitch deck, and the logo's orange only as a dot.
+   The 2026-10 refresh, made quieter on 2026-10-05: first lighter and smaller
+   (after skild.ai), then, the same day and at his ask, origami-robotics.com's
+   faces and paper: Source Serif 4 headings (engraved on the paper), IBM Plex
+   Mono for every other word, a warm grained paper ground, the claim cards in
+   the paper's ink, and the logo's orange only as a dot.
    Everything above still sets the structure; this block sets how the shared
    pieces look, and it comes last so it wins at equal weight, which is why
    each piece restates its own phone sizes here.
    ------------------------------------------------------------------------ */
-body { font: 400 16px/1.6 var(--sans); }
+body { font: 400 15px/1.65 var(--font); }
 
 /* Nav: the ground under it shows through, blurred, in place of a ruled bar */
 .topbar { background: color-mix(in srgb, var(--bg) 78%, transparent); -webkit-backdrop-filter: saturate(1.4) blur(18px); backdrop-filter: saturate(1.4) blur(18px); box-shadow: none; }
 .past-hero body:has(.hero) .topbar { background: color-mix(in srgb, var(--page) 78%, transparent); box-shadow: none; }
-.navlink { font: 400 14px/1 var(--sans); letter-spacing: 0; text-transform: none; }
-.glass-button-text { font: 450 14px/1 var(--sans); letter-spacing: 0; text-transform: none; }
-.glass-button-wrap--nav .glass-button-text { font-size: 13.5px; letter-spacing: 0; padding: 0 16px; }
-.lede h1 { font-weight: 330; letter-spacing: -.022em; line-height: 1.1; }
-.flick__k { font: 400 11px/1.4 var(--label); letter-spacing: .08em; text-transform: uppercase; margin-right: 0; }
+.navlink { font: 400 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+.glass-button-text { font: 400 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+.glass-button-wrap--nav .glass-button-text { font-size: 10.5px; letter-spacing: .14em; padding: 0 16px; }
+.lede h1 { font-weight: 400; letter-spacing: -.01em; line-height: 1.08; }
+.flick__k { font: 400 10px/1.4 var(--label); letter-spacing: .16em; text-transform: uppercase; margin-right: 0; }
 
 /* buttons that are not glass: one solid pill */
-.cta { min-height: 48px; padding: 0 26px; border: 0; border-radius: 999px; background: var(--ink); color: var(--bg); font: 500 15px/1 var(--sans); letter-spacing: 0; text-transform: none; transition: opacity .2s ease, transform .2s ease; }
-.cta:hover { background: var(--ink); opacity: .86; }
+.cta { min-height: 46px; padding: 0 30px; border: 1px solid var(--rule); border-radius: 0; background: none; color: var(--ink); font: 400 11px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; transition: border-color .2s ease, background .2s ease; }
+.cta:hover { border-color: var(--ink); background: var(--surface); }
 .cta--quiet { min-height: 44px; padding: 0 22px; font-size: 14.5px; }
-.field { font: 500 14px/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: var(--ink-soft); }
+.field { font: 400 11px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
 .field input, .field textarea, .field select { border-color: var(--line); border-radius: 14px; font: 400 17px/1.5 var(--sans); }
 .field input, .field select { height: 54px; }
 .link { border-bottom-color: var(--rule); }
 
 /* Section heads: light and modest, so the work carries the page */
-.sechead__t { max-width: 17ch; font-size: clamp(32px, 3.5vw, 52px); font-weight: 330; line-height: 1.1; letter-spacing: -.026em; }
-.sechead__sub { max-width: 40ch; text-align: left; font: 300 clamp(16px, 1.25vw, 19px)/1.6 var(--sans); color: var(--ink-soft); }
+.sechead__t { max-width: 24ch; font-size: clamp(32px, 3.5vw, 52px); font-weight: 400; line-height: 1.1; letter-spacing: -.01em; }
+.sechead__sub { max-width: 46ch; text-align: left; font: 300 14px/1.8 var(--mono); color: var(--ink-soft); }
 .sheet { padding-block: clamp(96px, 14vh, 160px); padding-inline: max(var(--pad), calc((100% - var(--measure)) / 2 + var(--pad))); }
 /* A small label: mono capitals after a dot in the logo's orange */
-.label { display: inline-flex; align-items: center; gap: 10px; margin: 0; font: 400 11px/1.4 var(--label); letter-spacing: .1em; text-transform: uppercase; color: var(--mute); }
+.label { display: inline-flex; align-items: center; gap: 10px; margin: 0; font: 400 10px/1.4 var(--label); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
 .label::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 
 /* Our start: the line as big as the phone beside it, centred against it */
@@ -1557,10 +1590,16 @@ body { font: 400 16px/1.6 var(--sans); }
 .steps__bar:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .features { margin-top: 0; border-top: 0; display: grid; gap: 14px; list-style: none; }
 .feature { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: stretch; gap: 0; padding: 0; border: 0; border-radius: 22px; overflow: hidden; background: var(--card); color: var(--card-ink); }
-.feature__art { position: relative; min-height: clamp(260px, 34vw, 480px); margin: 10px; border-radius: 14px; background: #07090A; overflow: hidden; }
+.feature__art { position: relative; min-height: clamp(260px, 34vw, 480px); margin: 10px; border-radius: 14px; background: #100F0D; overflow: hidden; }
 .feature__copy { display: flex; flex-direction: column; justify-content: center; padding: clamp(28px, 4vw, 64px); }
-.feature__t { max-width: 14ch; font-size: clamp(28px, 2.9vw, 44px); font-weight: 330; line-height: 1.1; letter-spacing: -.024em; color: var(--card-ink); }
-.feature__d { max-width: 34ch; margin-top: clamp(14px, 2vh, 22px); font: 300 clamp(16px, 1.2vw, 18px)/1.6 var(--sans); letter-spacing: 0; color: rgba(242, 242, 240, .62); }
+.feature__t { max-width: 14ch; font-size: clamp(28px, 2.9vw, 44px); font-weight: 400; line-height: 1.1; letter-spacing: -.01em; color: var(--card-ink); }
+/* on the ink card the title is plain paper-coloured type, not a cut */
+.feature .engraved { color: var(--card-ink); background: none; text-shadow: none; }
+/* The cut is for display titles, as origami keeps it: below about 32px its
+   lit lip blurs the letters, so section heads inside an article, a policy or
+   the careers list are plain ink in the same serif. */
+:is(.prose, .group__head) .engraved { color: var(--ink); background: none; text-shadow: none; }
+.feature__d { max-width: 38ch; margin-top: clamp(14px, 2vh, 22px); font: 300 14px/1.8 var(--mono); letter-spacing: 0; color: rgba(243, 239, 232, .66); }
 .features__more { margin-top: clamp(28px, 5vh, 52px); }
 
 .steps.is-pinned { height: calc(100svh - var(--nav) + var(--steps, 4) * 62svh); }
@@ -1605,10 +1644,10 @@ body { font: 400 16px/1.6 var(--sans); }
 /* Registered and Partners: one quiet band, readable labels, soft edges */
 .sheet.inline { padding-block: clamp(30px, 5vh, 54px); border-top: 0; }
 .sheet.inline + .sheet.inline { padding-top: 0; }
-.inline__k { padding-inline: max(var(--pad), calc((100% - var(--measure)) / 2 + var(--pad))); font: 400 11px/1.4 var(--label); letter-spacing: .1em; text-transform: uppercase; color: var(--mute); }
+.inline__k { padding-inline: max(var(--pad), calc((100% - var(--measure)) / 2 + var(--pad))); font: 400 10px/1.4 var(--label); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
 .inline__k::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 10px 1px 0; border-radius: 50%; background: var(--accent); vertical-align: middle; }
 /* on the black pitch page the label needs light ink: --ink-soft is only set for the paper and .dark grounds */
-.inline--dark .inline__k { font-size: 11px; color: rgba(244, 244, 240, .56); }
+.inline--dark .inline__k { font-size: 10px; color: rgba(244, 244, 240, .56); }
 .roll { -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); }
 .roll__logo { opacity: .62; }
 
@@ -1616,7 +1655,7 @@ body { font: 400 16px/1.6 var(--sans); }
 .careers__lead { font: 500 19px/1.5 var(--sans); }
 .rolecard { margin-top: clamp(32px, 5vh, 56px); grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) auto; padding: clamp(24px, 2.6vw, 38px); border: 0; border-radius: 24px; background: var(--surface); transition: background .3s ease, color .3s ease; }
 .rolecard + .rolecard { margin-top: 12px; }
-.rolecard__title { font: 400 clamp(22px, 2vw, 30px)/1.1 var(--sans); letter-spacing: -.022em; }
+.rolecard__title { font: 400 clamp(22px, 2vw, 30px)/1.12 var(--serif); letter-spacing: -.01em; }
 .rolecard__meta { margin-top: 12px; font: 500 15px/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: var(--mute); transition: color .3s ease; }
 .rolecard__pitch { font: 400 17px/1.5 var(--sans); color: var(--ink-soft); transition: color .3s ease; }
 .rolecard__go { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: var(--page); font: 500 14px/1 var(--sans); letter-spacing: -.01em; text-transform: none; color: var(--ink); transition: background .3s ease, color .3s ease; }
@@ -1627,17 +1666,17 @@ body { font: 400 16px/1.6 var(--sans); }
 
 /* The close: a heading and one email field (his call, 2026-10-05: no
    booking calendar). The field is the Smooth Input box the other forms use. */
-.contact h2 { max-width: 16ch; font-family: var(--sans); font-weight: 330; font-size: clamp(32px, 3.5vw, 52px); line-height: 1.1; letter-spacing: -.026em; }
+.contact h2 { max-width: 16ch; font-family: var(--serif); font-weight: 400; font-size: clamp(32px, 3.5vw, 52px); line-height: 1.1; letter-spacing: -.01em; }
 .close { max-width: var(--measure); margin-inline: auto; padding-inline: var(--pad); text-align: left; }
 .close .label { margin-bottom: clamp(18px, 2.6vh, 26px); }
 .ask { position: relative; display: flex; gap: 10px; max-width: 560px; margin-top: clamp(28px, 4.4vh, 44px); }
-.ask__in { flex: 1; min-width: 0; height: 56px; padding: 0 20px; border: 0; border-radius: 16px; background: var(--field); color: var(--ink); font: 400 18px/1.4 var(--sans); }
+.ask__in { flex: 1; min-width: 0; height: 56px; padding: 0 20px; border: 0; border-radius: 16px; background: var(--field); color: var(--ink); font: 400 16px/1.4 var(--mono); }
 .ask__in::placeholder { color: var(--mute); }
 .ask__in:focus-visible { outline: 2px solid color-mix(in srgb, var(--ink) 18%, transparent); outline-offset: 2px; }
-.ask__go { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 56px; padding: 0 24px; border: 0; border-radius: 16px; background: var(--ink); color: var(--bg); font: 500 15px/1 var(--sans); cursor: pointer; transition: opacity .2s ease; }
-.ask__go:hover { opacity: .86; }
+.ask__go { flex: none; display: inline-flex; align-items: center; gap: 10px; height: 56px; padding: 0 26px; border: 1px solid var(--rule); border-radius: 0; background: none; color: var(--ink); font: 400 11px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; cursor: pointer; transition: border-color .2s ease, background .2s ease; }
+.ask__go:hover { border-color: var(--ink); background: color-mix(in srgb, var(--ink) 6%, transparent); }
 .ask__go:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.ask__flash { margin-top: 16px; font: 400 15px/1.5 var(--sans); color: var(--ink-soft); }
+.ask__flash { margin-top: 16px; font: 300 13px/1.7 var(--mono); color: var(--ink-soft); }
 .ask__flash--error { color: #FF8F66; }
 
 /* Footer: the mark beside four columns under hairlines, headed by labels */
@@ -1646,9 +1685,9 @@ body { font: 400 16px/1.6 var(--sans); }
 .footer--full .brand--small { font-size: 20px; }
 .footer__cols { gap: 28px 20px; }
 .footer__col { gap: 10px; padding-top: 16px; border-top: 1px solid var(--line); }
-.footer__h { margin-bottom: 8px; font: 400 11px/1.4 var(--label); letter-spacing: .1em; text-transform: uppercase; color: var(--mute); }
-.footer__a, .footer__blog, .footer__company { font: 400 15px/1.5 var(--sans); }
-.footer__fine, .footer__line { font: 400 13px/1.6 var(--sans); }
+.footer__h { margin-bottom: 8px; font: 400 10px/1.4 var(--label); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
+.footer__a, .footer__blog, .footer__company { font: 400 13px/1.6 var(--mono); }
+.footer__fine, .footer__line { font: 300 12px/1.6 var(--mono); }
 .footer__base { border-top: 0; }
 
 /* The case is the first thing under the hero (his call, 2026-10-04): it lets
@@ -1701,7 +1740,7 @@ body { font: 400 16px/1.6 var(--sans); }
     body { font-size: 16px; }
     .navlink { font-size: 14px; letter-spacing: -.005em; }
     .glass-button-wrap--nav .glass-button-text { font-size: 13.5px; padding: 0 13px; gap: 6px; }
-    .lede h1 { font-weight: 330; letter-spacing: -.022em; line-height: 1.1; }
+    .lede h1 { font-weight: 400; letter-spacing: -.01em; line-height: 1.08; }
     .feature { padding: 0; gap: 0; }
     .feature__copy { padding: 26px 22px 30px; }
     .footer__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1716,10 +1755,10 @@ body { font: 400 16px/1.6 var(--sans); }
 /* inner pages: reading sizes */
 .prose { grid-template-columns: minmax(0, 1fr) minmax(0, 700px) minmax(0, 1fr); font: 400 18px/1.65 var(--sans); }
 .standfirst { font: 500 clamp(19px, 1.6vw, 23px)/1.45 var(--sans); letter-spacing: -.01em; }
-.masthead h1, .bloghero__t, .post__title { font-weight: 400; letter-spacing: -.028em; line-height: 1.04; }
-.group__head h2, .apply h2, .role__title { font-weight: 450; letter-spacing: -.022em; }
+.masthead h1, .bloghero__t, .post__title { font-weight: 400; letter-spacing: -.012em; line-height: 1.06; }
+.group__head h2, .apply h2, .role__title { font-weight: 400; letter-spacing: -.01em; }
 .masthead__lead { max-width: 52ch; font: 500 clamp(18px, 1.5vw, 21px)/1.45 var(--sans); }
-.postrow__title { font-weight: 450; letter-spacing: -.022em; }
+.postrow__title { font-weight: 400; letter-spacing: -.01em; }
 .steps.is-pinned .feature__t { font-size: clamp(30px, 3.2vw, 48px); }
 .steps.is-pinned .feature__d { font-size: clamp(16px, 1.25vw, 19px); }
 
@@ -1728,13 +1767,15 @@ body { font: 400 16px/1.6 var(--sans); }
    big text. The caret that glides is static/js/caret.js; .has-caret is only
    ever set by it, so without the script the browser's caret stays. Blue on
    the light pages, yellow on the dark ones, as the emphasis is. */
-:root { --field: #F2F2F1; --caret: var(--ink); }
+:root { --field: #FBF8F3; --caret: var(--ink); }
 .dark { --field: rgba(234, 232, 227, .07); --caret: #F4F4F0; }
 .wy { --caret: var(--hl); --field: rgba(244, 244, 240, .07); }
 /* on Why us the send button is the page's blue, like its other buttons */
-.wy .ask__go { background: var(--blue); color: #FFFFFF; }
+.wy .ask__in { font-family: var(--sans); }
+.wy .ask__go { border: 0; border-radius: 999px; background: var(--blue); color: #FFFFFF; font: 600 16px/1 var(--sans); letter-spacing: -.01em; text-transform: none; }
+.wy .ask__go:hover { background: var(--blue); opacity: .88; }
 .wy .ask__flash { color: var(--mute); }
-.field input, .field textarea, .field select { border: 0; border-radius: 16px; background: var(--field); font: 400 22px/1.4 var(--sans); color: var(--ink); }
+.field input, .field textarea, .field select { border: 0; border-radius: 16px; background: var(--field); font: 400 17px/1.5 var(--mono); color: var(--ink); }
 .field input, .field select { height: 64px; padding: 0 18px; }
 .field textarea { min-height: 150px; padding: 16px 18px; }
 .field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible { outline: 2px solid color-mix(in srgb, var(--ink) 16%, transparent); outline-offset: 2px; }
@@ -1757,15 +1798,15 @@ body { font: 400 16px/1.6 var(--sans); }
    classes: a 400px card, 8px corners, hairline border, soft shadow, 14px
    title and text, and its small buttons (32px tall, 12px type, 8px corners,
    a faint shadow), the dark Accept and the outlined Decline. */
-.cookie { position: fixed; right: 16px; bottom: 16px; z-index: 100; width: min(400px, calc(100vw - 32px)); padding: 16px; border: 1px solid #E4E4E7; border-radius: 8px; background: #FFFFFF; color: #09090B; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .05), 0 4px 6px -4px rgba(0, 0, 0, .05); font: 400 14px/20px var(--sans); letter-spacing: 0; text-align: left; opacity: 0; transform: translateY(8px); transition: opacity .2s ease, transform .2s ease; }
+.cookie { position: fixed; right: 16px; bottom: 16px; z-index: 100; width: min(400px, calc(100vw - 32px)); padding: 16px; border: 1px solid #E4E4E7; border-radius: 8px; background: #FFFFFF; color: #09090B; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .05), 0 4px 6px -4px rgba(0, 0, 0, .05); font: 400 14px/20px var(--geist); letter-spacing: 0; text-align: left; opacity: 0; transform: translateY(8px); transition: opacity .2s ease, transform .2s ease; }
 .cookie.is-in { opacity: 1; transform: none; }
 .cookie__row { display: flex; gap: 8px; }
 .cookie__content { flex-grow: 1; display: grid; gap: 4px; min-width: 0; }
-.cookie__title { margin: 0; font: 500 14px/20px var(--sans); color: #09090B; }
+.cookie__title { margin: 0; font: 500 14px/20px var(--geist); color: #09090B; }
 .cookie__text { margin: 0; color: #71717A; }
 .cookie__text a { color: #09090B; text-decoration: underline; text-underline-offset: 3px; }
 .cookie__actions { display: flex; gap: 8px; padding-top: 12px; }
-.cookie__btn { height: 32px; padding: 0 12px; border: 1px solid #E4E4E7; border-radius: 8px; background: #FFFFFF; color: #09090B; font: 500 12px/16px var(--sans); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .05); cursor: pointer; transition: background .15s ease; }
+.cookie__btn { height: 32px; padding: 0 12px; border: 1px solid #E4E4E7; border-radius: 8px; background: #FFFFFF; color: #09090B; font: 500 12px/16px var(--geist); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .05); cursor: pointer; transition: background .15s ease; }
 .cookie__btn:hover { background: #F4F4F5; }
 .cookie__btn--primary { border-color: #18181B; background: #18181B; color: #FAFAFA; }
 .cookie__btn--primary:hover { background: rgba(24, 24, 27, .9); }
