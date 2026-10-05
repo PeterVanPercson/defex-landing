@@ -153,24 +153,6 @@
         {% include "landing/_inline.html" %}
     </section>
 
-    <section class="careers sheet" id="careers" aria-labelledby="careers-title">
-        <div class="sechead">
-            <h2 class="sechead__t engraved" id="careers-title" data-reveal>Build with <em>us</em></h2>
-            <p data-reveal class="sechead__sub">We’re building the robot now. Three roles open in San Francisco, pay listed on each.</p>
-        </div>
-        {% for job in jobs %}
-        <a data-reveal class="rolecard" href="{% url 'career_detail' job.slug %}">
-            <span class="rolecard__id">
-                <span class="rolecard__title">{{ job.title }}</span>
-                <span class="rolecard__meta">{{ job.home_meta }}</span>
-            </span>
-            <span class="rolecard__pitch">{{ job.pitch }}</span>
-            <span class="rolecard__go">View role &rarr;</span>
-        </a>
-        {% endfor %}
-        <p data-reveal class="careers__alt"><a class="link" href="{% url 'careers' %}">See all roles and apply</a></p>
-    </section>
-
     <section class="contact dark" id="contact" aria-labelledby="contact-title">
         <!-- cal.com's booker, mounted by static/js/book.js. It lives here rather
              than on a page of its own: this is where someone has finished
@@ -179,6 +161,7 @@
         <div class="booker">
             <div class="sechead">
                 <h2 class="sechead__t cut" id="contact-title" data-reveal><span class="cut__face engraved">Test our <em>product</em></span><span class="cut__mask" aria-hidden="true">Test our <em>product</em></span></h2>
+                <p data-reveal class="sechead__sub">We are building it now. {{ company.paid_waitlist.factories }} factories have paid to be first in line.</p>
             </div>
             <div class="booker__panel">
                 <p class="booker__status" role="status">Choose a time to talk.</p>

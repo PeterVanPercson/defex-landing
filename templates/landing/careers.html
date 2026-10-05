@@ -55,7 +55,7 @@
             {% if form.errors %}<div class="form__flash form__flash--error" role="alert">{% for field in form %}{% for error in field.errors %}<p id="{{ field.name }}-error">{{ field.label }}: {{ error }}</p>{% endfor %}{% endfor %}</div>{% endif %}
             <div class="form__row">
                 <label class="field"><span>Name</span><input type="text" name="name" autocomplete="name" maxlength="120" value="{{ form.name.value|default_if_none:'' }}"{% if form.name.errors %} aria-invalid="true" aria-describedby="name-error"{% endif %} required></label>
-                <label class="field"><span>Email</span><input type="email" name="email" autocomplete="email" maxlength="200" value="{{ form.email.value|default_if_none:'' }}"{% if form.email.errors %} aria-invalid="true" aria-describedby="email-error"{% endif %} required></label>
+                <label class="field"><span>Email</span><input type="text" inputmode="email" name="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="200" value="{{ form.email.value|default_if_none:'' }}"{% if form.email.errors %} aria-invalid="true" aria-describedby="email-error"{% endif %} required></label>
             </div>
             <label class="field"><span>Role</span>
                 <select name="role"{% if form.role.errors %} aria-invalid="true" aria-describedby="role-error"{% endif %} required>

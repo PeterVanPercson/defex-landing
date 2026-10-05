@@ -770,3 +770,98 @@ test('a key press hands the page back to the browser mid-glide', () => {
     p.event('keydown');
     assert.equal(p.frames.size, 0);
 });
+
+// The logo rows (static/js/roll.js): no drag; a finger on a logo colours it
+// and holds its row still until the next tap somewhere else.
+test('a tap on a logo colours it and holds its row until the next tap elsewhere', () => {
+    const p = page();
+    const roll = new Element(), item = new Element(), elsewhere = new Element();
+    item.closest = (sel) => (sel === '.roll__i' ? item : sel === '.roll' ? roll : null);
+    elsewhere.closest = () => null;
+    p.selectors['.roll'] = [roll];
+    p.run('roll.js');
+    p.doc.emit('pointerdown', { pointerType: 'touch', target: item });
+    assert.equal(item.classList.contains('is-touched'), true);
+    assert.equal(roll.classList.contains('is-paused'), true);
+    p.doc.emit('pointerdown', { pointerType: 'touch', target: elsewhere });
+    assert.equal(item.classList.contains('is-touched'), false);
+    assert.equal(roll.classList.contains('is-paused'), false);
+    // a mouse is left to :hover in the stylesheet
+    p.doc.emit('pointerdown', { pointerType: 'mouse', target: item });
+    assert.equal(item.classList.contains('is-touched'), false);
+});
+
+// The smooth caret (static/js/caret.js). The mock lays text out at 10px a
+// character, so a caret after n characters belongs at 10n.
+function caretPage({ reduced = false } = {}) {
+    const p = page({ reduced });
+    const made = [];
+    p.doc.body = new Element();
+    p.doc.body.appendChild = (child) => child;
+    p.doc.createElement = (tag) => {
+        const el = new Element();
+        el.tagName = tag.toUpperCase();
+        el.textContent = '';
+        el.appendChild = (child) => child;
+        made.push(el);
+        return el;
+    };
+    const field = (value, hidden = false) => {
+        const f = new Element(), host = new Element();
+        Object.assign(f, { tagName: 'INPUT', type: 'text', value, tabIndex: hidden ? -1 : 0, selectionStart: value.length, selectionEnd: value.length,
+            selectionDirection: 'none', offsetLeft: 0, offsetTop: 30, clientLeft: 0, clientTop: 0, clientWidth: 400, clientHeight: 64, scrollLeft: 0, scrollTop: 0 });
+        host.appendChild = (child) => { host.child = child; return child; };
+        f.parentElement = host;
+        f.closest = () => (hidden ? host : null);
+        return f;
+    };
+    const name = field('connector housing'), trap = field('', true);
+    p.doc.querySelectorAll = () => [name, trap];
+    p.run('caret.js');
+    const [mirror, mark] = made;
+    Object.defineProperty(mark, 'offsetLeft', { get: () => 10 * mirror.textContent.length });
+    Object.defineProperty(mark, 'offsetTop', { get: () => 0 });
+    const caret = name.parentElement.child;
+    const x = () => Number(/translate3d\(([-\d.]+)px/.exec(caret.style.transform)[1]);
+    const focus = () => { p.doc.activeElement = name; name.emit('focus'); };
+    const settle = () => { for (let i = 0; i < 200 && p.frames.size; i++) p.frame(); };
+    return { ...p, name, trap, caret, x, focus, settle };
+}
+
+test('the caret sits after the text, glides when it moves and never steps back past its target', () => {
+    const p = caretPage();
+    assert.equal(p.name.classList.contains('has-caret'), true);
+    assert.equal(p.trap.classList.contains('has-caret'), false, 'the hidden honeypot keeps the browser caret');
+    p.focus();
+    assert.equal(p.x(), 170);
+    assert.equal(p.caret.style.opacity, '1');
+    p.name.selectionStart = p.name.selectionEnd = 0;
+    p.name.emit('keydown');
+    p.frame(); p.frame();
+    const mid = p.x();
+    assert.ok(mid > 0 && mid < 170, `one frame in it is on its way, not there (${mid})`);
+    const seen = [];
+    for (let i = 0; i < 200 && p.frames.size; i++) { p.frame(); seen.push(p.x()); }
+    assert.equal(p.x(), 0);
+    assert.ok(seen.every((v) => v > -2), 'it settles without a visible overshoot');
+});
+
+test('the caret hides while text is selected and when the field loses focus; Reduce Motion makes it jump', () => {
+    const p = caretPage();
+    p.focus();
+    p.name.selectionStart = 2; p.name.selectionEnd = 6;
+    p.doc.emit('selectionchange');
+    p.frame();
+    assert.equal(p.caret.style.opacity, '0');
+    p.name.selectionStart = p.name.selectionEnd = 6;
+    p.name.emit('keydown'); p.frame();
+    assert.equal(p.caret.style.opacity, '1');
+    p.doc.activeElement = null;
+    p.name.emit('blur');
+    assert.equal(p.caret.style.opacity, '0');
+    const still = caretPage({ reduced: true });
+    still.focus();
+    still.name.selectionStart = still.name.selectionEnd = 3;
+    still.name.emit('keydown'); still.frame();
+    assert.equal(still.x(), 30);
+});

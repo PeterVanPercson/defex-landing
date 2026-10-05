@@ -27,8 +27,8 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, 'id="why-title" data-reveal>Robots are cheap. Setting them up is <em>not</em>.</h2>')
         self.assertNotContains(home, "the test becomes the teacher")
         page = home.content.decode()
-        # the backing credit is off the hero for now; nothing on the page names a backer
-        for gone in ("lede__backed", "Backed by", "a16z"):
+        # no "Backed by" credit in the hero; a16z sits in Partners by his call (2026-10-04)
+        for gone in ("lede__backed", "Backed by"):
             self.assertNotIn(gone, page)
         self.assertNotIn('class="marquee', page)
         self.assertNotIn("marquee__", page)
@@ -49,10 +49,9 @@ class SiteTests(SimpleTestCase):
         # the A1 cell is unbuilt and the deck labels it PROPOSED on four
         # slides, so the page must not assert it as a shipping product
         self.assertContains(home, "building")
-        # the open role and the ending are load-bearing content, not decoration
-        self.assertContains(home, 'id="careers"')
-        self.assertContains(home, "Content Producer")
-        self.assertContains(home, "/careers/")
+        # careers left the home page (his call, 2026-10-04); the nav and footer still link it
+        self.assertNotContains(home, 'id="careers"')
+        self.assertContains(home, 'href="/careers/"')
         # the careers page carries the posting and a working application form
         careers = self.client.get("/careers/")
         for chunk in ("Content Producer", "To apply", "Build with us",
@@ -119,11 +118,37 @@ class SiteTests(SimpleTestCase):
         ("Robots are cheap.") comes straight after the hero, then Partners, then
         Meet the robot. Nothing links to the film any more."""
         home = self.client.get("/").content.decode()
-        order = ['id="top"', 'id="why"', 'id="partners"', 'id="meet"', 'id="in-line"', 'id="careers"', 'id="contact"']
+        order = ['id="top"', 'id="why"', 'id="partners"', 'id="meet"', 'id="in-line"', 'id="contact"']
         for before, after in zip(order, order[1:]):
             self.assertLess(home.index(before), home.index(after), (before, after))
         self.assertNotIn("#origin-film", self.client.get("/why-us/").content.decode())
         self.assertNotIn("#origin", self.client.get("/company.json").content.decode())
+
+    def test_the_logo_rows_pause_and_colour_but_never_drag(self):
+        """His call, 2026-10-04: the rows cannot be dragged; a pointer or a
+        finger on a row pauses it and shows that logo in its own colours."""
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertIn(".roll:hover .roll__track, .roll.is-paused .roll__track { animation-play-state: paused; }", css)
+        self.assertIn(".roll__i.is-touched .roll__logo { filter: none;", css)
+        script = (Path(settings.BASE_DIR) / "static/js/roll.js").read_text()
+        for gone in ("pointermove", "setPointerCapture", "is-held"):
+            self.assertNotIn(gone, script)
+        home = self.client.get("/").content.decode()
+        self.assertIn('alt="Andreessen Horowitz"', home.split('id="partners"', 1)[1].split("</ul>", 1)[0])
+
+    def test_text_fields_get_the_smooth_caret(self):
+        """Skiper UI's Smooth Input on every text field (his call, 2026-10-04):
+        caret.js on every page; the browser's caret is hidden only through the
+        class the script sets, so without it the caret is the browser's own."""
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertIn(".has-caret { caret-color: transparent; }", css)
+        self.assertEqual(len(re.findall(r"caret-color:\s*transparent", css)), 1)
+        for path in ("/", "/why-us/", "/careers/", "/blog/", "/privacy/"):
+            self.assertIn("js/caret.js?v=", self.client.get(path).content.decode(), path)
+        # browsers do not say where the caret is in an email field, so it is text with an email keyboard
+        careers = self.client.get("/careers/").content.decode()
+        self.assertIn('<input type="text" inputmode="email" name="email" autocomplete="email"', careers)
+        self.assertNotIn('type="email"', careers)
 
     def test_past_its_edges_the_home_page_is_black(self):
         """What shows when a page is pulled past its top or bottom is the root's
@@ -250,7 +275,7 @@ class SiteTests(SimpleTestCase):
         home = self.client.get("/").content.decode()
         pitch = self.client.get("/why-us/").content.decode()
         self.assertLess(home.index('id="why"'), home.index('id="in-line"'))
-        self.assertLess(home.index('id="in-line"'), home.index('id="careers"'))
+        self.assertLess(home.index('id="in-line"'), home.index('id="contact"'))
         self.assertLess(pitch.index('id="proof"'), pitch.index('id="in-line"'))
         self.assertLess(pitch.index('id="in-line"'), pitch.index('id="pricing"'))
         for page in (home, pitch):
