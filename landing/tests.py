@@ -55,6 +55,8 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, 'href="/careers/"')
         # the careers page carries the posting and a working application form
         careers = self.client.get("/careers/")
+        # no line under the title (his call, 2026-10-04)
+        self.assertNotContains(careers, "building the robot now")
         for chunk in ("Content Producer", "To apply", "Build with us",
                       'id="content-producer"', 'id="application"', 'name="work"'):
             self.assertContains(careers, chunk)
