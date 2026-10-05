@@ -52,7 +52,6 @@ PUBLIC_COMPANY = {
                  "security": "security@defexrobotics.com", "privacy": "privacy@defexrobotics.com"},
     "links": {
         "technical_note": CANONICAL_ORIGIN + "/blog/the-cost-of-the-next-attempt/",
-        "inspection_demo": CANONICAL_ORIGIN + "/#origin",
         "blog": CANONICAL_ORIGIN + "/blog/",
         "feed": CANONICAL_ORIGIN + "/blog/feed.xml",
     },
