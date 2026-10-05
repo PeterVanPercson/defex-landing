@@ -2,10 +2,11 @@
    Why us and Prototype. Self-contained: Prototype does not load site.css.
    Glass pills over the drawing; a pill opens into its card and the camera
    flies to that part. static/js/meet.js, drawing in _robot.html. */
-.meet { --ink: #F4F4F0; --mute: rgba(244, 244, 240, .62); --line: rgba(244, 244, 240, .13); --yellow: #FFD42A; --blue: #3D63FF; --fail: #FF5A1F; --m-sans: "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; --m-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace; --m-pad: var(--pad, 20px); color: var(--ink); font-family: var(--m-sans); -webkit-font-smoothing: antialiased; --glass: rgba(244, 244, 240, .1); --glass-hi: rgba(244, 244, 240, .16); --list-x: clamp(88px, 8vw, 124px); position: relative; }
+/* the explorer's highlight is white, not yellow (his call, 2026-10-04) */
+.meet { --ink: #F4F4F0; --mute: rgba(244, 244, 240, .62); --line: rgba(244, 244, 240, .13); --hi: #F4F4F0; --blue: #3D63FF; --fail: #FF5A1F; --m-sans: "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; --m-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace; --m-pad: var(--pad, 20px); color: var(--ink); font-family: var(--m-sans); -webkit-font-smoothing: antialiased; --glass: rgba(244, 244, 240, .1); --glass-hi: rgba(244, 244, 240, .16); --list-x: clamp(88px, 8vw, 124px); position: relative; }
 .meet__stage { position: relative; height: clamp(620px, 84svh, 840px); overflow: hidden; border-radius: clamp(28px, 3vw, 44px); background: radial-gradient(120% 95% at 66% 38%, #1a1b20 0%, #0e0e10 58%, #070708 100%); box-shadow: inset 0 0 0 1px var(--line); isolation: isolate; }
 .meet__stage::after { content: ""; position: absolute; inset: auto 0 0; height: 28%; background: linear-gradient(to top, rgba(5, 5, 5, .55), transparent); pointer-events: none; }
-.meet__tag { position: absolute; right: clamp(20px, 2.4vw, 32px); bottom: clamp(18px, 2.2vw, 28px); z-index: 2; padding: 5px 9px; border: 1.5px solid var(--yellow); border-radius: 6px; font: 600 11px/1 var(--m-mono); letter-spacing: .18em; text-transform: uppercase; color: var(--yellow); }
+.meet__tag { position: absolute; right: clamp(20px, 2.4vw, 32px); bottom: clamp(18px, 2.2vw, 28px); z-index: 2; padding: 5px 9px; border: 1.5px solid var(--hi); border-radius: 6px; font: 600 11px/1 var(--m-mono); letter-spacing: .18em; text-transform: uppercase; color: var(--hi); }
 
 /* the drawing */
 .rb { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
@@ -18,12 +19,12 @@
 .rb [data-part] { transition: opacity .6s cubic-bezier(.22, .61, .36, 1); }
 .rb__cable { fill: none; stroke: #34343a; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
 .rb__cable--thin { stroke-width: 3; }
-.rb__pulse { fill: var(--yellow); opacity: 0; }
+.rb__pulse { fill: var(--hi); opacity: 0; }
 .rb__brain { fill: #2b2b30; }
 .rb__fin { fill: #3a3a41; }
 .rb__screen { fill: #0A0A0A; }
 .rb__bar { fill: #26262b; transition: fill .3s ease; }
-.rb__bar.is-lit { fill: var(--yellow); }
+.rb__bar.is-lit { fill: var(--hi); }
 .rb__led { fill: #26262b; transition: fill .15s ease; }
 .rb__led.is-on { fill: var(--blue); }
 .rb__belt { fill: #151518; stroke: #3a3a41; stroke-width: 2; }
@@ -38,18 +39,18 @@
 .rb__check circle { fill: none; stroke: rgba(244, 244, 240, .3); stroke-width: 2; transition: fill .2s ease, stroke .2s ease; }
 .rb__check text { font: 500 16px/1 var(--m-sans); fill: var(--mute); }
 .rb__tick, .rb__cross { fill: none; stroke: #0A0A0A; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0; transition: opacity .15s ease; }
-.rb__check.is-ok circle { fill: var(--yellow); stroke: var(--yellow); }
+.rb__check.is-ok circle { fill: var(--hi); stroke: var(--hi); }
 .rb__check.is-bad circle { fill: var(--fail); stroke: var(--fail); }
 .rb__check.is-ok .rb__tick, .rb__check.is-bad .rb__cross { opacity: 1; }
 .rb__check.is-ok text, .rb__check.is-bad text { fill: var(--ink); }
 .rb__mast { fill: #34343a; }
 .rb__lamp { fill: #26262b; transition: fill .12s ease; }
 .rb__lamp--run.is-on { fill: var(--blue); }
-.rb__lamp--pass.is-on { fill: var(--yellow); }
+.rb__lamp--pass.is-on { fill: var(--hi); }
 .rb__lamp--fail.is-on { fill: var(--fail); }
-.rb__cone { fill: var(--yellow); opacity: .07; }
-.rb__scan { fill: none; stroke: var(--yellow); stroke-width: 3; stroke-linecap: round; opacity: 0; }
-.rb__lock { fill: none; stroke: var(--yellow); stroke-width: 3.5; stroke-linecap: round; opacity: 0; }
+.rb__cone { fill: var(--hi); opacity: .07; }
+.rb__scan { fill: none; stroke: var(--hi); stroke-width: 3; stroke-linecap: round; opacity: 0; }
+.rb__lock { fill: none; stroke: var(--hi); stroke-width: 3.5; stroke-linecap: round; opacity: 0; }
 .rb__bracket { fill: #34343a; }
 .rb__cam { fill: #F4F4F0; }
 .rb__lens { fill: var(--blue); }
@@ -58,7 +59,7 @@
 .rb__upper { fill: var(--blue); }
 .rb__fore, .rb__grip { fill: #F4F4F0; }
 .rb__finger { fill: #BEBEB6; }
-.rb__joint { fill: var(--yellow); }
+.rb__joint { fill: var(--hi); }
 .rb__pin { fill: #0A0A0A; }
 .rb__wj { fill: var(--blue); }
 .rb__puck { fill: var(--blue); transition: fill .12s ease; }
@@ -84,7 +85,7 @@
 .meet__plus { display: grid; width: 26px; height: 26px; transition: transform .45s cubic-bezier(.34, 1.56, .64, 1); }
 .meet__plus svg { width: 100%; height: 100%; fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; }
 .meet__item:hover .meet__plus { transform: rotate(90deg); }
-.meet__dot { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--dot, var(--yellow)); box-shadow: inset 0 -1.5px 0 rgba(255, 255, 255, .6), 0 0 0 1px rgba(255, 255, 255, .12); transition: background .3s ease; }
+.meet__dot { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--dot, var(--hi)); box-shadow: inset 0 -1.5px 0 rgba(255, 255, 255, .6), 0 0 0 1px rgba(255, 255, 255, .12); transition: background .3s ease; }
 .meet__name { display: block; }
 .meet__card { display: none; width: min(27rem, calc(100vw - 2 * var(--m-pad) - var(--list-x) - 40px)); padding: 26px 30px 28px; outline: none; }
 .meet__text { font: 400 20px/1.45 var(--m-sans); letter-spacing: -.01em; color: rgba(244, 244, 240, .74); }
@@ -139,18 +140,18 @@
 /* home and Prototype: the section around the explorer */
 .meet-sec { position: relative; padding: clamp(96px, 16vh, 180px) max(var(--pad, 20px), calc((100% - 1280px) / 2 + var(--pad, 20px))); background: #050505; color: #F4F4F0; font-family: "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .meet-sec__h { max-width: 13ch; margin: 0 0 clamp(40px, 7vh, 80px); font: 650 clamp(46px, 6.4vw, 104px)/.96 "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: -.045em; text-wrap: balance; color: #F4F4F0; }
-.meet-sec__h em { font-style: normal; color: #FFD42A; }
-.meet :focus-visible { outline: 2px solid #FFD42A; outline-offset: 4px; }
+.meet-sec__h em { font-style: normal; color: inherit; }
+.meet :focus-visible { outline: 2px solid #F4F4F0; outline-offset: 4px; }
 .meet p { margin: 0; }
 .meet ul { margin: 0; padding: 0; }
 .embed .meet-sec { display: none; }
 
 /* under the robot on home and Why us: the way into the prototype */
 .meet-cta { display: flex; justify-content: center; margin: clamp(28px, 5vh, 48px) 0 0; }
-.meet-cta__btn { display: inline-flex; align-items: center; gap: 14px; min-height: 64px; padding: 0 34px; border-radius: 999px; background: #FFD42A; color: #0A0A0A; font: 600 19px/1 "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: -.01em; text-decoration: none; transition: background .2s ease, transform .2s ease; }
+.meet-cta__btn { display: inline-flex; align-items: center; gap: 14px; min-height: 64px; padding: 0 34px; border-radius: 999px; background: #F4F4F0; color: #0A0A0A; font: 600 19px/1 "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: -.01em; text-decoration: none; transition: background .2s ease, transform .2s ease; }
 .meet-cta__btn span { transition: transform .3s cubic-bezier(.22, .61, .36, 1); }
-.meet-cta__btn:hover { background: #FFE366; }
+.meet-cta__btn:hover { background: #FFFFFF; }
 .meet-cta__btn:hover span { transform: translateX(5px); }
 .meet-cta__btn:active { transform: scale(.97); }
-.meet-cta__btn:focus-visible { outline: 2px solid #FFD42A; outline-offset: 4px; }
+.meet-cta__btn:focus-visible { outline: 2px solid #F4F4F0; outline-offset: 4px; }
 
