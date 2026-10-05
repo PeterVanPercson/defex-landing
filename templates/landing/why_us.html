@@ -13,7 +13,8 @@
 {% block extra_head %}
 <!-- Meet the robot sits far below the fold, so its sheet never holds up first paint -->
 <link rel="stylesheet" href="{% static 'css/meet.css' %}?v={{ asset_v }}" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="{% static 'css/meet.css' %}?v={{ asset_v }}"></noscript>
-<link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/geist-400-900-normal.woff2' %}">
+<!-- the portal cuts WHY US out of the heading face and waits for it before it measures -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="{% static 'fonts/newsreader-400-normal.woff2' %}">
 <noscript><style>.portal__fallback { display: grid; }</style></noscript>
 {% endblock %}
 
@@ -26,7 +27,7 @@
          WHY US are windows onto a blue world of factory parts, and the
          scroll flies the camera into one letter. Hover a letter first to
          choose the way in. Inside, the problem is told over the parts. -->
-    <section class="portal" id="portal" aria-labelledby="why-title" data-portal data-word="WHY US" data-font='"Geist"' data-length="1.9">
+    <section class="portal" id="portal" aria-labelledby="why-title" data-portal data-word="WHY US" data-font='"Newsreader"' data-length="1.9">
         <div class="portal__probe" aria-hidden="true"></div>
         <div class="portal__pin">
             <div class="portal__field" aria-hidden="true">

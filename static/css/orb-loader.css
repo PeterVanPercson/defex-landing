@@ -5,7 +5,7 @@
 .orbload.is-done { opacity: 0; pointer-events: none; }
 .orbload__in { display: grid; justify-items: center; gap: 4px; margin-top: -6vh; }
 .orbload__orb { display: block; width: 220px; height: 220px; }
-.orbload__label { margin: 0; display: inline-flex; align-items: baseline; font: 500 15px/1.2 Geist, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: .01em; opacity: 0; transform: translateY(6px); }
+.orbload__label { margin: 0; display: inline-flex; align-items: baseline; font: 400 17px/1.2 "EB Garamond", Georgia, serif; letter-spacing: .02em; opacity: 0; transform: translateY(6px); }
 .orbload__dots { display: inline-flex; gap: 3px; margin-left: 4px; }
 .orbload__dots i { width: 3px; height: 3px; border-radius: 50%; background: currentColor; animation: orbload-dot 1.2s ease-in-out infinite; }
 .orbload__dots i:nth-child(2) { animation-delay: .15s; }
