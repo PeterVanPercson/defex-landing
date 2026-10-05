@@ -193,12 +193,12 @@ class SiteTests(SimpleTestCase):
 
     def test_logos_show_colour_on_black_and_azure_sits_level(self):
         """His calls, 2026-10-04: on the black Works with us rows a pointer or a
-        tap shows a mark's own colours; Azure is drawn smaller so it reads level
+        tap shows a mark's own colours; Azure is drawn smaller and lifted so it reads level
         with the other partners, in the row and in the hero's badge."""
         home = self.client.get("/").content.decode()
         row = home.split('id="partners"', 1)[1].split("</ul>", 1)[0]
-        self.assertIn('alt="Microsoft Azure" width="1280" height="369" loading="lazy" decoding="async" style="--s: 0.77"', row)
-        self.assertIn('data-scale="0.77"', home.split('class="flick__stage"', 1)[1].split("</span>", 1)[0])
+        self.assertIn('alt="Microsoft Azure" width="1280" height="369" loading="lazy" decoding="async" style="--s: 0.92; --lift: 0.1"', row)
+        self.assertIn('data-scale="0.92"', home.split('class="flick__stage"', 1)[1].split("</span>", 1)[0])
         works = home.split('id="in-line"', 1)[1].split("</ul>", 1)[0]
         self.assertIn('alt="NOVA Solutions"', works)
         self.assertIn('data-on-dark="flip"', works)
