@@ -1,23 +1,16 @@
 /* The site's faces, served from here rather than from Google Fonts: the
    Google CSS was the render-blocking gate for first paint on every page,
    and the deferred scripts waited on it. Latin subset, cut from the Google
-   Fonts sources. Newsreader keeps its optical-size axis from 20 to 72, so
-   each heading is drawn for the size it is set at, as on his own site; its
-   italic, one word per heading, is the 48pt cut. EB Garamond's 600 is only
-   fetched by a page with bold text in it. */
+   Fonts sources. Two faces set every word on the site (his call,
+   2026-10-05: "all of the texts should have the same font"), each in one
+   weight and no italic. Newsreader keeps its optical-size axis from 20 to
+   72, so each heading is drawn for the size it is set at, as on his site. */
 @font-face { font-family: 'Newsreader'; font-style: normal; font-weight: 400; font-display: swap; src: url(../fonts/newsreader-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: 'Newsreader'; font-style: italic; font-weight: 400; font-display: swap; src: url(../fonts/newsreader-400-italic.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400; font-display: swap; src: url(../fonts/eb-garamond-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 600; font-display: swap; src: url(../fonts/eb-garamond-600-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: 'EB Garamond'; font-style: italic; font-weight: 400; font-display: swap; src: url(../fonts/eb-garamond-400-italic.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 /* Georgia, scaled to each face's measure (his site's numbers), so the swap
    from it moves no line */
 @font-face { font-family: 'Newsreader Fallback'; src: local('Iowan Old Style'), local('Georgia'); size-adjust: 94%; ascent-override: 98%; descent-override: 26%; line-gap-override: 0%; }
 @font-face { font-family: 'Garamond Fallback'; src: local('Georgia'); size-adjust: 83%; ascent-override: 121%; descent-override: 36%; line-gap-override: 0%; }
-/* Why us keeps its own pair: Geist, with Plex Mono for its small labels */
-@font-face { font-family: 'Geist'; font-style: normal; font-weight: 100 900; font-display: swap; src: url(../fonts/geist-400-900-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url(../fonts/ibm-plex-mono-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500; font-display: swap; src: url(../fonts/ibm-plex-mono-500-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 /* the wordmark */
 @font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url(../fonts/inter-600-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 :root {
@@ -53,17 +46,15 @@
     /* His own site's pair (husanmavlonov.com; his call, 2026-10-05: "change
        the font to husanmavlonov.com ish ... engraved and stuff paper, but just
        text structure is like my site"): Newsreader for anything that is a
-       heading, EB Garamond for every other word. --mono, --sans and --font
-       are the names the rules below were written against; they all mean the
-       text face now. Why us sets its own Geist and Plex Mono (.wy), and the
-       cookie notice keeps the sans of the component he sent (--geist). Inter
-       is kept for the wordmark only. */
+       heading, EB Garamond for every other word, on every page, in every
+       drawing and in the cookie notice. --mono, --sans and --font are the
+       names the rules below were written against; they all mean the text
+       face now. Inter is kept for the wordmark only. */
     --text: "EB Garamond", "Garamond Fallback", Georgia, serif;
     --serif: "Newsreader", "Newsreader Fallback", "Iowan Old Style", Georgia, serif;
     --mono: var(--text);
     --sans: var(--text);
     --font: var(--text);
-    --geist: "Geist", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     --brand: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     /* small labels, set as his site sets its meta lines: lowercase, a touch spaced */
     --label: var(--text);
@@ -145,8 +136,10 @@ a { color: inherit; text-decoration: none; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 [hidden] { display: none !important; }
 h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -.012em; text-wrap: balance; }
-/* the word that carries the line is set in the serif's italic, as origami does */
-h1 em, h2 em, h3 em, .engraved em { font-style: italic; color: inherit; }
+/* No word is set apart (his call, 2026-10-05: "remove the emphasize thing
+   for words"): no italics, no bold and no coloured words, anywhere. The
+   markup keeps its <em> and <strong> for screen readers. */
+em, i, b, strong, cite, dfn, var { font-style: normal; font-weight: inherit; color: inherit; }
 section[id], h1[id], h2[id], details[id], .form--apply { scroll-margin-top: calc(var(--nav) + 16px); }
 .dot { color: var(--accent); }
 
@@ -255,8 +248,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .scroll-cue span { display: inline-block; margin-left: 9px; }
 
 .lede { width: 100%; padding-inline: max(var(--pad), calc((100% - var(--max)) / 2 + var(--pad))); }
-/* Set like the section titles below (.sechead__t): one face, one italic
-   word, the same size and the same stone cut. */
+/* Set like the section titles below (.sechead__t): one face, the same size
+   and the same stone cut. */
 .lede h1 { max-width: 22ch; font-size: clamp(32px, 3.1vw, 46px); line-height: 1.06; letter-spacing: -.01em; }
 
 
@@ -737,9 +730,8 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 }
 
 /* ------------------------------------------------------------------------
-   Blog. origami-robotics.com sets its posts in the same pair this site uses,
-   Plex Mono for the text and Source Serif 4 for the titles, so the article
-   keeps the site's type and only adds a reading measure: one 600px column,
+   Blog. The article keeps the site's type, Newsreader for the titles and
+   EB Garamond for the text, and only adds a reading measure: one 600px column,
    with figures allowed out to 940px. Every figure below is drawn from
    numbers or sentences that are already in the text. */
 
@@ -989,7 +981,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 .formula__frac { display: inline-grid; justify-items: center; text-align: center; }
 .formula__num { padding: 0 12px 6px; border-bottom: 1px solid var(--ink); }
 .formula__den { padding: 6px 12px 0; white-space: nowrap; }
-.formula var { font-style: italic; }
 .formula sub { font: 400 .58em/1 var(--mono); letter-spacing: .04em; vertical-align: -.35em; }
 
 /* Figure 3: the formula with handles. Chips for the worked examples, a
@@ -1151,14 +1142,14 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* ------------------------------------------------------------------------
    Why us. A page with its own palette: near-black, white, factory yellow and
    an electric blue. The brand orange stays in the mark, and as the colour of
-   a failed test. Geist for everything big, Plex Mono for the small labels.
+   a failed test, and never on a word. Its type is the site's (see the end).
    It opens on 21st.dev's Glyph Portal (static/js/portal.js): WHY US, whose
    letters are windows onto a yellow world of parts, and a camera the scroll
    flies into one of them. Then one idea per screen, each with a drawing that
    moves: the arm, the render, the gauge, the tries, the loop, the new part. */
 body:has(.wy) { background: #050505; }
 body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244, 240, .72); --on-accent: #F4F4F0; --rule: rgba(244, 244, 240, .3); background: rgba(5, 5, 5, .88); color: var(--ink); box-shadow: inset 0 -1px 0 rgba(244, 244, 240, .08); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
-.wy { --bg: #050505; --ink: #F4F4F0; --mute: rgba(244, 244, 240, .62); --line: rgba(244, 244, 240, .13); --hl: #5A7CFF; --blue: #3D63FF; --fail: #FF5A1F; --sans: "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; --text: var(--sans); --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; --label: var(--mono); --wide: 2400px; --gutter: max(var(--pad), calc((100% - var(--wide)) / 2 + var(--pad))); display: block; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+.wy { --bg: #050505; --ink: #F4F4F0; --mute: rgba(244, 244, 240, .62); --line: rgba(244, 244, 240, .13); --hl: #5A7CFF; --blue: #3D63FF; --fail: #FF5A1F; --wide: 2400px; --gutter: max(var(--pad), calc((100% - var(--wide)) / 2 + var(--pad))); display: block; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
 .wy ::selection { background: var(--blue); color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; }
 .wy :focus-visible { outline: 2px solid var(--hl); outline-offset: 4px; }
 .wy-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -1195,7 +1186,7 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 .portal__choices button:disabled { pointer-events: none; }
 .portal__front { position: absolute; inset: 0; opacity: var(--gp-caption, 1); pointer-events: none; }
 .portal__title { position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--gp-word-bottom, 62%) + clamp(30px, 5vh, 56px)); margin-inline: auto; max-width: 20ch; text-align: center; font: 600 clamp(28px, 3.4vw, 54px)/1.06 var(--sans); letter-spacing: -.035em; color: var(--ink); text-wrap: balance; }
-.portal__fallback { position: absolute; inset: 0; display: none; place-items: center; font: 900 min(19cqw, 34cqh)/1 "Geist", "Arial Black", sans-serif; letter-spacing: -.02em; color: var(--gp-field); }
+.portal__fallback { position: absolute; inset: 0; display: none; place-items: center; font: 400 min(19cqw, 34cqh)/1 var(--serif); letter-spacing: -.012em; color: var(--gp-field); }
 .portal[data-ready] .portal__fallback { visibility: hidden; }
 /* Inside the letter: the problem, in black on the yellow, scrolling over the
    parts while they drift at their own depths. A halo in the yellow keeps the
@@ -1563,22 +1554,20 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
 body { font: 400 16px/1.6 var(--font); }
 /* As on his site, every word is in lowercase except the headings, which keep
    their capitals the way his name does. The markup keeps its capitals, for
-   search and for screen readers. What someone types keeps its case; Why us,
-   the cookie notice and Meet the robot's explorer keep their own. */
+   search and for screen readers. What someone types keeps its case. */
 body { text-transform: lowercase; }
-h1, h2, h3, h4, input, textarea, select, .wy, .cookie, .meet { text-transform: none; }
+h1, h2, h3, h4, input, textarea, select { text-transform: none; }
 /* titles set in the heading face keep their capitals like the headings; a
    formula keeps them because T is not t */
-.postrow__title, .evidence__table td:first-child, .formula, var { text-transform: none; }
+.postrow__title, .evidence__table td:first-child, .formula, var,
+.wy :is(.beat, .gauge__result, .half__n, .half__t, .proof__n, .proof__t, .price__n, .price__t, .price__p, .price__v strong, .faq__q, .city__n) { text-transform: none; }
 /* the browser sets buttons apart (text-transform: none); here they follow
    whatever holds them */
 button { text-transform: inherit; }
 /* Meet's explorer is drawn by meet.css, which arrives after the page; until it
-   does, its text would take the page's face, and its bold card titles would
-   fetch a bold Garamond the page never shows (35 KB) */
-.meet { font-family: var(--geist); }
+   does, its text takes the page's face from here */
+.meet { font-family: var(--text); }
 ::placeholder { text-transform: lowercase; }
-.wy ::placeholder { text-transform: none; }
 
 /* Nav: the ground under it shows through, blurred, in place of a ruled bar */
 .topbar { background: color-mix(in srgb, var(--bg) 78%, transparent); -webkit-backdrop-filter: saturate(1.4) blur(18px); backdrop-filter: saturate(1.4) blur(18px); box-shadow: none; }
@@ -1684,8 +1673,6 @@ button { text-transform: inherit; }
 .inline__k::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 10px 1px 0; border-radius: 50%; background: var(--accent); vertical-align: middle; }
 /* on the black pitch page the label needs light ink: --ink-soft is only set for the paper and .dark grounds */
 .inline--dark .inline__k { font-size: 10px; color: rgba(244, 244, 240, .56); }
-/* Why us keeps its label in spaced mono capitals */
-.wy .inline__k { letter-spacing: .16em; text-transform: uppercase; }
 .roll { -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); }
 .roll__logo { opacity: .62; }
 
@@ -1809,13 +1796,9 @@ button { text-transform: inherit; }
 .dark { --field: rgba(234, 232, 227, .07); --caret: #F4F4F0; }
 .wy { --caret: var(--hl); --field: rgba(244, 244, 240, .07); }
 /* on Why us the send button is the page's blue, like its other buttons */
-.wy .ask__in { font-family: var(--sans); }
-.wy .ask__go { border: 0; border-radius: 999px; background: var(--blue); color: #FFFFFF; font: 600 16px/1 var(--sans); letter-spacing: -.01em; text-transform: none; }
+.wy .ask__go { border: 0; border-radius: 999px; background: var(--blue); color: #FFFFFF; }
 .wy .ask__go:hover { background: var(--blue); opacity: .88; }
-.wy .ask__flash { font: 400 15px/1.5 var(--sans); color: var(--mute); }
-/* Meet's button takes the page's text face on home; on Why us it stays the
-   page's own Geist pill, as meet.css draws it */
-main:not(.wy) .meet-cta__btn { font: 400 17px/1 var(--text); letter-spacing: .02em; text-transform: lowercase; }
+.wy .ask__flash { color: var(--mute); }
 .field input, .field textarea, .field select { border: 0; border-radius: 16px; background: var(--field); font: 400 18px/1.5 var(--text); color: var(--ink); }
 .field input, .field select { height: 64px; padding: 0 18px; }
 .field textarea { min-height: 150px; padding: 16px 18px; }
@@ -1836,18 +1819,18 @@ main:not(.wy) .meet-cta__btn { font: 400 17px/1 var(--text); letter-spacing: .02
 
 /* The cookie notice (static/js/cookies.js): the shadcn Alert "cookie
    notice" he sent (2026-10-04), measured from its own markup and Tailwind
-   classes: a 400px card, 8px corners, hairline border, soft shadow, 14px
-   title and text, and its small buttons (32px tall, 12px type, 8px corners,
-   a faint shadow), the dark Accept and the outlined Decline. */
-.cookie { position: fixed; right: 16px; bottom: 16px; z-index: 100; width: min(400px, calc(100vw - 32px)); padding: 16px; border: 1px solid #E4E4E7; border-radius: 8px; background: #FFFFFF; color: #09090B; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .05), 0 4px 6px -4px rgba(0, 0, 0, .05); font: 400 14px/20px var(--geist); letter-spacing: 0; text-align: left; opacity: 0; transform: translateY(8px); transition: opacity .2s ease, transform .2s ease; }
+   classes: a 400px card, 8px corners, hairline border, soft shadow, and its
+   small buttons (32px tall, 8px corners, a faint shadow), the dark Accept
+   and the outlined Decline. Its words are in the site's text face. */
+.cookie { position: fixed; right: 16px; bottom: 16px; z-index: 100; width: min(400px, calc(100vw - 32px)); padding: 16px; border: 1px solid #E4E4E7; border-radius: 8px; background: #FFFFFF; color: #09090B; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .05), 0 4px 6px -4px rgba(0, 0, 0, .05); font: 400 16px/22px var(--text); letter-spacing: 0; text-align: left; opacity: 0; transform: translateY(8px); transition: opacity .2s ease, transform .2s ease; }
 .cookie.is-in { opacity: 1; transform: none; }
 .cookie__row { display: flex; gap: 8px; }
 .cookie__content { flex-grow: 1; display: grid; gap: 4px; min-width: 0; }
-.cookie__title { margin: 0; font: 500 14px/20px var(--geist); color: #09090B; }
+.cookie__title { margin: 0; font: 400 17px/22px var(--text); color: #09090B; }
 .cookie__text { margin: 0; color: #71717A; }
 .cookie__text a { color: #09090B; text-decoration: underline; text-underline-offset: 3px; }
 .cookie__actions { display: flex; gap: 8px; padding-top: 12px; }
-.cookie__btn { height: 32px; padding: 0 12px; border: 1px solid #E4E4E7; border-radius: 8px; background: #FFFFFF; color: #09090B; font: 500 12px/16px var(--geist); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .05); cursor: pointer; transition: background .15s ease; }
+.cookie__btn { height: 32px; padding: 0 12px; border: 1px solid #E4E4E7; border-radius: 8px; background: #FFFFFF; color: #09090B; font: 400 15px/16px var(--text); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .05); cursor: pointer; transition: background .15s ease; }
 .cookie__btn:hover { background: #F4F4F5; }
 .cookie__btn--primary { border-color: #18181B; background: #18181B; color: #FAFAFA; }
 .cookie__btn--primary:hover { background: rgba(24, 24, 27, .9); }
@@ -1872,3 +1855,19 @@ main:not(.wy) .meet-cta__btn { font: 400 17px/1 var(--text); letter-spacing: .02
 :is(.inline--black, .inline--dark) .roll__i:is(:hover, .is-touched) .roll__logo[data-on-dark="flip"] { filter: invert(1) hue-rotate(180deg); }
 :is(.inline--black, .inline--dark) .roll__i:is(:hover, .is-touched) .roll__logo[data-on-dark="mono"] { filter: url(#roll-ink-light); }
 
+/* ------------------------------------------------------------------------
+   Why us in the site's type (his call, 2026-10-05: "all of the texts should
+   have the same font. either engraved or simple ... even for animations and
+   other places"). Its statements and numbers take the heading face, plain;
+   every other word, the drawings' labels included, takes the text face in
+   lowercase like the rest of the site. Its blue stays on the buttons and in
+   the drawings, never on a word.
+   ------------------------------------------------------------------------ */
+.wy :is(.portal__title, .beat, .wy-h, .story__t, .gauge__result, .half__n, .half__t, .proof__n, .proof__t, .price__n, .price__t, .price__p, .price__v strong, .faq__q, .face__name, .city__n) { font-family: var(--serif); font-weight: 400; letter-spacing: -.015em; color: var(--ink); }
+.wy :is(.wy-lead, .wy-kicker, .wy-link, .wy-btn, .story__d, .gauge__check, .proof__v, .price__s, .price__v, .faq__a, .face__bio, .price__go, .talk__pick) { font-family: var(--text); font-weight: 400; letter-spacing: 0; }
+.wy :is(.tries__label, .loop__labels li, .morph__label, .morph__names, .half__tag, .proof__k, .price__per, .face__role, .city__t, .window__bar, .inline__k) { font-family: var(--text); font-weight: 400; font-size: 13.5px; letter-spacing: .04em; text-transform: lowercase; }
+.wy :is(.wy-hl, .talk__pick strong, .proof__i--now .proof__k, .face__role, .city__t) { color: inherit; }
+.wy .beat__not { margin-left: 0; padding: 0; background: none; color: inherit; text-shadow: inherit; }
+.wy .half__tag { border-color: var(--line); color: var(--mute); }
+.wy .tries__label--hit { fill: rgba(244, 244, 240, .6); }
+.wy .gauge.is-pass .gauge__pass, .wy .gauge.is-fail .gauge__fail { color: inherit; }

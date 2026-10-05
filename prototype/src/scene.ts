@@ -18,8 +18,9 @@ export type View = 'overview' | 'side' | 'top' | 'connector' | 'part';
 export type Mode = 'machine' | 'inside' | 'parts';
 export interface Hud { labels: HTMLElement; tooltip: HTMLElement; onPick?: (id: PartId) => void; onDirector?: (on: boolean) => void }
 
-const FONT = "Geist, 'Helvetica Neue', Arial, sans-serif";
-const MONO = "'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace";
+// The signs and the HMI screen are set in the site's text face at its one
+// weight, like every other word on the site (his call, 2026-10-05).
+const FONT = "'EB Garamond', Georgia, serif";
 const mat = (color: number, metalness: number, roughness: number, extra: THREE.MeshStandardMaterialParameters = {}) =>
   new THREE.MeshStandardMaterial({ color, metalness, roughness, ...extra });
 const M = finishes;
@@ -62,8 +63,8 @@ function canvasTexture(w: number, h: number) {
   const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 8;
   return { canvas, texture, ctx: canvas.getContext('2d')! };
 }
-function print(c: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, color: string, weight = 500, font = FONT) {
-  c.fillStyle = color; c.font = `${weight} ${size}px ${font}`; c.fillText(text, x, y);
+function print(c: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, color: string) {
+  c.fillStyle = color; c.font = `400 ${size}px ${FONT}`; c.fillText(text, x, y);
 }
 
 const EXPLODE_ORDER: PartId[] = ['socket', 'tester', 'connector', 'gripper', 'zaxis', 'carriage', 'gantry'];
@@ -318,10 +319,10 @@ export class WorkcellScene {
     const c = this.plate.ctx, w = 1536, h = 172;
     c.fillStyle = '#20252b'; c.fillRect(0, 0, w, h);
     c.strokeStyle = '#4d545c'; c.lineWidth = 3; c.strokeRect(3, 3, w - 6, h - 6);
-    print(c, 'DEFEX', 44, 80, 46, '#e4e2d8', 700);
-    print(c, '·  connector lab  ·  insert  ·  test  ·  reset', 250, 80, 38, '#b8bdc1', 450);
-    print(c, 'SELF-TEACHING ROBOTS FOR MANUFACTURING   /   SIMULATION', 46, 134, 21, '#737e88', 500, MONO);
-    print(c, 'No. 001', 1350, 132, 26, '#ff7a1a', 500, MONO);
+    print(c, 'DEFEX', 44, 80, 46, '#e4e2d8');
+    print(c, '·  connector lab  ·  insert  ·  test  ·  reset', 250, 80, 38, '#b8bdc1');
+    print(c, 'SELF-TEACHING ROBOTS FOR MANUFACTURING   /   SIMULATION', 46, 134, 21, '#737e88');
+    print(c, 'No. 001', 1350, 132, 26, '#ff7a1a');
     this.plate.texture.needsUpdate = true;
   }
 
@@ -406,22 +407,22 @@ export class WorkcellScene {
   drawHmi() {
     const c = this.hmi.ctx, w = 640, h = 420, s = this.state;
     c.fillStyle = '#0f1519'; c.fillRect(0, 0, w, h);
-    print(c, 'DEFEX · CONNECTOR LAB', 30, 48, 20, '#8e9aa0', 600, MONO);
+    print(c, 'DEFEX · CONNECTOR LAB', 30, 48, 20, '#8e9aa0');
     const running = !!s && s.phase !== 'ready' && s.phase !== 'complete';
     c.fillStyle = running && this.playing ? '#ff7a1a' : '#4a555c'; c.beginPath(); c.arc(600, 41, 7, 0, Math.PI * 2); c.fill();
     const phaseName: Record<string, string> = { ready: 'READY', approach: 'INSERT', insert: 'INSERT', backoff: 'BLOCKED', move: 'NEW TRY', electrical: 'CONNECTION', retention: 'PULL TEST', reset: 'RESET', complete: 'DONE' };
     // The verdict stays up while the tool retracts.
     const done = s?.phase === 'complete' || (s?.phase === 'reset' && s.accepted != null);
     const label = this.isOffline ? 'OFFLINE' : done ? (s!.accepted ? 'PASS' : 'REJECT') : running && !this.playing ? 'PAUSED' : phaseName[s?.phase ?? 'ready'];
-    print(c, label, 30, 128, 64, this.isOffline ? '#5b676d' : done ? (s!.accepted ? '#58d494' : '#ff5a45') : s?.phase === 'backoff' ? '#ff9b5c' : '#f1eee5', 650);
-    print(c, `${(s?.force ?? 0).toFixed(1)} N`, 30, 186, 34, '#ff7a1a', 500, MONO);
-    print(c, `${(s?.depth ?? 0).toFixed(1)} mm`, 250, 186, 34, '#c9ced2', 500, MONO);
-    print(c, `TRY ${s && s.phase !== 'ready' ? Math.max(1, s.probes) : 0}`, 470, 186, 34, '#c9ced2', 500, MONO);
+    print(c, label, 30, 128, 64, this.isOffline ? '#5b676d' : done ? (s!.accepted ? '#58d494' : '#ff5a45') : s?.phase === 'backoff' ? '#ff9b5c' : '#f1eee5');
+    print(c, `${(s?.force ?? 0).toFixed(1)} N`, 30, 186, 34, '#ff7a1a');
+    print(c, `${(s?.depth ?? 0).toFixed(1)} mm`, 250, 186, 34, '#c9ced2');
+    print(c, `TRY ${s && s.phase !== 'ready' ? Math.max(1, s.probes) : 0}`, 470, 186, 34, '#c9ced2');
     const row = (name: string, value: boolean | null, y: number) => {
       c.fillStyle = '#1b252b'; c.beginPath(); c.roundRect(24, y, 592, 64, 10); c.fill();
-      print(c, name, 46, y + 42, 26, '#b9c2c4', 500);
+      print(c, name, 46, y + 42, 26, '#b9c2c4');
       const text = value === true ? 'PASS' : value === false ? 'FAIL' : '—';
-      print(c, text, 480, y + 42, 28, value === true ? '#58d494' : value === false ? '#ff5a45' : '#5b676d', 650, MONO);
+      print(c, text, 480, y + 42, 28, value === true ? '#58d494' : value === false ? '#ff5a45' : '#5b676d');
     };
     row('Connection', s?.continuity ?? null, 222);
     row('Lock', s?.retention ?? null, 298);

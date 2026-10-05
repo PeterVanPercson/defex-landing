@@ -28,12 +28,14 @@
         const t = clamp((n - a) / (b - a));
         return t * t * (3 - 2 * t);
     };
-    const FALLBACK = '"Arial Black", Arial, sans-serif';
-    const WEIGHT = 900;
+    // The word is cut from the site's heading face at its one weight (his
+    // call, 2026-10-05: every word in the same type, animations included).
+    const FALLBACK = 'Georgia, serif';
+    const WEIGHT = 400;
 
     const text = (section.dataset.word || 'TEST').trim().normalize('NFC');
     const length = clamp(Number(section.dataset.length) || 1.9, 1, 8);
-    const family = section.dataset.font || '"Source Serif 4"';
+    const family = section.dataset.font || '"Newsreader"';
     const pin = section.querySelector('.portal__pin');
     const field = section.querySelector('.portal__field');
     const art = section.querySelector('.portal__art');
