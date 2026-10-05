@@ -944,3 +944,17 @@ class OfficialPagesTests(SimpleTestCase):
     def test_no_personal_inbox_on_the_public_pages(self):
         for path in ("/", "/why-us/", "/careers/") + self.PAGES:
             self.assertNotIn("mailto:husan@", self.client.get(path).content.decode(), path)
+
+
+@override_settings(SECURE_SSL_REDIRECT=False)
+class PingTests(SimpleTestCase):
+    # a reply to a Telegram request must reach the person who asked, not the sending address
+    def test_telegram_request_replies_go_to_the_requester(self):
+        from unittest import mock
+        with mock.patch("landing.notify._post", return_value=(True, "ok")) as post, \
+             mock.patch("landing.views.rate_limited", return_value=False):
+            r = self.client.post("/ping/", data='{"name": "Radu", "email": "radu@example.com"}',
+                                 content_type="application/json",
+                                 HTTP_ORIGIN="https://husanmavlonov.com")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(post.call_args.args[0]["reply_to"], "radu@example.com")

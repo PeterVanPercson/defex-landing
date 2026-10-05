@@ -345,7 +345,8 @@ def ping(request):
     )
     from_addr = settings.EMAIL_FROM or "onboarding@resend.dev"
     to_addr = settings.PING_TO or settings.NOTIFY_TO
-    ok, detail = send_to(to_addr, f"telegram request — {name}", html, from_addr=from_addr)
+    ok, detail = send_to(to_addr, f"telegram request — {name}", html, from_addr=from_addr,
+                         reply_to=email)
     # `detail` is the provider's raw error text. It carries no key material, but
     # it is upstream infrastructure detail and there is no reason to hand it to
     # an anonymous caller. Owner sees it in the logs; DEBUG sees it in the body.

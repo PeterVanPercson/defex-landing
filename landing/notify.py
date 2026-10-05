@@ -56,14 +56,18 @@ def send(subject: str, html: str) -> tuple[bool, str]:
     })
 
 
-def send_to(to_addr: str, subject: str, html: str, from_addr: str | None = None) -> tuple[bool, str]:
+def send_to(to_addr: str, subject: str, html: str, from_addr: str | None = None,
+            reply_to: str | None = None) -> tuple[bool, str]:
     """Synchronous send to an arbitrary address. Used for autoresponders."""
-    return _post({
+    payload = {
         "from": from_addr or settings.EMAIL_FROM,
         "to": [to_addr],
         "subject": subject,
         "html": html,
-    })
+    }
+    if reply_to:
+        payload["reply_to"] = reply_to
+    return _post(payload)
 
 
 def client_ip(request) -> str:
