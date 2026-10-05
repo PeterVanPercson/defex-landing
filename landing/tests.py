@@ -68,43 +68,15 @@ class SiteTests(SimpleTestCase):
         self.assertNotContains(home, 'id="intro"')
         self.assertNotContains(home, "is-intro")
         self.assertNotContains(home, "js/intro.js")
-        # the clip stays under the hero; the "where it started" label and page do not
+        # the "how we started" film is gone from home (his call, 2026-10-04), and
+        # so are its label, its page and its player
         self.assertNotContains(home, "/where-it-started/")
         self.assertNotContains(home, "Where it started")
         self.assertNotContains(home, "where it started")
-        # the clip has a voice: it waits on its poster for a press, with the
-        # sound on, and it has a bar to scrub with. Nothing starts or loops it.
-        clip = re.search(r'<video[^>]*id="origin-video"[^>]*>', home.content.decode()).group(0)
-        for attr in ("autoplay", "muted", "loop"):
-            self.assertNotIn(attr, clip)
-        for attr in ("controls", "playsinline", 'preload="none"'):
-            self.assertIn(attr, clip)
-        self.assertContains(home, 'id="scrub" role="slider"')
-        # the player he picked: the film sits inside an iPhone, with the phone's
-        # own island, status bar and home bar drawn over it
-        # the bar to scrub with is inside the screen too, not under the phone,
-        # and there is no card behind the phone (his call, 2026-10-03)
-        screen = home.content.decode().split('class="origin__screen"', 1)[1].split("</figure>", 1)[0]
-        for part in ('id="origin-video"', 'class="origin__island"', 'class="origin__status"', 'id="scrub"', 'class="origin__home"', 'id="sound"'):
-            self.assertIn(part, screen)
-        # and the controls are an iPhone's own player's (his call): back 10,
-        # play, forward 10 over the film, the time gone and the time left
-        # under the bar, and nothing orange
-        for part in ('id="origin-surface"', 'id="skip-back"', 'id="playpause"', 'id="skip-forward"',
-                     '<span class="scrub__time scrub__time--now">0:00</span>'):
-            self.assertIn(part, screen)
-        for gone in ("scrub__caret", "scrub__tag"):
-            self.assertNotIn(gone, screen)
-        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
-        player = css.split("/* The controls are an iPhone's own player's", 1)[1].split(".scrub:hover { --open: 1; }", 1)[0]
-        self.assertIn(".scrub__fill", player)
-        for orange in ("--accent", "#FF5A1F", "#ff5a1f"):
-            self.assertNotIn(orange, player)
-        self.assertRegex(screen, r'id="sound"[^>]*></button>\s*</div>\s*</div>\s*</div>\s*$')
-        self.assertContains(home, "That is how we learned the camera is not enough")
+        for gone in ('id="origin"', 'id="origin-video"', "js/origin.js", "That is how we learned the camera is not enough"):
+            self.assertNotContains(home, gone)
         # no example text in the part field
         self.assertNotContains(home, 'placeholder="e.g.')
-        self.assertContains(home, "js/origin.js")
         # it was indexed, so the old URL redirects home rather than 404ing
         origin = self.client.get("/where-it-started/")
         self.assertEqual(origin.status_code, 301)
@@ -129,25 +101,6 @@ class SiteTests(SimpleTestCase):
         for asset in ("js/hero-film.js", "js/origin.js", "js/reveal.js", "img/backers/nvidia-inception.png", "img/backers/zfellows.png", "img/backers/zfellows-collage.png", "img/backers/google-for-startups.png", "img/backers/google-for-startups-light.png", "img/backers/a16z-speedrun.png", "img/backers/yandex-cloud.png", "video/origin.mp4", "video/origin-poster.jpg"):
             self.assertEqual(self.client.get(f"/static/{asset}").status_code, 200, asset)
 
-    def test_the_origin_clip_says_its_real_length(self):
-        """The bar shows how long the film is before a byte of it is fetched,
-        from data-duration in the markup. Replace the film and this follows."""
-        import struct
-        data = (Path(settings.BASE_DIR) / "static/video/origin.mp4").read_bytes()
-        at = data.index(b"mvhd")
-        if data[at + 4] == 1:
-            timescale, length = struct.unpack(">IQ", data[at + 24:at + 36])
-        else:
-            timescale, length = struct.unpack(">II", data[at + 16:at + 24])
-        seconds = length / timescale
-        home = self.client.get("/").content.decode()
-        said = float(re.search(r'id="origin-video"[^>]*data-duration="([\d.]+)"', home).group(1))
-        self.assertAlmostEqual(said, seconds, delta=.05)
-        # the way the phone writes it: the time left, with its minus, no leading zero
-        left = f"-{int(seconds) // 60}:{int(seconds) % 60:02d}"
-        self.assertIn(f'aria-valuemax="{int(seconds)}"', home)
-        self.assertIn(f'<span class="scrub__time scrub__time--end">{left}</span>', home)
-
     def test_the_stylesheets_braces_balance(self):
         """One stray brace silently drops the rule after it: the phone lost its
         container and everything cut in cqw came out the size of the window."""
@@ -161,11 +114,16 @@ class SiteTests(SimpleTestCase):
                 self.assertGreaterEqual(depth, 0, f"{name}: a brace closes nothing near {css[max(0, at - 80):at + 1]!r}")
             self.assertEqual(depth, 0, f"{name}: {depth} brace(s) never close")
 
-    def test_watch_it_lands_on_the_player(self):
-        """The film no longer starts by itself, so the link that promises it has
-        to put the whole player on screen, not the top of its section."""
-        self.assertContains(self.client.get("/"), '<figure data-reveal class="origin__film" id="origin-film">')
-        self.assertContains(self.client.get("/why-us/"), 'href="/#origin-film">Watch it')
+    def test_home_opens_on_the_case_then_partners(self):
+        """His call, 2026-10-04: the "how we started" phone film is gone; the case
+        ("Robots are cheap.") comes straight after the hero, then Partners, then
+        Meet the robot. Nothing links to the film any more."""
+        home = self.client.get("/").content.decode()
+        order = ['id="top"', 'id="why"', 'id="partners"', 'id="meet"', 'id="in-line"', 'id="careers"', 'id="contact"']
+        for before, after in zip(order, order[1:]):
+            self.assertLess(home.index(before), home.index(after), (before, after))
+        self.assertNotIn("#origin-film", self.client.get("/why-us/").content.decode())
+        self.assertNotIn("#origin", self.client.get("/company.json").content.decode())
 
     def test_past_its_edges_the_home_page_is_black(self):
         """What shows when a page is pulled past its top or bottom is the root's
@@ -312,11 +270,11 @@ class SiteTests(SimpleTestCase):
         self.assertRegex(css, r"prefers-reduced-motion: reduce\) \{\s*\.roll__track \{ animation: none;")
         self.assertNotIn("in_line", self.client.get("/company.json").content.decode())
 
-    def test_partners_roll_under_registered(self):
+    def test_partners_roll_after_the_case(self):
         from landing.discovery import PARTNERS
         home = self.client.get("/").content.decode()
-        self.assertLess(home.index('id="in-line"'), home.index('id="partners"'))
-        self.assertLess(home.index('id="partners"'), home.index('id="careers"'))
+        self.assertLess(home.index('id="why"'), home.index('id="partners"'))
+        self.assertLess(home.index('id="partners"'), home.index('id="in-line"'))
         row = home.split('id="partners"', 1)[1].split("</ul>", 1)[0]
         self.assertIn(">Partners<", row)
         self.assertNotIn("roll__defs", row)
@@ -422,11 +380,11 @@ class SiteTests(SimpleTestCase):
             self.assertIn(f'aria-controls="meet-{key}"', body)
             self.assertIn(f'id="meet-{key}"', body)
         self.assertEqual(body.count('class="rb"'), 1)
-        # the same explorer is on home, right after the origin film, and on
+        # the same explorer is on home, after the case and Partners, and on
         # Prototype before the experiment controls; its sheet never blocks first paint
         home = self.client.get("/").content.decode()
-        self.assertLess(home.index('id="origin"'), home.index('id="meet"'))
-        self.assertLess(home.index('id="meet"'), home.index('id="why"'))
+        self.assertLess(home.index('id="why"'), home.index('id="meet"'))
+        self.assertLess(home.index('id="partners"'), home.index('id="meet"'))
         # the bar turns dark over it, like over the hero (hero-film.js)
         self.assertIn('id="meet" data-nav-dark', home)
         proto = self.client.get("/prototype/").content.decode()

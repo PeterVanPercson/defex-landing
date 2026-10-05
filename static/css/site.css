@@ -1699,6 +1699,16 @@ body { font: 400 17px/1.55 var(--sans); }
 .footer__fine, .footer__line { font: 400 14px/1.6 var(--sans); }
 .footer__base { border-top: 0; }
 
+/* The case is the first thing under the hero (his call, 2026-10-04): it lets
+   the hero's dissolve show through instead of laying its sheet over it, and
+   its heading starts where the dissolve ends. */
+.hero + .sheet { z-index: auto; background: none; padding-top: calc(var(--hero-fade) + clamp(36px, 6vh, 72px)); }
+
+/* Partners right after the case, with marks smaller than the Registered row
+   (his call, 2026-10-04) */
+#partners .roll { --roll-gap: clamp(40px, 4.6vw, 76px); }
+#partners .roll__i { --roll-h: 30px; width: clamp(84px, 7.6vw, 112px); }
+
 @media (max-width: 900px) {
     .feature { grid-template-columns: minmax(0, 1fr); }
     .feature__art { min-height: 0; aspect-ratio: 4 / 3; margin: 10px 10px 0; }
@@ -1713,6 +1723,7 @@ body { font: 400 17px/1.55 var(--sans); }
     .feature { padding: 0; gap: 0; }
     .feature__copy { padding: 26px 22px 30px; }
     .footer__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #partners .roll__i { --roll-h: 24px; width: 80px; }
 }
 @media (prefers-reduced-motion: reduce) {
     .art * { animation: none; }
