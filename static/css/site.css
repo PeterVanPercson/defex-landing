@@ -1578,9 +1578,8 @@ body { font: 400 16px/1.6 var(--font); }
 .sechead__t { max-width: 24ch; font-size: clamp(32px, 3.5vw, 52px); font-weight: 400; line-height: 1.08; letter-spacing: -.012em; }
 .sechead__sub { max-width: 46ch; text-align: left; font: 400 18px/1.6 var(--text); color: var(--ink-soft); }
 .sheet { padding-block: clamp(96px, 14vh, 160px); padding-inline: max(var(--pad), calc((100% - var(--measure)) / 2 + var(--pad))); }
-/* A small label: small and a touch spaced, after a dot in the logo's orange */
+/* A small label: small and a touch spaced */
 .label { display: inline-flex; align-items: center; gap: 10px; margin: 0; font: 400 13.5px/1.4 var(--label); letter-spacing: .04em; color: var(--mute); }
-.label::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 
 /* Our start: the line as big as the phone beside it, centred against it */
 .origin { align-items: center; }
@@ -1657,7 +1656,6 @@ body { font: 400 16px/1.6 var(--font); }
 .sheet.inline { padding-block: clamp(30px, 5vh, 54px); border-top: 0; }
 .sheet.inline + .sheet.inline { padding-top: 0; }
 .inline__k { padding-inline: max(var(--pad), calc((100% - var(--measure)) / 2 + var(--pad))); font: 400 13.5px/1.4 var(--label); letter-spacing: .04em; color: var(--mute); }
-.inline__k::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 10px 1px 0; border-radius: 50%; background: var(--accent); vertical-align: middle; }
 /* on the black pitch page the label needs light ink: --ink-soft is only set for the paper and .dark grounds */
 .inline--dark .inline__k { font-size: 10px; color: rgba(244, 244, 240, .56); }
 .roll { -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); }
