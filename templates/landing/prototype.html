@@ -31,8 +31,26 @@
   <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-Bsa0vvy6.css">
   <link rel="stylesheet" href="/static/css/meet.css?v={{ asset_v }}" />
   <script src="/static/js/meet.js?v={{ asset_v }}" defer></script>
+  <!-- The opening screen (static/js/orb-loader.js, his call 2026-10-04): the
+       thinking orb from the component he sent and "Loading" under it, over
+       the stage until the simulation is ready; then it simply fades. -->
+  <style>
+    .orbload { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: #191d1b; color: rgba(238, 238, 233, .66); transition: opacity .45s cubic-bezier(.22, 1, .36, 1); }
+    .orbload.is-done { opacity: 0; pointer-events: none; }
+    .orbload__in { display: grid; justify-items: center; gap: 4px; margin-top: -6vh; }
+    .orbload__orb { display: block; width: 220px; height: 220px; }
+    .orbload__label { margin: 0; display: inline-flex; align-items: baseline; font: 500 15px/1.2 Geist, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: .01em; opacity: 0; transform: translateY(6px); }
+    .orbload__dots { display: inline-flex; gap: 3px; margin-left: 4px; }
+    .orbload__dots i { width: 3px; height: 3px; border-radius: 50%; background: currentColor; animation: orbload-dot 1.2s ease-in-out infinite; }
+    .orbload__dots i:nth-child(2) { animation-delay: .15s; }
+    .orbload__dots i:nth-child(3) { animation-delay: .3s; }
+    @keyframes orbload-dot { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+    html.is-orbloading { overflow: hidden; }
+    @media (prefers-reduced-motion: reduce) { .orbload { transition-duration: .2s; } .orbload__dots i { animation: none; opacity: .6; } }
+  </style>
 </head>
 <body>
+  <script src="/static/js/orb-loader.js?v={{ asset_v }}"></script>
   <main>
     <section class="stage" aria-label="Connector lab: 3D workcell">
       <div id="scene"></div>

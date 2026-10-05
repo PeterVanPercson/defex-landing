@@ -25,3 +25,19 @@ class PrototypeTests(SimpleTestCase):
         self.assertEqual(wasm_response.status_code, 200)
         self.assertEqual(wasm_response['Content-Type'], 'application/wasm')
         self.assertIn(wasm[0].name, worker[0].read_text())
+
+    def test_the_prototype_opens_on_the_thinking_orb(self):
+        """His call, 2026-10-04: the prototype starts on the thinking orb from
+        the component he sent, with "Loading" under it, and the screen simply
+        fades once the simulation hides its own #loading. No green resolve."""
+        body = self.client.get('/prototype/').content.decode()
+        start = body.index('<body>')
+        self.assertLess(body.index('js/orb-loader.js?v='), body.index('<main>'))
+        self.assertGreater(body.index('js/orb-loader.js?v='), start)
+        self.assertIn('.orbload.is-done { opacity: 0;', body[:start])
+        script = (Path(settings.BASE_DIR) / 'static/js/orb-loader.js').read_text()
+        self.assertIn("getElementById('loading')", script)
+        self.assertIn('Loading<span class="orbload__dots"', script)
+        for green in ('52,211,153', 'sweep', 'resolve('):
+            self.assertNotIn(green, script)
+        self.assertEqual(self.client.get('/static/js/orb-loader.js').status_code, 200)
