@@ -57,6 +57,7 @@
 <body>
     {% block content %}{% endblock %}
     <script src="{% static 'js/smooth.js' %}?v={{ asset_v }}" defer></script>
+    <script src="{% static 'js/caret.js' %}?v={{ asset_v }}" defer></script>
     {% block extra_scripts %}{% endblock %}
     {% if web_analytics %}<script defer src="/_vercel/insights/script.js"></script>{% endif %}
 </body>

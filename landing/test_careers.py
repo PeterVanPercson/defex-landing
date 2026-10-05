@@ -21,8 +21,9 @@ class CareersTests(SimpleTestCase):
             "note": "I built and commissioned the control system for this robot.",
         }
 
-    def test_all_jobs_are_reachable_from_home_listing_and_sitemap(self):
-        for page in ("/", "/careers/", "/sitemap.xml"):
+    def test_all_jobs_are_reachable_from_careers_and_sitemap(self):
+        # the home page no longer lists the roles (his call, 2026-10-04)
+        for page in ("/careers/", "/sitemap.xml"):
             response = self.client.get(page)
             self.assertEqual(response.status_code, 200)
             for job in JOBS:

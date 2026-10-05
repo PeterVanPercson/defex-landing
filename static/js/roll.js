@@ -1,42 +1,26 @@
-// Press and drag a logo row to move it sideways; let go and it rolls on from
-// where it was left. The track is four copies of one set and the animation
-// moves it by a quarter, so any offset folds back into (-set, 0].
+// The logo rows roll on their own and cannot be dragged (his call,
+// 2026-10-04). A pointer on a row pauses it and shows the logo under it in
+// its own colours (site.css, :hover). A finger leaves no hover behind on
+// every phone, so a tap does the same here: the tapped logo shows its colours
+// and its row holds still until the next tap somewhere else.
 (() => {
-    for (const roll of document.querySelectorAll('.roll')) {
-        const track = roll.querySelector('.roll__track');
-        if (!track) continue;
-        let held = null, from = 0, x = 0, set = 0, seconds = 0;
-        const fold = (v) => { v %= set; return v > 0 ? v - set : v; };
-        roll.addEventListener('pointerdown', (e) => {
-            if (held !== null || e.button !== 0) return;
-            const style = getComputedStyle(track);
-            if (style.animationName === 'none') return;
-            set = track.scrollWidth / 4;
-            seconds = parseFloat(style.animationDuration) || 0;
-            if (!set || !seconds) return;
-            x = new DOMMatrixReadOnly(style.transform).m41;
-            from = e.clientX - x;
-            held = e.pointerId;
-            track.style.animation = 'none';
-            track.style.transform = `translateX(${x}px)`;
-            roll.classList.add('is-held');
-            roll.setPointerCapture(held);
-        });
-        roll.addEventListener('pointermove', (e) => {
-            if (e.pointerId !== held) return;
-            x = fold(e.clientX - from);
-            track.style.transform = `translateX(${x}px)`;
-        });
-        const release = (e) => {
-            if (e.pointerId !== held) return;
-            held = null;
-            roll.classList.remove('is-held');
-            track.style.transform = '';
-            track.style.animation = '';
-            track.style.animationDelay = `${(x / set) * seconds}s`;
-        };
-        roll.addEventListener('pointerup', release);
-        roll.addEventListener('pointercancel', release);
-        roll.addEventListener('dragstart', (e) => e.preventDefault());
-    }
+    let held = null;
+    const letGo = () => {
+        if (!held) return;
+        held.classList.remove('is-touched');
+        const roll = held.closest('.roll');
+        if (roll) roll.classList.remove('is-paused');
+        held = null;
+    };
+    document.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse') return;
+        const item = e.target && e.target.closest ? e.target.closest('.roll__i') : null;
+        if (item === held) return;
+        letGo();
+        if (!item) return;
+        held = item;
+        item.classList.add('is-touched');
+        item.closest('.roll').classList.add('is-paused');
+    }, { passive: true });
+    for (const roll of document.querySelectorAll('.roll')) roll.addEventListener('dragstart', (e) => e.preventDefault());
 })();

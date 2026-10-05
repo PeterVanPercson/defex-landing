@@ -1704,10 +1704,22 @@ body { font: 400 17px/1.55 var(--sans); }
    its heading starts where the dissolve ends. */
 .hero + .sheet { z-index: auto; background: none; padding-top: calc(var(--hero-fade) + clamp(36px, 6vh, 72px)); }
 
-/* Partners right after the case, with marks smaller than the Registered row
-   (his call, 2026-10-04) */
-#partners .roll { --roll-gap: clamp(40px, 4.6vw, 76px); }
-#partners .roll__i { --roll-h: 30px; width: clamp(84px, 7.6vw, 112px); }
+/* The logo rows (his calls, 2026-10-04): they cannot be dragged; a pointer
+   on a row pauses it and only the logo under it shows its colours. A finger
+   does the same through static/js/roll.js (.is-touched, .is-paused). On home,
+   Partners and Registered share one size. */
+.roll { cursor: default; }
+.roll:hover .roll__track, .roll.is-paused .roll__track { animation-play-state: paused; }
+.roll__i.is-touched .roll__logo { filter: none; opacity: 1; transform: scale(1.06); }
+.roll__i.is-touched .roll__logo[data-opaque] { filter: url(#roll-colour); }
+.inline--dark .roll__i.is-touched .roll__logo { filter: grayscale(1) invert(1) contrast(.9); opacity: 1; }
+.inline--dark .roll__i.is-touched .roll__logo[data-opaque] { filter: url(#roll-ink-light); }
+.sheet.inline .roll { --roll-gap: clamp(44px, 5vw, 84px); }
+.sheet.inline .roll__i { --roll-h: 38px; width: clamp(104px, 9.4vw, 140px); }
+
+/* Careers left the home page (his call, 2026-10-04): whichever paper band now
+   comes last clears the dissolve into the closing dark block */
+.sheet:has(+ .contact.dark) { padding-bottom: calc(var(--close-fade) + clamp(28px, 5vh, 52px)); }
 
 @media (max-width: 900px) {
     .feature { grid-template-columns: minmax(0, 1fr); }
@@ -1723,7 +1735,7 @@ body { font: 400 17px/1.55 var(--sans); }
     .feature { padding: 0; gap: 0; }
     .feature__copy { padding: 26px 22px 30px; }
     .footer__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    #partners .roll__i { --roll-h: 24px; width: 80px; }
+    .sheet.inline .roll__i { --roll-h: 28px; width: 96px; }
 }
 @media (prefers-reduced-motion: reduce) {
     .art * { animation: none; }
@@ -1739,3 +1751,35 @@ body { font: 400 17px/1.55 var(--sans); }
 .postrow__title { font-weight: 600; letter-spacing: -.035em; }
 .steps.is-pinned .feature__t { font-size: clamp(40px, 5.6vw, 104px); }
 .steps.is-pinned .feature__d { font-size: clamp(19px, 1.7vw, 25px); }
+
+/* Fields as Skiper UI's Smooth Input draws them (his pick, 2026-10-04): a
+   filled box a shade lighter than the ground, no border, 16px corners and
+   big text. The caret that glides is static/js/caret.js; .has-caret is only
+   ever set by it, so without the script the browser's caret stays. Blue on
+   the light pages, yellow on the dark ones, as the emphasis is. */
+:root { --field: #FFFFFF; --caret: var(--blue); }
+.dark { --field: rgba(234, 232, 227, .07); --caret: #FFD42A; }
+.wy { --caret: var(--yellow); }
+.field input, .field textarea, .field select { border: 0; border-radius: 16px; background: var(--field); font: 400 22px/1.4 var(--sans); color: var(--ink); }
+.field input, .field select { height: 64px; padding: 0 18px; }
+.field textarea { min-height: 150px; padding: 16px 18px; }
+.field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible { outline: 2px solid color-mix(in srgb, var(--ink) 16%, transparent); outline-offset: 2px; }
+/* the bigger text needs a wider form: at 560px a company name scrolled out of its box */
+.contact__inner { max-width: 760px; }
+.talk__field :is(input, select, textarea) { min-height: 64px; border: 0; border-radius: 16px; background: rgba(244, 244, 240, .07); font: 400 22px/1.4 var(--sans); }
+.talk__field textarea { min-height: 150px; padding: 16px 18px; }
+.talk__field :is(input, select, textarea):focus { border: 0; }
+.talk__field :is(input, select, textarea):focus-visible { outline: 2px solid rgba(244, 244, 240, .18); outline-offset: 2px; }
+.caret-host { position: relative; }
+.has-caret { caret-color: transparent; }
+.caret { position: absolute; left: 0; top: 0; z-index: 1; width: 2px; height: 0; border-radius: 1px; background: var(--caret); opacity: 0; pointer-events: none; will-change: transform; }
+.caret-mirror { position: absolute; left: 0; top: 0; height: 0; overflow: hidden; visibility: hidden; box-sizing: content-box; border: 0; pointer-events: none; }
+.caret-mirror span { display: inline-block; width: 0; vertical-align: top; }
+@media (max-width: 720px) {
+    .field input, .field textarea, .field select, .talk__field :is(input, select, textarea) { font-size: 19px; }
+    .field input, .field select, .talk__field :is(input, select) { height: 58px; min-height: 58px; }
+}
+@media (forced-colors: active) {
+    .has-caret { caret-color: auto; }
+    .caret { display: none; }
+}

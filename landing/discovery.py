@@ -87,12 +87,15 @@ PARTNERS = [
     {"name": "Onshape", "logo": "img/partners/onshape.png", "width": 1556, "height": 347},
     {"name": "University of Michigan", "logo": "img/partners/michigan.png", "width": 1865, "height": 374},
     {"name": "GMI Cloud", "logo": "img/partners/gmi-cloud.png", "width": 2991, "height": 672},
+    # his call, 2026-10-04: his own a16z file, the maroon ground cut away
+    {"name": "Andreessen Horowitz", "logo": "img/partners/andreessen-horowitz.png", "width": 756, "height": 376},
 ]
 
 # The hero's flick (static/js/flick.js) opens on the specialist names and saves the
 # household ones for later, his order. Every partner, once; the tests hold it to that.
 HERO_PARTNER_ORDER = ["NVIDIA", "GMI Cloud", "MathWorks", "Ansys", "Onshape", "Lambda", "Google",
-                      "OpenAI", "Claude", "AWS", "Microsoft Azure", "University of Michigan"]
+                      "OpenAI", "Claude", "AWS", "Microsoft Azure", "University of Michigan",
+                      "Andreessen Horowitz"]
 HERO_PARTNERS = [next(p for p in PARTNERS if p["name"] == name) for name in HERO_PARTNER_ORDER]
 
 # Kept out of PUBLIC_COMPANY on purpose: that dict is dumped whole into /company.json.
