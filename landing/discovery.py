@@ -78,25 +78,23 @@ PARTNERS = [
     {"name": "NVIDIA", "logo": "img/partners/nvidia.png", "width": 576, "height": 116},
     {"name": "Google", "logo": "img/partners/google.png", "width": 743, "height": 250},
     {"name": "AWS", "logo": "img/partners/aws.png", "width": 557, "height": 335},
-    # a big "A" and short word fill the full height, so it reads larger than the
-    # other marks at the same size (his note, 2026-10-04): drawn at 77%
-    {"name": "Microsoft Azure", "logo": "img/partners/azure.png", "width": 1280, "height": 369, "scale": 0.77},
+    # the triangle runs below the word's baseline, so the word sat small and low next to
+    # the others (his notes, 2026-10-04/05): drawn at 92% and lifted a tenth of its height
+    {"name": "Microsoft Azure", "logo": "img/partners/azure.png", "width": 1280, "height": 369, "scale": 0.92, "lift": 0.1},
     {"name": "Lambda", "logo": "img/partners/lambda.png", "width": 480, "height": 110},
-    {"name": "OpenAI", "logo": "img/partners/openai.png", "width": 658, "height": 169},
-    {"name": "Claude", "logo": "img/partners/claude.png", "width": 548, "height": 124},
     {"name": "MathWorks", "logo": "img/partners/mathworks.png", "width": 537, "height": 106},
     {"name": "Ansys", "logo": "img/partners/ansys.png", "width": 792, "height": 256},
     {"name": "Onshape", "logo": "img/partners/onshape.png", "width": 1556, "height": 347},
     {"name": "University of Michigan", "logo": "img/partners/michigan.png", "width": 1865, "height": 374},
     {"name": "GMI Cloud", "logo": "img/partners/gmi-cloud.png", "width": 2991, "height": 672},
-    # his call, 2026-10-04: his own a16z file, the maroon ground cut away
-    {"name": "Andreessen Horowitz", "logo": "img/partners/andreessen-horowitz.png", "width": 756, "height": 376},
+    # his call, 2026-10-04; since 2026-10-05 the caps serif wordmark, in the site's engraved idiom
+    {"name": "Andreessen Horowitz", "logo": "img/partners/andreessen-horowitz.png", "width": 2042, "height": 649},
 ]
 
 # The hero's flick (static/js/flick.js) opens on the specialist names and saves the
 # household ones for later, his order. Every partner, once; the tests hold it to that.
 HERO_PARTNER_ORDER = ["NVIDIA", "GMI Cloud", "MathWorks", "Ansys", "Onshape", "Lambda", "Google",
-                      "OpenAI", "Claude", "AWS", "Microsoft Azure", "University of Michigan",
+                      "AWS", "Microsoft Azure", "University of Michigan",
                       "Andreessen Horowitz"]
 HERO_PARTNERS = [next(p for p in PARTNERS if p["name"] == name) for name in HERO_PARTNER_ORDER]
 

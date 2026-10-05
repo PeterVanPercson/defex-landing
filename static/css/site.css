@@ -291,7 +291,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* the copies are read-only for screen readers but still take the hover */
 .roll__i--copy { pointer-events: auto; }
 /* a length, not 100%: the grid row is sized by its content, so a percentage here caps nothing */
-.roll__logo { display: block; width: auto; height: auto; max-width: calc(100% * var(--s, 1)); max-height: calc(var(--roll-h) * var(--s, 1)); filter: grayscale(1) contrast(.82); opacity: .42; transition: filter .35s ease, opacity .35s ease, transform .35s ease; }
+.roll__logo { display: block; width: auto; height: auto; max-width: calc(100% * var(--s, 1)); max-height: calc(var(--roll-h) * var(--s, 1)); translate: 0 calc(var(--roll-h) * var(--s, 1) * var(--lift, 0) * -1); filter: grayscale(1) contrast(.82); opacity: .42; transition: filter .35s ease, opacity .35s ease, transform .35s ease; }
 .roll__logo[data-opaque] { filter: url(#roll-ink); }
 /* the row keeps rolling; the logo under the pointer shows its own colours,
    and the two on a white ground lose the white but keep the colour (#roll-colour) */
