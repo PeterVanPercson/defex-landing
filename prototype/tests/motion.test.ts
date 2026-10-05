@@ -7,10 +7,10 @@ test('interpolates computed motion at either display refresh rate',()=>{
     const stream=new PoseStream();
     for(let i=0;i<4;i++)stream.push([i,0,42-i,0],i*33,0);
     let previous=-1;
-    for(let t=45;t<=144;t+=1000/hz){
+    for(let t=stream.delay;t<=stream.delay+99;t+=1000/hz){
       const p=stream.sample(t)!;
       assert.ok(p[0]>=previous);assert.ok(p[0]<=3);
-      assert.ok(Math.abs(p[0]-(t-45)/33)<1e-9);
+      assert.ok(Math.abs(p[0]-(t-stream.delay)/33)<1e-9);
       previous=p[0];
     }
   }

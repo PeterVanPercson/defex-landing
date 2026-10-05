@@ -1,4 +1,5 @@
-import type { Snapshot, Sample } from './engine.ts';
+import type { Snapshot } from './engine.ts';
+import { METHOD_NAMES } from './model.ts';
 
 export class DemoRecorder {
   canvas=document.createElement('canvas');
@@ -11,16 +12,17 @@ export class DemoRecorder {
   description='A computed insertion, test and reset experiment.';
   state:Snapshot|null=null;
   speed=1;
-  samples:Sample[]=[];
   source:HTMLCanvasElement;
   onFinish:(blob:Blob,extension:string)=>void;
   stream:MediaStream;
 
   constructor(source:HTMLCanvasElement,onFinish:(blob:Blob,extension:string)=>void){
     this.source=source;this.onFinish=onFinish;this.canvas.width=1600;this.canvas.height=900;this.context=this.canvas.getContext('2d')!;
-    const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/mp4'].find(type=>MediaRecorder.isTypeSupported(type));
+    // MP4 first: QuickTime and Preview open it, and it carries a duration to seek with.
+    const mime=['video/mp4;codecs=avc1.640028','video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8'].find(type=>MediaRecorder.isTypeSupported(type));
     if(!mime)throw new Error('This browser cannot export a video.');
-    this.stream=this.canvas.captureStream(30);
+    // Each drawn frame becomes exactly one video frame (see draw).
+    this.stream=this.canvas.captureStream(0);
     try{this.recorder=new MediaRecorder(this.stream,{mimeType:mime,videoBitsPerSecond:8_000_000});}
     catch(error){this.stream.getTracks().forEach(track=>track.stop());throw error;}
     this.recorder.ondataavailable=e=>{if(e.data.size)this.chunks.push(e.data);};
@@ -31,7 +33,8 @@ export class DemoRecorder {
   resume(){if(this.recorder.state==='paused')this.recorder.resume();}
   stop(){if(this.recorder.state!=='inactive')this.recorder.stop();}
   draw=()=>{
-    const now=performance.now(); if(now-this.lastDraw<1000/30)return; this.lastDraw=now;
+    // A steady 30 fps: every second frame at 60 Hz, every fourth at 120 Hz.
+    const now=performance.now(); if(now-this.lastDraw<1000/30-6)return; this.lastDraw=now;
     const c=this.context,s=this.state;
     c.fillStyle='#111413';c.fillRect(0,0,1600,900);
     c.fillStyle='#f4f1ea';c.font='bold 38px Arial';c.fillText('defex',44,53);c.fillStyle='#d5dfd3';c.beginPath();c.arc(151,32,4,0,Math.PI*2);c.fill();
@@ -45,14 +48,14 @@ export class DemoRecorder {
     c.fillStyle='#1b2026';c.fillRect(64,214,131,29);c.fillStyle='#d6ddcd';c.font='11px monospace';c.fillText(`SIMULATION · ${this.speed}×`,75,233);
     const x=1130;
     c.fillStyle='#75806a';c.font='12px monospace';c.fillText('CURRENT ATTEMPT',x,221);
-    const controllers={fixed:'Fixed path',search:'Contact search',reuse:'Reused correction'};
-    c.fillStyle='#f4f1ea';c.font='450 25px Geist, Arial';c.fillText(s?controllers[s.controller]:'Preparing',x,263);
-    const values=[['SEARCH PROBES',String(s?.probes??0)],['SIMULATION TIME',`${(s?.time??0).toFixed(1)} s`],['AXIAL FORCE',`${(s?.force??0).toFixed(2)} N`],['ELECTRICAL CHECK',s?.continuity===true?'PASS':s?.continuity===false?'FAIL':'NOT TESTED'],['RETENTION CHECK',s?.retention===true?'PASS':s?.retention===false?'FAIL':'NOT TESTED']];
+    c.fillStyle='#f4f1ea';c.font='450 25px Geist, Arial';c.fillText(s?METHOD_NAMES[s.controller]:'Preparing',x,263);
+    const values=[['TRIES',String(s?.probes??0)],['SIMULATION TIME',`${(s?.time??0).toFixed(1)} s`],['AXIAL FORCE',`${(s?.force??0).toFixed(2)} N`],['CONNECTION',s?.continuity===true?'PASS':s?.continuity===false?'FAIL':'NOT TESTED'],['LOCK',s?.retention===true?'PASS':s?.retention===false?'FAIL':'NOT TESTED']];
     values.forEach(([name,value],i)=>{const y=315+i*66;c.strokeStyle='#2a3036';c.beginPath();c.moveTo(x,y+36);c.lineTo(1547,y+36);c.stroke();c.font='11px monospace';c.fillStyle='#89937c';c.fillText(name,x,y);c.font='19px monospace';c.fillStyle=value==='FAIL'?'#d38b73':value==='PASS'?'#85b997':'#f4f1ea';c.fillText(value,x,y+25);});
-    c.font='450 21px Geist, Arial';c.fillStyle=s?.accepted===true?'#85b997':s?.accepted===false?'#d38b73':'#69745d';c.fillText(s?.accepted===true?'Accepted in simulation':s?.accepted===false?'Rejected in simulation':'Attempt in progress',x,691);
+    c.font='450 21px Geist, Arial';c.fillStyle=s?.accepted===true?'#85b997':s?.accepted===false?'#d38b73':'#69745d';c.fillText(s?.accepted===true?'Passed in simulation':s?.accepted===false?'Rejected in simulation':'Attempt in progress',x,691);
     c.font='13px Arial';c.fillStyle='#79836e';c.fillText(s?.reason??'',x,718);
     c.font='12px monospace';c.fillStyle='#8a917e';c.fillText('ILLUSTRATIVE GEOMETRY / MODELED TESTS',44,817);
     c.font='15px Arial';c.fillStyle='#6c765f';c.fillText('Rigid-body contact. Ideal electrical and latch models. Deterministic search, not a trained robot policy.',44,849);
     c.fillText('No physical robot or factory performance is demonstrated here.',44,875);
+    (this.stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack).requestFrame();
   };
 }

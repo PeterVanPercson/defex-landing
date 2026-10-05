@@ -8,7 +8,7 @@
     // The orb is that component's renderer, ported as it was. With Reduce
     // Motion the orb holds one still frame. Without script there is no screen.
     const CANVAS = 220, ORB_R = 66, RINGS = 16, TAU = Math.PI * 2;
-    const MIN_MS = 1600, MAX_MS = 15000, LIGHT_MS = 1150;
+    const MIN_MS = 1100, MAX_MS = 15000, LIGHT_MS = 1150;
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -188,14 +188,17 @@
         label.style.transform = s >= 1 ? 'none' : `translateY(${(6 * (1 - s)).toFixed(2)}px)`;
     }
 
-    const born = performance.now();
-    let last = born, frame = 0, gone = false, lights = 0;
+    // The intro runs on frame time, clamped like the orb's own, so a busy first
+    // second (the page building its scene) slows the assembly instead of skipping it.
+    let last = performance.now(), first = 0, clock = 0, frame = 0, gone = false, lights = 0;
     function tick(now) {
         frame = 0;
         if (gone) return;
         const dt = still ? 0 : Math.max(0, Math.min(0.05, (now - last) / 1000));
         last = now;
-        if (still) assemble(800); else assemble(now - born);
+        first = first || now;
+        clock += dt * 1000;
+        assemble(still ? 800 : clock);
         if (ctx) draw(dt);
         if (!still) frame = requestAnimationFrame(tick);
     }
@@ -203,10 +206,11 @@
     if (!still) lights = setInterval(() => { P.prog = (P.prog + 1) % 4; }, LIGHT_MS);
 
     // and away, once the simulation is ready (or has failed, which hides
-    // #loading too), but never before the orb has had its moment
+    // #loading too), but never before the orb has assembled and held a beat,
+    // counted from its first frame on screen
     function leave() {
         if (gone || root.classList.contains('is-done')) return;
-        const wait = Math.max(0, MIN_MS - (performance.now() - born));
+        const wait = Math.max(0, MIN_MS - (performance.now() - (first || performance.now())));
         setTimeout(() => {
             root.classList.add('is-done');
             document.documentElement.classList.remove('is-orbloading');

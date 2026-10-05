@@ -3,10 +3,12 @@ export type Pose = [number, number, number, number];
 interface Frame { at: number; pose: Pose }
 
 // Display between computed poses. Never extrapolate through a contact surface.
+// Updates arrive every 33 ms but up to 44 ms apart on a fast machine and over
+// 80 ms on a slow one; the delay keeps a pose in hand so motion never stalls.
 export class PoseStream {
   frames: Frame[] = [];
   epoch = -1;
-  delay = 45;
+  delay = 70;
 
   push(pose: Pose, at: number, epoch: number) {
     if (epoch !== this.epoch) {

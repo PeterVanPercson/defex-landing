@@ -11,6 +11,8 @@ class PrototypeTests(SimpleTestCase):
         response = self.client.get('/prototype/')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['X-Frame-Options'], 'SAMEORIGIN')
+        self.assertIn('s-maxage=86400', response['Cache-Control'])
+        self.assertNotIn('Set-Cookie', response)
         self.assertContains(response, 'INTERACTIVE SOFTWARE PROTOTYPE')
         self.assertContains(response, 'not a trained robot policy')
         self.assertContains(response, 'Interactive simulation')

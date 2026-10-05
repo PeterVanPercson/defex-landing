@@ -26,13 +26,15 @@ const finish = (name: string, color: number, metalness: number, roughness: numbe
 };
 
 export const finishes = {
-  base: finish('Anodized graphite', 0x343838, .72, .37, cast, .024),
-  body: finish('Powder coated aluminium', 0x252a2b, .48, .43, cast, .027),
-  edge: finish('Machined edge', 0x959e9f, .88, .29, brushed),
-  silver: finish('Brushed aluminium', 0xb3babb, .85, .34, brushed, .018),
-  dark: finish('Black oxide steel', 0x141919, .6, .34),
-  rubber: finish('Elastomer', 0x171b1b, .0, .82, cast, .01),
-  ivory: finish('Molded nylon', 0xc8c7ba, .0, .51, cast, .008),
-  gold: finish('Contact plating', 0xcfaa64, .93, .24),
-  amber: finish('Safety marking', 0xd47a36, .05, .58),
+  base: finish('Anodized graphite', 0x3a3e41, 1, .5, cast, .024),
+  body: finish('Powder coated aluminium', 0x282c2e, 0, .62, cast, .027),
+  edge: finish('Machined edge', 0xd4d8db, 1, .24, brushed),
+  silver: finish('Brushed aluminium', 0xc8cdd0, 1, .4, brushed, .018),
+  dark: finish('Black oxide steel', 0x2c3033, 1, .42),
+  polymer: finish('Glass-filled PBT', 0x1b1d1f, 0, .5),
+  bore: finish('Tapped bore', 0x070808, 0, 1),
+  rubber: finish('Elastomer', 0x161818, 0, .82, cast, .01),
+  ivory: finish('Molded nylon', 0xdedcd3, 0, .45, cast, .008),
+  gold: finish('Contact plating', 0xe9c47e, 1, .2),
+  amber: finish('Safety marking', 0xd47a36, 0, .58),
 };

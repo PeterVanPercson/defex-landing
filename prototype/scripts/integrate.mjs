@@ -1,10 +1,22 @@
-import {cp,mkdir,readFile,rm,writeFile} from 'node:fs/promises';
+import {cp,mkdir,readdir,readFile,rm,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const destination=new URL('../../static/prototype/',import.meta.url);
 await mkdir(destination,{recursive:true});
 await rm(new URL('assets/',destination),{recursive:true,force:true});
 await cp(new URL('../dist/assets/',import.meta.url),new URL('assets/',destination),{recursive:true});
+// MuJoCo's WASM carries about 5.8 MB of DWARF and name sections (custom
+// sections, id 0) that only a debugger reads; dropping them halves the download.
+for(const name of await readdir(new URL('assets/',destination))){
+  if(!name.endsWith('.wasm'))continue;
+  const file=new URL(`assets/${name}`,destination),bytes=await readFile(file),kept=[bytes.subarray(0,8)];
+  let at=8;
+  const leb=()=>{let value=0,shift=0,byte;do{byte=bytes[at++];value|=(byte&127)<<shift;shift+=7;}while(byte&128);return value>>>0;};
+  while(at<bytes.length){const start=at,id=bytes[at++],size=leb();at+=size;if(id!==0)kept.push(bytes.subarray(start,at));}
+  const stripped=Buffer.concat(kept);
+  if(!WebAssembly.validate(stripped))throw new Error(`${name} is not valid WebAssembly without its custom sections`);
+  await writeFile(file,stripped);
+}
 // Meet the robot (templates/landing/_meet.html) is shared with the Django
 // pages; its sheet and script are added here so Vite never tries to bundle them.
 const meet='  <link rel="stylesheet" href="/static/css/meet.css?v={{ asset_v }}" />\n  <script src="/static/js/meet.js?v={{ asset_v }}" defer></script>\n';
