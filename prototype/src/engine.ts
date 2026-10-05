@@ -48,6 +48,7 @@ export class ConnectorEngine {
   completedTrial: Trial | null = null;
   testedCorrection: [number, number] | null = null;
   returningHome = false;
+  stopping = false;
   plan: { from: number[]; to: number[]; start: number; duration: number } | null = null;
 
   constructor(mj: Module, config = DEFAULT_CONFIG) {
@@ -77,7 +78,7 @@ export class ConnectorEngine {
     this.accepted = null; this.reason = ''; this.latchEngaged = false;
     this.samples = []; this.lastSample = -1; this.blockedTime = 0; this.completedTrial = null;
     this.plan = null;
-    this.testedCorrection = null; this.returningHome = false;
+    this.testedCorrection = null; this.returningHome = false; this.stopping = false;
   }
 
   start(controller: Controller) {
@@ -118,6 +119,16 @@ export class ConnectorEngine {
     this.latchEngaged = active;
   }
 
+  // Reset during a cycle: let go of the latch and leave along the same path a
+  // finished cycle takes, up clear of the socket and then home, instead of
+  // jumping there. No trial is recorded.
+  stop() {
+    if (this.phase === 'ready' || this.phase === 'complete') { this.resetState(); return; }
+    this.stopping = true; this.accepted = null; this.reason = '';
+    this.setLatch(false);
+    this.enter('reset');
+  }
+
   finish(reason: string) {
     this.reason = reason;
     this.accepted = this.continuity === true && this.retention === true;
@@ -154,7 +165,7 @@ export class ConnectorEngine {
         } else if (this.blockedTime > 0.015 || elapsed > 3.2) {
           if (this.controller === 'search' && this.probe < this.points.length - 1) {
             this.enter('backoff');
-          } else this.finish(this.controller === 'search' ? 'Search range exhausted' : 'Contact stopped insertion');
+          } else this.finish(this.controller === 'search' ? 'No fit in the search range' : 'Blocked by the socket');
         }
         break;
       }
@@ -175,7 +186,7 @@ export class ConnectorEngine {
         this.follow();
         if (elapsed > 0.5) {
           this.retention = Math.abs(q[2] - SEATED_Z) < 0.0003;
-          this.finish(!this.continuity ? 'Electrical check failed' : !this.retention ? 'Retention check failed' : 'Both checks passed');
+          this.finish(!this.continuity ? (this.config.fault === 'open' ? 'Open circuit' : 'Not seated deep enough') : !this.retention ? 'Latch did not hold' : 'Both tests passed');
         }
         break;
       case 'reset': {
@@ -184,6 +195,7 @@ export class ConnectorEngine {
           this.returningHome = true;
           this.glide([0, 0, START_Z], .72);
         } else if (settled && this.returningHome && q[2] > START_Z - 0.0001 && Math.hypot(q[0], q[1]) < .00003) {
+          if (this.stopping) { this.resetState(); return; }
           this.enter('complete');
           this.completedTrial = {
             id: this.trials.length + 1, controller: this.controller, config: {...this.config}, model: MODEL_VERSION,
@@ -200,7 +212,9 @@ export class ConnectorEngine {
     this.mj.mj_step(this.model, this.data);
     this.clock += DT;
     this.force = Math.abs(Number(this.data.qfrc_constraint[2]));
-    this.peakForce = Math.max(this.peakForce, this.force);
+    // Peak force is the push of going in: the pull test loads the ideal latch and
+    // reset draws the plug back out, so neither counts.
+    if (this.phase !== 'retention' && this.phase !== 'reset') this.peakForce = Math.max(this.peakForce, this.force);
     if (this.clock - this.lastSample >= 0.02) {
       this.samples.push({ t: this.clock, x: q[0], y: q[1], z: q[2], force: this.force, phase: this.phase });
       this.lastSample = this.clock;

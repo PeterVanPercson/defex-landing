@@ -9,6 +9,7 @@ from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.cache import patch_cache_control
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
@@ -59,6 +60,10 @@ def home(request):
 def prototype(request):
     response = render(request, "landing/prototype.html")
     response["X-Frame-Options"] = "SAMEORIGIN"
+    # The page is the same for every visitor until the next deploy, and a deploy
+    # clears Vercel's edge cache, so the edge serves it instead of iad1 rendering
+    # it on every visit.
+    patch_cache_control(response, public=True, max_age=0, s_maxage=86400, stale_while_revalidate=604800)
     return response
 
 

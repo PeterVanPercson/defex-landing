@@ -1,4 +1,5 @@
 export type Controller = 'fixed' | 'search' | 'reuse';
+export const METHOD_NAMES: Record<Controller, string> = { fixed: 'Fixed path', search: 'Find a fit', reuse: 'Reuse fit' };
 export type Fault = 'none' | 'open' | 'latch';
 export interface Configuration {
   variant: 'six' | 'eight';

@@ -4,7 +4,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { dimensions } from './model.ts';
 import type { Configuration } from './model.ts';
-import type { Snapshot, Sample } from './engine.ts';
+import type { Snapshot } from './engine.ts';
 import { PoseStream, damping } from './motion.ts';
 import { PARTS } from './parts.ts';
 import { RenderStats } from './render-stats.ts';
@@ -96,12 +96,12 @@ export class WorkcellScene {
   rotaryGripper = new THREE.Group();
   plug = new THREE.Group();
   parts = new Map<PartId, Part>();
-  trail: THREE.Line;
   shells: THREE.Mesh[] = [];
   socketCover: THREE.Mesh[] = [];
   plugCover: THREE.Mesh[] = [];
   ledMaterial = mat(0xe7aa45, 0.1, 0.4, { emissive: 0xc77917, emissiveIntensity: 0.5 });
-  stack = [0x4fd08a, 0xffb02e, 0xff4b3a].map(c => mat(c, 0.1, 0.35, { emissive: c, emissiveIntensity: 0.08, transparent: true, opacity: 0.92 }));
+  // Unlit lenses are dark tinted plastic; a lit one glows below the tone curve's shoulder so it stays saturated.
+  stack = [0x4fd08a, 0xffb02e, 0xff4b3a].map(c => mat(new THREE.Color(c).multiplyScalar(0.05).getHex(), 0, 0.28, { emissive: c, emissiveIntensity: 0 }));
   hmi = canvasTexture(640, 420);
   plate = canvasTexture(1536, 172);
   config: Configuration;
@@ -112,9 +112,6 @@ export class WorkcellScene {
   spread = 0;
   cut = 0;
   poses = new PoseStream();
-  trailPositions = new Float32Array(1500);
-  trailStart = -1;
-  trailCount = 0;
   lastVariant: Configuration['variant'] | null = null;
   connectorMaterials = new Set<THREE.Material>();
   resizeObserver: ResizeObserver;
@@ -129,20 +126,30 @@ export class WorkcellScene {
   height = 1;
   baseDistance = 260;
   shift = 0;
+  wide = false;
+  contactMaterial: THREE.MeshBasicMaterial | null = null;
+  floorMaterial = new THREE.ShadowMaterial({ opacity: 0.18 });
   desiredPosition = new THREE.Vector3();
   desiredTarget = new THREE.Vector3(0, 0, 30);
   animating = false;
   tween: { from: THREE.Vector3; fromTarget: THREE.Vector3; start: number; duration: number } | null = null;
   shadowPose = '';
   dragging = false;
+  pressed = false;
+  touches = new Set<number>();
   lastInteraction = performance.now();
   hovered: PartId | null = null;
   pointer: { x: number; y: number } | null = null;
+  pointerType = 'mouse';
   pointerMoved = false;
+  pickFrame = 0;
+  lastPick = 0;
+  tipTimer = 0;
   down: { x: number; y: number; moved: boolean; pointerId: number | null } = { x: 0, y: 0, moved: false, pointerId: null };
   reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   embed: boolean;
   pixelRatio: number;
+  screenRatio: number;
   frames = 0;
   measured = 0;
   renderCost = 0;
@@ -152,6 +159,7 @@ export class WorkcellScene {
   labelWidths = new Map<PartId, number>();
   director = false;
   directorHasRun = false;
+  tourHold = false;
   dirPos = new THREE.Vector3();
   dirTarget = new THREE.Vector3();
   phase = 'ready';
@@ -164,6 +172,9 @@ export class WorkcellScene {
   visualTime = 0;
   playbackSpeed = 1;
   disposed = false;
+  compiling = false;
+  isOffline = false;
+  dprQuery: MediaQueryList | null = null;
   rendering = false;
   afterRender: (() => void) | null = null;
   lastLabels = 0;
@@ -176,46 +187,52 @@ export class WorkcellScene {
     this.container = container; this.config = config; this.hud = hud; this.embed = embed;
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance', preserveDrawingBuffer: false });
     this.stats = new RenderStats(container, this.renderer);
-    this.pixelRatio = Math.min(devicePixelRatio, 2);
+    this.pixelRatio = this.screenRatio = Math.min(devicePixelRatio, 2);
     this.renderer.setPixelRatio(this.pixelRatio);
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.shadowMap.enabled = true; this.renderer.shadowMap.type = THREE.PCFShadowMap; this.renderer.shadowMap.autoUpdate = false; this.renderer.shadowMap.needsUpdate = true;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.12;
+    this.renderer.toneMapping = THREE.NeutralToneMapping; this.renderer.toneMappingExposure = 1;
     container.append(this.renderer.domElement);
-    this.renderer.domElement.setAttribute('aria-label', 'Interactive 3D simulation of a connector workcell. Drag to rotate, scroll to zoom, hover a part to name it.');
+    this.renderer.domElement.setAttribute('role', 'img');
+    this.renderer.domElement.setAttribute('aria-label', 'Interactive 3D simulation of a connector workcell. Drag to rotate, pinch to zoom, hover a part to name it.');
     this.camera.up.set(0, 0, 1);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     Object.assign(this.controls, { enableDamping: true, dampingFactor: 0.07, enablePan: false, minDistance: 45, maxDistance: 520, maxPolarAngle: Math.PI * 0.49, minPolarAngle: 0.02, rotateSpeed: 0.55, zoomSpeed: 0.7 });
     if (embed) this.controls.enableZoom = false;
-    if (matchMedia('(pointer: coarse)').matches) { this.controls.touches = { ONE: -1 as THREE.TOUCH, TWO: THREE.TOUCH.DOLLY_ROTATE }; this.renderer.domElement.style.touchAction = 'pan-y'; }
-    this.controls.addEventListener('start', () => { this.direct(false); this.dragging = true; this.animating = false; this.tween = null; this.lastInteraction = performance.now(); });
+    // One finger turns the machine while an upward swipe still scrolls the page; two fingers pinch and twist.
+    this.controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE }; this.renderer.domElement.style.touchAction = 'pan-y';
+    // A press may turn out to be a page scroll or a click on a part, so the camera
+    // is handed over once it drags (onPointerMove); a wheel or pinch takes it at once.
+    this.controls.addEventListener('start', () => { this.lastInteraction = performance.now(); if (!this.pressed) this.takeCamera(); });
     this.controls.addEventListener('end', () => { this.dragging = false; this.lastInteraction = performance.now(); });
     this.controls.addEventListener('change', this.wake);
+    // The page scrolls over the stage. A trackpad pinch (a wheel with ctrlKey) or Ctrl/⌘ and the wheel zoom.
+    container.addEventListener('wheel', this.onWheel, { capture: true, passive: true });
+    container.addEventListener('pointerdown', this.onPointerDown, { capture: true });
 
     const env = new RoomEnvironment(), pmrem = new THREE.PMREMGenerator(this.renderer);
-    this.scene.environment = pmrem.fromScene(env, 0.04).texture; this.scene.environmentIntensity = 0.9; this.scene.environmentRotation.set(Math.PI / 2, 0, 0); env.dispose(); pmrem.dispose();
-    const hemi = new THREE.HemisphereLight(0xe5e9ed, 0x252321, 1.2); hemi.position.set(0, 0, 1); this.scene.add(hemi);
-    const key = new THREE.DirectionalLight(0xfff5e9, 3.1); key.position.set(-40, -70, 140); key.castShadow = true;
+    this.scene.environment = pmrem.fromScene(env, 0.04).texture; this.scene.environmentIntensity = 1; this.scene.environmentRotation.set(Math.PI / 2, 0, 0); env.dispose(); pmrem.dispose();
+    const key = new THREE.DirectionalLight(0xfff5e9, 3.4); key.position.set(-40, -70, 140); key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left: -95, right: 95, top: 95, bottom: -95, near: 20, far: 320 });
-    key.shadow.normalBias = 0.12; key.shadow.bias = -0.0002; key.shadow.radius = 3; this.scene.add(key);
-    const rim = new THREE.DirectionalLight(0xe1eafa, 2.5); rim.position.set(60, 90, 80); this.scene.add(rim);
-    const front = new THREE.DirectionalLight(0xffffff, 1); front.position.set(90, -120, 40); this.scene.add(front);
+    key.shadow.normalBias = 0.12; key.shadow.bias = -0.0002; key.shadow.radius = 4; this.scene.add(key);
+    const rim = new THREE.DirectionalLight(0xe1eafa, 1.6); rim.position.set(60, 90, 80); this.scene.add(rim);
 
-    this.renderer.toneMappingExposure = 1.05; this.backdrop();
+    this.backdrop();
     this.scene.add(this.cell);
     this.buildGround(); this.buildTable(); this.buildGantry(); this.buildTool(); this.buildTester(); this.buildConnector();
     batchStaticMeshes(this.cell, new Set([...this.shells, ...this.socketCover, ...this.plugCover, ...this.latchParts.map(p => p.mesh)])); this.tagParts();
     this.cell.add(this.serviceLoop.mesh); this.serviceLoop.update(0, 0, 42);
-    this.trail = line(this.cell, [new THREE.Vector3(0, 0, 27)], 0xff8a3a, 0.8);
-    this.trail.geometry.setAttribute('position', new THREE.BufferAttribute(this.trailPositions, 3).setUsage(THREE.DynamicDrawUsage));
-    this.trail.geometry.setDrawRange(0, 0); this.trail.frustumCulled = false;
-    this.trail.visible = false;
     this.tool.position.z = 42;
     this.drawPlate(); this.drawHmi();
     document.fonts?.ready.then(() => { if (!this.disposed) { this.drawPlate(); this.drawHmi(); this.wake(); } });
     this.measureAnchors();
-    this.cut = 1; this.applyCut(true); this.renderer.compile(this.scene, this.camera); this.cut = 0; this.applyCut(true);
+    // Both the ghosted and the solid shaders compile off this thread (KHR_parallel_shader_compile)
+    // while the loading screen is up; frames start once they are ready.
+    this.cut = 1; this.applyCut(true); const ghosted = this.renderer.compileAsync(this.scene, this.camera);
+    this.cut = 0; this.applyCut(true); const solid = this.renderer.compileAsync(this.scene, this.camera);
+    this.compiling = true;
+    Promise.all([ghosted, solid]).catch(() => {}).then(() => { this.compiling = false; this.wake(); });
 
     this.resizeObserver = new ResizeObserver(() => this.layout()); this.resizeObserver.observe(container);
     this.intersection = new IntersectionObserver(([entry]) => { this.visible = entry.isIntersecting; this.wake(); }, { threshold: 0.01 });
@@ -225,10 +242,9 @@ export class WorkcellScene {
     canvas.addEventListener('webglcontextlost', this.onContextLost);
     canvas.addEventListener('pointermove', this.onPointerMove);
     canvas.addEventListener('pointerleave', this.onPointerLeave);
-    canvas.addEventListener('pointerdown', this.onPointerDown);
     canvas.addEventListener('pointerup', this.onPointerUp);
     canvas.addEventListener('pointercancel', this.onPointerCancel);
-    this.layout();
+    this.layout(); this.watchPixelRatio();
     this.camera.position.copy(this.desiredPosition); this.controls.target.copy(this.desiredTarget); this.controls.update();
     this.wake();
   }
@@ -261,13 +277,21 @@ export class WorkcellScene {
   }
 
   buildGround() {
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.ShadowMaterial({ opacity: 0.18 }));
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), this.floorMaterial);
     floor.position.z = -10.4; floor.receiveShadow = true; this.scene.add(floor);
     const shadow = canvasTexture(128, 128), g = shadow.ctx.createRadialGradient(64, 64, 10, 64, 64, 64);
     g.addColorStop(0, 'rgba(0,0,0,.85)'); g.addColorStop(.55, 'rgba(0,0,0,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)');
     shadow.ctx.fillStyle = g; shadow.ctx.fillRect(0, 0, 128, 128); shadow.texture.needsUpdate = true;
     const contact = new THREE.Mesh(new THREE.PlaneGeometry(170, 135), new THREE.MeshBasicMaterial({ map: shadow.texture, transparent: true, depthWrite: false, opacity: 0.7 }));
     contact.position.z = -10.3; this.scene.add(contact);
+    const soft = canvasTexture(64, 64), sg = soft.ctx.createRadialGradient(32, 32, 4, 32, 32, 32);
+    sg.addColorStop(0, 'rgba(0,0,0,1)'); sg.addColorStop(.45, 'rgba(0,0,0,.55)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
+    soft.ctx.fillStyle = sg; soft.ctx.fillRect(0, 0, 64, 64); soft.texture.needsUpdate = true;
+    this.contactMaterial = new THREE.MeshBasicMaterial({ map: soft.texture, transparent: true, depthWrite: false, opacity: .5, polygonOffset: true, polygonOffsetFactor: -2 });
+    const blob = new THREE.PlaneGeometry(1, 1);
+    for (const [w, h, x, y, z] of [[72, 58, 0, 0, .34], [36, 30, 0, 0, 4.03], [13, 22, 22, -5, 4.03], [17, 18, -27, 31, .34], [17, 18, 27, 31, .34], [11, 11, 45, -27, .34], [8.5, 8.5, 44, 30, .34]]) {
+      const m = new THREE.Mesh(blob, this.contactMaterial); m.scale.set(w, h, 1); m.position.set(x, y, z); m.renderOrder = -1; this.cell.add(m);
+    }
   }
 
   buildTable() {
@@ -283,7 +307,7 @@ export class WorkcellScene {
     for (const x of [-52, 52]) for (const y of [-39, 39]) screw(t, x, y, 0.5);
     for (let x = -50; x <= 50; x += 10) for (let y = -35; y <= 35; y += 10) {
       if ((Math.abs(x) < 36 && Math.abs(y) < 30) || (Math.abs(Math.abs(x) - 27) < 9 && y > 5) || (y < -30 && x < 25) || (x > 36 && y < -12) || (x > 36 && y > 22)) continue;
-      cylinder(t, 0.9, 0.12, [x, y, 0.32], M.dark, 12);
+      cylinder(t, 1.02, 0.06, [x, y, 0.31], M.edge, 20); cylinder(t, 0.86, 0.12, [x, y, 0.33], M.bore, 20);
     }
     const plate = new THREE.Mesh(new THREE.PlaneGeometry(56, 6.3), new THREE.MeshBasicMaterial({ map: this.plate.texture, toneMapped: false }));
     plate.position.set(-8, -36.6, 0.34); t.add(plate);
@@ -350,7 +374,7 @@ export class WorkcellScene {
     box(f, 'Aluminium fixture', [62, 48, 4], [0, 0, 2], M.silver, 0.7);
     box(f, 'Fixture footing', [59, 45, 1.2], [0, 0, 0.7], M.body, 0.4);
     for (const x of [-26, 26]) for (const y of [-19, 19]) screw(f, x, y, 4.25);
-    for (const x of [-22, -16, 16]) for (const y of [-12, -6, 0, 6, 12]) cylinder(f, 0.52, 0.12, [x, y, 4.1], M.dark, 12);
+    for (const x of [-22, -16, 16]) for (const y of [-12, -6, 0, 6, 12]) { cylinder(f, 0.68, 0.05, [x, y, 4.04], M.edge, 16); cylinder(f, 0.5, 0.12, [x, y, 4.08], M.bore, 16); }
     box(f, 'Socket carrier', [29, 23, 4.5], [0, 0, 6.25], M.body, 0.4);
     for (const x of [-12, 12]) for (const y of [-9, 9]) screw(f, x, y, 8.5);
     line(f, [new THREE.Vector3(-8, -19, 4.1), new THREE.Vector3(8, -19, 4.1)], 0x8a949c, 0.7);
@@ -366,28 +390,30 @@ export class WorkcellScene {
     cylinder(hmi, 1, 15, [0, 3, 8.5], M.silver, 16);
     const head = new THREE.Group(); head.position.set(0, 3, 22); head.rotation.x = -0.24; hmi.add(head);
     box(head, 'Screen bezel', [27, 1.8, 18.4], [0, 0.4, 0], M.dark, 0.7);
-    const screen = new THREE.Mesh(new THREE.PlaneGeometry(25, 16.4), new THREE.MeshBasicMaterial({ map: this.hmi.texture, toneMapped: false }));
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(25, 16.4), new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffffff, emissiveMap: this.hmi.texture, roughness: 0.16, metalness: 0, envMapIntensity: 0.55, toneMapped: false }));
     screen.rotation.x = Math.PI / 2; screen.position.y = -0.55; head.add(screen);
 
     const tower = new THREE.Group(); tower.position.set(44, 30, 0); tester.add(tower);
     cylinder(tower, 2.6, 2, [0, 0, 1.1], M.body, 28);
     cylinder(tower, 0.9, 24, [0, 0, 14], M.silver, 16);
-    [2, 1, 0].forEach((i, k) => {
+    [0, 1, 2].forEach((i, k) => {
       cylinder(tower, 2.5, 4, [0, 0, 28.3 + k * 4.4], this.stack[i], 28);
       cylinder(tower, 2.7, 0.4, [0, 0, 26.1 + k * 4.4], M.edge, 28);
     });
     cylinder(tower, 2.7, 1.2, [0, 0, 41], M.dark, 28);
-    this.stack.forEach(m => { m.toneMapped = false; });
   }
 
   drawHmi() {
     const c = this.hmi.ctx, w = 640, h = 420, s = this.state;
     c.fillStyle = '#0f1519'; c.fillRect(0, 0, w, h);
     print(c, 'DEFEX · CONNECTOR LAB', 30, 48, 20, '#8e9aa0', 600, MONO);
-    c.fillStyle = s && s.phase !== 'ready' && s.phase !== 'complete' ? '#ff7a1a' : '#4a555c'; c.beginPath(); c.arc(600, 41, 7, 0, Math.PI * 2); c.fill();
+    const running = !!s && s.phase !== 'ready' && s.phase !== 'complete';
+    c.fillStyle = running && this.playing ? '#ff7a1a' : '#4a555c'; c.beginPath(); c.arc(600, 41, 7, 0, Math.PI * 2); c.fill();
     const phaseName: Record<string, string> = { ready: 'READY', approach: 'INSERT', insert: 'INSERT', backoff: 'BLOCKED', move: 'NEW TRY', electrical: 'CONNECTION', retention: 'PULL TEST', reset: 'RESET', complete: 'DONE' };
-    const done = s?.phase === 'complete', label = done ? (s!.accepted ? 'PASS' : s!.continuity === false || s!.retention === false ? 'REJECT' : 'STUCK') : phaseName[s?.phase ?? 'ready'];
-    print(c, label, 30, 128, 64, done ? (s!.accepted ? '#58d494' : '#ff5a45') : s?.phase === 'backoff' ? '#ff9b5c' : '#f1eee5', 650);
+    // The verdict stays up while the tool retracts.
+    const done = s?.phase === 'complete' || (s?.phase === 'reset' && s.accepted != null);
+    const label = this.isOffline ? 'OFFLINE' : done ? (s!.accepted ? 'PASS' : 'REJECT') : running && !this.playing ? 'PAUSED' : phaseName[s?.phase ?? 'ready'];
+    print(c, label, 30, 128, 64, this.isOffline ? '#5b676d' : done ? (s!.accepted ? '#58d494' : '#ff5a45') : s?.phase === 'backoff' ? '#ff9b5c' : '#f1eee5', 650);
     print(c, `${(s?.force ?? 0).toFixed(1)} N`, 30, 186, 34, '#ff7a1a', 500, MONO);
     print(c, `${(s?.depth ?? 0).toFixed(1)} mm`, 250, 186, 34, '#c9ced2', 500, MONO);
     print(c, `TRY ${s && s.phase !== 'ready' ? Math.max(1, s.probes) : 0}`, 470, 186, 34, '#c9ced2', 500, MONO);
@@ -411,12 +437,12 @@ export class WorkcellScene {
     remove(this.socket); remove(this.plug); this.socketCover = []; this.plugCover = [];
     this.connectorMaterials.forEach(material => material.dispose()); this.connectorMaterials.clear();
     const d = dimensions(this.config.variant), sx = d.socketX * 1000, sy = d.socketY * 1000;
-    const socketBody = new THREE.Mesh(cached(`socket-${d.pins}`, () => socketHousing(sx, sy)), M.dark.clone());
+    const socketBody = new THREE.Mesh(cached(`socket-${d.pins}`, () => socketHousing(sx, sy)), M.polymer.clone());
     socketBody.name = 'Molded socket housing'; socketBody.position.z = 10.2; socketBody.castShadow = true; socketBody.receiveShadow = true;
     this.socket.add(socketBody); this.socketCover.push(socketBody);
-    box(this.socket, 'Socket floor', [sx * 2 + 8, sy * 2 + 8, 4], [0, 0, 9], M.dark, 0.2);
-    box(this.socket, 'Polarizing key', [2.4, .8, 2.8], [0, -sy - 4, 18.4], M.dark, .12);
-    for (const x of [-sx - 3.9, sx + 3.9]) for (const y of [-sy + 1, 0, sy - 1]) box(this.socket, 'Socket molding rib', [.65, .7, 9.2], [x, y, 16], M.dark, .1);
+    box(this.socket, 'Socket floor', [sx * 2 + 8, sy * 2 + 8, 4], [0, 0, 9], M.polymer, 0.2);
+    box(this.socket, 'Polarizing key', [2.4, .8, 2.8], [0, -sy - 4, 18.4], M.polymer, .12);
+    for (const x of [-sx - 3.9, sx + 3.9]) for (const y of [-sy + 1, 0, sy - 1]) box(this.socket, 'Socket molding rib', [.65, .7, 9.2], [x, y, 16], M.polymer, .1);
     box(this.socket, 'Mold parting line', [sx * 2 + 7.9, .08, .12], [0, -sy - 3.8, 12], M.body, 0);
     for (const [i, [x, y]] of contactCenters(d.pins).entries()) {
       cylinder(this.socket, 0.37, 5, [x, y, 13], M.gold, 16);
@@ -479,7 +505,6 @@ export class WorkcellScene {
   }
   setMode(mode: Mode) {
     this.mode = mode; this.lastInteraction = performance.now();
-    this.trail.visible = mode === 'inside';
     if (this.viewMode !== 'part' && this.viewMode !== 'connector') this.goal();
     this.startTween(); this.wake();
   }
@@ -500,11 +525,16 @@ export class WorkcellScene {
     if (next !== this.director) { this.director = next; this.hud?.onDirector?.(next); }
     this.wake();
   }
+  hold(on: boolean) { this.tourHold = on; this.wake(); }
+  offline() { this.isOffline = true; this.drawHmi(); this.wake(); }
+  takeCamera() { this.direct(false); this.dragging = true; this.down.moved = true; this.animating = false; this.tween = null; }
   directorGoal(now: number) {
     const age = (now - this.phaseStart) / 1000, k = Math.max(1, 0.92 / this.camera.aspect), socket = this.socket.getWorldPosition(new THREE.Vector3());
     let az = 0, el = 0.5, dist = this.baseDistance, target = new THREE.Vector3(0, 0, 30);
+    // Held through the demo, the shot stays on the socket between cycles.
+    const close = ['insert', 'backoff', 'move', 'electrical', 'retention'].includes(this.phase) || (this.phase === 'reset' && age < 0.5) || (this.tourHold && this.phase !== 'approach');
     if (this.phase === 'approach') { target.set(socket.x, socket.y, 28); dist = (195 - Math.min(1, age / 1.4) * 35) * k; az = -0.18; el = 0.43; }
-    else if (['insert', 'backoff', 'move', 'electrical', 'retention'].includes(this.phase)) { target.set(socket.x, socket.y, 25); dist = 155 * k; az = -0.18; el = 0.43; }
+    else if (close) { target.set(socket.x, socket.y, 25); dist = 155 * k; az = -0.18; el = 0.43; }
     else { this.desiredTarget.copy(target); this.desiredPosition.copy(this.direction).multiplyScalar(dist).add(target); return; }
     if (this.width < 700) target.z -= 5;
     const b = Math.atan2(this.direction.y, this.direction.x) + az;
@@ -517,7 +547,7 @@ export class WorkcellScene {
     this.animating = true;
     const from = this.camera.position.clone().sub(this.controls.target), to = this.desiredPosition.clone().sub(this.desiredTarget);
     const turn = from.angleTo(to), zoom = Math.abs(Math.log(to.length() / Math.max(1, from.length())));
-    this.tween = { from: this.camera.position.clone(), fromTarget: this.controls.target.clone(), start: performance.now(), duration: this.reduceMotion ? 0 : THREE.MathUtils.clamp(360 + turn * 160 + zoom * 180, 360, 780) };
+    this.tween = { from: this.camera.position.clone(), fromTarget: this.controls.target.clone(), start: performance.now(), duration: this.reduceMotion ? 0 : THREE.MathUtils.clamp(520 + turn * 260 + zoom * 320, 520, 1150) };
   }
 
   goal() {
@@ -540,6 +570,16 @@ export class WorkcellScene {
     this.desiredPosition.copy(dir).normalize().multiplyScalar(this.viewMode === 'top' ? this.baseDistance * (this.mode === 'parts' ? 1.02 : 0.92) : d).add(this.desiredTarget);
   }
 
+  shiftGoal() {
+    if (!this.wide) return 0;
+    if (this.mode === 'parts') return 0;
+    return -this.width * (this.viewMode === 'overview' && !this.director ? 0.095 : 0.035);
+  }
+  applyShift() {
+    this.camera.setViewOffset(this.width, this.height, this.shift, this.width > 900 ? this.height * 0.025 : -this.height * 0.025, this.width, this.height);
+    this.camera.updateProjectionMatrix();
+  }
+
   layout() {
     const r = this.container.getBoundingClientRect();
     if (!r.width || !r.height) return;
@@ -547,10 +587,9 @@ export class WorkcellScene {
     this.renderer.setSize(r.width, r.height);
     this.labelWidths.clear();
     this.camera.aspect = r.width / r.height;
-    const wide = r.width > 1100 && !this.embed;
-    this.shift = wide ? -r.width * 0.095 : 0;
-    this.camera.setViewOffset(r.width, r.height, this.shift, r.width > 900 ? r.height * 0.025 : -r.height * 0.025, r.width, r.height);
-    this.camera.updateProjectionMatrix();
+    this.wide = r.width > 1100 && !this.embed;
+    this.shift = this.shiftGoal();
+    this.applyShift();
     const t = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)), radius = 70;
     const usableW = r.width > 900 ? 0.78 : 0.94, usableH = r.width > 900 ? 0.83 : 0.62;
     this.baseDistance = Math.max(radius / (t * this.camera.aspect * usableW), radius / (t * usableH));
@@ -560,42 +599,65 @@ export class WorkcellScene {
     this.wake();
   }
 
-  update(state: Snapshot, samples: Sample[], epoch: number, playing = false, speed = 1) {
+  // Follow the window to a display with another pixel density, or a browser zoom: the
+  // media query reports it while idle, and every frame checks too (see animate).
+  watchPixelRatio() {
+    this.dprQuery?.removeEventListener('change', this.onPixelRatio);
+    this.dprQuery = matchMedia(`(resolution: ${devicePixelRatio}dppx)`);
+    this.dprQuery.addEventListener('change', this.onPixelRatio);
+  }
+  onPixelRatio = () => {
+    if (this.disposed) return;
+    this.pixelRatio = this.screenRatio = Math.min(devicePixelRatio, 2); this.slow = 0;
+    this.renderer.setPixelRatio(this.pixelRatio); this.labelWidths.clear();
+    this.watchPixelRatio(); this.wake();
+  };
+
+  update(state: Snapshot, epoch: number, playing = false, speed = 1) {
     this.playing = playing; this.playbackSpeed = speed;
     if (this.director && playing && state.phase !== 'ready' && state.phase !== 'complete') this.directorHasRun = true;
-    const now0 = this.visualTime;
-    if (state.phase !== this.phase) { this.phase = state.phase; this.phaseStart = now0; }
+    const now0 = this.visualTime, phaseChanged = state.phase !== this.phase;
+    if (phaseChanged) { this.phase = state.phase; this.phaseStart = now0; }
     if (state.latchEngaged && !this.latched) this.clickAt = now0;
     this.latched = state.latchEngaged;
     this.state = state;
-    if (epoch !== this.poses.epoch) { this.trailStart = -1; this.trailCount = 0; }
     this.poses.push(state.pose, performance.now(), epoch);
     const c = state.accepted === true ? 0x4fd08a : state.accepted === false ? 0xff4b3a : state.phase === 'electrical' ? 0xffc04a : 0x8a918b;
     this.ledMaterial.color.setHex(c); this.ledMaterial.emissive.setHex(c);
-    const count = Math.min(500, Math.ceil(samples.length / 3)), start = samples[0]?.t ?? -1;
-    const from = start === this.trailStart ? this.trailCount : 0;
-    for (let i = from; i < count; i++) { const p = samples[i * 3]; this.trailPositions.set([p.x * 1000, p.y * 1000, p.z * 1000], i * 3); }
-    this.trailStart = start; this.trailCount = count;
-    if (count !== from) this.trail.geometry.attributes.position.needsUpdate = true;
-    this.trail.geometry.setDrawRange(0, count > 1 ? count : 0);
     const now = performance.now();
-    if (now - this.lastHmi > 90 || !playing || state.phase === 'ready' || state.phase === 'complete') { this.lastHmi = now; this.drawHmi(); }
+    // Readings refresh about 11 times a second; a new phase shows at once, in step with the page.
+    if (phaseChanged || now - this.lastHmi > 90 || !playing || state.phase === 'ready' || state.phase === 'complete') { this.lastHmi = now; this.drawHmi(); }
     this.wake();
   }
 
+  onWheel = (e: WheelEvent) => { if (!e.ctrlKey && !e.metaKey) e.stopPropagation(); };
   onPointerMove = (e: PointerEvent) => {
     const r = this.renderer.domElement.getBoundingClientRect();
-    this.pointer = { x: e.clientX - r.left, y: e.clientY - r.top }; this.pointerMoved = true;
-    if (Math.hypot(this.pointer.x - this.down.x, this.pointer.y - this.down.y) > 5) this.down.moved = true;
-    this.wake();
+    this.pointer = { x: e.clientX - r.left, y: e.clientY - r.top }; this.pointerMoved = true; this.pointerType = e.pointerType;
+    const dx = Math.abs(this.pointer.x - this.down.x), dy = Math.abs(this.pointer.y - this.down.y);
+    if (Math.hypot(dx, dy) > 5) this.down.moved = true;
+    // A sideways touch drag turns the machine; an upward one is the page scrolling.
+    if (this.pressed && !this.dragging && (e.pointerType === 'touch' ? dx > 10 && dx > dy : dx + dy > 3)) this.takeCamera();
+    // Hovering a still scene only needs a pick, not a new frame.
+    if (this.frame || this.dragging) this.wake();
+    else if (!this.pickFrame) this.pickFrame = requestAnimationFrame(this.pickOnly);
   };
-  onPointerLeave = () => { this.pointer = null; this.setHover(null); };
+  pickOnly = () => {
+    this.pickFrame = 0;
+    if (this.frame || this.disposed || !this.pointer || !this.pointerMoved || this.pressed || this.pointerType === 'touch') return;
+    this.pointerMoved = false; this.lastPick = performance.now(); this.setHover(this.pick(this.pointer.x, this.pointer.y));
+  };
+  onPointerLeave = (e: PointerEvent) => { if (e.pointerType === 'touch') return; this.pointer = null; this.setHover(null); };
   onPointerDown = (e: PointerEvent) => {
     const r = this.renderer.domElement.getBoundingClientRect();
     this.down = { x: e.clientX - r.left, y: e.clientY - r.top, moved: false, pointerId: e.pointerId };
-    this.hud?.tooltip.classList.remove('visible');
+    this.pressed = true;
+    if (e.pointerType === 'touch') { this.touches.add(e.pointerId); if (this.touches.size > 1) this.takeCamera(); }
+    clearTimeout(this.tipTimer); this.hud?.tooltip.classList.remove('visible');
   };
+  release(e: PointerEvent) { this.touches.delete(e.pointerId); if (!this.touches.size) this.pressed = false; }
   onPointerUp = (e: PointerEvent) => {
+    this.release(e);
     if (this.down.pointerId !== e.pointerId) return;
     this.down.pointerId = null;
     const r = this.renderer.domElement.getBoundingClientRect();
@@ -603,8 +665,13 @@ export class WorkcellScene {
     const id = this.pick(e.clientX - r.left, e.clientY - r.top);
     if (!id) return;
     this.focusPart(id); this.hud?.onPick?.(id);
+    // A touch has no hover, so a tap names the part for a moment.
+    if (e.pointerType === 'touch') {
+      this.pointer = { x: e.clientX - r.left, y: e.clientY - r.top }; this.setHover(id);
+      this.tipTimer = window.setTimeout(() => { this.pointer = null; this.setHover(null); }, 1800);
+    }
   };
-  onPointerCancel = () => { this.down.pointerId = null; };
+  onPointerCancel = (e: PointerEvent) => { this.release(e); this.down.pointerId = null; };
   pick(x: number, y: number): PartId | null {
     this.raycaster.setFromCamera(new THREE.Vector2(x / this.width * 2 - 1, -y / this.height * 2 + 1), this.camera);
     const hit = this.raycaster.intersectObjects([...this.parts.values()].map(p => p.group), true).find(h => h.object.visible && (h.object as THREE.Mesh).isMesh && (((h.object as THREE.Mesh).material as THREE.Material).opacity ?? 1) > 0.5);
@@ -612,7 +679,7 @@ export class WorkcellScene {
   }
   setHover(id: PartId | null) {
     this.hovered = id;
-    this.renderer.domElement.style.cursor = id ? 'pointer' : 'grab';
+    this.renderer.domElement.style.cursor = id ? 'pointer' : '';
     const tip = this.hud?.tooltip; if (!tip) return;
     tip.classList.toggle('visible', !!id);
     if (!id || !this.pointer) return;
@@ -622,21 +689,23 @@ export class WorkcellScene {
     tip.style.transform = `translate(${Math.min(this.width - 250, Math.max(10, this.pointer.x + 18))}px,${Math.max(10, Math.min(this.height - 100, this.pointer.y - 70))}px)`;
   }
 
+  // A recording keeps drawing while the stage is scrolled out of view.
   wake = () => {
-    if (!this.disposed && !this.frame && !this.rendering && this.visible && !document.hidden) { this.lastFrame = performance.now(); this.frame = requestAnimationFrame(this.animate); }
+    if (!this.disposed && !this.frame && !this.rendering && (this.visible || this.afterRender) && !document.hidden) { this.lastFrame = performance.now(); this.frame = requestAnimationFrame(this.animate); }
   };
   animate = (now: number) => {
     this.frame = 0;
-    if (!this.visible || document.hidden) return;
+    if ((!this.visible && !this.afterRender) || document.hidden || this.compiling) return;
     this.rendering = true;
+    if (Math.min(devicePixelRatio, 2) !== this.screenRatio) this.onPixelRatio();
     const elapsed = Math.max(1, now - this.lastFrame);
     const dt = Math.min(50, elapsed); this.lastFrame = now;
     if (this.playing) this.visualTime += dt * this.playbackSpeed;
     const spreadGoal = this.mode === 'parts' ? 1 : 0, cutGoal = this.mode === 'inside' ? 1 : 0;
     const moving = this.spread !== spreadGoal || this.cut !== cutGoal;
-    this.spread = step(this.spread, spreadGoal, dt / 800);
+    this.spread = this.reduceMotion ? spreadGoal : step(this.spread, spreadGoal, dt / 800);
     const cutBefore = this.cut;
-    this.cut = step(this.cut, cutGoal, dt / 300);
+    this.cut = this.reduceMotion ? cutGoal : step(this.cut, cutGoal, dt / 300);
     if (cutBefore !== this.cut) this.applyCut();
     if (moving) {
       EXPLODE_ORDER.forEach((id, k) => {
@@ -658,13 +727,16 @@ export class WorkcellScene {
       }
     }
     this.serviceLoop.mesh.visible = this.spread < .01;
-    this.trail.position.z = this.parts.get('connector')!.group.position.z;
+    // Parts pulled apart leave the table, so their contact shade and the floor shadow fade.
+    if (this.contactMaterial) this.contactMaterial.opacity = .5 * (1 - Math.min(1, this.spread * 4));
+    this.floorMaterial.opacity = 0.18 * (1 - 0.75 * this.spread);
+    // One lamp at a time: green ready or passed, amber blinking while it works, red rejected.
     const running = !!this.state && this.state.phase !== 'ready' && this.state.phase !== 'complete';
-    const accepted = this.state?.accepted;
-    const blink = 0.5 - 0.5 * Math.cos(this.visualTime / 260);
-    this.stack[0].emissiveIntensity = accepted === true ? 1.2 : !running ? 0.22 : 0.025;
-    this.stack[1].emissiveIntensity = running && accepted == null ? 0.5 + blink * .3 : 0.025;
-    this.stack[2].emissiveIntensity = accepted === false ? 1.2 : 0.025;
+    const accepted = this.isOffline ? undefined : this.state?.accepted;
+    const blink = this.reduceMotion ? 1 : 0.5 - 0.5 * Math.cos(this.visualTime / 260);
+    this.stack[0].emissiveIntensity = accepted === true ? 1.05 : accepted === null && !running ? 0.7 : 0;
+    this.stack[1].emissiveIntensity = running && accepted === null ? 0.3 + blink * 0.8 : 0;
+    this.stack[2].emissiveIntensity = accepted === false ? 1.05 : 0;
 
     if (moving && this.viewMode === 'part') this.goal();
     const paused = running && !this.playing;
@@ -675,7 +747,7 @@ export class WorkcellScene {
       const fromOff = this.dirPos.clone().sub(this.dirTarget), toOff = this.desiredPosition.clone().sub(this.desiredTarget);
       this.dirTarget.lerp(this.desiredTarget, a); orbitBlend(fromOff, toOff, a, this.dirPos); this.dirPos.add(this.dirTarget);
       this.camera.position.lerp(this.dirPos, a); this.controls.target.lerp(this.dirTarget, a);
-      if (this.phase === 'complete' && this.directorHasRun) { this.direct(false); this.viewMode = 'overview'; this.goal(); this.startTween(); }
+      if (this.phase === 'complete' && this.directorHasRun && !this.tourHold) { this.direct(false); this.viewMode = 'overview'; this.goal(); this.startTween(); }
     }
     if (this.tween && !this.dragging) {
       const k = this.tween.duration ? Math.min(1, (now - this.tween.start) / this.tween.duration) : 1, e = ease(k);
@@ -685,9 +757,14 @@ export class WorkcellScene {
       if (k >= 1) { this.tween = null; this.animating = false; }
     }
     this.controls.dampingFactor = damping(dt, 170);
+    const shiftGoal = this.shiftGoal(), shifting = !this.reduceMotion && Math.abs(shiftGoal - this.shift) > 0.25;
+    if (shifting) { this.shift += (shiftGoal - this.shift) * damping(dt, 150); this.applyShift(); }
+    else if (this.shift !== shiftGoal) { this.shift = shiftGoal; this.applyShift(); }
     const orbitChanged = this.controls.update(dt / 1000);
 
-    if (this.pointerMoved && !this.dragging && this.pointer) { this.pointerMoved = false; this.setHover(this.pick(this.pointer.x, this.pointer.y)); }
+    // A part under a resting pointer changes as the camera flies, so pick again every 100 ms.
+    const flying = !!(this.director || this.tween || orbitChanged);
+    if (this.pointer && !this.pressed && this.pointerType !== 'touch' && (this.pointerMoved || (flying && now - this.lastPick > 100))) { this.pointerMoved = false; this.lastPick = now; this.setHover(this.pick(this.pointer.x, this.pointer.y)); }
     if (now - this.lastLabels > 40 || !this.playing) { this.placeLabels(); this.lastLabels = now; }
     this.animateLatch(this.visualTime, this.playing ? dt * this.playbackSpeed : 0);
     const renderStarted = performance.now();
@@ -707,7 +784,7 @@ export class WorkcellScene {
       if (this.slow >= 2 && this.pixelRatio > 1.5) { this.pixelRatio = Math.max(1.5, this.pixelRatio - 0.25); this.renderer.setPixelRatio(this.pixelRatio); this.renderer.setSize(this.width, this.height); this.slow = 0; }
       this.frames = 0; this.measured = 0; this.renderCost = 0;
     }
-    if (!this.frame && (this.playing || moving || this.tween || (this.director && !paused) || this.dragging || orbitChanged || this.poses.pending(now))) this.frame = requestAnimationFrame(this.animate);
+    if (!this.frame && (this.playing || moving || shifting || this.tween || (this.director && !paused) || this.dragging || orbitChanged || this.poses.pending(now))) this.frame = requestAnimationFrame(this.animate);
   };
 
   animateLatch(now: number, dt: number) {
@@ -750,11 +827,14 @@ export class WorkcellScene {
   dispose() {
     this.stats.dispose();
     this.disposed = true;
-    cancelAnimationFrame(this.frame);
+    cancelAnimationFrame(this.frame); cancelAnimationFrame(this.pickFrame); clearTimeout(this.tipTimer);
     document.removeEventListener('visibilitychange', this.wake);
+    this.dprQuery?.removeEventListener('change', this.onPixelRatio);
+    this.container.removeEventListener('wheel', this.onWheel, { capture: true });
+    this.container.removeEventListener('pointerdown', this.onPointerDown, { capture: true });
     const canvas = this.renderer.domElement;
     canvas.removeEventListener('pointermove', this.onPointerMove); canvas.removeEventListener('pointerleave', this.onPointerLeave);
-    canvas.removeEventListener('pointerdown', this.onPointerDown); canvas.removeEventListener('pointerup', this.onPointerUp);
+    canvas.removeEventListener('pointerup', this.onPointerUp);
     canvas.removeEventListener('pointercancel', this.onPointerCancel);
     canvas.removeEventListener('webglcontextlost', this.onContextLost);
     this.resizeObserver.disconnect(); this.intersection.disconnect(); this.controls.dispose();

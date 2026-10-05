@@ -27,8 +27,8 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png" />
   <link rel="preload" href="/static/fonts/geist-400-900-normal.woff2" as="font" type="font/woff2" crossorigin />
-  <script type="module" crossorigin src="/static/prototype/assets/index-Bemg805a.js"></script>
-  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-Bsa0vvy6.css">
+  <script type="module" crossorigin src="/static/prototype/assets/index-_yuXmHz-.js"></script>
+  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-D6UeRP48.css">
   <link rel="stylesheet" href="/static/css/meet.css?v={{ asset_v }}" />
   <script src="/static/js/meet.js?v={{ asset_v }}" defer></script>
   <link rel="stylesheet" href="/static/css/orb-loader.css?v={{ asset_v }}" />
@@ -64,8 +64,8 @@
         <div><strong id="journey-title">Insert</strong><small id="journey-detail">The robot lowers the connector.</small></div>
         <div class="track"><i id="journey-progress"></i></div>
       </div>
-      <div class="tour-story" id="tour-story" hidden><span class="tour-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span><strong id="tour-title"></strong><button id="stop-tour" aria-label="Exit demo">×</button><span class="quiet" id="tour-index"></span><span class="quiet" id="tour-live"></span><span class="quiet" id="tour-description"></span></div>
-      <div class="endcard" id="endcard" hidden><strong>Four cycles. One workcell.</strong><div class="endcard-actions"><a class="endcard-buy" href="/#contact">Discuss a pilot ↗</a><button id="replay" class="endcard-replay">Replay</button></div></div>
+      <div class="tour-story" id="tour-story" hidden><span class="tour-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span><strong id="tour-title" role="status"></strong><button id="stop-tour" aria-label="Exit demo">×</button><span class="quiet" id="tour-index"></span><span class="quiet" id="tour-live"></span><span class="quiet" id="tour-description"></span></div>
+      <div class="endcard" id="endcard" hidden><strong>Four cycles. One workcell.</strong><div class="endcard-actions"><a class="endcard-buy" href="/#contact" target="_top">Discuss a pilot ↗</a><button id="replay" class="endcard-replay">Replay</button></div></div>
 
       <div id="loading" class="loading"><i></i><span>Loading the simulation</span></div>
       <div id="fallback" class="fallback" hidden><svg viewBox="0 0 420 300" role="img" aria-label="Live X/Z schematic of the simulated connector"><rect x="100" y="237" width="220" height="18" rx="2" fill="#3a4148"/><g id="schematic-socket" fill="#59616b"><rect id="schematic-wall-left" x="160" y="160" width="20" height="63" rx="2"/><rect id="schematic-wall-right" x="240" y="160" width="20" height="63" rx="2"/><rect id="schematic-seat" x="160" y="215" width="100" height="20" rx="2"/></g><g id="schematic-plug" transform="translate(210 60)"><rect id="schematic-housing" x="-28" y="-20" width="56" height="40" rx="2" fill="#e3e1d6" stroke="#8e969d" stroke-width="1.5"/><rect x="-18" y="-50" width="36" height="30" fill="#707986" stroke="#8e969d"/><path d="M-17 0v19 M0 0v19 M17 0v19" stroke="#d2ad68" stroke-width="3"/></g><text x="25" y="285" fill="#707986" font-size="9" font-family="monospace">X/Z SCHEMATIC · ILLUSTRATIVE GEOMETRY</text></svg><p id="fallback-title">3D unavailable; showing a live side view.</p><span>Physics and tests still run in your browser.</span></div>
@@ -79,7 +79,7 @@
           <span class="dock-sep" aria-hidden="true"></span>
           <button class="dock-item dock-demo" id="tour" aria-pressed="false" aria-label="Play demo" data-playing="false" disabled><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="play-shape" d="m8 5 11 7-11 7Z"/><g class="pause-shape"><path d="M8 6v12M16 6v12"/></g></svg></span><span class="dock-tip" aria-hidden="true" id="tour-label">Play demo</span></button>
         </nav>
-        <span class="control-hint">Drag to rotate · Scroll to zoom</span>
+        <span class="control-hint">Drag to rotate · Pinch to zoom</span>
       </div>
       <button id="embed-run" class="embed-run" disabled>▶ Play demo</button>
       <footer class="stage-footer"><span>Interactive simulation</span><span class="footer-detail">DEFEX ROBOTICS / R&D</span></footer>
@@ -132,7 +132,7 @@
 
     <footer class="model-footer"><p>Simulation. The search saves an offset; it is not a trained robot policy.</p><button class="text-button" data-open-notes>About this model <span>↗</span></button></footer>
   </main>
-  <dialog id="notes"><div class="dialog-heading"><p class="eyebrow">INTERACTIVE SOFTWARE PROTOTYPE</p><button id="close-notes" aria-label="Close model notes">×</button></div><h2>Inside the simulation.</h2><p>A tool pushes a connector into a socket. MuJoCo works out the motion and forces in your browser.</p><dl><dt>The search</dt><dd>If the plug hits, it backs off and tries a little to each side. When one spot works, it keeps it. It never sees where the socket is. This is a fixed search, not a learned skill.</dd><dt>The checks</dt><dd>Connected means the plug went in deep enough. Locked means it held when pulled. You can force either to fail. There is no real wiring or latch.</dd><dt>The limits</dt><dd>Sizes and forces are made up. Only the plug and socket touch; everything else is for show. No camera, no cables, no wear, no real robot. Reset pulls the same plug back out.</dd><dt>Next</dt><dd>Build the real robot and run it on customer parts. This page shows the idea, not how it does in a factory.</dd></dl><div class="dialog-actions"><button id="download-model" class="tour-button">Download physics model <span>↓</span></button><a href="?view=schematic">Use 2D view ↗</a><a href="https://github.com/google-deepmind/mujoco/tree/main/wasm" target="_blank" rel="noopener">MuJoCo WASM ↗</a></div></dialog>
+  <dialog id="notes" aria-labelledby="notes-title"><div class="dialog-heading"><p class="eyebrow">INTERACTIVE SOFTWARE PROTOTYPE</p><button id="close-notes" aria-label="Close model notes">×</button></div><h2 id="notes-title">Inside the simulation.</h2><p>A tool pushes a connector into a socket. MuJoCo works out the motion and forces in your browser.</p><dl><dt>The search</dt><dd>If the plug hits, it backs off and tries a little to each side. When one spot works, it keeps it. It never sees where the socket is. This is a fixed search, not a learned skill.</dd><dt>The checks</dt><dd>Connected means the plug went in deep enough. Locked means it held when pulled. You can force either to fail. There is no real wiring or latch.</dd><dt>The limits</dt><dd>Sizes and forces are made up. Only the plug and socket touch; everything else is for show. No camera, no cables, no wear, no real robot. Reset pulls the same plug back out.</dd><dt>Next</dt><dd>Build the real robot and run it on customer parts. This page shows the idea, not how it does in a factory.</dd></dl><div class="dialog-actions"><button id="download-model" class="tour-button">Download physics model <span>↓</span></button><a href="?view=schematic">Use 2D view ↗</a><a href="https://github.com/google-deepmind/mujoco/tree/main/wasm" target="_blank" rel="noopener">MuJoCo WASM ↗</a></div></dialog>
   <noscript><div class="noscript">This simulation needs JavaScript.</div></noscript>
 </body>
 </html>
