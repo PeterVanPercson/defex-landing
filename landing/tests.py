@@ -166,6 +166,29 @@ class SiteTests(SimpleTestCase):
         self.assertIn('class="inline sheet" id="partners"', home)
         self.assertNotIn("inline--black", self.client.get("/why-us/").content.decode())
 
+    def test_cookie_policy_and_notice(self):
+        """His call, 2026-10-04: a cookie policy page and a notice drawn as the
+        shadcn cookie Alert he sent. The page lists the two cookies the site
+        sets and Cal.com's, and says how to say no; the notice claims nothing
+        the site does not do."""
+        page = self.client.get("/cookies/")
+        self.assertEqual(page.status_code, 200)
+        body = page.content.decode()
+        for fact in ("csrftoken", "messages", "Cal.com", "data-cookie-reopen", "No advertising cookies", "privacy@defexrobotics.com"):
+            self.assertIn(fact, body)
+        for path in ("/", "/careers/", "/privacy/", "/cookies/"):
+            html = self.client.get(path).content.decode()
+            self.assertIn('href="/cookies/">Cookies</a>', html, path)
+            self.assertIn("js/cookies.js?v=", html, path)
+        self.assertIn('href="/cookies/">cookie policy</a>', self.client.get("/privacy/").content.decode())
+        self.assertIn("/cookies/", self.client.get("/sitemap.xml").content.decode())
+        script = (Path(settings.BASE_DIR) / "static/js/cookies.js").read_text()
+        for slop in ("personalized", "personalised", "improve your experience", "We Value Your Privacy"):
+            self.assertNotIn(slop, script)
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertIn(".cookie { position: fixed;", css)
+        self.assertIn("localStorage.getItem('defex-cookies') === 'declined'", (Path(settings.BASE_DIR) / "static/js/book.js").read_text())
+
     def test_past_its_edges_the_home_page_is_black(self):
         """What shows when a page is pulled past its top or bottom is the root's
         colour. Home opens and closes on black; with the body's paper showing
@@ -563,7 +586,7 @@ class SiteTests(SimpleTestCase):
         for name in ("home.html", "why_us.html", "_inline.html", "_arm.html", "_robot.html", "_meet.html", "_topbar.html", "_scan.html", "blog/index.html",
                      "blog/_article.html", "blog/the-cost-of-the-next-attempt.html",
                      "blog/the-ai-inference-revolution-is-here.html", "_footer.html", "legal/_page.html",
-                     "legal/privacy.html", "legal/terms.html", "legal/security.html"):
+                     "legal/privacy.html", "legal/terms.html", "legal/security.html", "legal/cookies.html"):
             markup = (root / "templates/landing" / name).read_text()
             for attr in re.findall(r'class="([^"]*)"', markup):
                 used |= {c for c in attr.split() if re.fullmatch(r"[a-z][a-z0-9_-]*", c)}

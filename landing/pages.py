@@ -1,4 +1,4 @@
-"""The legal pages: privacy, terms, security, and security.txt."""
+"""The legal pages: privacy, terms, security, cookies, and security.txt."""
 from datetime import date
 
 from django.http import HttpResponse
@@ -17,6 +17,8 @@ DOCS = {
                 "description": "How Defex Robotics, Inc. collects, uses and protects personal information on defexrobotics.com."},
     "terms": {"title": "Terms of Use", "eyebrow": "Legal", "heading": "Terms.", "effective": LEGAL_EFFECTIVE,
               "description": "The terms for using defexrobotics.com, the website of Defex Robotics, Inc."},
+    "cookies": {"title": "Cookie Policy", "eyebrow": "Legal", "heading": "Cookies.", "effective": date(2026, 10, 4),
+                "description": "The two cookies defexrobotics.com sets, the ones Cal.com's booking calendar sets, and how to say no."},
     "security": {"title": "Security", "eyebrow": "Legal", "heading": "Security.",
                  "description": "How Defex Robotics protects factory and website data, and how to report a vulnerability."},
 }
@@ -40,6 +42,11 @@ def terms(request):
 @require_safe
 def security(request):
     return render_doc(request, "security")
+
+
+@require_safe
+def cookies(request):
+    return render_doc(request, "cookies")
 
 
 @require_safe

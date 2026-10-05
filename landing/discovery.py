@@ -230,7 +230,7 @@ def sitemap(request):
              (reverse("blog"), None), (reverse("why_us"), None),
              (reverse("prototype"), None),
              (reverse("security"), None),
-             (reverse("privacy"), None), (reverse("terms"), None)]
+             (reverse("privacy"), None), (reverse("terms"), None), (reverse("cookies"), None)]
     pages.extend((job_path(job), JOBS_UPDATED) for job in JOBS)
     for post in POSTS:
         path = reverse("blog_post", kwargs={"slug": post["slug"]})

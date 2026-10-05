@@ -16,9 +16,17 @@
         state('failed', 'The calendar is taking longer than expected. You can open it directly or send a note below.');
     }
 
+    // Declining cookies (static/js/cookies.js) keeps Cal.com's calendar, and
+    // the cookies it sets, out of our pages; the link to cal.com stays.
+    const declined = () => { try { return localStorage.getItem('defex-cookies') === 'declined'; } catch (e) { return false; } };
+    document.addEventListener('defex:cookies', (event) => {
+        if (event.detail === 'accepted' && panel.dataset.state === 'declined') load();
+    });
+
     // cal.com pulls in ~90 requests of its own, so it only starts when the
     // booker is a couple of screens away rather than with the page.
     const load = () => {
+        if (declined()) { state('declined', 'You declined cookies, so the calendar opens on cal.com.'); return; }
         state('loading', 'Loading available times…');
         timer = setTimeout(failed, 12000);
         // cal.com's own loader, unchanged apart from formatting. It appends
