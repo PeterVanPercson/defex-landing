@@ -89,42 +89,9 @@
             <p class="wy-lead" data-reveal>Show it the job. It practices, tests its own work and gets better every time. It keeps up when your parts change.</p>
             <div class="wy-actions" data-reveal>
                 <a class="wy-btn" href="#pricing">See the options <span aria-hidden="true">&rarr;</span></a>
-                <a class="wy-link" href="#watch">Watch it work <span aria-hidden="true">&darr;</span></a>
             </div>
         </div>
         <figure class="arm" aria-hidden="true">{% include "landing/_arm.html" %}</figure>
-    </section>
-
-    <!-- The concept render, scrubbed by the scroll inside a window, with the
-         three things it does beside it. static/js/why.js. -->
-    <section class="wy-sec wy-watch" id="watch" aria-labelledby="watch-title" data-story>
-        <h2 class="wy-h" id="watch-title" data-reveal>Watch it <span class="wy-hl">work</span>.</h2>
-        <div class="story">
-            <div class="story__media">
-                <div class="window">
-                    <p class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>Concept render</span></p>
-                    <span class="window__line" aria-hidden="true"></span>
-                    <video class="story__video" muted playsinline preload="none" disablepictureinpicture aria-hidden="true" width="1920" height="1080"
-                           poster="{% static 'why/story-first.webp' %}?v={{ asset_v }}"
-                           data-src="{% static 'why/story.mp4' %}?v={{ asset_v }}"
-                           data-still="{% static 'why/story-lit.webp' %}?v={{ asset_v }}"></video>
-                </div>
-            </div>
-            <ol class="story__steps">
-                <li class="story__step is-on" data-step>
-                    <p class="story__t">It puts the part together.</p>
-                    <p class="story__d">Vision finds it. Touch guides it in.</p>
-                </li>
-                <li class="story__step" data-step>
-                    <p class="story__t">It tests it on the spot.</p>
-                    <p class="story__d">Connected? Locked? The light says pass or fail.</p>
-                </li>
-                <li class="story__step" data-step>
-                    <p class="story__t">It lets go and starts the next one.</p>
-                    <p class="story__d">No one standing over it.</p>
-                </li>
-            </ol>
-        </div>
     </section>
 
     <!-- Meet the robot: Apple's highlights explorer, drawn in our flat shapes.

@@ -412,9 +412,13 @@ class SiteTests(SimpleTestCase):
         self.assertIn("<title>Why Defex | Robots that test every part they build</title>", body)
         self.assertIn('data-word="WHY US"', body)
         self.assertIn('id="why-title"><span class="wy-sr">Why us: </span>Robots that test every part', body)
-        for section in ("portal", "problem", "promise", "watch", "meet", "tests", "learns", "resets", "newpart", "proof", "pricing", "faq", "talk"):
+        for section in ("portal", "problem", "promise", "meet", "tests", "learns", "resets", "newpart", "proof", "pricing", "faq", "talk"):
             self.assertIn(f'id="{section}"', body)
-        for claim in ("Concept render", "Target</span>", "factories paid to be first in line.",
+        # his call, 2026-10-04: no "Watch it work" section and no link to it
+        self.assertNotIn('id="watch"', body)
+        self.assertNotIn("Watch it work", body)
+        # the robot drawing is still marked as a concept
+        for claim in ('<span class="meet__tag">Concept</span>', "Target</span>", "factories paid to be first in line.",
                       'href="#talk"', "Book a call", "Robots are cheap."):
             self.assertIn(claim, body)
         # what it costs comes after the proof and before the questions, robot price first
@@ -435,15 +439,12 @@ class SiteTests(SimpleTestCase):
         self.assertIsNone(re.search(r"\b0\d\b", text), "a numbered step")
         for gone in ("nobody else", "the only", "robot software and hardware integration"):
             self.assertNotIn(gone, text)
-        # the portal keeps its licence notice; the clip and its stills stay small
+        # the portal keeps its licence notice
         root = Path(settings.BASE_DIR)
         self.assertIn("Glyph Portal \u00a9 2026 Christian Katzmann. MIT.", (root / "static/js/portal.js").read_text())
-        for asset, cap in (("why/story.mp4", 2 * 1024 * 1024), ("why/story-first.webp", 80 * 1024), ("why/story-lit.webp", 80 * 1024)):
-            self.assertIn(asset, body)
-            self.assertLessEqual((root / "static" / asset).stat().st_size, cap, asset)
         # Meet the robot: six parts, each a pill that opens its own card,
-        # after the render and before the first feature
-        self.assertLess(body.index('id="watch"'), body.index('id="meet"'))
+        # after the promise and before the first feature
+        self.assertLess(body.index('id="promise"'), body.index('id="meet"'))
         self.assertLess(body.index('id="meet"'), body.index('id="tests"'))
         for key in ("part", "vision", "touch", "tester", "brain", "reset"):
             self.assertIn(f'aria-controls="meet-{key}"', body)
