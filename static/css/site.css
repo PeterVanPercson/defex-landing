@@ -1666,6 +1666,8 @@ body { font: 400 17px/1.55 var(--sans); }
 .sheet.inline { padding-block: clamp(30px, 5vh, 54px); border-top: 0; }
 .sheet.inline + .sheet.inline { padding-top: 0; }
 .inline__k { font: 500 clamp(16px, 1.3vw, 19px)/1.4 var(--sans); letter-spacing: -.01em; text-transform: none; color: var(--ink-soft); }
+/* on the black pitch page the label needs light ink: --ink-soft is only set for the paper and .dark grounds */
+.inline--dark .inline__k { font-size: clamp(16px, 1.3vw, 19px); color: rgba(244, 244, 240, .62); }
 .roll { -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); }
 .roll__logo { opacity: .62; }
 

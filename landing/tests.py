@@ -267,7 +267,7 @@ class SiteTests(SimpleTestCase):
 
     def test_registered_companies_roll_by_name(self):
         """Husan's call: one list (discovery.IN_LINE) feeds a rolling row labelled
-        "Registered", after the case on the home page and after "Factories are
+        "Works with us" (was "Registered"), after the case on the home page and after "Factories are
         already in line" on the pitch. Every mark is the company's own file,
         served as it was sent; the greyed look is CSS. The row is laid out four
         times so it never runs dry, and only the first set is read out."""
@@ -281,7 +281,9 @@ class SiteTests(SimpleTestCase):
         self.assertLess(pitch.index('id="in-line"'), pitch.index('id="pricing"'))
         for page in (home, pitch):
             row = page.split('id="in-line"', 1)[1].split("</ul>", 1)[0]
-            self.assertIn(">Registered<", row)
+            # his words, 2026-10-04: the factories that paid "work with us", not "Registered"
+            self.assertIn(">Works with us<", row)
+            self.assertNotIn(">Registered<", row)
             for gone in ("Factories already in line", "Including"):
                 self.assertNotIn(gone, row)
             self.assertEqual(row.count('class="roll__i"'), len(IN_LINE))
