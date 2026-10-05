@@ -1529,9 +1529,9 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
 .booker__status, .booker__fallback { position: absolute; left: 0; right: 0; margin: 0; padding-inline: var(--pad); text-align: center; font: 400 15px/1.7 var(--mono); color: var(--ink-soft); }
 .booker__status { top: min(30%, 200px); }
 .booker__fallback { top: calc(min(30%, 200px) + 34px); }
-.booker__panel[data-state="failed"] :is(.booker__status, .booker__fallback) { position: static; margin: 12px 0; }
+.booker__panel:is([data-state="failed"], [data-state="declined"]) :is(.booker__status, .booker__fallback) { position: static; margin: 12px 0; }
 .booker__fallback a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
-.booker__panel[data-state="failed"] .booker__frame { min-height: 0; max-height: 160px; overflow: hidden; }
+.booker__panel:is([data-state="failed"], [data-state="declined"]) .booker__frame { min-height: 0; max-height: 160px; overflow: hidden; }
 .booker__panel[data-state="ready"] :is(.booker__status, .booker__fallback) { display: none; }
 
 @media (max-width: 380px) {
@@ -1804,3 +1804,31 @@ body { font: 400 17px/1.55 var(--sans); }
     .has-caret { caret-color: auto; }
     .caret { display: none; }
 }
+
+/* The cookie notice (static/js/cookies.js), drawn as the shadcn Alert
+   "cookie notice" he sent (2026-10-04): a 400px card with 8px corners, a
+   hairline border and a soft shadow, 14px type, a dark Accept, an outlined
+   Decline and a quiet cross. */
+.cookie { position: fixed; right: 16px; bottom: 16px; z-index: 100; width: min(400px, calc(100vw - 32px)); padding: 16px; border: 1px solid #E4E4E7; border-radius: 8px; background: #FFFFFF; color: #09090B; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .05), 0 4px 6px -4px rgba(0, 0, 0, .05); font: 400 14px/20px var(--sans); letter-spacing: 0; text-align: left; opacity: 0; transform: translateY(8px); transition: opacity .2s ease, transform .2s ease; }
+.cookie.is-in { opacity: 1; transform: none; }
+.cookie__row { display: flex; gap: 8px; }
+.cookie__content { flex-grow: 1; display: grid; gap: 4px; min-width: 0; }
+.cookie__title { margin: 0; font: 500 14px/20px var(--sans); color: #09090B; }
+.cookie__text { margin: 0; color: #71717A; }
+.cookie__text a { color: #09090B; text-decoration: underline; text-underline-offset: 3px; }
+.cookie__actions { display: flex; gap: 8px; padding-top: 12px; }
+.cookie__btn { height: 36px; padding: 0 12px; border: 1px solid #E4E4E7; border-radius: 6px; background: #FFFFFF; color: #09090B; font: 500 14px/1 var(--sans); cursor: pointer; transition: background .15s ease; }
+.cookie__btn:hover { background: #F4F4F5; }
+.cookie__btn--primary { border-color: #18181B; background: #18181B; color: #FAFAFA; }
+.cookie__btn--primary:hover { background: #2E2E33; }
+.cookie__close { flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin: -6px -8px 0 0; padding: 0; border: 0; border-radius: 6px; background: none; color: #09090B; cursor: pointer; }
+.cookie__close svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; opacity: .6; transition: opacity .15s ease; }
+.cookie__close:hover svg { opacity: 1; }
+.cookie :focus-visible { outline: 2px solid rgba(9, 9, 11, .45); outline-offset: 2px; }
+@media (max-width: 480px) {
+    .cookie { left: 16px; right: 16px; width: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .cookie { transition: none; }
+}
+

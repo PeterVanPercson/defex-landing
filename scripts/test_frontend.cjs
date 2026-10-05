@@ -865,3 +865,63 @@ test('the caret hides while text is selected and when the field loses focus; Red
     still.name.emit('keydown'); still.frame();
     assert.equal(still.x(), 30);
 });
+
+// The cookie notice (static/js/cookies.js) and its hold on the calendar.
+function storage(initial = {}) {
+    const data = { ...initial };
+    return { data, getItem: (k) => (k in data ? data[k] : null), setItem: (k, v) => { data[k] = String(v); }, removeItem: (k) => { delete data[k]; } };
+}
+function cookiePage(stored = {}) {
+    const p = page();
+    const made = [], events = [];
+    p.context.localStorage = storage(stored);
+    p.context.sessionStorage = storage();
+    p.context.CustomEvent = class { constructor(type, init) { this.type = type; this.detail = init && init.detail; } };
+    p.doc.dispatchEvent = (e) => { events.push(e); p.doc.emit(e.type, e); };
+    p.doc.body = new Element();
+    p.doc.body.appendChild = (el) => { el.attached = true; return el; };
+    p.doc.createElement = () => { const el = new Element(); el.remove = () => { el.attached = false; }; made.push(el); return el; };
+    p.run('cookies.js');
+    const click = (box, answer) => box.emit('click', { target: { closest: (sel) => (sel === '[data-answer]' && answer ? { dataset: { answer } } : sel === '.cookie__close' && !answer ? {} : null) } });
+    return { ...p, made, events, click };
+}
+
+test('the cookie notice asks once and keeps the answer in local storage', () => {
+    const p = cookiePage();
+    assert.equal(p.made.length, 0, 'it waits a moment after load');
+    p.advance(700);
+    const box = p.made[0];
+    assert.ok(box && box.attached, 'then it opens');
+    p.frame(); p.frame();
+    assert.equal(box.classList.contains('is-in'), true);
+    p.click(box, 'declined');
+    assert.equal(p.context.localStorage.data['defex-cookies'], 'declined');
+    assert.equal(p.events[0].detail, 'declined');
+    const again = cookiePage({ 'defex-cookies': 'accepted' });
+    again.advance(2000);
+    assert.equal(again.made.length, 0, 'an answer already given is not asked again');
+});
+
+test('the cross puts the question off for the visit without answering it', () => {
+    const p = cookiePage();
+    p.advance(700);
+    p.click(p.made[0]);
+    assert.equal(p.context.localStorage.data['defex-cookies'], undefined);
+    assert.equal(p.context.sessionStorage.data['defex-cookies'], 'later');
+});
+
+test('a declined visitor gets the link to cal.com, not the embedded calendar', () => {
+    const p = page(), mount = new Element(), panel = new Element(), status = new Element();
+    p.context.localStorage = storage({ 'defex-cookies': 'declined' });
+    mount.parent = panel; mount.dataset.cal = 'defex/test';
+    panel.querySelector = () => status; p.ids['cal-inline'] = mount;
+    p.run('book.js'); p.observers[0].enter(mount);
+    assert.equal(panel.dataset.state, 'declined');
+    assert.match(status.textContent, /cal\.com/);
+    assert.equal(p.context.Cal, undefined, 'cal.com is never asked for');
+    // changing the answer to Accept on the same page brings the calendar in
+    p.context.localStorage.setItem('defex-cookies', 'accepted');
+    p.doc.emit('defex:cookies', { detail: 'accepted' });
+    assert.equal(panel.dataset.state, 'loading');
+    assert.ok(p.context.Cal, 'and now it loads');
+});
