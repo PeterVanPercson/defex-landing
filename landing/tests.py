@@ -182,9 +182,10 @@ class SiteTests(SimpleTestCase):
             self.assertIn("js/cookies.js?v=", html, path)
         self.assertIn('href="/cookies/">cookie policy</a>', self.client.get("/privacy/").content.decode())
         self.assertIn("/cookies/", self.client.get("/sitemap.xml").content.decode())
+        # the notice's words are the ones he sent, as he sent them (2026-10-04)
         script = (Path(settings.BASE_DIR) / "static/js/cookies.js").read_text()
-        for slop in ("personalized", "personalised", "improve your experience", "We Value Your Privacy"):
-            self.assertNotIn(slop, script)
+        self.assertIn("We Value Your Privacy 🍪", script)
+        self.assertIn("We use cookies to improve your experience, and show personalized content.", script)
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
         self.assertIn(".cookie { position: fixed;", css)
         self.assertIn("localStorage.getItem('defex-cookies') === 'declined'", (Path(settings.BASE_DIR) / "static/js/book.js").read_text())

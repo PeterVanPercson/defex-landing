@@ -1,6 +1,6 @@
 (() => {
-    // The cookie notice (Husan's call, 2026-10-04), drawn as the shadcn Alert
-    // "cookie notice" he sent. It asks once, and the answer stays in this
+    // The cookie notice (Husan's call, 2026-10-04): the shadcn Alert "cookie
+    // notice" he sent, with its own words and look. It asks once, and the answer stays in this
     // browser's local storage (defex-cookies), not in a cookie. Accept leaves
     // everything as it is. Decline keeps the booking calendar, which sets
     // Cal.com's own cookies, out of our pages: static/js/book.js reads the
@@ -34,13 +34,13 @@
         box.setAttribute('aria-label', 'Cookies');
         box.innerHTML = '<div class="cookie__row">'
             + '<div class="cookie__content">'
-            + '<p class="cookie__title">Cookies 🍪</p>'
-            + '<p class="cookie__text">Two small ones keep our forms working. No ads, no tracking. If you decline, our booking calendar, which sets Cal.com&rsquo;s cookies, opens on cal.com instead. <a href="/cookies/">Cookie policy</a></p>'
+            + '<p class="cookie__title">We Value Your Privacy 🍪</p>'
+            + '<p class="cookie__text">We use cookies to improve your experience, and show personalized content.</p>'
             + '<div class="cookie__actions">'
             + '<button type="button" class="cookie__btn cookie__btn--primary" data-answer="accepted">Accept</button>'
             + '<button type="button" class="cookie__btn" data-answer="declined">Decline</button>'
             + '</div></div>'
-            + '<button type="button" class="cookie__close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>'
+            + '<button type="button" class="cookie__close" aria-label="Close notification"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>'
             + '</div>';
         box.addEventListener('click', (event) => {
             const choice = event.target.closest('[data-answer]');
