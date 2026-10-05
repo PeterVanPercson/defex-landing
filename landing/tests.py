@@ -46,9 +46,10 @@ class SiteTests(SimpleTestCase):
         self.assertNotContains(home, "The next one is better")
         # the first application is named, not left abstract
         self.assertContains(home, "connector")
-        # the A1 cell is unbuilt and the deck labels it PROPOSED on four
-        # slides, so the page must not assert it as a shipping product
-        self.assertContains(home, "building")
+        # the robot is unbuilt, so its drawing on home keeps its Concept tag
+        # (his call, 2026-10-04: no "we are building it" line on home)
+        self.assertContains(home, '<span class="meet__tag">Concept</span>')
+        self.assertNotContains(home, "We are building it now")
         # careers left the home page (his call, 2026-10-04); the nav and footer still link it
         self.assertNotContains(home, 'id="careers"')
         self.assertContains(home, 'href="/careers/"')
