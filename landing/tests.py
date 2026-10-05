@@ -190,6 +190,23 @@ class SiteTests(SimpleTestCase):
         self.assertIn(".cookie { position: fixed;", css)
         self.assertIn("localStorage.getItem('defex-cookies') === 'declined'", (Path(settings.BASE_DIR) / "static/js/book.js").read_text())
 
+    def test_logos_show_colour_on_black_and_azure_sits_level(self):
+        """His calls, 2026-10-04: on the black Works with us rows a pointer or a
+        tap shows a mark's own colours; Azure is drawn smaller so it reads level
+        with the other partners, in the row and in the hero's badge."""
+        home = self.client.get("/").content.decode()
+        row = home.split('id="partners"', 1)[1].split("</ul>", 1)[0]
+        self.assertIn('alt="Microsoft Azure" width="1280" height="369" loading="lazy" decoding="async" style="--s: 0.77"', row)
+        self.assertIn('data-scale="0.77"', home.split('class="flick__stage"', 1)[1].split("</span>", 1)[0])
+        works = home.split('id="in-line"', 1)[1].split("</ul>", 1)[0]
+        self.assertIn('alt="NOVA Solutions"', works)
+        self.assertIn('data-on-dark="flip"', works)
+        self.assertIn('data-on-dark="mono"', works)
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertIn(":is(.inline--black, .inline--dark) .roll__i:is(:hover, .is-touched) .roll__logo { filter: none; opacity: 1; }", css)
+        self.assertIn("max-height: calc(var(--roll-h) * var(--s, 1))", css)
+        self.assertIn("scale: parseFloat(img.dataset.scale) || 1", (Path(settings.BASE_DIR) / "static/js/flick.js").read_text())
+
     def test_past_its_edges_the_home_page_is_black(self):
         """What shows when a page is pulled past its top or bottom is the root's
         colour. Home opens and closes on black; with the body's paper showing

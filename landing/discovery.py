@@ -66,10 +66,10 @@ PUBLIC_COMPANY = {
 # crest grow past the row height so it reads as big as the wordmarks. Kept out of PUBLIC_COMPANY,
 # which is dumped whole into /company.json.
 IN_LINE = [
-    {"name": "GRAND", "logo": "img/factories/grand.png", "width": 309, "height": 356, "opaque": True, "tall": True},
+    {"name": "GRAND", "logo": "img/factories/grand.png", "width": 309, "height": 356, "opaque": True, "tall": True, "on_dark": "mono"},
     {"name": "UzChasys", "logo": "img/factories/uzchasys.png", "width": 159, "height": 60},
     {"name": "ATH", "logo": "img/factories/ath.png", "width": 1520, "height": 1034},
-    {"name": "NOVA Solutions", "logo": "img/factories/nova.png", "width": 400, "height": 140},
+    {"name": "NOVA Solutions", "logo": "img/factories/nova.png", "width": 400, "height": 140, "on_dark": "flip"},
     {"name": "Artel", "logo": "img/factories/artel.png", "width": 765, "height": 401, "opaque": True},
     {"name": "Texnopark", "logo": "img/factories/texnopark.webp", "width": 3719, "height": 577},
 ]
@@ -78,7 +78,9 @@ PARTNERS = [
     {"name": "NVIDIA", "logo": "img/partners/nvidia.png", "width": 576, "height": 116},
     {"name": "Google", "logo": "img/partners/google.png", "width": 743, "height": 250},
     {"name": "AWS", "logo": "img/partners/aws.png", "width": 557, "height": 335},
-    {"name": "Microsoft Azure", "logo": "img/partners/azure.png", "width": 1280, "height": 369},
+    # a big "A" and short word fill the full height, so it reads larger than the
+    # other marks at the same size (his note, 2026-10-04): drawn at 77%
+    {"name": "Microsoft Azure", "logo": "img/partners/azure.png", "width": 1280, "height": 369, "scale": 0.77},
     {"name": "Lambda", "logo": "img/partners/lambda.png", "width": 480, "height": 110},
     {"name": "OpenAI", "logo": "img/partners/openai.png", "width": 658, "height": 169},
     {"name": "Claude", "logo": "img/partners/claude.png", "width": 548, "height": 124},

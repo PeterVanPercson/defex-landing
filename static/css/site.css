@@ -242,7 +242,7 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 /* the copies are read-only for screen readers but still take the hover */
 .roll__i--copy { pointer-events: auto; }
 /* a length, not 100%: the grid row is sized by its content, so a percentage here caps nothing */
-.roll__logo { display: block; width: auto; height: auto; max-width: 100%; max-height: var(--roll-h); filter: grayscale(1) contrast(.82); opacity: .42; transition: filter .35s ease, opacity .35s ease, transform .35s ease; }
+.roll__logo { display: block; width: auto; height: auto; max-width: calc(100% * var(--s, 1)); max-height: calc(var(--roll-h) * var(--s, 1)); filter: grayscale(1) contrast(.82); opacity: .42; transition: filter .35s ease, opacity .35s ease, transform .35s ease; }
 .roll__logo[data-opaque] { filter: url(#roll-ink); }
 /* the row keeps rolling; the logo under the pointer shows its own colours,
    and the two on a white ground lose the white but keep the colour (#roll-colour) */
@@ -1832,4 +1832,14 @@ body { font: 400 17px/1.55 var(--sans); }
 @media (prefers-reduced-motion: reduce) {
     .cookie { transition: none; }
 }
+
+/* Works with us on black, home and /why-us/ (his call, 2026-10-04): a pointer
+   or a tap shows the mark in its own colours, as on the paper rows. Marks on
+   a white ground lose the white (#roll-colour); NOVA's dark lettering is
+   flipped light so only its lightness changes and the red star stays red;
+   GRAND, black and white to begin with, goes full white. */
+:is(.inline--black, .inline--dark) .roll__i:is(:hover, .is-touched) .roll__logo { filter: none; opacity: 1; }
+:is(.inline--black, .inline--dark) .roll__i:is(:hover, .is-touched) .roll__logo[data-opaque] { filter: url(#roll-colour); }
+:is(.inline--black, .inline--dark) .roll__i:is(:hover, .is-touched) .roll__logo[data-on-dark="flip"] { filter: invert(1) hue-rotate(180deg); }
+:is(.inline--black, .inline--dark) .roll__i:is(:hover, .is-touched) .roll__logo[data-on-dark="mono"] { filter: url(#roll-ink-light); }
 

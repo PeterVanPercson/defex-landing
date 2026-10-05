@@ -15,8 +15,8 @@ the empty margin a filter adds around an image stays empty instead of turning so
 </svg>{% endif %}
 <div class="roll">
     <ul class="roll__track">
-        {% for factory in in_line %}<li class="roll__i"><img class="roll__logo" src="{% static factory.logo %}?v={{ asset_v }}" alt="{{ factory.name }}" width="{{ factory.width }}" height="{{ factory.height }}" loading="lazy" decoding="async"{% if factory.opaque %} data-opaque{% endif %}{% if factory.trim %} data-trim{% endif %}{% if factory.tall %} data-tall{% endif %}></li>
-        {% endfor %}{% for copy in "abc" %}{% for factory in in_line %}<li class="roll__i roll__i--copy" aria-hidden="true"><img class="roll__logo" src="{% static factory.logo %}?v={{ asset_v }}" alt="" width="{{ factory.width }}" height="{{ factory.height }}" loading="lazy" decoding="async"{% if factory.opaque %} data-opaque{% endif %}{% if factory.trim %} data-trim{% endif %}{% if factory.tall %} data-tall{% endif %}></li>
+        {% for factory in in_line %}<li class="roll__i"><img class="roll__logo" src="{% static factory.logo %}?v={{ asset_v }}" alt="{{ factory.name }}" width="{{ factory.width }}" height="{{ factory.height }}" loading="lazy" decoding="async"{% if factory.opaque %} data-opaque{% endif %}{% if factory.trim %} data-trim{% endif %}{% if factory.tall %} data-tall{% endif %}{% if factory.on_dark %} data-on-dark="{{ factory.on_dark }}"{% endif %}{% if factory.scale %} style="--s: {{ factory.scale }}"{% endif %}></li>
+        {% endfor %}{% for copy in "abc" %}{% for factory in in_line %}<li class="roll__i roll__i--copy" aria-hidden="true"><img class="roll__logo" src="{% static factory.logo %}?v={{ asset_v }}" alt="" width="{{ factory.width }}" height="{{ factory.height }}" loading="lazy" decoding="async"{% if factory.opaque %} data-opaque{% endif %}{% if factory.trim %} data-trim{% endif %}{% if factory.tall %} data-tall{% endif %}{% if factory.on_dark %} data-on-dark="{{ factory.on_dark }}"{% endif %}{% if factory.scale %} style="--s: {{ factory.scale }}"{% endif %}></li>
         {% endfor %}{% endfor %}
     </ul>
 </div>
