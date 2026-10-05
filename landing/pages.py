@@ -13,12 +13,12 @@ SECURITY_TXT_EXPIRES = "2027-09-24T00:00:00Z"
 
 
 DOCS = {
-    "privacy": {"title": "Privacy Policy", "eyebrow": "Legal", "heading": "Privacy.", "effective": LEGAL_EFFECTIVE,
+    "privacy": {"title": "Privacy Policy", "eyebrow": "Legal", "heading": "Privacy.", "effective": date(2026, 10, 5),
                 "description": "How Defex Robotics, Inc. collects, uses and protects personal information on defexrobotics.com."},
     "terms": {"title": "Terms of Use", "eyebrow": "Legal", "heading": "Terms.", "effective": LEGAL_EFFECTIVE,
               "description": "The terms for using defexrobotics.com, the website of Defex Robotics, Inc."},
-    "cookies": {"title": "Cookie Policy", "eyebrow": "Legal", "heading": "Cookies.", "effective": date(2026, 10, 4),
-                "description": "The two cookies defexrobotics.com sets, the ones Cal.com's booking calendar sets, and how to say no."},
+    "cookies": {"title": "Cookie Policy", "eyebrow": "Legal", "heading": "Cookies.", "effective": date(2026, 10, 5),
+                "description": "The two cookies defexrobotics.com sets, and how to say no."},
     "security": {"title": "Security", "eyebrow": "Legal", "heading": "Security.",
                  "description": "How Defex Robotics protects factory and website data, and how to report a vulnerability."},
 }

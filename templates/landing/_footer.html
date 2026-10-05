@@ -1,6 +1,6 @@
 {% comment %}Every page's footer. dark: the pages that close on black. top: the mark
-becomes back-to-top on the long home page. booker: the page has its own
-#contact booker, so "Test our product" stays on the page.{% endcomment %}
+becomes back-to-top on the long home page. here: the page ends on its own
+#contact form, so "Test our product" stays on the page.{% endcomment %}
 <footer class="footer footer--full {{ dark|yesno:'dark,' }}">
     <div class="footer__top">
         <a href="{% if top %}#top{% else %}/{% endif %}" class="brand brand--small" aria-label="{% if top %}defex, back to top{% else %}defex home{% endif %}">
@@ -10,7 +10,7 @@ becomes back-to-top on the long home page. booker: the page has its own
         <nav class="footer__cols" aria-label="Footer">
             <div class="footer__col">
                 <p class="footer__h">Product</p>
-                <a class="footer__a" href="{% if booker %}#contact{% else %}/#contact{% endif %}">Test our product</a>
+                <a class="footer__a" href="{% if here %}#contact{% else %}/#contact{% endif %}">Test our product</a>
                 <a class="footer__a" href="{% url 'why_us' %}">Why us</a>
                 <a class="footer__a" href="{% url 'why_us' %}#pricing">Pricing</a>
             </div>

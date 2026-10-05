@@ -312,52 +312,32 @@
             </details>
             <details class="faq__i">
                 <summary class="faq__q">Is it ready today?</summary>
-                <p class="faq__a">We are building it now. {{ company.paid_waitlist.factories }} factories have paid to be first in line. Book a call to join them.</p>
+                <p class="faq__a">We are building it now. {{ company.paid_waitlist.factories }} factories have paid to be first in line. Leave your email at the bottom of this page to join them.</p>
             </details>
             <details class="faq__i">
                 <summary class="faq__q">How do we start?</summary>
-                <p class="faq__a">Book a call. Tell us the part and how you check it. We will tell you straight if it is a fit.</p>
+                <p class="faq__a">Leave your email at the bottom of this page. We write back within one working day and ask about the part and how you check it.</p>
             </details>
         </div>
     </section>
 
     <section class="wy-sec wy-close" id="talk" aria-labelledby="talk-title">
         <h2 class="wy-h wy-h--xl" id="talk-title" data-reveal>Bring us the job your team <span class="wy-hl">hates</span>.</h2>
-        <p class="wy-lead" data-reveal>Pick a time and talk to a founder. Tell us the part and how you check it. We will tell you straight if our robot can take it on.</p>
+        <p class="wy-lead" data-reveal>Leave your email. We write back within one working day.</p>
         <p class="talk__pick" hidden>You picked: <strong></strong></p>
 
-        <!-- The same booker as the home page (static/js/book.js), so nobody has to
-             leave the pitch to get a slot. The form is the other way in: it carries
-             the option they picked above. id="contact" is where /contact/ sends them back. -->
-        <div class="talk" id="contact">
-            <div class="talk__cal">
-                <h3 class="wy-kicker talk__h">Book a call with a founder.</h3>
-                <div class="booker__panel">
-                    <p class="booker__status" role="status">Choose a time to talk.</p>
-                    <div class="booker__frame" id="cal-inline" data-cal="{{ cal_link }}" role="region" aria-label="Choose a time"></div>
-                    <p class="booker__fallback"><a class="wy-link" href="https://cal.com/{{ cal_link }}" target="_blank" rel="noopener noreferrer">Open the calendar in a new tab <span aria-hidden="true">&nearr;</span></a></p>
-                </div>
-            </div>
-            <form class="talk__form" action="{% url 'contact' %}" method="post">
-                {% csrf_token %}
-                <h3 class="wy-kicker talk__h">Or send us your part.</h3>
-                {% if messages %}{% for message in messages %}<p class="talk__flash talk__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
-                <div class="talk__row">
-                    <label class="talk__field"><span>Name</span><input type="text" name="name" autocomplete="name" maxlength="120" required></label>
-                    <label class="talk__field"><span>Company</span><input type="text" name="factory" autocomplete="organization" maxlength="200" required></label>
-                </div>
-                <div class="talk__row">
-                    <label class="talk__field"><span>Email, phone or WeChat</span><input type="text" name="contact" autocomplete="email" maxlength="200" required></label>
-                    <label class="talk__field"><span>What you want</span><select name="option">{% for value, label in form.fields.option.choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
-                </div>
-                <label class="talk__field"><span>The part and how you check it</span><textarea name="product" rows="4" maxlength="1200"></textarea></label>
-                <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
-                <div class="wy-actions talk__send">
-                    <button type="submit" class="wy-btn">Send <span aria-hidden="true">&rarr;</span></button>
-                    <a class="wy-link" href="mailto:{{ company.contact }}">{{ company.contact }}</a>
-                </div>
-            </form>
-        </div>
+        <!-- Email only (his call, 2026-10-05: no booking calendar), the same
+             form as the home page's close. The option picked in "What it costs"
+             rides along in the hidden select, set by static/js/why.js.
+             id="contact" is where /contact/ sends them back. -->
+        <form class="ask" id="contact" action="{% url 'contact' %}" method="post" data-reveal>
+            {% csrf_token %}
+            <input class="ask__in" type="text" inputmode="email" name="contact" autocomplete="email" maxlength="200" placeholder="Your email" aria-label="Your email" required>
+            <button type="submit" class="ask__go">Send <span aria-hidden="true">&rarr;</span></button>
+            <select name="option" hidden tabindex="-1" aria-hidden="true">{% for value, label in form.fields.option.choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+            <span class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></span>
+        </form>
+        {% if messages %}{% for message in messages %}<p class="ask__flash ask__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
     </section>
 
     <!-- The three offices, each with the time it is there right now, set by
@@ -370,7 +350,7 @@
     </section>
 </main>
 
-{% include "landing/_footer.html" with dark=1 booker=1 %}
+{% include "landing/_footer.html" with dark=1 here=1 %}
 {% endblock %}
 
 {% block extra_scripts %}
@@ -379,5 +359,4 @@
 <script src="{% static 'js/meet.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/roll.js' %}?v={{ asset_v }}" defer></script>
-<script src="{% static 'js/book.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}

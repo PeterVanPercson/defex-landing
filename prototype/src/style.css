@@ -1,4 +1,4 @@
-@font-face{font-family:Geist;src:url('/static/fonts/geist-400-900-normal.woff2') format('woff2');font-weight:400 900;font-display:swap}
+@font-face{font-family:Geist;src:url('/static/fonts/geist-400-900-normal.woff2') format('woff2');font-weight:100 900;font-display:swap}
 @font-face{font-family:'IBM Plex Mono';src:url('/static/fonts/ibm-plex-mono-400-normal.woff2') format('woff2');font-weight:400;font-display:swap}
 @font-face{font-family:'IBM Plex Mono';src:url('/static/fonts/ibm-plex-mono-500-normal.woff2') format('woff2');font-weight:500;font-display:swap}
 :root{color-scheme:dark;--bg:#111413;--panel:#171b19;--raise:#202523;--white:#eeeee9;--muted:#a1a7a2;--dim:#8b948d;--line:#ffffff14;--amber:#ddd9cc;--green:#85b997;--red:#d38b73;--mono:'IBM Plex Mono','SFMono-Regular',Menlo,monospace;font-family:Geist,'Helvetica Neue',Arial,sans-serif;color:var(--white);background:var(--bg);font-synthesis:none;-webkit-font-smoothing:antialiased}

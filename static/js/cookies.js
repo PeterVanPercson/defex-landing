@@ -1,11 +1,11 @@
 (() => {
     // The cookie notice (Husan's call, 2026-10-04): the shadcn Alert "cookie
     // notice" he sent, with its own words and look. It asks once, and the answer stays in this
-    // browser's local storage (defex-cookies), not in a cookie. Accept leaves
-    // everything as it is. Decline keeps the booking calendar, which sets
-    // Cal.com's own cookies, out of our pages: static/js/book.js reads the
-    // same key and offers the link to cal.com instead. The cross only puts
-    // the question off until the next visit. /cookies/ can ask again.
+    // browser's local storage (defex-cookies), not in a cookie. Nothing on
+    // the site sets a cookie that needs the answer today (the Cal.com booking
+    // calendar, which did, is gone), so Accept and Decline only record it.
+    // The cross only puts the question off until the next visit. /cookies/
+    // can ask again.
     const KEY = 'defex-cookies';
     const get = (store) => { try { return window[store].getItem(KEY); } catch (e) { return null; } };
     const put = (store, value) => { try { window[store].setItem(KEY, value); } catch (e) { /* private mode: ask again next time */ } };

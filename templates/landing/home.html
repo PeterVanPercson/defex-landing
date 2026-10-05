@@ -23,7 +23,7 @@
     <!-- The film is pinned and advances with the scroll. It never plays on its own.
          Under the headline sits one button, the product's way in: Husan asked
          for it here, under the robot, and it opens the pitch. The blog took the
-         pill in the nav. The page still ends on the booker. -->
+         pill in the nav. The page ends on an email field. -->
     <section class="hero" id="top" aria-labelledby="hero-title">
         <div class="hero__sticky">
             <!-- The film as 450 stills (static/defex/frames), drawn on the canvas by
@@ -158,46 +158,25 @@
         {% include "landing/_inline.html" %}
     </section>
 
+    <!-- The close asks for an email and nothing else (his call, 2026-10-05:
+         no booking calendar). The same form as Why us; /contact/ sends them
+         back here with the reply. -->
     <section class="contact dark" id="contact" aria-labelledby="contact-title">
-        <!-- cal.com's booker, mounted by static/js/book.js. It lives here rather
-             than on a page of its own: this is where someone has finished
-             reading and is deciding, and a second page is one more click
-             between them and a slot. -->
-        <div class="booker">
-            <div class="sechead">
-                <h2 class="sechead__t cut" id="contact-title" data-reveal><span class="cut__face engraved">Test our <em>product</em></span><span class="cut__mask" aria-hidden="true">Test our <em>product</em></span></h2>
-            </div>
-            <div class="booker__panel">
-                <p class="booker__status" role="status">Choose a time to talk.</p>
-                <div class="booker__frame" id="cal-inline" data-cal="{{ cal_link }}" role="region" aria-label="Choose a time"></div>
-                <p class="booker__fallback"><a class="link" href="https://cal.com/{{ cal_link }}" target="_blank" rel="noopener noreferrer">Open calendar in a new tab <span aria-hidden="true">↗</span></a></p>
-            </div>
-        </div>
-
-        <!-- The calendar is the thing to do. The form is for people who will not
-             book a slot, so it sits one quiet line under it, closed. It opens by
-             itself when a submission comes back with a message, otherwise the
-             visitor would never see whether it sent. -->
-        <details class="note contact__inner"{% if messages %} open{% endif %}>
-            <summary class="note__open">Or send a note instead</summary>
-            <form class="form" action="{% url 'contact' %}" method="post">
+        <div class="close">
+            <p class="label" data-reveal>Contact</p>
+            <h2 id="contact-title" data-reveal>Test our <em>product</em>.</h2>
+            <form class="ask" action="{% url 'contact' %}" method="post" data-reveal>
                 {% csrf_token %}
-                {% if messages %}{% for message in messages %}<p class="form__flash form__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
-                <div class="form__row">
-                    <label class="field"><span>Name</span><input type="text" name="name" autocomplete="name" maxlength="120" required></label>
-                    <label class="field"><span>Company</span><input type="text" name="factory" autocomplete="organization" maxlength="200" required></label>
-                </div>
-                <label class="field"><span>Email, phone, or WeChat</span><input type="text" name="contact" autocomplete="email" maxlength="200" required></label>
-                <label class="field"><span>The part and how it is checked</span><textarea name="product" rows="4" maxlength="1200"></textarea></label>
-                <div class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
-                <button type="submit" class="cta">Send</button>
+                <input class="ask__in" type="text" inputmode="email" name="contact" autocomplete="email" maxlength="200" placeholder="Your email" aria-label="Your email" required>
+                <button type="submit" class="ask__go">Send <span aria-hidden="true">&rarr;</span></button>
+                <span class="form__trap" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></span>
             </form>
-            <p class="contact__alt">or email <a class="link" href="mailto:sales@defexrobotics.com">sales@defexrobotics.com</a></p>
-        </details>
+            {% if messages %}{% for message in messages %}<p class="ask__flash ask__flash--{{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
+        </div>
     </section>
 </main>
 
-{% include "landing/_footer.html" with dark=1 top=1 booker=1 %}
+{% include "landing/_footer.html" with dark=1 top=1 here=1 %}
 {% endblock %}
 
 {% block extra_scripts %}
@@ -208,5 +187,4 @@
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/roll.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/flick.js' %}?v={{ asset_v }}" defer></script>
-<script src="{% static 'js/book.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}

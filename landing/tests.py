@@ -37,9 +37,9 @@ class SiteTests(SimpleTestCase):
             self.assertNotIn(f'alt="{gone}"', page)
         # the hero has to say what the machine does and ask for something
         self.assertContains(home, 'href="#contact"')
-        # the calendar is the action; the form is the fallback, one line under it
-        self.assertContains(home, '<details class="note contact__inner">')
-        self.assertContains(home, 'name="factory"')
+        # the close is one email field (his call, 2026-10-05)
+        self.assertContains(home, '<form class="ask" action="/contact/" method="post"')
+        self.assertContains(home, 'name="contact"')
         # the hero is the headline and the film, nothing else competing with it
         self.assertNotContains(home, "lede__sub")
         # nothing promises monotonic improvement
@@ -169,13 +169,15 @@ class SiteTests(SimpleTestCase):
     def test_cookie_policy_and_notice(self):
         """His call, 2026-10-04: a cookie policy page and a notice drawn as the
         shadcn cookie Alert he sent. The page lists the two cookies the site
-        sets and Cal.com's, and says how to say no; the notice claims nothing
-        the site does not do."""
+        sets and says how to say no; the notice claims nothing the site does
+        not do. The Cal.com calendar, and its cookies, left on 2026-10-05."""
         page = self.client.get("/cookies/")
         self.assertEqual(page.status_code, 200)
         body = page.content.decode()
-        for fact in ("csrftoken", "messages", "Cal.com", "data-cookie-reopen", "No advertising cookies", "privacy@defexrobotics.com"):
+        for fact in ("csrftoken", "messages", "data-cookie-reopen", "No advertising cookies", "privacy@defexrobotics.com"):
             self.assertIn(fact, body)
+        self.assertNotIn("Cal.com", body)
+        self.assertNotIn("Cal.com", self.client.get("/privacy/").content.decode())
         for path in ("/", "/careers/", "/privacy/", "/cookies/"):
             html = self.client.get(path).content.decode()
             self.assertIn('href="/cookies/">Cookies</a>', html, path)
@@ -188,7 +190,6 @@ class SiteTests(SimpleTestCase):
         self.assertIn("We use cookies to improve your experience, and show personalized content.", script)
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
         self.assertIn(".cookie { position: fixed;", css)
-        self.assertIn("localStorage.getItem('defex-cookies') === 'declined'", (Path(settings.BASE_DIR) / "static/js/book.js").read_text())
 
     def test_logos_show_colour_on_black_and_azure_sits_level(self):
         """His calls, 2026-10-04: on the black Works with us rows a pointer or a
@@ -255,9 +256,8 @@ class SiteTests(SimpleTestCase):
         body = response.content.decode()
         self.assertNotIn("We reply within one working day", body)
         self.assertIn("did not send", body)
-        # the form lives behind a disclosure, so it has to open on its own when
-        # a submission comes back, or the visitor never sees the message
-        self.assertIn('<details class="note contact__inner" open>', body)
+        # the reply shows right under the field it came from
+        self.assertIn('<p class="ask__flash ask__flash--error" role="status">', body.split('id="contact"', 1)[1])
         # and the submission itself is in the log, so it is recoverable by hand
         self.assertIn("A Factory", "".join(logged.output))
 
@@ -289,8 +289,8 @@ class SiteTests(SimpleTestCase):
         product" sits under the hero film and (his call, 2026-09-30) opens the
         prototype; Why us is in the nav. The pitch shows
         the options, each one carries to the sign-up at the end of the same
-        page, and that sign-up is a founder's calendar or the form. Nobody is
-        sent back to the home page to book."""
+        page, and that sign-up is one email field (his call, 2026-10-05: no
+        booking calendar). Nobody is sent back to the home page."""
         home = self.client.get("/").content.decode()
         actions = home.split('class="lede__actions"', 1)[1].split("</div>", 1)[0]
         self.assertIn('class="glass-button-wrap" href="/prototype/"', actions)
@@ -302,15 +302,16 @@ class SiteTests(SimpleTestCase):
         for pick in ("part", "place", "bench"):
             self.assertIn(f'href="#talk" data-pick="{pick}"', main)
             self.assertIn(f'<option value="{pick}">', main)
-        talk = main.split('id="talk"', 1)[1]
-        for piece in ('id="contact"', 'id="cal-inline"', 'data-cal="husan-mavlonov-qxqy1a/30min"',
-                      'action="/contact/"', 'name="option"', "Book a call with a founder."):
+        talk = main.split('id="talk"', 1)[1].split("</section>", 1)[0]
+        for piece in ('id="contact"', 'action="/contact/"', 'name="contact"', 'inputmode="email"', '<select name="option" hidden'):
             self.assertIn(piece, talk)
-        self.assertIn("js/book.js", pitch)
+        # one visible field: the email
+        self.assertEqual(len(re.findall(r'<input class="ask__in"', talk)), 1)
+        for gone in ("cal-inline", "data-cal=", "Book a call", "book.js", "<textarea"):
+            self.assertNotIn(gone, pitch.split("<main", 1)[1].split("</main>", 1)[0] if gone != "book.js" else pitch)
         # the option they picked reaches the inbox
         from unittest.mock import patch
-        payload = {"name": "A Buyer", "factory": "A Factory", "contact": "buyer@example.com",
-                   "product": "12-pin connector", "option": "place"}
+        payload = {"contact": "buyer@example.com", "option": "place"}
         with patch("landing.views.send", return_value=(True, "sent")) as sent:
             response = self.client.post("/contact/", payload, HTTP_REFERER="http://testserver/why-us/")
         self.assertEqual(response["Location"], "http://testserver/why-us/#contact")
@@ -379,28 +380,32 @@ class SiteTests(SimpleTestCase):
         shown = [next(l for l in logos if l in src) for src in re.findall(r'src="([^"]+)"', stage)]
         self.assertEqual(shown, [next(p["logo"] for p in PARTNERS if p["name"] == n) for n in HERO_PARTNER_ORDER])
 
-    def test_booker_is_on_the_home_page(self):
-        """It lives at #contact, not on a page of its own: that is where someone
-        has finished reading, and a second page is one more click before a slot."""
+    def test_the_home_page_ends_on_an_email_field(self):
+        """His call, 2026-10-05: no booking calendar, anywhere. The close asks
+        for an email and nothing else, at #contact, and sends to /contact/."""
         body = self.client.get("/").content.decode()
-        self.assertIn('id="cal-inline"', body)
-        self.assertIn('data-cal="husan-mavlonov-qxqy1a/30min"', body)
-        self.assertIn("js/book.js", body)
-        self.assertIn("Test our <em>product</em>", body)
-        # nothing competing with the calendar underneath it
-        self.assertNotIn("Calendar not loading", body)
-        self.assertNotIn("What happens next", body)
-
-        # the event is env-overridable, so it can be renamed without a deploy
-        with override_settings(CAL_LINK="defex/product-test"):
-            body = self.client.get("/").content.decode()
-        self.assertIn('data-cal="defex/product-test"', body)
-
-        # cal.com injects `.cal-embed { color-scheme: unset !important }`; without
-        # an !important override the frame inherits our dark scheme and Chrome
-        # paints it opaque white under their branding. Do not "clean this up".
-        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
-        self.assertRegex(css, r"\.booker__frame iframe \{[^}]*color-scheme:\s*light !important")
+        close = body.split('id="contact"', 1)[1].split("</section>", 1)[0]
+        self.assertIn("Test our <em>product</em>", close)
+        self.assertIn('action="/contact/"', close)
+        self.assertEqual(re.findall(r'<input class="ask__in"[^>]*>', close),
+                         ['<input class="ask__in" type="text" inputmode="email" name="contact" autocomplete="email" maxlength="200" placeholder="Your email" aria-label="Your email" required>'])
+        self.assertNotIn("<textarea", close)
+        for gone in ("cal-inline", "data-cal=", "book.js", "booker", "cal.com"):
+            self.assertNotIn(gone, body)
+        self.assertFalse((Path(settings.BASE_DIR) / "static/js/book.js").exists())
+        self.assertFalse(hasattr(settings, "CAL_LINK"))
+        # an email alone is a complete request; anything else is not an email
+        from unittest.mock import patch
+        with patch("landing.views.rate_limited", return_value=False), \
+                patch("landing.views.send", return_value=(True, "sent")) as sent:
+            done = self.client.post("/contact/", {"contact": "buyer@acme.com"}, follow=True)
+        self.assertIn("We reply within one working day", done.content.decode())
+        self.assertIn("buyer@acme.com", sent.call_args[0][0])
+        with patch("landing.views.rate_limited", return_value=False), \
+                patch("landing.views.send", return_value=(True, "sent")) as sent:
+            bad = self.client.post("/contact/", {"contact": "my wechat is acme123"}, follow=True)
+        self.assertFalse(sent.called)
+        self.assertIn("your email", bad.content.decode())
 
         # /book/ was live and indexed, so it redirects rather than 404s
         moved = self.client.get("/book/")
@@ -436,8 +441,10 @@ class SiteTests(SimpleTestCase):
         self.assertNotIn("Watch it work", body)
         # the robot drawing is still marked as a concept
         for claim in ('<span class="meet__tag">Concept</span>', "Target</span>", "factories paid to be first in line.",
-                      'href="#talk"', "Book a call", "Robots are cheap."):
+                      'href="#talk"', "Leave your email", "Robots are cheap."):
             self.assertIn(claim, body)
+        # his call, 2026-10-05: no booking calendar
+        self.assertNotIn("Book a call", body)
         # what it costs comes after the proof and before the questions, robot price first
         self.assertLess(body.index('id="proof"'), body.index('id="pricing"'))
         self.assertLess(body.index('id="pricing"'), body.index('id="faq"'))
