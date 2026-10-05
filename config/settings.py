@@ -174,7 +174,7 @@ WHITENOISE_MIMETYPES = {'.wasm': 'application/wasm', '.avif': 'image/avif'}
 # static/** through @vercel/static, so /static/ is answered at the edge and never
 # reaches Django. Production cache headers live in vercel.json. This hook still
 # runs under gunicorn and in the tests, and is what they assert against.
-DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "191")
+DEFEX_ASSET_VERSION = os.getenv("DEFEX_ASSET_VERSION", "192")
 
 # The hero film's stills (static/defex/frames, 15 MB for a desktop visitor)
 # carry their own version instead of the asset version, so a deploy that does
@@ -187,9 +187,6 @@ DEFEX_FILM_VERSION = "132"
 # behind this flag until then, rather than 404ing on every page.
 WEB_ANALYTICS = os.getenv("WEB_ANALYTICS", "0") == "1"
 
-# The cal.com event the booker on the home page mounts. Env-overridable, so
-# the event can be renamed in the Vercel project without a deploy.
-CAL_LINK = os.getenv("CAL_LINK", "husan-mavlonov-qxqy1a/30min")
 
 
 def _static_headers(headers, path, url):

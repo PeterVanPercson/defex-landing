@@ -559,7 +559,7 @@
     // ------------------------------------------------------------------
     // An option picked in "What it costs" is already chosen in the form at
     // the end of the page, and named above it, so nobody picks twice.
-    const wants = document.querySelector('.talk__form select[name="option"]');
+    const wants = document.querySelector('#talk select[name="option"]');
     const picked = document.querySelector('.talk__pick');
     if (wants) {
         for (const link of document.querySelectorAll('[data-pick]')) {

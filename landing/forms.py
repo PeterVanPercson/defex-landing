@@ -15,6 +15,9 @@ LOOKALIKE = re.compile(r"[\w.-]*defex[\w-]*\.[a-z]{2,}", re.I)
 OWN_DOMAINS = {"defexrobotics.com", "www.defexrobotics.com", "defex.app"}
 
 
+EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
+
+
 def looks_like_pitch(*fields: str) -> bool:
     text = " ".join(f or "" for f in fields)
     if SEO_PITCH.search(text):
@@ -27,12 +30,16 @@ def looks_like_pitch(*fields: str) -> bool:
 
 
 class ContactForm(forms.Form):
+    """The close of the home page and Why us asks for an email and nothing
+    else (his call, 2026-10-05: no booking calendar). Why us's pricing buttons
+    add the option they picked; name, company and the part are still accepted
+    from anything that posts them."""
     OPTIONS = (("part", "Send my part (free)"), ("place", "Hold my place ($1,000)"),
                ("bench", "Put my part on your bench ($5,000)"))
 
-    name = forms.CharField(max_length=120)
-    factory = forms.CharField(max_length=200)
-    contact = forms.CharField(max_length=200)  # email or wechat handle
+    name = forms.CharField(max_length=120, required=False)
+    factory = forms.CharField(max_length=200, required=False)
+    contact = forms.CharField(max_length=200)  # the email
     # 200 was not enough to describe a connector, its failure mode and the
     # current process, which is exactly what makes an enquiry worth reading.
     product = forms.CharField(max_length=1200, required=False)
@@ -40,6 +47,12 @@ class ContactForm(forms.Form):
 
     # Honeypot — real users won't fill this; bots usually do.
     website = forms.CharField(max_length=200, required=False)
+
+    def clean_contact(self):
+        value = self.cleaned_data["contact"].strip()
+        if not EMAIL.fullmatch(value):
+            raise forms.ValidationError("Enter an email address.")
+        return value
 
     def is_spam(self) -> bool:
         d = self.cleaned_data

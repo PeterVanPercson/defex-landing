@@ -547,35 +547,6 @@ test('a second picked on the origin bar before the film has loaded is applied on
     p.near(24.815);
 });
 
-function calendar() {
-    const p = page(), mount = new Element(), panel = new Element(), status = new Element();
-    mount.parent = panel; mount.dataset.cal = 'defex/test';
-    panel.querySelector = () => status; p.ids['cal-inline'] = mount;
-    p.run('book.js'); p.observers[0].enter(mount);
-    const event = name => p.context.Cal.ns.defex.q.find(([call, data]) => call === 'on' && data.action === name)[1].callback();
-    return { ...p, mount, panel, status, calEvent: event };
-}
-
-test('calendar timeout exposes recovery instead of an empty booking frame', () => {
-    const p = calendar();
-    assert.equal(p.panel.dataset.state, 'loading');
-    p.advance(12000);
-    assert.equal(p.panel.dataset.state, 'failed');
-    assert.equal(p.mount.getAttribute('aria-busy'), 'false');
-});
-
-test('calendar can recover after a timeout and reports provider failure', () => {
-    const p = calendar(); p.advance(12000); p.calEvent('linkReady');
-    assert.equal(p.panel.dataset.state, 'ready');
-    p.calEvent('linkFailed');
-    assert.equal(p.panel.dataset.state, 'failed');
-});
-
-test('calendar readiness cancels the failure timeout', () => {
-    const p = calendar(); p.calEvent('linkReady'); p.advance(12000);
-    assert.equal(p.panel.dataset.state, 'ready');
-});
-
 test('Why us stops its animation clock when reduced motion is enabled', () => {
     const p = page(), arm = new Element(), nodes = {};
     arm.querySelector = selector => nodes[selector] ||= new Element();
@@ -972,18 +943,3 @@ test('the cross puts the question off for the visit without answering it', () =>
     assert.equal(p.context.sessionStorage.data['defex-cookies'], 'later');
 });
 
-test('a declined visitor gets the link to cal.com, not the embedded calendar', () => {
-    const p = page(), mount = new Element(), panel = new Element(), status = new Element();
-    p.context.localStorage = storage({ 'defex-cookies': 'declined' });
-    mount.parent = panel; mount.dataset.cal = 'defex/test';
-    panel.querySelector = () => status; p.ids['cal-inline'] = mount;
-    p.run('book.js'); p.observers[0].enter(mount);
-    assert.equal(panel.dataset.state, 'declined');
-    assert.match(status.textContent, /cal\.com/);
-    assert.equal(p.context.Cal, undefined, 'cal.com is never asked for');
-    // changing the answer to Accept on the same page brings the calendar in
-    p.context.localStorage.setItem('defex-cookies', 'accepted');
-    p.doc.emit('defex:cookies', { detail: 'accepted' });
-    assert.equal(panel.dataset.state, 'loading');
-    assert.ok(p.context.Cal, 'and now it loads');
-});

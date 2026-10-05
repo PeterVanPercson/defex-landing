@@ -139,7 +139,7 @@
 
 /* home and Prototype: the section around the explorer */
 .meet-sec { position: relative; padding: clamp(96px, 16vh, 180px) max(var(--pad, 20px), calc((100% - 1280px) / 2 + var(--pad, 20px))); background: #050505; color: #F4F4F0; font-family: "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
-.meet-sec__h { max-width: 13ch; margin: 0 0 clamp(40px, 7vh, 80px); font: 650 clamp(46px, 6.4vw, 104px)/.96 "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: -.045em; text-wrap: balance; color: #F4F4F0; }
+.meet-sec__h { max-width: 16ch; margin: 0 0 clamp(36px, 6vh, 72px); font: 330 clamp(32px, 3.5vw, 52px)/1.1 "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: -.026em; text-wrap: balance; color: #F4F4F0; }
 .meet-sec__h em { font-style: normal; color: inherit; }
 .meet :focus-visible { outline: 2px solid #F4F4F0; outline-offset: 4px; }
 .meet p { margin: 0; }
@@ -148,7 +148,7 @@
 
 /* under the robot on home and Why us: the way into the prototype */
 .meet-cta { display: flex; justify-content: center; margin: clamp(28px, 5vh, 48px) 0 0; }
-.meet-cta__btn { display: inline-flex; align-items: center; gap: 14px; min-height: 64px; padding: 0 34px; border-radius: 999px; background: #F4F4F0; color: #0A0A0A; font: 600 19px/1 "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: -.01em; text-decoration: none; transition: background .2s ease, transform .2s ease; }
+.meet-cta__btn { display: inline-flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 28px; border-radius: 999px; background: #F4F4F0; color: #0A0A0A; font: 500 15px/1 "Geist", Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: -.01em; text-decoration: none; transition: background .2s ease, transform .2s ease; }
 .meet-cta__btn span { transition: transform .3s cubic-bezier(.22, .61, .36, 1); }
 .meet-cta__btn:hover { background: #FFFFFF; }
 .meet-cta__btn:hover span { transform: translateX(5px); }

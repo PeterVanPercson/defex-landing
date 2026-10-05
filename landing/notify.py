@@ -75,20 +75,18 @@ def client_ip(request) -> str:
 
 
 def autoresponder_email(name: str, factory: str) -> tuple[str, str]:
-    """(subject, html) sent FROM Husan personally TO the submitter."""
-    first = (name or "there").strip().split()[0] if name else "there"
-    subject = "got your note — defex"
+    """(subject, html) sent FROM Husan personally TO the submitter. The forms
+    ask for an email only now, so the name and company are usually blank."""
+    first = (name or "").strip().split()[0] if (name or "").strip() else ""
+    subject = "got your email"
     html = (
         '<div style="font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;'
         'color:#0F1115;line-height:1.55;max-width:540px">'
-        f'<p>Hi {escape(first)},</p>'
-        f'<p>Thanks for telling us about {escape(factory) if factory else "your line"}. '
-        'We&rsquo;ve received your note and will be in touch within one working day '
-        'with next steps and a 15-min slot to talk through your line.</p>'
-        '<p>If you&rsquo;d like to share anything ahead of the call '
-        '&mdash; the part, how it is assembled and checked today, a photo of the station '
-        '&mdash; just reply to this email.</p>'
-        '<p style="margin-top:24px">&mdash; Husan Mavlonov<br>'
+        f'<p>Hi{" " + escape(first) if first else ""},</p>'
+        '<p>Thanks for getting in touch. I&rsquo;ll write back within one working day.</p>'
+        '<p>If you want to get ahead, reply with the part you want the robot to handle '
+        'and how it&rsquo;s checked today. A photo of the station helps.</p>'
+        '<p style="margin-top:24px">Husan Mavlonov<br>'
         '<span style="color:#7A7B7F;font-size:13px">Self-teaching robots for manufacturing &middot; '
         '<a href="https://defexrobotics.com" style="color:#FF5A1F;text-decoration:none">defexrobotics.com</a></span></p>'
         '</div>'
@@ -104,7 +102,8 @@ def submission_email(data: dict, request) -> tuple[str, str]:
     product = data.get("product", "")
     ip = client_ip(request)
 
-    subject = f"defex · parts study request — {name} ({factory})"
+    who = " · ".join(x for x in (name, factory) if x) or contact
+    subject = f"defex · new contact · {who}" + (f" · {data['wants']}" if data.get("wants") else "")
     rows = [
         ("Name", name),
         ("Company", factory),
@@ -121,7 +120,7 @@ def submission_email(data: dict, request) -> tuple[str, str]:
     )
     html = (
         '<div style="font-family:ui-monospace,monospace;color:#111;max-width:600px">'
-        '<p style="margin:0 0 12px;font-size:15px"><b>Pilot request from defexrobotics.com</b></p>'
+        '<p style="margin:0 0 12px;font-size:15px"><b>New contact from defexrobotics.com</b></p>'
         f'<table style="border-collapse:collapse">{body}</table>'
         '</div>'
     )

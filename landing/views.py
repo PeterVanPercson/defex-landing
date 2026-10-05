@@ -32,7 +32,7 @@ LOST_MESSAGE = ("That did not send. Please email husan@defexrobotics.com directl
                 "and we will pick it up from there.")
 
 CONTACT_LABELS = {"name": "name", "factory": "company",
-                  "contact": "email, phone or WeChat", "product": "the part", "option": "what you want"}
+                  "contact": "your email", "product": "the part", "option": "what you want"}
 APPLICATION_LABELS = {"name": "name", "email": "email", "role": "role",
                       "work": "work link", "profile": "profile link", "note": "note"}
 
