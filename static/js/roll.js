@@ -23,4 +23,20 @@
         item.closest('.roll').classList.add('is-paused');
     }, { passive: true });
     for (const roll of document.querySelectorAll('.roll')) roll.addEventListener('dragstart', (e) => e.preventDefault());
+    // A row holds still until it is on screen, so it opens on its first names
+    // (MathWorks, GMI, NVIDIA, a16z, his call, 2026-10-05) instead of having
+    // rolled past them while the visitor was still reading the hero.
+    if ('IntersectionObserver' in window) {
+        const seen = new IntersectionObserver((entries) => {
+            for (const e of entries) {
+                if (!e.isIntersecting) continue;
+                e.target.classList.remove('is-waiting');
+                seen.unobserve(e.target);
+            }
+        }, { rootMargin: '0px 0px -15% 0px' });
+        for (const roll of document.querySelectorAll('.roll')) {
+            roll.classList.add('is-waiting');
+            seen.observe(roll);
+        }
+    }
 })();

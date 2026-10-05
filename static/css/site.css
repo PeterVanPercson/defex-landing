@@ -1711,6 +1711,8 @@ body { font: 400 16px/1.6 var(--font); }
    Partners and Registered share one size. */
 .roll { cursor: default; }
 .roll:hover .roll__track, .roll.is-paused .roll__track { animation-play-state: paused; }
+/* roll.js holds a row still until it is on screen */
+.roll.is-waiting .roll__track { animation-play-state: paused; }
 .roll__i.is-touched .roll__logo { filter: none; opacity: 1; transform: scale(1.06); }
 .roll__i.is-touched .roll__logo[data-opaque] { filter: url(#roll-colour); }
 .inline--dark .roll__i.is-touched .roll__logo { filter: grayscale(1) invert(1) contrast(.9); opacity: 1; }
