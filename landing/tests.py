@@ -239,7 +239,7 @@ class SiteTests(SimpleTestCase):
         sent back to the home page to book."""
         home = self.client.get("/").content.decode()
         actions = home.split('class="lede__actions"', 1)[1].split("</div>", 1)[0]
-        self.assertIn('class="glass-button-wrap" href="/prototype/?play=1"', actions)
+        self.assertIn('class="glass-button-wrap" href="/prototype/"', actions)
         self.assertIn("Test our product", actions)
         pitch = self.client.get("/why-us/").content.decode()
         main = pitch.split("<main", 1)[1]
@@ -442,8 +442,8 @@ class SiteTests(SimpleTestCase):
         home = self.client.get("/").content.decode()
         for page in (home, body):
             under = page.split('id="meet"', 1)[1]
-            self.assertIn('<a class="meet-cta__btn" href="/prototype/?play=1">Test our prototype', under.split("</section>", 1)[0])
-        self.assertRegex(home, r'class="features__more">\s*<a class="glass-button-wrap" href="/prototype/\?play=1">')
+            self.assertIn('<a class="meet-cta__btn" href="/prototype/">Test our prototype', under.split("</section>", 1)[0])
+        self.assertRegex(home, r'class="features__more">\s*<a class="glass-button-wrap" href="/prototype/">')
         self.assertNotIn("See why it works", home)
         self.assertIn("Test our product", home.split('class="features__more"', 1)[1].split("</p>", 1)[0])
         # the three claims are not numbered
