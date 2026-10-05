@@ -34,10 +34,26 @@ class PrototypeTests(SimpleTestCase):
         start = body.index('<body>')
         self.assertLess(body.index('js/orb-loader.js?v='), body.index('<main>'))
         self.assertGreater(body.index('js/orb-loader.js?v='), start)
-        self.assertIn('.orbload.is-done { opacity: 0;', body[:start])
+        self.assertIn('css/orb-loader.css?v=', body[:start])
+        css = (Path(settings.BASE_DIR) / 'static/css/orb-loader.css').read_text()
+        self.assertIn('.orbload.is-done { opacity: 0;', css)
         script = (Path(settings.BASE_DIR) / 'static/js/orb-loader.js').read_text()
         self.assertIn("getElementById('loading')", script)
         self.assertIn('Loading<span class="orbload__dots"', script)
         for green in ('52,211,153', 'sweep', 'resolve('):
             self.assertNotIn(green, script)
         self.assertEqual(self.client.get('/static/js/orb-loader.js').status_code, 200)
+
+    def test_the_page_is_in_step_with_its_source(self):
+        """templates/landing/prototype.html is generated from prototype/index.html
+        (prototype/scripts/integrate.mjs) and CI regenerates it before these tests,
+        so a hand edit to the generated page alone is lost there. Everything from
+        <main> to the <noscript> note must be the source's own markup (Vite only
+        moves the source's module script into the head)."""
+        root = Path(settings.BASE_DIR)
+        source = (root / 'prototype/index.html').read_text()
+        page = (root / 'templates/landing/prototype.html').read_text()
+        main = source[source.index('<main>'):source.index('</noscript>') + len('</noscript>')]
+        self.assertIn(main, page)
+        self.assertNotIn('Assembly', source)
+
