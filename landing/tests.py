@@ -84,7 +84,7 @@ class SiteTests(SimpleTestCase):
         origin = self.client.get("/where-it-started/")
         self.assertEqual(origin.status_code, 301)
         self.assertEqual(origin["Location"], "/")
-        self.assertContains(home, "defex/cobot/still/cobot-hall-1920.avif")
+        self.assertContains(home, "defex/cobot/still/cobot-photo-1672.avif")
         # his call, 2026-10-12: the connector cell replaced the humanoid film,
         # then one still picture replaced the cell's film
         self.assertContains(home, 'class="hero hero--card hero--still"')
@@ -98,8 +98,8 @@ class SiteTests(SimpleTestCase):
                      "defex/frames/", "defex/cobot/frames/", "cobot-film.mp4",
                      "cobot-poster.webp", "has-scroll-film"):
             self.assertNotContains(home, gone)
-        for asset in ("defex/cobot/still/cobot-hall-1920.avif",
-                      "defex/cobot/still/cobot-hall-tall-1080.avif"):
+        for asset in ("defex/cobot/still/cobot-photo-1672.avif",
+                      "defex/cobot/still/cobot-photo-square-940.avif"):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
@@ -543,19 +543,18 @@ class SiteTests(SimpleTestCase):
         hero is now one still (scripts/render/cobot_still.py), so the guard is
         per file, and the phone frame has to be lighter than the desk one."""
         budget = {
-            "cobot-hall-2880.avif": 900 * 1024,
-            "cobot-hall-1920.avif": 500 * 1024,
-            "cobot-hall-1920.webp": 600 * 1024,
-            "cobot-hall-tall-1440.avif": 600 * 1024,
-            "cobot-hall-tall-1080.avif": 400 * 1024,
-            "cobot-hall-tall-1080.webp": 500 * 1024,
+            "cobot-photo-1672.avif": 400 * 1024,
+            "cobot-photo-1280.avif": 300 * 1024,
+            "cobot-photo-1672.webp": 500 * 1024,
+            "cobot-photo-square-940.avif": 300 * 1024,
+            "cobot-photo-square-940.webp": 400 * 1024,
         }
         still = Path(settings.BASE_DIR) / "static" / "defex" / "cobot" / "still"
         for name, cap in budget.items():
             size = (still / name).stat().st_size
             self.assertLessEqual(size, cap, f"{name} is {size / 1024:.0f}KB")
-        self.assertLess((still / "cobot-hall-tall-1080.avif").stat().st_size,
-                        (still / "cobot-hall-1920.avif").stat().st_size)
+        self.assertLess((still / "cobot-photo-square-940.avif").stat().st_size,
+                        (still / "cobot-photo-1672.avif").stat().st_size)
         # the humanoid film and the cell's film are gone from the deployed tree
         for gone in ("assets", "frames", "cobot/frames"):
             self.assertFalse((Path(settings.BASE_DIR) / "static" / "defex" / gone).exists(), gone)
@@ -565,22 +564,22 @@ class SiteTests(SimpleTestCase):
 
     def test_the_hero_is_one_still(self):
         """No film, no canvas, no pinned scroll: a <picture> with a wide frame
-        for screens and a 4:5 frame for phones held upright, preloaded, with
+        for screens and a square crop for phones held upright, preloaded, with
         the bar still turning dark over the dark bands (hero-film.js)."""
         home = self.client.get("/").content.decode()
         for chunk in ('<picture class="hero__photo">',
-                      'media="(max-aspect-ratio: 13/10) and (max-width: 600px)" srcset="/static/defex/cobot/still/cobot-hall-tall-1080.avif',
-                      'cobot-hall-2880.avif?v=', 'width="1920" height="1080" alt="A white Defex cobot',
-                      'rel="preload" as="image" fetchpriority="high" imagesrcset="/static/defex/cobot/still/cobot-hall-1920.avif',
+                      'media="(max-aspect-ratio: 13/10) and (max-width: 600px)" srcset="/static/defex/cobot/still/cobot-photo-square-940.avif',
+                      'cobot-photo-1280.avif?v=', 'width="1672" height="941" alt="A white Defex cobot',
+                      'rel="preload" as="image" fetchpriority="high" imagesrcset="/static/defex/cobot/still/cobot-photo-1280.avif',
                       "js/hero-film.js"):
             self.assertIn(chunk, home, chunk)
         for gone in ('id="film"', 'id="frames"', "data-frame-count", "<video"):
             self.assertNotIn(gone, home.split('id="why"')[0], gone)
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
-        self.assertRegex(css, r"\.hero--still \.hero__screen \{ flex: 0 0 auto; aspect-ratio: 4 / 5; \}")
+        self.assertRegex(css, r"\.hero--still \.hero__screen \{ flex: 0 0 auto; aspect-ratio: 1 / 1; \}")
         js = (Path(settings.BASE_DIR) / "static/js/hero-film.js").read_text()
         self.assertIn("if (!film) {", js)
-        image = self.client.get("/static/defex/cobot/still/cobot-hall-1920.avif?v=1")
+        image = self.client.get("/static/defex/cobot/still/cobot-photo-1672.avif?v=1")
         self.assertEqual(image.status_code, 200)
         self.assertEqual(image["Content-Type"], "image/avif")
         self.assertIn("s-maxage", image["Cache-Control"])
