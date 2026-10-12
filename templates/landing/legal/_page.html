@@ -29,10 +29,21 @@ The blog's paper, its heading and reading column, and the full footer.{% endcomm
         {% if doc.effective %}<p class="post__meta">Effective <time datetime="{{ doc.effective|date:'Y-m-d' }}">{{ doc.effective|date:"F j, Y" }}</time></p>{% endif %}
     </header>
 
-    <article class="prose">
-        {% block article %}{% endblock %}
-    </article>
+    <!-- Skiper's terms layout (his call, 2026-10-12): the sections listed
+         down the left, sticky, the one being read marked by a bar that
+         slides to it (static/js/legal.js builds the list from the h2s;
+         without the script the page is the plain reading column). -->
+    <div class="legal">
+        <nav class="legal__toc" aria-label="On this page" hidden><ol class="legal__list"></ol><span class="legal__bar" aria-hidden="true"></span></nav>
+        <article class="prose prose--legal">
+            {% block article %}{% endblock %}
+        </article>
+    </div>
 </main>
 
 {% include "landing/_footer.html" %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/legal.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}
