@@ -16,7 +16,8 @@ class SiteTests(SimpleTestCase):
         home = self.client.get("/")
         # the headline and the three steps must match the deck, not the
         # superseded vision-inspection positioning they replaced
-        self.assertContains(home, "Connectors, plugged in <br>and <em>checked</em>.")
+        self.assertContains(home, "The robot that plugs <br>in your connectors.")
+        self.assertNotContains(home, "self-teaching")
         # the case in the pitch's own words: what it does for a factory, as ruled rows
         for claim in ("The robot plugs it in.", "It checks every one.",
                       "Every test teaches it.", "A new part is not a new project."):
