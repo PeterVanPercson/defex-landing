@@ -7,7 +7,7 @@
 
 {% block extra_head %}
 <link rel="preload" as="image" fetchpriority="high" imagesrcset="{% static 'defex/cobot/still/cobot-photo-1280.avif' %}?v={{ asset_v }} 1280w, {% static 'defex/cobot/still/cobot-photo-1672.avif' %}?v={{ asset_v }} 1672w" imagesizes="100vw" type="image/avif" media="not ((max-aspect-ratio: 13/10) and (max-width: 600px))">
-<link rel="preload" as="image" fetchpriority="high" imagesrcset="{% static 'defex/cobot/still/cobot-photo-square-940.avif' %}?v={{ asset_v }} 940w" imagesizes="100vw" type="image/avif" media="(max-aspect-ratio: 13/10) and (max-width: 600px)">
+<link rel="preload" as="image" fetchpriority="high" imagesrcset="{% static 'defex/cobot/still/cobot-photo-tall-772.avif' %}?v={{ asset_v }} 772w" imagesizes="100vw" type="image/avif" media="(max-aspect-ratio: 13/10) and (max-width: 600px)">
 <!-- Meet the robot sits far below the fold, so its sheet never holds up first paint -->
 <link rel="stylesheet" href="{% static 'css/meet.css' %}?v={{ asset_v }}" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="{% static 'css/meet.css' %}?v={{ asset_v }}"></noscript>
 {% endblock %}
@@ -30,14 +30,14 @@
                 <h1 class="cut" id="hero-title"><span class="cut__face engraved">Connectors, plugged in <br>and <em>checked</em>.</span><span class="cut__mask" aria-hidden="true">Connectors, plugged in <br>and <em>checked</em>.</span></h1>
             </div>
             <!-- One still: the cell on its bench in a factory hall. His picture
-                 (2026-10-12), wide for screens and a square crop on the robot
-                 for phones held upright until a portrait exists. -->
+                 (2026-10-12), wide for screens and a 4:5 crop of his portrait
+                 version for phones held upright. -->
             <div class="hero__screen">
                 <picture class="hero__photo">
-                    <source type="image/avif" media="(max-aspect-ratio: 13/10) and (max-width: 600px)" srcset="{% static 'defex/cobot/still/cobot-photo-square-940.avif' %}?v={{ asset_v }} 940w" sizes="100vw">
-                    <source type="image/webp" media="(max-aspect-ratio: 13/10) and (max-width: 600px)" srcset="{% static 'defex/cobot/still/cobot-photo-square-940.webp' %}?v={{ asset_v }} 940w" sizes="100vw">
+                    <source type="image/avif" media="(max-aspect-ratio: 13/10) and (max-width: 600px)" srcset="{% static 'defex/cobot/still/cobot-photo-tall-772.avif' %}?v={{ asset_v }} 772w" sizes="100vw">
+                    <source type="image/webp" media="(max-aspect-ratio: 13/10) and (max-width: 600px)" srcset="{% static 'defex/cobot/still/cobot-photo-tall-772.webp' %}?v={{ asset_v }} 772w" sizes="100vw">
                     <source type="image/avif" srcset="{% static 'defex/cobot/still/cobot-photo-1280.avif' %}?v={{ asset_v }} 1280w, {% static 'defex/cobot/still/cobot-photo-1672.avif' %}?v={{ asset_v }} 1672w" sizes="100vw">
-                    <img class="hero__film" src="{% static 'defex/cobot/still/cobot-photo-1672.webp' %}?v={{ asset_v }}" width="1672" height="941" alt="A white Defex cobot over a circuit board on its fixture, on a bench in a factory hall" fetchpriority="high" decoding="async">
+                    <img class="hero__film" src="{% static 'defex/cobot/still/cobot-photo-1672.webp' %}?v={{ asset_v }}" width="1672" height="941" alt="A white Defex cobot over a part on its fixture, on a bench in an empty factory hall" fetchpriority="high" decoding="async">
                 </picture>
                 <span class="hero__tag">Concept render</span>
                 <div class="lede__actions">
