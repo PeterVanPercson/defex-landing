@@ -38,7 +38,7 @@ Use **Pause / Resume** below the scene or on the demo button. Space toggles play
 
 The renderer interpolates between computed poses with a 70 ms buffer and never extrapolates through contact. Camera damping uses elapsed time. The camera holds during pause and stays still at rest. Circular controls animate their icons with CSS transitions. Geometry is reused while adjusting offsets; the worker sends only new samples, and the renderer stops scheduling frames once the view settles. Loss of the WebGL context switches to the live 2D schematic without discarding the physics run.
 
-The illustrative machine has independent X/Y slides, open-backed linear bearings, a guided Z saddle and a rotating lead screw. The gripper rotates independently of the saddle. Clearance checks exercise 783 poses against the housing, motor and fixed slides; the connector has a latch relief channel, and each cable terminates at a gland. A service loop deforms using reusable GPU buffers. The plug has bored female contacts opposite the socket pins, and its wires terminate at a strain relief. These rendered details do not add flexible-body or electrical physics. The stage shows computed force, depth and playback speed, including in close views.
+The illustrative robot is a six-joint cobot (src/cobot.ts), white with black-ringed joint caps, an orange flange ring and an external cable, as in the site's hero picture. It is drawn, not simulated: each frame an analytic elbow-up solution poses its base, shoulder, elbow and wrist so the tool flange sits on the pose MuJoCo computed for the plug, and the gripper turns with the computed yaw. Tests exercise 783 poses for rigid links, an upright elbow and clearance from the gripper, socket and table; the connector has a latch relief channel, and the arm cable ends in the gripper's gland, its tube rebuilt in reusable GPU buffers. The plug has bored female contacts opposite the socket pins, and its wires terminate at a strain relief. These rendered details do not add flexible-body or electrical physics. The stage shows computed force, depth and playback speed, including in close views.
 
 To package a built demo with an existing recording and evaluation output:
 
@@ -56,7 +56,7 @@ This is deterministic feedback search and calibration. It is not RL, a learned n
 
 ## Model boundaries
 
-- The contact model includes a rigid box plug, four socket walls and a seat. Cartesian slides and yaw are position-actuated. Gravity is disabled. Tooling, wires, pins and the grasp extension are visual details, not extra collision bodies.
+- The contact model includes a rigid box plug, four socket walls and a seat. The plug's Cartesian slides and yaw are position-actuated; the arm drawn around them is not part of the physics. Gravity is disabled. Tooling, wires, pins and the grasp extension are visual details, not extra collision bodies.
 - Timestep: 0.5 ms; samples: approximately 50 Hz; browser state updates: 30 Hz. Reported time is simulation time, not measured production cycle time.
 - The displayed axial force is the absolute generalized constraint force on Z. It includes the ideal latch constraint during retention. It is not a real force-sensor reading. The records' peak force covers insertion and the connection test only, so a clean insertion and a jam read differently.
 - Continuity is a depth threshold plus a manually injected open-circuit flag. No circuit is simulated.

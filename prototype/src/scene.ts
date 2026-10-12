@@ -10,9 +10,11 @@ import { PARTS } from './parts.ts';
 import { RenderStats } from './render-stats.ts';
 import { finishes } from './finishes.ts';
 import { batchStaticMeshes } from './batching.ts';
-import { ServiceLoop, contactCenters, plugHousing, socketHousing } from './mechanism.ts';
+import { contactCenters, plugHousing, socketHousing } from './mechanism.ts';
 import type { PartId } from './parts.ts';
-import { createTooling, GANTRY_REAR_OFFSET } from './tooling.ts';
+import { createTooling } from './tooling.ts';
+import { createCobot, FLANGE_Z } from './cobot.ts';
+import type { Cobot } from './cobot.ts';
 
 export type View = 'overview' | 'side' | 'top' | 'connector' | 'part';
 export type Mode = 'machine' | 'inside' | 'parts';
@@ -67,7 +69,7 @@ function print(c: CanvasRenderingContext2D, text: string, x: number, y: number, 
   c.fillStyle = color; c.font = `400 ${size}px ${FONT}`; c.fillText(text, x, y);
 }
 
-const EXPLODE_ORDER: PartId[] = ['socket', 'tester', 'connector', 'gripper', 'zaxis', 'carriage', 'gantry'];
+const EXPLODE_ORDER: PartId[] = ['socket', 'tester', 'connector', 'gripper', 'arm'];
 const ease = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const step = (value: number, goal: number, amount: number) => value < goal ? Math.min(goal, value + amount) : Math.max(goal, value - amount);
 const toY = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 1, 0)), fromY = toY.clone().invert();
@@ -90,10 +92,9 @@ export class WorkcellScene {
   fixture = new THREE.Group();
   socket = new THREE.Group();
   tool = new THREE.Group();
-  carriage = new THREE.Group();
-  ySlide = new THREE.Group();
-  serviceLoop = new ServiceLoop(M.rubber);
-  screwRotor = new THREE.Group();
+  cobot!: Cobot;
+  armTarget = new THREE.Vector3();
+  armPose = '';
   rotaryGripper = new THREE.Group();
   plug = new THREE.Group();
   parts = new Map<PartId, Part>();
@@ -221,10 +222,9 @@ export class WorkcellScene {
 
     this.backdrop();
     this.scene.add(this.cell);
-    this.buildGround(); this.buildTable(); this.buildGantry(); this.buildTool(); this.buildTester(); this.buildConnector();
-    batchStaticMeshes(this.cell, new Set([...this.shells, ...this.socketCover, ...this.plugCover, ...this.latchParts.map(p => p.mesh)])); this.tagParts();
-    this.cell.add(this.serviceLoop.mesh); this.serviceLoop.update(0, 0, 42);
-    this.tool.position.z = 42;
+    this.buildGround(); this.buildTable(); this.buildArm(); this.buildTool(); this.buildTester(); this.buildConnector();
+    batchStaticMeshes(this.cell, new Set([...this.shells, ...this.socketCover, ...this.plugCover, ...this.latchParts.map(p => p.mesh), this.cobot.cable.mesh])); this.tagParts();
+    this.tool.position.z = 42; this.poseArm();
     this.drawPlate(); this.drawHmi();
     document.fonts?.ready.then(() => { if (!this.disposed) { this.drawPlate(); this.drawHmi(); this.wake(); } });
     this.measureAnchors();
@@ -266,10 +266,10 @@ export class WorkcellScene {
     const label = document.createElement('div');
     label.className = 'part-label';
     label.innerHTML = `<div class="stem"></div><div class="label-card"><div class="label-title"><span>${String(PARTS.indexOf(info) + 1).padStart(2, '0')}</span>${info.name}</div></div>`;
-    const side = (['gantry', 'zaxis', 'connector', 'tester'] as PartId[]).includes(id) ? 1 : -1;
+    const side = (['arm', 'connector', 'tester'] as PartId[]).includes(id) ? 1 : -1;
     label.classList.add(side > 0 ? 'right' : 'left');
     this.hud?.labels.append(label);
-    const offsets: Record<PartId, number[]> = { socket: [0, 0, 8], connector: [0, 0, 22], gripper: [0, 0, 36], zaxis: [0, 0, 52], carriage: [0, 0, 66], gantry: [0, 0, 74], tester: [22, -14, 6] };
+    const offsets: Record<PartId, number[]> = { socket: [0, 0, 8], connector: [0, 0, 22], gripper: [0, 0, 36], arm: [6, 8, 30], tester: [22, -14, 6] };
     this.parts.set(id, { ...info, group, offset: new THREE.Vector3(...offsets[id]), anchor: new THREE.Vector3(), side, label });
     return group;
   }
@@ -290,7 +290,7 @@ export class WorkcellScene {
     soft.ctx.fillStyle = sg; soft.ctx.fillRect(0, 0, 64, 64); soft.texture.needsUpdate = true;
     this.contactMaterial = new THREE.MeshBasicMaterial({ map: soft.texture, transparent: true, depthWrite: false, opacity: .5, polygonOffset: true, polygonOffsetFactor: -2 });
     const blob = new THREE.PlaneGeometry(1, 1);
-    for (const [w, h, x, y, z] of [[72, 58, 0, 0, .34], [36, 30, 0, 0, 4.03], [13, 22, 22, -5, 4.03], [17, 18, -27, 31, .34], [17, 18, 27, 31, .34], [11, 11, 45, -27, .34], [8.5, 8.5, 44, 30, .34]]) {
+    for (const [w, h, x, y, z] of [[72, 58, 0, 0, .34], [36, 30, 0, 0, 4.03], [13, 22, 22, -5, 4.03], [24, 24, 40, 31, .34], [11, 11, 45, -27, .34], [8.5, 8.5, -44, 31, .34]]) {
       const m = new THREE.Mesh(blob, this.contactMaterial); m.scale.set(w, h, 1); m.position.set(x, y, z); m.renderOrder = -1; this.cell.add(m);
     }
   }
@@ -307,7 +307,7 @@ export class WorkcellScene {
     }
     for (const x of [-52, 52]) for (const y of [-39, 39]) screw(t, x, y, 0.5);
     for (let x = -50; x <= 50; x += 10) for (let y = -35; y <= 35; y += 10) {
-      if ((Math.abs(x) < 36 && Math.abs(y) < 30) || (Math.abs(Math.abs(x) - 27) < 9 && y > 5) || (y < -30 && x < 25) || (x > 36 && y < -12) || (x > 36 && y > 22)) continue;
+      if ((Math.abs(x) < 36 && Math.abs(y) < 30) || (x > 28 && y > 20) || (y < -30 && x < 25) || (x > 36 && y < -12) || (x < -36 && y > 22)) continue;
       cylinder(t, 1.02, 0.06, [x, y, 0.31], M.edge, 20); cylinder(t, 0.86, 0.12, [x, y, 0.33], M.bore, 20);
     }
     const plate = new THREE.Mesh(new THREE.PlaneGeometry(56, 6.3), new THREE.MeshBasicMaterial({ map: this.plate.texture, toneMapped: false }));
@@ -321,52 +321,35 @@ export class WorkcellScene {
     c.strokeStyle = '#4d545c'; c.lineWidth = 3; c.strokeRect(3, 3, w - 6, h - 6);
     print(c, 'DEFEX', 44, 80, 46, '#e4e2d8');
     print(c, '·  connector lab  ·  insert  ·  test  ·  reset', 250, 80, 38, '#b8bdc1');
-    print(c, 'SELF-TEACHING ROBOTS FOR MANUFACTURING   /   SIMULATION', 46, 134, 21, '#737e88');
+    print(c, 'CONNECTOR WORKCELL   /   SIMULATION', 46, 134, 21, '#737e88');
     print(c, 'No. 001', 1350, 132, 26, '#ff7a1a');
     this.plate.texture.needsUpdate = true;
   }
 
-  buildGantry() {
-    const frame = this.part('gantry'); this.cell.add(frame);
-    const g = new THREE.Group(); g.position.y = GANTRY_REAR_OFFSET; frame.add(g);
-    for (const x of [-27, 27]) {
-      box(g, 'Gantry upright', [6, 7, 61], [x, 17, 34.5], M.silver, 0.18);
-      box(g, 'Upright face', [0.2, 2.2, 55], [x - Math.sign(x) * 3.02, 17, 34.5], M.dark, 0.03);
-      for (const y of [13.45, 20.55]) {
-        box(g, 'Extrusion channel', [2.1, 0.18, 55], [x, y, 34.5], M.dark, 0);
-        for (const dx of [-1.05, 1.05]) box(g, 'Channel lip', [.24, .32, 55], [x + dx, y, 34.5], M.edge, .04);
-      }
-      for (const zz of [14, 62]) {
-        const bolt = new THREE.Group(); bolt.position.set(x, 13.3, zz); bolt.rotation.x = Math.PI / 2; g.add(bolt); screw(bolt, 0, 0, 0);
-      }
-      box(g, 'Gantry foot', [11, 12, 5], [x, 17, 3.5], M.body, 0.6);
-      box(g, 'Foot plate', [13, 14, 0.8], [x, 17, 0.6], M.edge, 0.3);
-      for (const dx of [-4.2, 4.2]) screw(g, x + dx, 12.2, 6.2);
-      box(g, 'Corner bracket', [6.4, 7.4, 6], [x, 17, 64.2], M.edge, 0.4);
-    }
-    this.shell(box(g, 'Cross rail', [64, 9, 8], [0, 17, 69], M.body, 0.25));
-    box(g, 'Belt', [54, 0.8, 4.4], [0, 17, 69], M.dark, 0);
-    for (const x of [-27, 27]) cylinder(g, 2.2, 5, [x, 17, 69], M.edge, 20);
-    box(g, 'Linear track', [55, 1.2, 2.2], [0, 11.9, 69.1], M.dark, 0.1);
-    for (let i = 0; i < 18; i++) box(g, 'Track bolt', [0.5, 0.2, 0.5], [-26 + i * 3.06, 11.25, 69.1], M.silver, 0);
-    this.shell(box(g, 'Drive cover', [15, 12, 13], [-26, 17, 69], M.body, 1));
-    box(g, 'Drive label', [5, 0.12, 2.3], [-26, 10.93, 69], M.silver, 0.05);
-    cylinder(g, 4.2, 9, [-38, 17, 69], M.dark, 28, 'x');
-    cylinder(g, 4.5, 1.2, [-42.8, 17, 69], M.silver, 28, 'x');
-    for (let i = 0; i < 17; i++) box(g, 'Cable chain link', [2.6, 4.2, 2.2], [-22 + i * 2.75, 19, 74.2], i % 2 ? M.dark : M.base, 0.3);
-    cable(g, [[-26, 22, 75], [-32, 24, 70], [-34, 24, 40], [-30, 24, 6]], 0x1a1f24, 0.7);
+  // The robot (his call, 2026-10-12): the cobot from the home page, not a
+  // gantry. Only the plug and socket are simulated; the arm is posed each
+  // frame so its flange sits on the tool the physics moved (cobot.ts).
+  buildArm() {
+    const arm = this.part('arm'); this.cell.add(arm);
+    this.cobot = createCobot(M); arm.add(this.cobot.root);
+  }
+  poseArm() {
+    const grip = this.parts.get('gripper')!.group, arm = this.parts.get('arm')!.group;
+    this.armTarget.copy(this.tool.position).add(grip.position).sub(arm.position); this.armTarget.z += FLANGE_Z;
+    const key = `${this.armTarget.x.toFixed(4)},${this.armTarget.y.toFixed(4)},${this.armTarget.z.toFixed(4)},${this.rotaryGripper.rotation.z.toFixed(5)}`;
+    if (key === this.armPose) return false;
+    this.armPose = key; this.cobot.set(this.armTarget, this.rotaryGripper.rotation.z);
+    return true;
   }
 
   buildTool() {
-    const carriage = this.part('carriage'), z = this.part('zaxis');
     const grip = this.part('gripper'), connector = this.part('connector');
     const tooling = createTooling(M);
-    this.cell.add(this.carriage); this.carriage.add(carriage, this.ySlide); this.ySlide.add(z);
-    carriage.add(tooling.carriage); z.add(tooling.axis);
     this.cell.add(this.tool); this.tool.add(grip, connector); connector.add(this.plug);
-    grip.add(tooling.saddle, tooling.spindle);
-    this.rotaryGripper = tooling.spindle; this.screwRotor = tooling.screw;
-    this.shells.push(tooling.housing);
+    grip.add(tooling.spindle);
+    // the adapter between the gripper and the arm's tool flange, turning with the gripper
+    cylinder(tooling.spindle, 3.8, 3.6, [0, 0, FLANGE_Z - 1.8], M.edge, 40);
+    this.rotaryGripper = tooling.spindle;
   }
 
   buildTester() {
@@ -394,7 +377,7 @@ export class WorkcellScene {
     const screen = new THREE.Mesh(new THREE.PlaneGeometry(25, 16.4), new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffffff, emissiveMap: this.hmi.texture, roughness: 0.16, metalness: 0, envMapIntensity: 0.55, toneMapped: false }));
     screen.rotation.x = Math.PI / 2; screen.position.y = -0.55; head.add(screen);
 
-    const tower = new THREE.Group(); tower.position.set(44, 30, 0); tester.add(tower);
+    const tower = new THREE.Group(); tower.position.set(-44, 31, 0); tester.add(tower);
     cylinder(tower, 2.6, 2, [0, 0, 1.1], M.body, 28);
     cylinder(tower, 0.9, 24, [0, 0, 14], M.silver, 16);
     [0, 1, 2].forEach((i, k) => {
@@ -481,7 +464,7 @@ export class WorkcellScene {
   }
   measureAnchors() {
     const anchors: Record<PartId, [number, number, number]> = {
-      gantry: [27, 27, 63], carriage: [-5, 21, 70], zaxis: [4, 11, 45],
+      arm: [this.cobot.pose.elbow.x, this.cobot.pose.elbow.y, this.cobot.pose.elbow.z + 6],
       gripper: [-8, -3, 13], connector: [5, -3, 0], socket: [-9, -4, 17], tester: [47, -27, 23],
     };
     for (const p of this.parts.values()) p.anchor.set(...anchors[p.id]);
@@ -719,15 +702,11 @@ export class WorkcellScene {
     if (pose) {
       this.tool.position.set(pose[0] * 1000, pose[1] * 1000, pose[2] * 1000);
       this.rotaryGripper.rotation.z = pose[3]; this.plug.rotation.z = pose[3];
-      this.carriage.position.set(pose[0] * 1000, 0, 0); this.ySlide.position.y = pose[1] * 1000;
       const key = pose.map(v => v.toFixed(6)).join();
-      if (key !== this.shadowPose) {
-        this.shadowPose = key; this.renderer.shadowMap.needsUpdate = true;
-        this.serviceLoop.update(pose[0] * 1000, pose[1] * 1000, pose[2] * 1000, pose[3]);
-        this.screwRotor.rotation.z = (42 - pose[2] * 1000) / 1.5 * Math.PI * 2;
-      }
+      if (key !== this.shadowPose) { this.shadowPose = key; this.renderer.shadowMap.needsUpdate = true; }
     }
-    this.serviceLoop.mesh.visible = this.spread < .01;
+    if (this.poseArm()) this.renderer.shadowMap.needsUpdate = true;
+    this.cobot.cable.mesh.visible = this.spread < .01;
     // Parts pulled apart leave the table, so their contact shade and the floor shadow fade.
     if (this.contactMaterial) this.contactMaterial.opacity = .5 * (1 - Math.min(1, this.spread * 4));
     this.floorMaterial.opacity = 0.18 * (1 - 0.75 * this.spread);

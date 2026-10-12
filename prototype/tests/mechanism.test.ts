@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { contactCenters, plugHousing, ServiceLoop, socketHousing } from '../src/mechanism.ts';
+import { contactCenters, plugHousing, socketHousing } from '../src/mechanism.ts';
 import { dimensions } from '../src/model.ts';
 
 test('each connector contact has an open bore through its rendered housing',()=>{
@@ -28,22 +28,6 @@ test('socket cavity remains open and its top agrees with the contact model',()=>
     assert.equal(ray.intersectObject(mesh).length,0);
     geometry.dispose();material.dispose();
   }
-});
-
-test('service loop stays finite over the stroke and reuses its GPU buffers',()=>{
-  const material=new THREE.MeshBasicMaterial(), loop=new ServiceLoop(material);
-  const positions=loop.geometry.attributes.position.array;
-  for(const z of [15.1,26.8,42])for(const x of [-2.8,2.8]){
-    loop.update(x,-2,z);
-    assert.equal(loop.geometry.attributes.position.array,positions);
-    assert.ok(positions.every(Number.isFinite));
-    assert.ok(loop.geometry.attributes.normal.array.every(Number.isFinite));
-    const first=new THREE.Vector3().fromBufferAttribute(loop.geometry.attributes.position,0);
-    const last=new THREE.Vector3().fromBufferAttribute(loop.geometry.attributes.position,32*9);
-    assert.ok(Math.abs(first.distanceTo(loop.curve.v0)-.52)<1e-4);
-    assert.ok(Math.abs(last.distanceTo(loop.curve.v3)-.52)<1e-4);
-  }
-  loop.geometry.dispose();material.dispose();
 });
 
 test('the socket has a relief channel for the plug latch on both variants',()=>{

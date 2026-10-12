@@ -8,7 +8,7 @@ test('batching preserves geometry, part picking and independent slide motion', (
   slide.position.set(8, 5, 12); slide.rotation.z = .35; root.add(slide);
   for (const x of [-2, 2]) {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), material);
-    mesh.position.set(x, 0, 0); mesh.userData.part = 'carriage'; slide.add(mesh);
+    mesh.position.set(x, 0, 0); mesh.userData.part = 'arm'; slide.add(mesh);
   }
   root.updateMatrixWorld(true);
   const before = new THREE.Box3().setFromObject(root);
@@ -18,7 +18,7 @@ test('batching preserves geometry, part picking and independent slide motion', (
   assert.equal(slide.children.length, 1);
   assert.ok(before.min.distanceTo(after.min) < 1e-5 && before.max.distanceTo(after.max) < 1e-5);
   const hit = new THREE.Raycaster(origin, new THREE.Vector3(0, 0, -1)).intersectObject(root, true)[0];
-  assert.equal(hit.object.userData.part, 'carriage');
+  assert.equal(hit.object.userData.part, 'arm');
   slide.position.z += 10; root.updateMatrixWorld(true);
   const moved = new THREE.Box3().setFromObject(root);
   assert.ok(Math.abs(moved.min.z - after.min.z - 10) < 1e-5);
