@@ -4,6 +4,7 @@
     if (!hero || !film) return;
     const sticky = hero.querySelector('.hero__sticky');
     if (!sticky) return;
+    const card = Boolean(hero.classList && hero.classList.contains('hero--card'));
     // The canvas the frames are drawn on. Absent in the tests and in old markup,
     // in which case the film scrubs the <video> as it always did.
     const frames = document.getElementById('frames');
@@ -33,6 +34,9 @@
         const nav = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav')) || 64;
         const fade = parseFloat(getComputedStyle(hero, '::after').height) || 0;
         navFlipAt = heroTop + hero.offsetHeight + fade * .75 - nav;
+        // The card hero sits on the paper, so the bar is paper from the top
+        // and goes dark only over the dark bands further down.
+        if (card) navFlipAt = -Infinity;
         // Dark bands in the middle of the page ([data-nav-dark], Meet the
         // robot) dissolve in from the paper and back out again, so the bar
         // goes dark three quarters of the way into the top dissolve and back
@@ -59,6 +63,7 @@
         if (past === navPast) return;
         navPast = past;
         document.documentElement.classList.toggle('past-hero', past);
+        if (card) document.documentElement.classList.toggle('nav-dark', !past);
     }
     // Progress is the travel through .hero's extra height above the pinned box.
     // The second branch is the no-CSS fallback, where .hero has no extra height.
