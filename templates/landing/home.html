@@ -6,11 +6,8 @@
 {% block color_scheme %}light{% endblock %}
 
 {% block extra_head %}
-<link rel="preload" as="image" fetchpriority="high" href="{% static 'defex/cobot/cobot-poster.webp' %}?v={{ asset_v }}">
-<!-- The hero is 280svh only while it has a film. Set before first paint, so
-     the page does not shift when the deferred script gets round to it;
-     hero-film.js takes the class off again if the film cannot run. -->
-<script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !(navigator.connection && navigator.connection.saveData)) document.documentElement.classList.add('has-scroll-film');</script>
+<link rel="preload" as="image" fetchpriority="high" imagesrcset="{% static 'defex/cobot/still/cobot-hall-1920.avif' %}?v={{ asset_v }} 1920w, {% static 'defex/cobot/still/cobot-hall-2880.avif' %}?v={{ asset_v }} 2880w" imagesizes="100vw" type="image/avif" media="not ((max-aspect-ratio: 13/10) and (max-width: 600px))">
+<link rel="preload" as="image" fetchpriority="high" imagesrcset="{% static 'defex/cobot/still/cobot-hall-tall-1080.avif' %}?v={{ asset_v }} 1080w, {% static 'defex/cobot/still/cobot-hall-tall-1440.avif' %}?v={{ asset_v }} 1440w" imagesizes="100vw" type="image/avif" media="(max-aspect-ratio: 13/10) and (max-width: 600px)">
 <!-- Meet the robot sits far below the fold, so its sheet never holds up first paint -->
 <link rel="stylesheet" href="{% static 'css/meet.css' %}?v={{ asset_v }}" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="{% static 'css/meet.css' %}?v={{ asset_v }}"></noscript>
 {% endblock %}
@@ -21,36 +18,27 @@
 {% include "landing/_topbar.html" %}
 
 <main>
-    <!-- The film is pinned and advances with the scroll. It never plays on its own.
-         Under the headline sits one button, the product's way in: Husan asked
+    <!-- Under the headline sits one button, the product's way in: Husan asked
          for it here, under the robot, and it opens the pitch. The blog took the
          pill in the nav. The page ends on an email field. -->
-    <section class="hero hero--card" id="top" aria-labelledby="hero-title">
+    <section class="hero hero--card hero--still" id="top" aria-labelledby="hero-title">
         <div class="hero__sticky">
-            <!-- The headline on the paper, the film in a card under it (his call,
+            <!-- The headline on the paper, the robot in a card under it (his call,
                  2026-10-12: the connector cell, not the humanoid, the way Agility
-                 and Skild frame their machines). -->
+                 and Skild frame their machines; then one still picture, no film). -->
             <div class="lede">
                 <h1 class="cut" id="hero-title"><span class="cut__face engraved">Connectors, plugged in <br>and <em>checked</em>.</span><span class="cut__mask" aria-hidden="true">Connectors, plugged in <br>and <em>checked</em>.</span></h1>
             </div>
-            <!-- The film as 360 stills (static/defex/cobot/frames), drawn on the
-                 canvas by hero-film.js: the frame is a function of the scroll
-                 position. Previews of every second still (640, 400) arrive first.
-                 The stills carry their own version (film_v). The <video> holds the
-                 poster and is the fallback where the stills cannot be decoded.
-                 Rendered in Blender from scripts/render/cobot_hero.py. -->
+            <!-- One still: the cell on its bench in a factory hall, rendered in
+                 Blender from scripts/render/cobot_still.py (wide for screens, a
+                 4:5 frame for phones held upright). -->
             <div class="hero__screen">
-                <video class="hero__film" id="film" muted playsinline preload="none" disablepictureinpicture aria-hidden="true"
-                       width="1920" height="1080"
-                       poster="{% static 'defex/cobot/cobot-poster.webp' %}?v={{ asset_v }}"
-                       data-poster-final="{% static 'defex/cobot/cobot-poster-final.webp' %}?v={{ asset_v }}"
-                       data-fps="30" data-type="video/mp4"
-                       data-src="{% static 'defex/cobot/cobot-film.mp4' %}?v={{ asset_v }}"
-                       data-src-sm="{% static 'defex/cobot/cobot-film-sm.mp4' %}?v={{ asset_v }}"
-                       data-frames="{% static 'defex/cobot/frames/1920/' %}" data-frames-sm="{% static 'defex/cobot/frames/960/' %}"
-                       data-preview="{% static 'defex/cobot/frames/640/' %}" data-preview-sm="{% static 'defex/cobot/frames/400/' %}" data-preview-step="2"
-                       data-frame-count="360" data-frame-ext="avif" data-frame-size="1920x1080" data-frame-size-sm="960x960" data-frame-v="{{ film_v }}"></video>
-                <canvas class="hero__film hero__film--frames" id="frames" width="1920" height="1080" aria-hidden="true" hidden></canvas>
+                <picture class="hero__photo">
+                    <source type="image/avif" media="(max-aspect-ratio: 13/10) and (max-width: 600px)" srcset="{% static 'defex/cobot/still/cobot-hall-tall-1080.avif' %}?v={{ asset_v }} 1080w, {% static 'defex/cobot/still/cobot-hall-tall-1440.avif' %}?v={{ asset_v }} 1440w" sizes="100vw">
+                    <source type="image/webp" media="(max-aspect-ratio: 13/10) and (max-width: 600px)" srcset="{% static 'defex/cobot/still/cobot-hall-tall-1080.webp' %}?v={{ asset_v }} 1080w" sizes="100vw">
+                    <source type="image/avif" srcset="{% static 'defex/cobot/still/cobot-hall-1920.avif' %}?v={{ asset_v }} 1920w, {% static 'defex/cobot/still/cobot-hall-2880.avif' %}?v={{ asset_v }} 2880w" sizes="100vw">
+                    <img class="hero__film" src="{% static 'defex/cobot/still/cobot-hall-1920.webp' %}?v={{ asset_v }}" width="1920" height="1080" alt="A white Defex cobot holding a connector over a circuit board on its bench in a factory hall" fetchpriority="high" decoding="async">
+                </picture>
                 <span class="hero__tag">Concept render</span>
                 <div class="lede__actions">
                     <a class="glass-button-wrap" href="/prototype/">
@@ -181,7 +169,7 @@
 
 {% block extra_scripts %}
 
-<script src="{% static 'js/hero-film.js' %}?v={{ asset_v }}" defer fetchpriority="high"></script>
+<script src="{% static 'js/hero-film.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/meet.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/steps.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>

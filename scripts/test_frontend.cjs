@@ -943,3 +943,22 @@ test('the cross puts the question off for the visit without answering it', () =>
     assert.equal(p.context.sessionStorage.data['defex-cookies'], 'later');
 });
 
+
+test('a still hero with no film still turns the bar dark over a dark band and back', () => {
+    const p = page(), hero = new Element(), sticky = new Element(), band = new Element();
+    hero.classList.add('hero--card');
+    hero.querySelector = () => sticky;
+    band.getBoundingClientRect = () => ({ top: 1000 });
+    band.offsetHeight = 800;
+    p.selectors['.hero'] = hero;
+    p.selectors['[data-nav-dark]'] = [band];
+    p.run('hero-film.js');
+    assert.equal(p.root.classList.contains('nav-dark'), false);
+    assert.equal(p.root.classList.contains('has-scroll-film'), false);
+    p.context.scrollY = 1200;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), true);
+    p.context.scrollY = 2400;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), false);
+});

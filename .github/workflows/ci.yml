@@ -77,5 +77,5 @@ jobs:
           done
           curl --fail --silent --show-error -H "X-Forwarded-Proto: https" -H "Range: bytes=0-1023" \
             -D /tmp/hero-headers.txt -o /tmp/hero-range.bin \
-            http://127.0.0.1:8000/static/defex/cobot/cobot-film.mp4
+            http://127.0.0.1:8000/static/why/story.mp4
           python -c "from pathlib import Path; assert '206 Partial Content' in Path('/tmp/hero-headers.txt').read_text(); assert len(Path('/tmp/hero-range.bin').read_bytes()) == 1024"
