@@ -1875,13 +1875,13 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
 .has-scroll-film .hero--card .hero__screen { flex: 1 1 auto; width: 100%; height: auto; min-height: 0; aspect-ratio: auto; }
 .hero--card .hero__screen::before, .hero--card .hero__screen::after, .has-scroll-film .hero--card .hero__screen::before { display: none; }
 .hero--card .hero__film, .has-scroll-film .hero--card .hero__film { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; aspect-ratio: auto; object-fit: cover; object-position: 50% 50%; background: var(--film-ground); }
-.hero__tag { position: absolute; z-index: 2; top: clamp(12px, 1.6vw, 22px); left: clamp(12px, 1.6vw, 22px); padding: 7px 12px 6px; border-radius: 999px; font: 400 12.5px/1.2 var(--label); letter-spacing: .03em; color: rgba(26, 24, 21, .72); background: rgba(243, 239, 232, .72); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .hero--card .lede__actions { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; margin: 0; padding: clamp(12px, 1.8vw, 26px); align-items: flex-end; pointer-events: none; }
 .hero--card .lede__actions > * { pointer-events: auto; }
 .hero--card .glass-button { background: color-mix(in srgb, var(--page) 62%, transparent); }
-.hero--card .flick { padding: 11px 16px 12px; border-radius: 14px; color: #EAE8E3; background: rgba(8, 10, 12, .76); -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3); }
-.hero--card .flick__k { color: rgba(234, 232, 227, .62); }
-.hero--card .flick:hover .flick__k { color: #EAE8E3; }
+.hero--card .flick { padding: 11px 16px 12px; border-radius: 0; color: var(--ink); background: var(--page); }
+.hero--card .flick__stage { filter: brightness(0); opacity: .86; }
+.hero--card .flick__k { color: rgba(26, 24, 21, .58); }
+.hero--card .flick:hover .flick__k { color: var(--ink); }
 .hero--card .scroll-cue, .has-scroll-film .hero--card .scroll-cue { display: none; }
 .hero--card + .sheet { padding-top: clamp(56px, 9vh, 112px); }
 @media (min-width: 900px) {
@@ -1891,7 +1891,7 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
     .has-scroll-film .hero--card .hero__sticky { justify-content: center; padding-top: 12px; gap: clamp(20px, 3.5vh, 32px); }
     .has-scroll-film .hero--card .hero__screen { flex: 0 1 auto; aspect-ratio: 4 / 5; }
     .hero--card .lede h1 { font-size: clamp(30px, 8.6vw, 40px); }
-    .hero--card .flick { gap: 6px; padding: 8px 11px 9px; border-radius: 12px; }
+    .hero--card .flick { gap: 6px; padding: 8px 11px 9px; }
     .hero--card .flick__k { font-size: 12px; }
     .hero--card .flick__stage { width: 92px; height: 26px; }
     .hero--card .glass-button-wrap { font-size: 14px; }

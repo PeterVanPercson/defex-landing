@@ -89,7 +89,11 @@ class SiteTests(SimpleTestCase):
         # his call, 2026-10-12: the connector cell replaced the humanoid film,
         # then one still picture replaced the cell's film
         self.assertContains(home, 'class="hero hero--card hero--still"')
-        self.assertContains(home, '<span class="hero__tag">Concept render</span>')
+        # his call: no "Concept render" tag on the picture
+        self.assertNotContains(home, "Concept render")
+        # the partners sit in ink on a square block of the page's paper
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertIn(".hero--card .flick { padding: 11px 16px 12px; border-radius: 0; color: var(--ink); background: var(--page); }", css)
         # every superseded hero asset, so a revert to one of them is caught
         for gone in ("defex-intro-scroll-v2.webm", "defex-intro-scroll.mp4",
                      "defex-intro-scroll-1080.mp4", "defex-first-frame.webp",
