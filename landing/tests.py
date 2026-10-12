@@ -936,6 +936,19 @@ class OfficialPagesTests(SimpleTestCase):
         self.assertIn('"postalCode": "94110"', home)
         self.assertIn('"entity": "Delaware C corporation"', self.client.get("/company.json").content.decode())
 
+    def test_legal_pages_list_their_sections_down_the_side(self):
+        """Skiper's terms layout (his call, 2026-10-12): every legal page gets
+        the sticky list of its sections, built by legal.js from the h2s."""
+        for path in ("/privacy/", "/terms/", "/security/", "/cookies/"):
+            page = self.client.get(path).content.decode()
+            self.assertIn('<nav class="legal__toc" aria-label="On this page" hidden>', page, path)
+            self.assertIn('<article class="prose prose--legal">', page, path)
+            self.assertIn("js/legal.js?v=", page, path)
+            self.assertGreaterEqual(page.count("<h2"), 3, path)
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertIn(".legal__toc { position: sticky;", css)
+        self.assertEqual(self.client.get("/static/js/legal.js").status_code, 200)
+
     def test_no_personal_inbox_on_the_public_pages(self):
         for path in ("/", "/why-us/", "/careers/") + self.PAGES:
             self.assertNotIn("mailto:husan@", self.client.get(path).content.decode(), path)
