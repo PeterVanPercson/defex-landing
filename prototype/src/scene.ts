@@ -216,8 +216,8 @@ export class WorkcellScene {
     const env = new RoomEnvironment(), pmrem = new THREE.PMREMGenerator(this.renderer);
     this.scene.environment = pmrem.fromScene(env, 0.04).texture; this.scene.environmentIntensity = 1; this.scene.environmentRotation.set(Math.PI / 2, 0, 0); env.dispose(); pmrem.dispose();
     const key = new THREE.DirectionalLight(0xfff5e9, 3.4); key.position.set(-40, -70, 140); key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left: -95, right: 95, top: 95, bottom: -95, near: 20, far: 320 });
-    key.shadow.normalBias = 0.12; key.shadow.bias = -0.0002; key.shadow.radius = 4; this.scene.add(key);
+    key.shadow.mapSize.set(4096, 4096); Object.assign(key.shadow.camera, { left: -95, right: 95, top: 95, bottom: -95, near: 20, far: 320 });
+    key.shadow.normalBias = 0.12; key.shadow.bias = -0.0002; key.shadow.radius = 7; key.shadow.blurSamples = 16; this.scene.add(key);
     const rim = new THREE.DirectionalLight(0xe1eafa, 1.6); rim.position.set(60, 90, 80); this.scene.add(rim);
 
     this.backdrop();
