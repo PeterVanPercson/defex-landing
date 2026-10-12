@@ -16,7 +16,7 @@ class SiteTests(SimpleTestCase):
         home = self.client.get("/")
         # the headline and the three steps must match the deck, not the
         # superseded vision-inspection positioning they replaced
-        self.assertContains(home, "Connectors, plugged in<br>and <em>checked</em>.")
+        self.assertContains(home, "Connectors, plugged in <br>and <em>checked</em>.")
         # the case in the pitch's own words: what it does for a factory, as ruled rows
         for claim in ("The robot plugs it in.", "It checks every one.",
                       "Every test teaches it.", "A new part is not a new project."):
@@ -84,20 +84,24 @@ class SiteTests(SimpleTestCase):
         origin = self.client.get("/where-it-started/")
         self.assertEqual(origin.status_code, 301)
         self.assertEqual(origin["Location"], "/")
-        self.assertContains(home, 'data-fps="60"')
-        self.assertContains(home, "defex-intro-v4.mp4")
-        self.assertContains(home, "defex-poster-v4.webp")
+        self.assertContains(home, 'data-fps="30"')
+        self.assertContains(home, "defex/cobot/cobot-film.mp4")
+        self.assertContains(home, "defex/cobot/cobot-poster.webp")
+        # his call, 2026-10-12: the connector cell replaced the humanoid film
+        self.assertContains(home, 'class="hero hero--card"')
+        self.assertContains(home, '<span class="hero__tag">Concept render</span>')
         # every superseded hero asset, so a revert to one of them is caught
         for gone in ("defex-intro-scroll-v2.webm", "defex-intro-scroll.mp4",
                      "defex-intro-scroll-1080.mp4", "defex-first-frame.webp",
                      "defex-first-frame-v2.webp", "defex-final-frame.webp",
                      "defex-final-frame-v2.webp", "defex-intro-v3.mp4",
-                     "defex-poster-v3.webp"):
+                     "defex-poster-v3.webp", "defex-intro-v4.mp4", "defex-poster-v4.webp",
+                     "defex/frames/"):
             self.assertNotContains(home, gone)
-        for asset in ("defex/assets/defex-intro-v4.mp4",
-                      "defex/assets/defex-intro-v4-sm.mp4",
-                      "defex/assets/defex-poster-v4.webp",
-                      "defex/assets/defex-poster-final-v4.webp"):
+        for asset in ("defex/cobot/cobot-film.mp4",
+                      "defex/cobot/cobot-film-sm.mp4",
+                      "defex/cobot/cobot-poster.webp",
+                      "defex/cobot/cobot-poster-final.webp"):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
@@ -209,14 +213,16 @@ class SiteTests(SimpleTestCase):
         self.assertIn("max-height: calc(var(--roll-h) * var(--s, 1))", css)
         self.assertIn("scale: parseFloat(img.dataset.scale) || 1", (Path(settings.BASE_DIR) / "static/js/flick.js").read_text())
 
-    def test_past_its_edges_the_home_page_is_black(self):
-        """What shows when a page is pulled past its top or bottom is the root's
-        colour. Home opens and closes on black; with the body's paper showing
-        there instead, a pale band sat over the hero."""
+    def test_past_its_edges_the_home_page_is_paper(self):
+        """What shows when a page is pulled past its top is the root's colour.
+        Since 2026-10-12 home opens on the paper (the card hero), so the root
+        and the browser bar are paper; the closing block keeps the dark set."""
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
         self.assertRegex(css, r"\.hero, \.dark \{\s*--bg: #020506;")
-        self.assertIn("html:has(.hero) { background-color: #020506; }", css)
-        self.assertContains(self.client.get("/"), '<meta name="theme-color" content="#020506">')
+        self.assertIn("html:has(.hero--card) { background-color: var(--page); }", css)
+        home = self.client.get("/")
+        self.assertContains(home, '<meta name="theme-color" content="#F3EFE8">')
+        self.assertContains(home, '<meta name="color-scheme" content="light">')
 
     def test_article_pictures_hold_their_place(self):
         """A picture that arrives without its size pushes the text under it down
@@ -229,7 +235,7 @@ class SiteTests(SimpleTestCase):
 
     def test_scroll_videos_support_byte_ranges(self):
         """Scroll seeking needs partial responses at both ends of each film."""
-        for path in ("defex/assets/defex-intro-v4.mp4", "why/story.mp4"):
+        for path in ("defex/cobot/cobot-film.mp4", "why/story.mp4"):
             size = (Path(settings.BASE_DIR) / "static" / path).stat().st_size
             for start in (0, size - 1024):
                 response = self.client.get(
@@ -539,65 +545,64 @@ class SiteTests(SimpleTestCase):
         is generous on purpose: the film stays 1920x1080 at 60fps, and the way
         to stay under it is the GOP, not the resolution or the frame rate."""
         budget = {
-            "defex-intro-v4.mp4": 14 * 1024 * 1024,
-            "defex-intro-v4-sm.mp4": 8 * 1024 * 1024,
-            "defex-poster-v4.webp": 90 * 1024,
-            "defex-poster-final-v4.webp": 90 * 1024,
+            "cobot-film.mp4": 14 * 1024 * 1024,
+            "cobot-film-sm.mp4": 8 * 1024 * 1024,
+            "cobot-poster.webp": 90 * 1024,
+            "cobot-poster-final.webp": 90 * 1024,
         }
-        assets = Path(settings.BASE_DIR) / "static" / "defex" / "assets"
+        assets = Path(settings.BASE_DIR) / "static" / "defex" / "cobot"
         for name, cap in budget.items():
             size = (assets / name).stat().st_size
             self.assertLessEqual(size, cap, f"{name} is {size / 1048576:.1f}MB")
         # the phone build has to actually be smaller, or it is pointless
-        self.assertLess((assets / "defex-intro-v4-sm.mp4").stat().st_size,
-                        (assets / "defex-intro-v4.mp4").stat().st_size)
+        self.assertLess((assets / "cobot-film-sm.mp4").stat().st_size,
+                        (assets / "cobot-film.mp4").stat().st_size)
+        # the humanoid film is gone from the deployed tree
+        self.assertFalse((Path(settings.BASE_DIR) / "static" / "defex" / "assets").exists())
+        self.assertFalse((Path(settings.BASE_DIR) / "static" / "defex" / "frames").exists())
         # nothing superseded is still sitting in the deployed tree
         shipped = {p.name for p in assets.iterdir() if p.is_file()}
         self.assertEqual(shipped, set(budget))
 
     def test_hero_stills_stay_within_budget(self):
-        """The film is 450 AVIF stills a size, drawn on a canvas; the count is
-        what maps the scroll to a frame, so it is pinned, and the two sets get
-        a byte budget like the MP4s they replace. The 1920 set is encoded at
-        the CRF that matches the MP4's own measured quality (0.9951 against
-        its 0.9955 mean SSIM, docs/hero.md), which lands near the MP4's bytes;
-        the way to stay under the cap is a denser encode, not a smaller frame.
-        The phone set is the 5:4 crop the phone shows, pixel for pixel at 3x
-        on a 390px screen."""
-        frames = Path(settings.BASE_DIR) / "static" / "defex" / "frames"
+        """The film is 360 AVIF stills a size, rendered in Blender
+        (scripts/render/cobot_hero.py) and drawn on a canvas; the count is what
+        maps the scroll to a frame, so it is pinned, and the sets get a byte
+        budget. The phone set is the square crop the phone card shows."""
+        frames = Path(settings.BASE_DIR) / "static" / "defex" / "cobot" / "frames"
         totals = {}
-        for size, cap in (("1920", 15 * 1024 * 1024), ("1200", 10 * 1024 * 1024)):
+        for size, cap in (("1920", 15 * 1024 * 1024), ("960", 10 * 1024 * 1024)):
             files = sorted(p for p in (frames / size).iterdir() if p.is_file())
-            self.assertEqual(len(files), 450, size)
+            self.assertEqual(len(files), 360, size)
             self.assertEqual(files[0].name, "f0000.avif")
-            self.assertEqual(files[-1].name, "f0449.avif")
+            self.assertEqual(files[-1].name, "f0359.avif")
             totals[size] = sum(p.stat().st_size for p in files)
             self.assertLessEqual(totals[size], cap, f"{size}: {totals[size] / 1048576:.1f}MB")
-        self.assertLess(totals["1200"], totals["1920"])
+        self.assertLess(totals["960"], totals["1920"])
         # The previews: every second still, small, so a first scroll on a slow
         # connection has the right moment to show (hero-film.js). They have to
         # stay a small fraction of the full sets or they stop arriving first.
-        for size, full, cap in (("640", "1920", 1.6 * 1024 * 1024), ("400", "1200", 1.2 * 1024 * 1024)):
+        for size, full, cap in (("640", "1920", 1.6 * 1024 * 1024), ("400", "960", 1.2 * 1024 * 1024)):
             files = sorted(p.name for p in (frames / size).iterdir() if p.is_file())
-            self.assertEqual(files, [f"f{i:04d}.avif" for i in range(0, 450, 2)], size)
+            self.assertEqual(files, [f"f{i:04d}.avif" for i in range(0, 360, 2)], size)
             total = sum((frames / size / name).stat().st_size for name in files)
             self.assertLessEqual(total, cap, f"{size}: {total / 1048576:.2f}MB")
-            self.assertLess(total * 6, totals[full], size)
-        self.assertEqual({p.name for p in frames.iterdir()}, {"1920", "1200", "640", "400"})
+            self.assertLess(total * 3, totals[full], size)
+        self.assertEqual({p.name for p in frames.iterdir()}, {"1920", "960", "640", "400"})
         home = self.client.get("/").content.decode()
-        for chunk in ('data-frames="/static/defex/frames/1920/"', 'data-frames-sm="/static/defex/frames/1200/"',
-                      'data-preview="/static/defex/frames/640/"', 'data-preview-sm="/static/defex/frames/400/"',
+        for chunk in ('data-frames="/static/defex/cobot/frames/1920/"', 'data-frames-sm="/static/defex/cobot/frames/960/"',
+                      'data-preview="/static/defex/cobot/frames/640/"', 'data-preview-sm="/static/defex/cobot/frames/400/"',
                       'data-preview-step="2"', f'data-frame-v="{settings.DEFEX_FILM_VERSION}"',
-                      'data-frame-count="450"', 'data-frame-size="1920x1080"', 'data-frame-size-sm="1200x960"',
+                      'data-frame-count="360"', 'data-frame-size="1920x1080"', 'data-frame-size-sm="960x960"',
                       '<canvas class="hero__film hero__film--frames" id="frames"', 'preload="none"',
                       "classList.add('has-scroll-film')"):
             self.assertIn(chunk, home, chunk)
-        # a deploy must not change the stills' URLs: they are 15 MB a visitor
+        # a deploy must not change the stills' URLs
         self.assertNotEqual(settings.DEFEX_FILM_VERSION, settings.DEFEX_ASSET_VERSION)
         # the film is no longer masked: a mask on the element repainted it on every frame
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
         self.assertNotIn("mask-image: linear-gradient(to bottom, transparent 0, #000 26%", css)
-        still = self.client.get("/static/defex/frames/1920/f0000.avif?v=1")
+        still = self.client.get("/static/defex/cobot/frames/1920/f0000.avif?v=1")
         self.assertEqual(still.status_code, 200)
         self.assertEqual(still["Content-Type"], "image/avif")
         self.assertIn("s-maxage", still["Cache-Control"])

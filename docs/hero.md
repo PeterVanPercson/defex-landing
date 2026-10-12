@@ -2,6 +2,26 @@
 
 ## Hero film
 
+**Since 2026-10-12 (his call) the hero is the connector cell, not the humanoid.**
+The headline sits on the paper and the film plays in a rounded card under it
+(`.hero--card`), the way Agility and Skild frame their machines. The film is a
+Blender render, `scripts/render/cobot_hero.py`: a white cobot carries a
+connector on its cable, seats it in the header on a green board, the tester
+lamp and the board LED go amber then green, the gripper lets go and the arm
+lifts away, with the camera gliding from a wide shot to a close-up and back.
+It is all modelled in the script (no external models), 360 frames at 1920x1080,
+about 11 s a frame on this Mac (Cycles, Metal, 64 samples, OIDN):
+
+```bash
+blender --background --python scripts/render/cobot_hero.py -- --output /tmp/cobot --frames 360 --samples 64
+scripts/render/encode.sh /tmp/cobot/frames static/defex/cobot
+```
+
+`encode.sh` writes the 1920 stills, the 960x960 square set the phone card shows
+(a centre crop), the 640/400 previews of every second still, the two posters
+and the MP4 fallbacks. The card carries a "Concept render" tag. The engine
+below is unchanged; the notes on the humanoid's stills are kept for the method.
+
 The hero is pinned with `position: sticky` for the height of `.hero` (280svh,
 220svh in portrait) and `static/js/hero-film.js` maps the page's scroll position
 onto a frame of the film. Scrolling is watching, so the whole fifteen seconds is
