@@ -22,7 +22,7 @@ PUBLIC_COMPANY = {
     "address": {"street": "128 York Street, 2nd floor", "city": "San Francisco", "region": "California",
                 "postal_code": "94110", "country": "United States"},
     "url": CANONICAL_ORIGIN + "/",
-    "description": "Defex is developing self-teaching robots for manufacturing, starting with connectors.",
+    "description": "Defex is developing robots that plug in connectors, check every one and learn from each test.",
     "location": "San Francisco, California, United States",
     # headquarters first, then the other two offices, west to east
     "offices": [
@@ -195,7 +195,7 @@ def llms_txt(request):
         "Canonical domain: defexrobotics.com (defex.app redirects here).", "",
         "## Pages",
         "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robots do and the inspection prototype",
-        "- [Why us](" + CANONICAL_ORIGIN + reverse("why_us") + "): why robots that test every part they build: built-in testing, self-reset, new parts, and where we are today",
+        "- [Why us](" + CANONICAL_ORIGIN + reverse("why_us") + "): why robots that plug in and check every connector: the check, learning from each test, new parts, and where we are today",
         "- [Careers](" + CANONICAL_ORIGIN + reverse("careers") + "): open roles",
         "- [Security](" + CANONICAL_ORIGIN + reverse("security") + "): data handling and vulnerability reporting",
         "- [Privacy](" + CANONICAL_ORIGIN + reverse("privacy") + ") and [Terms](" + CANONICAL_ORIGIN + reverse("terms") + ")", "",

@@ -16,12 +16,13 @@ class SiteTests(SimpleTestCase):
         home = self.client.get("/")
         # the headline and the three steps must match the deck, not the
         # superseded vision-inspection positioning they replaced
-        self.assertContains(home, "Self-teaching robots")
+        self.assertContains(home, "Connectors, plugged in<br>and <em>checked</em>.")
         # the case in the pitch's own words: what it does for a factory, as ruled rows
-        for claim in ("Our robot teaches itself.", "Bad parts never ship.",
-                      "No one stands over it.", "A new part is not a new project."):
+        for claim in ("The robot plugs it in.", "It checks every one.",
+                      "Every test teaches it.", "A new part is not a new project."):
             self.assertContains(home, f'class="feature__t engraved">{claim}</h3>')
-        for slop in ("walk away from", "feel what", "A new way, not a new project", "harder to fixture"):
+        for slop in ("walk away from", "feel what", "A new way, not a new project", "harder to fixture",
+                     "Bad parts never ship", "No one stands over it", "stand over it", "Self-teaching"):
             self.assertNotContains(home, slop)
         # the section is "Why us", not the old slogan
         self.assertContains(home, 'id="why-title" data-reveal>Robots are cheap.<br> Setting them up is <em>not</em>.</h2>')
@@ -431,9 +432,9 @@ class SiteTests(SimpleTestCase):
         response = self.client.get("/why-us/")
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()
-        self.assertIn("<title>Why Defex | Robots that test every part they build</title>", body)
+        self.assertIn("<title>Why Defex | Robots that plug in and check every connector</title>", body)
         self.assertIn('data-word="WHY US"', body)
-        self.assertIn('id="why-title"><span class="wy-sr">Why us: </span>Robots that test every part', body)
+        self.assertIn('id="why-title"><span class="wy-sr">Why us: </span>Robots that plug in and check every', body)
         for section in ("portal", "problem", "promise", "meet", "tests", "learns", "resets", "newpart", "proof", "pricing", "faq", "talk"):
             self.assertIn(f'id="{section}"', body)
         # his call, 2026-10-04: no "Watch it work" section and no link to it
@@ -813,7 +814,7 @@ class SiteTests(SimpleTestCase):
         to self-teaching robots. It signs off with the positioning instead."""
         from landing.notify import autoresponder_email
         subject, html = autoresponder_email("Ada Lovelace", "Analytical Engines")
-        self.assertIn("Self-teaching robots for manufacturing", html)
+        self.assertIn("Robots that plug in and check connectors", html)
         for stale in ("inspection", "defect", "vision"):
             self.assertNotIn(stale, html.lower())
 
