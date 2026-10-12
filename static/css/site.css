@@ -1894,6 +1894,8 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
    cuts it out of the dark band would only darken the paper behind it */
 .hero--card .cut { background: none; }
 .hero--card .cut__mask { display: none; }
+/* the headline in plain ink, not cut (his call, 2026-10-12: "usual text") */
+.hero--card .cut__face { color: var(--ink); background: none; text-shadow: none; -webkit-text-fill-color: currentColor; }
 .hero--card .lede h1 { max-width: none; margin-inline: auto; font-size: clamp(34px, 4.6vw, 74px); line-height: 1.02; letter-spacing: -.015em; }
 .hero--card .hero__screen { position: relative; width: 100%; max-width: none; margin: 0; aspect-ratio: 16 / 9; border-radius: clamp(16px, 1.8vw, 28px); overflow: hidden; isolation: isolate; background: var(--film-ground); }
 .has-scroll-film .hero--card .hero__screen { flex: 1 1 auto; width: 100%; height: auto; min-height: 0; aspect-ratio: auto; }
