@@ -1909,3 +1909,14 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
     .hero--still .hero__sticky { height: auto; min-height: 0; justify-content: center; padding-top: 12px; gap: clamp(20px, 3.5vh, 32px); }
     .hero--still .hero__screen { flex: 0 0 auto; aspect-ratio: 4 / 5; }
 }
+
+/* The picture opens out of a small square in its middle (fous.com's reveal,
+   his call, 2026-10-12): the clip grows to the card, the picture itself never
+   scales. The head script sets .hero-opening, the inline script after the
+   hero adds .is-open once the picture has arrived. */
+@keyframes hero-open {
+    from { clip-path: inset(calc(50% - 64px) round 8px); opacity: 0; filter: blur(10px); }
+    to { clip-path: inset(0 round clamp(16px, 1.8vw, 28px)); opacity: 1; filter: blur(0); }
+}
+.hero-opening .hero--still .hero__screen:not(.is-open) { clip-path: inset(calc(50% - 64px) round 8px); opacity: 0; filter: blur(10px); }
+.hero-opening .hero--still .hero__screen.is-open { animation: hero-open 1.8s cubic-bezier(.22, 1, .36, 1) backwards; }

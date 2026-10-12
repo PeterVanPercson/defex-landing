@@ -579,6 +579,13 @@ class SiteTests(SimpleTestCase):
         self.assertRegex(css, r"\.hero--still \.hero__screen \{ flex: 0 0 auto; aspect-ratio: 4 / 5; \}")
         js = (Path(settings.BASE_DIR) / "static/js/hero-film.js").read_text()
         self.assertIn("if (!film) {", js)
+        # it opens out of a small square (fous.com's reveal), never under
+        # Reduce Motion, and never stays shut if the picture fails to load
+        self.assertIn("document.documentElement.classList.add('hero-opening')", home)
+        self.assertIn("prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('hero-opening')", home)
+        self.assertIn("setTimeout(open, 2500)", home)
+        self.assertIn("from { clip-path: inset(calc(50% - 64px) round 8px); opacity: 0; filter: blur(10px); }", css)
+        self.assertIn(".hero-opening .hero--still .hero__screen.is-open { animation: hero-open 1.8s cubic-bezier(.22, 1, .36, 1) backwards; }", css)
         image = self.client.get("/static/defex/cobot/still/cobot-photo-1672.avif?v=1")
         self.assertEqual(image.status_code, 200)
         self.assertEqual(image["Content-Type"], "image/avif")
