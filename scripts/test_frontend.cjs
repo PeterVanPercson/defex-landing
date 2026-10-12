@@ -717,47 +717,49 @@ test('duplicate application clicks are blocked and back navigation restores subm
     assert.equal(p.form.hasAttribute('aria-busy'), false);
 });
 
-// The pinned claims (static/js/steps.js): four cards, four bars, a root whose
-// top the test places, and a media query the test answers.
-function steps({ roomy = true, reduced = false } = {}) {
-    const p = page({ reduced }), root = new Element();
-    const cards = [0, 1, 2, 3].map(() => new Element()), bars = [0, 1, 2, 3].map(() => new Element());
+// The stacked claims (static/js/steps.js): four cards in a list whose top the
+// test places, and a media query the test answers.
+function steps({ tall = true, reduced = false } = {}) {
+    const p = page({ reduced }), root = new Element(), list = new Element();
+    const cards = [0, 1, 2, 3].map(() => new Element());
     const media = p.context.matchMedia;
-    p.context.matchMedia = query => query.includes('min-width') ? { matches: roomy, addEventListener() {} } : media(query);
-    root.getBoundingClientRect = () => ({ top: 3000 - p.context.scrollY });
-    root.querySelectorAll = selector => selector === '.feature' ? cards : bars;
+    p.context.matchMedia = query => query.includes('min-height') ? { matches: tall, addEventListener() {} } : media(query);
+    list.getBoundingClientRect = () => ({ top: 3000 - p.context.scrollY, height: 3600 });
+    root.querySelectorAll = () => cards;
+    root.querySelector = () => list;
     p.ids.steps = root;
-    p.context.scrollTo = (x, y) => { p.context.scrollY = y; };
     p.run('steps.js');
     const scroll = (y) => { p.context.scrollY = y; p.event('scroll'); p.frame(); };
-    const on = () => cards.findIndex(card => card.classList.contains('is-on'));
-    return { ...p, root, cards, bars, scroll, on };
+    const s = i => Number(cards[i].style['--s']);
+    return { ...p, root, cards, scroll, s };
 }
 
-test('the claims pin on a roomy screen and the scroll walks through them', () => {
+test('the claims stack and each card shrinks back as the ones after it arrive', () => {
     const p = steps();
-    assert.equal(p.root.classList.contains('is-pinned'), true);
-    assert.equal(p.on(), 0);
-    // the pin starts a nav's height (64) above the root's top; one card is 62% of the 720 viewport
-    const start = 3000 - 64, stretch = 720 * 0.62;
-    p.scroll(start + stretch * 1.5);
-    assert.equal(p.on(), 1);
-    assert.equal(p.bars[0].style['--fill'], '1.000');
-    assert.equal(p.bars[1].style['--fill'], '0.500');
-    assert.equal(p.bars[2].style['--fill'], '0.000');
-    p.scroll(start + stretch * 9);
-    assert.equal(p.on(), 3);
-    p.bars[2].emit('click');
-    p.event('scroll'); p.frame();
-    assert.equal(p.on(), 2);
+    assert.equal(p.root.classList.contains('is-stacked'), true);
+    // before the list: every card at full size
+    p.scroll(0);
+    for (let i = 0; i < 4; i++) assert.equal(p.s(i), 1);
+    // halfway through: the first card is on its way back, the last never moves
+    const start = 3000 - 720 * 0.15, span = 3600 - 720 * 0.6;
+    p.scroll(start + span * .5);
+    assert.ok(p.s(0) < 1 && p.s(0) > 0.85);
+    assert.equal(p.s(3), 1);
+    // the end: each card a step further back than the one after it
+    p.scroll(start + span * 2);
+    assert.equal(p.s(0), 0.85);
+    assert.equal(p.s(1), 0.9);
+    assert.equal(p.s(2), 0.95);
+    assert.equal(p.s(3), 1);
+    assert.ok(Number(p.cards[0].style['--dim']) > Number(p.cards[2].style['--dim']));
 });
 
-test('the claims stay stacked on a phone and under reduced motion', () => {
-    for (const options of [{ roomy: false }, { reduced: true }]) {
+test('the claims simply sit one under another on a short window and under reduced motion', () => {
+    for (const options of [{ tall: false }, { reduced: true }]) {
         const p = steps(options);
-        assert.equal(p.root.classList.contains('is-pinned'), false);
+        assert.equal(p.root.classList.contains('is-stacked'), false);
         p.scroll(4000);
-        assert.equal(p.on(), -1);
+        assert.equal(p.cards[0].style['--s'], undefined);
     }
 });
 
