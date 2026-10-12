@@ -1,6 +1,25 @@
 # Home page: the scroll-driven intro film and the origin clip
 
-## Hero film
+## Hero still
+
+**Later on 2026-10-12 (his call: "just a robot as an intro") the film became
+one still.** The card under the headline (`.hero--still`) holds a `<picture>`:
+the cobot on its bench in a factory hall, wide (2880 and 1920) for screens and
+4:5 (1440 and 1080) for phones held upright, AVIF with a WebP fallback, all in
+`static/defex/cobot/still/`, about 330 KB together. Rendered from
+`scripts/render/cobot_still.py` (Cycles, Metal, 512 samples, about 10 min a
+frame at 3840x2160):
+
+```bash
+blender --background --python scripts/render/cobot_still.py -- --output /tmp/still --t .5 --shot close3 --res 3840x2160 --samples 512 --name final-wide
+blender --background --python scripts/render/cobot_still.py -- --output /tmp/still --t .5 --shot tall --res 2160x2700 --samples 512 --name final-tall
+```
+
+`--t` is the moment in the cell's job (0.5: the connector held over the
+socket). hero-film.js runs only the bar logic when there is no `#film`. The
+film notes below are history.
+
+## Hero film (superseded)
 
 **Since 2026-10-12 (his call) the hero is the connector cell, not the humanoid.**
 The headline sits on the paper and the film plays in a rounded card under it

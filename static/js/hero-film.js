@@ -1,7 +1,7 @@
 (() => {
     const hero = document.querySelector('.hero');
     const film = document.getElementById('film');
-    if (!hero || !film) return;
+    if (!hero) return;
     const sticky = hero.querySelector('.hero__sticky');
     if (!sticky) return;
     const card = Boolean(hero.classList && hero.classList.contains('hero--card'));
@@ -11,7 +11,7 @@
     const cue = hero.querySelector('.scroll-cue');
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     const saveData = Boolean(navigator.connection && navigator.connection.saveData);
-    const initialPoster = film.poster;
+    const initialPoster = film ? film.poster : '';
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
     // The film finishes a little before the pin releases, so the last frame holds.
     const SCRUB_END = 0.9;
@@ -64,6 +64,17 @@
         navPast = past;
         document.documentElement.classList.toggle('past-hero', past);
         if (card) document.documentElement.classList.toggle('nav-dark', !past);
+    }
+    // A hero with a still picture and no film: only the bar to look after.
+    if (!film) {
+        const resyncNav = () => { measureGeometry(); syncNav(); };
+        resyncNav();
+        addEventListener('scroll', syncNav, { passive: true });
+        addEventListener('resize', resyncNav, { passive: true });
+        addEventListener('pageshow', resyncNav);
+        addEventListener('load', resyncNav);
+        if ('ResizeObserver' in window) new ResizeObserver(resyncNav).observe(document.body);
+        return;
     }
     // Progress is the travel through .hero's extra height above the pinned box.
     // The second branch is the no-CSS fallback, where .hero has no extra height.

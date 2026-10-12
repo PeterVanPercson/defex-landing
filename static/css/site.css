@@ -1902,3 +1902,15 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
     .hero--card .glass-button-wrap { font-size: 14px; }
     .hero--card .glass-button-text { min-height: 40px; padding: 0 18px; font-size: 12.5px; }
 }
+
+/* Then one still instead of the film (his call, the same day: "just a robot
+   as an intro"): the card fills the screen under the headline on a desk and
+   is a 4:5 frame on a phone held upright. */
+.hero--still .hero__sticky { height: calc(100svh - var(--nav)); min-height: 520px; }
+.hero--still .hero__screen { flex: 1 1 auto; min-height: 0; aspect-ratio: auto; }
+.hero__photo { position: absolute; inset: 0; display: block; }
+.hero--still .hero__photo .hero__film { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; }
+@media (max-aspect-ratio: 13/10) and (max-width: 600px) {
+    .hero--still .hero__sticky { height: auto; min-height: 0; justify-content: center; padding-top: 12px; gap: clamp(20px, 3.5vh, 32px); }
+    .hero--still .hero__screen { flex: 0 0 auto; aspect-ratio: 4 / 5; }
+}

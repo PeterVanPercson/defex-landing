@@ -66,7 +66,7 @@ class SiteTests(SimpleTestCase):
         header = home.content.decode().split("<header", 1)[1].split("</header>", 1)[0]
         self.assertNotIn(">defex<", header)
         self.assertIn(">defex<", home.content.decode())   # present in the footer
-        self.assertContains(home, 'id="film"')
+        self.assertContains(home, '<picture class="hero__photo">')
         # nothing plays before the hero: the starting page (the mark on black) is gone
         self.assertNotContains(home, 'id="intro"')
         self.assertNotContains(home, "is-intro")
@@ -84,11 +84,10 @@ class SiteTests(SimpleTestCase):
         origin = self.client.get("/where-it-started/")
         self.assertEqual(origin.status_code, 301)
         self.assertEqual(origin["Location"], "/")
-        self.assertContains(home, 'data-fps="30"')
-        self.assertContains(home, "defex/cobot/cobot-film.mp4")
-        self.assertContains(home, "defex/cobot/cobot-poster.webp")
-        # his call, 2026-10-12: the connector cell replaced the humanoid film
-        self.assertContains(home, 'class="hero hero--card"')
+        self.assertContains(home, "defex/cobot/still/cobot-hall-1920.avif")
+        # his call, 2026-10-12: the connector cell replaced the humanoid film,
+        # then one still picture replaced the cell's film
+        self.assertContains(home, 'class="hero hero--card hero--still"')
         self.assertContains(home, '<span class="hero__tag">Concept render</span>')
         # every superseded hero asset, so a revert to one of them is caught
         for gone in ("defex-intro-scroll-v2.webm", "defex-intro-scroll.mp4",
@@ -96,12 +95,11 @@ class SiteTests(SimpleTestCase):
                      "defex-first-frame-v2.webp", "defex-final-frame.webp",
                      "defex-final-frame-v2.webp", "defex-intro-v3.mp4",
                      "defex-poster-v3.webp", "defex-intro-v4.mp4", "defex-poster-v4.webp",
-                     "defex/frames/"):
+                     "defex/frames/", "defex/cobot/frames/", "cobot-film.mp4",
+                     "cobot-poster.webp", "has-scroll-film"):
             self.assertNotContains(home, gone)
-        for asset in ("defex/cobot/cobot-film.mp4",
-                      "defex/cobot/cobot-film-sm.mp4",
-                      "defex/cobot/cobot-poster.webp",
-                      "defex/cobot/cobot-poster-final.webp"):
+        for asset in ("defex/cobot/still/cobot-hall-1920.avif",
+                      "defex/cobot/still/cobot-hall-tall-1080.avif"):
             response = self.client.get(f"/static/{asset}?v=1")
             self.assertEqual(response.status_code, 200, asset)
             self.assertIn("s-maxage", response["Cache-Control"])
@@ -235,7 +233,7 @@ class SiteTests(SimpleTestCase):
 
     def test_scroll_videos_support_byte_ranges(self):
         """Scroll seeking needs partial responses at both ends of each film."""
-        for path in ("defex/cobot/cobot-film.mp4", "why/story.mp4"):
+        for path in ("why/story.mp4",):
             size = (Path(settings.BASE_DIR) / "static" / path).stat().st_size
             for start in (0, size - 1024):
                 response = self.client.get(
@@ -541,71 +539,51 @@ class SiteTests(SimpleTestCase):
     def test_hero_assets_stay_within_budget(self):
         """The hero shipped at 34.5MB once, on every device, with no narrow
         build and nothing in CI that noticed. A visitor on a phone pays for
-        this before they read a word, so it gets a number and a guard. The cap
-        is generous on purpose: the film stays 1920x1080 at 60fps, and the way
-        to stay under it is the GOP, not the resolution or the frame rate."""
+        this before they read a word, so it gets a number and a guard. The
+        hero is now one still (scripts/render/cobot_still.py), so the guard is
+        per file, and the phone frame has to be lighter than the desk one."""
         budget = {
-            "cobot-film.mp4": 14 * 1024 * 1024,
-            "cobot-film-sm.mp4": 8 * 1024 * 1024,
-            "cobot-poster.webp": 90 * 1024,
-            "cobot-poster-final.webp": 90 * 1024,
+            "cobot-hall-2880.avif": 900 * 1024,
+            "cobot-hall-1920.avif": 500 * 1024,
+            "cobot-hall-1920.webp": 600 * 1024,
+            "cobot-hall-tall-1440.avif": 600 * 1024,
+            "cobot-hall-tall-1080.avif": 400 * 1024,
+            "cobot-hall-tall-1080.webp": 500 * 1024,
         }
-        assets = Path(settings.BASE_DIR) / "static" / "defex" / "cobot"
+        still = Path(settings.BASE_DIR) / "static" / "defex" / "cobot" / "still"
         for name, cap in budget.items():
-            size = (assets / name).stat().st_size
-            self.assertLessEqual(size, cap, f"{name} is {size / 1048576:.1f}MB")
-        # the phone build has to actually be smaller, or it is pointless
-        self.assertLess((assets / "cobot-film-sm.mp4").stat().st_size,
-                        (assets / "cobot-film.mp4").stat().st_size)
-        # the humanoid film is gone from the deployed tree
-        self.assertFalse((Path(settings.BASE_DIR) / "static" / "defex" / "assets").exists())
-        self.assertFalse((Path(settings.BASE_DIR) / "static" / "defex" / "frames").exists())
+            size = (still / name).stat().st_size
+            self.assertLessEqual(size, cap, f"{name} is {size / 1024:.0f}KB")
+        self.assertLess((still / "cobot-hall-tall-1080.avif").stat().st_size,
+                        (still / "cobot-hall-1920.avif").stat().st_size)
+        # the humanoid film and the cell's film are gone from the deployed tree
+        for gone in ("assets", "frames", "cobot/frames"):
+            self.assertFalse((Path(settings.BASE_DIR) / "static" / "defex" / gone).exists(), gone)
+        self.assertEqual({p.name for p in (still.parent).iterdir()}, {"still"})
         # nothing superseded is still sitting in the deployed tree
-        shipped = {p.name for p in assets.iterdir() if p.is_file()}
-        self.assertEqual(shipped, set(budget))
+        self.assertEqual({p.name for p in still.iterdir() if p.is_file()}, set(budget))
 
-    def test_hero_stills_stay_within_budget(self):
-        """The film is 360 AVIF stills a size, rendered in Blender
-        (scripts/render/cobot_hero.py) and drawn on a canvas; the count is what
-        maps the scroll to a frame, so it is pinned, and the sets get a byte
-        budget. The phone set is the square crop the phone card shows."""
-        frames = Path(settings.BASE_DIR) / "static" / "defex" / "cobot" / "frames"
-        totals = {}
-        for size, cap in (("1920", 15 * 1024 * 1024), ("960", 10 * 1024 * 1024)):
-            files = sorted(p for p in (frames / size).iterdir() if p.is_file())
-            self.assertEqual(len(files), 360, size)
-            self.assertEqual(files[0].name, "f0000.avif")
-            self.assertEqual(files[-1].name, "f0359.avif")
-            totals[size] = sum(p.stat().st_size for p in files)
-            self.assertLessEqual(totals[size], cap, f"{size}: {totals[size] / 1048576:.1f}MB")
-        self.assertLess(totals["960"], totals["1920"])
-        # The previews: every second still, small, so a first scroll on a slow
-        # connection has the right moment to show (hero-film.js). They have to
-        # stay a small fraction of the full sets or they stop arriving first.
-        for size, full, cap in (("640", "1920", 1.6 * 1024 * 1024), ("400", "960", 1.2 * 1024 * 1024)):
-            files = sorted(p.name for p in (frames / size).iterdir() if p.is_file())
-            self.assertEqual(files, [f"f{i:04d}.avif" for i in range(0, 360, 2)], size)
-            total = sum((frames / size / name).stat().st_size for name in files)
-            self.assertLessEqual(total, cap, f"{size}: {total / 1048576:.2f}MB")
-            self.assertLess(total * 3, totals[full], size)
-        self.assertEqual({p.name for p in frames.iterdir()}, {"1920", "960", "640", "400"})
+    def test_the_hero_is_one_still(self):
+        """No film, no canvas, no pinned scroll: a <picture> with a wide frame
+        for screens and a 4:5 frame for phones held upright, preloaded, with
+        the bar still turning dark over the dark bands (hero-film.js)."""
         home = self.client.get("/").content.decode()
-        for chunk in ('data-frames="/static/defex/cobot/frames/1920/"', 'data-frames-sm="/static/defex/cobot/frames/960/"',
-                      'data-preview="/static/defex/cobot/frames/640/"', 'data-preview-sm="/static/defex/cobot/frames/400/"',
-                      'data-preview-step="2"', f'data-frame-v="{settings.DEFEX_FILM_VERSION}"',
-                      'data-frame-count="360"', 'data-frame-size="1920x1080"', 'data-frame-size-sm="960x960"',
-                      '<canvas class="hero__film hero__film--frames" id="frames"', 'preload="none"',
-                      "classList.add('has-scroll-film')"):
+        for chunk in ('<picture class="hero__photo">',
+                      'media="(max-aspect-ratio: 13/10) and (max-width: 600px)" srcset="/static/defex/cobot/still/cobot-hall-tall-1080.avif',
+                      'cobot-hall-2880.avif?v=', 'width="1920" height="1080" alt="A white Defex cobot',
+                      'rel="preload" as="image" fetchpriority="high" imagesrcset="/static/defex/cobot/still/cobot-hall-1920.avif',
+                      "js/hero-film.js"):
             self.assertIn(chunk, home, chunk)
-        # a deploy must not change the stills' URLs
-        self.assertNotEqual(settings.DEFEX_FILM_VERSION, settings.DEFEX_ASSET_VERSION)
-        # the film is no longer masked: a mask on the element repainted it on every frame
+        for gone in ('id="film"', 'id="frames"', "data-frame-count", "<video"):
+            self.assertNotIn(gone, home.split('id="why"')[0], gone)
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
-        self.assertNotIn("mask-image: linear-gradient(to bottom, transparent 0, #000 26%", css)
-        still = self.client.get("/static/defex/cobot/frames/1920/f0000.avif?v=1")
-        self.assertEqual(still.status_code, 200)
-        self.assertEqual(still["Content-Type"], "image/avif")
-        self.assertIn("s-maxage", still["Cache-Control"])
+        self.assertRegex(css, r"\.hero--still \.hero__screen \{ flex: 0 0 auto; aspect-ratio: 4 / 5; \}")
+        js = (Path(settings.BASE_DIR) / "static/js/hero-film.js").read_text()
+        self.assertIn("if (!film) {", js)
+        image = self.client.get("/static/defex/cobot/still/cobot-hall-1920.avif?v=1")
+        self.assertEqual(image.status_code, 200)
+        self.assertEqual(image["Content-Type"], "image/avif")
+        self.assertIn("s-maxage", image["Cache-Control"])
 
     def test_share_card_is_current(self):
         """Every page's og:image is the same file, it is what a link pastes
