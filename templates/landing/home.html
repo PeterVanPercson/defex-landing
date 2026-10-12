@@ -42,7 +42,6 @@
                     <source type="image/avif" srcset="{% static 'defex/cobot/still/cobot-photo-1280.avif' %}?v={{ asset_v }} 1280w, {% static 'defex/cobot/still/cobot-photo-1672.avif' %}?v={{ asset_v }} 1672w" sizes="100vw">
                     <img class="hero__film" src="{% static 'defex/cobot/still/cobot-photo-1672.webp' %}?v={{ asset_v }}" width="1672" height="941" alt="A white Defex cobot over a part on its fixture, on a bench in an empty factory hall" fetchpriority="high" decoding="async">
                 </picture>
-                <span class="hero__tag">Concept render</span>
                 <div class="lede__actions">
                     <a class="glass-button-wrap" href="/prototype/">
                         <span class="glass-button-tilt">
@@ -50,8 +49,8 @@
                             <span class="glass-button-shadow" aria-hidden="true"></span>
                         </span>
                     </a>
-                    <!-- Every partner, one at a time (static/js/flick.js), on a dark
-                         chip so the white strips read over the light film. -->
+                    <!-- Every partner, one at a time (static/js/flick.js), in ink on a
+                         square-cornered block of the page's paper (his call). -->
                     <a class="flick" href="#partners">
                         <span class="flick__k">Partners</span>
                         <span class="flick__names">: {% for p in hero_partners %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
