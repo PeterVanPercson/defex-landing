@@ -1,6 +1,6 @@
 # Defex Robotics
 
-Self-teaching robots for manufacturing, starting with connector assembly.
+Robots that plug in connectors, check every one and learn from each test.
 
 [Website](https://defexrobotics.com/) · [Why us](https://defexrobotics.com/why-us/) · [Engineering notes](https://defexrobotics.com/blog/)
 

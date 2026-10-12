@@ -87,7 +87,7 @@ def autoresponder_email(name: str, factory: str) -> tuple[str, str]:
         '<p>If you want to get ahead, reply with the part you want the robot to handle '
         'and how it&rsquo;s checked today. A photo of the station helps.</p>'
         '<p style="margin-top:24px">Husan Mavlonov<br>'
-        '<span style="color:#7A7B7F;font-size:13px">Self-teaching robots for manufacturing &middot; '
+        '<span style="color:#7A7B7F;font-size:13px">Robots that plug in and check connectors &middot; '
         '<a href="https://defexrobotics.com" style="color:#FF5A1F;text-decoration:none">defexrobotics.com</a></span></p>'
         '</div>'
     )
