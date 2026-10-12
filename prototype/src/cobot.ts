@@ -45,11 +45,11 @@ export function solveArm(flange: THREE.Vector3, out?: ArmPose): ArmPose {
 type Materials = Record<'dark' | 'edge' | 'silver' | 'rubber', THREE.MeshStandardMaterial>;
 
 export function cobotMaterials() {
-  const paint = new THREE.MeshPhysicalMaterial({ color: 0xecebe6, roughness: 0.36, metalness: 0, clearcoat: 0.35, clearcoatRoughness: 0.28 });
+  const paint = new THREE.MeshPhysicalMaterial({ color: 0xeeede8, roughness: 0.42, metalness: 0, clearcoat: 0.55, clearcoatRoughness: 0.2, envMapIntensity: 1.15 });
   paint.name = 'Cobot satin white';
-  const cap = new THREE.MeshStandardMaterial({ color: 0x17181a, roughness: 0.42, metalness: 0.1 });
+  const cap = new THREE.MeshPhysicalMaterial({ color: 0x141517, roughness: 0.5, metalness: 0, clearcoat: 0.3, clearcoatRoughness: 0.4 });
   cap.name = 'Joint cap black';
-  const capFace = new THREE.MeshPhysicalMaterial({ color: 0xd9d9d5, roughness: 0.3, metalness: 0, clearcoat: 0.5, clearcoatRoughness: 0.2 });
+  const capFace = new THREE.MeshPhysicalMaterial({ color: 0xcfcfcb, roughness: 0.34, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.18 });
   capFace.name = 'Joint cap face';
   const accent = new THREE.MeshStandardMaterial({ color: 0xe0601c, roughness: 0.4, metalness: 0 });
   accent.name = 'Flange ring orange';
@@ -57,6 +57,27 @@ export function cobotMaterials() {
 }
 
 const Y = new THREE.Vector3(0, 1, 0), Z = new THREE.Vector3(0, 0, 1);
+
+// A cylinder about local Y from y=a to y=b with filleted rims, so its edges
+// catch a highlight the way a cast and painted housing does.
+export function roundedCylinder(r: number, a: number, b: number, fillet: number, sides = 64) {
+  const f = Math.min(fillet, r * 0.45, (b - a) * 0.45), pts: THREE.Vector2[] = [new THREE.Vector2(0, a)];
+  for (let i = 0; i <= 8; i++) { const t = i / 8 * Math.PI / 2; pts.push(new THREE.Vector2(r - f + Math.sin(t) * f, a + f - Math.cos(t) * f)); }
+  for (let i = 0; i <= 8; i++) { const t = i / 8 * Math.PI / 2; pts.push(new THREE.Vector2(r - f + Math.cos(t) * f, b - f + Math.sin(t) * f)); }
+  pts.push(new THREE.Vector2(0, b));
+  return new THREE.LatheGeometry(pts, sides);
+}
+// A link about local Y, 0..length, that swells into the joint at each end.
+export function flaredLink(length: number, start: number, middle: number, end: number, sides = 64) {
+  const pts: THREE.Vector2[] = [new THREE.Vector2(0, 0)];
+  const swell = (u: number) => { const k = THREE.MathUtils.clamp(1 - u / 0.3, 0, 1); return k * k * (3 - 2 * k); };
+  for (let i = 0; i <= 48; i++) {
+    const u = i / 48;
+    pts.push(new THREE.Vector2(middle + (start - middle) * swell(u) + (end - middle) * swell(1 - u), u * length));
+  }
+  pts.push(new THREE.Vector2(0, length));
+  return new THREE.LatheGeometry(pts, sides);
+}
 
 // A bent cable that follows the arm, its tube buffers reused every frame.
 export class ArmCable {
@@ -135,17 +156,15 @@ export function createCobot(m: Materials): Cobot {
     const mesh = new THREE.Mesh(geometry, material); mesh.name = name; mesh.castShadow = mesh.receiveShadow = true; parent.add(mesh); meshes.push(mesh); return mesh;
   };
   // A cylinder along local +Y between y=a and y=b.
-  const tube = (parent: THREE.Object3D, r: number, a: number, b: number, material: THREE.Material, name: string, sides = 48, r2 = r) => {
-    const mesh = add(parent, new THREE.CylinderGeometry(r2, r, b - a, sides, 1), material, name); mesh.position.y = (a + b) / 2; return mesh;
-  };
+  const tube = (parent: THREE.Object3D, r: number, a: number, b: number, material: THREE.Material, name: string, sides = 48, fillet = Math.min(0.9, r * 0.18)) =>
+    add(parent, roundedCylinder(r, a, b, fillet, sides), material, name);
   // A joint housing whose axis is the parent's local Y, capped both ends:
   // a black ring with a light disc in it, as on the home page's robot.
   const joint = (parent: THREE.Object3D, r: number, length: number, name: string) => {
-    tube(parent, r, -length / 2, length / 2, mats.paint, `${name} housing`, 64);
+    tube(parent, r, -length / 2, length / 2, mats.paint, `${name} housing`, 72, r * 0.16);
     for (const s of [-1, 1]) {
-      const ring = tube(parent, r * 0.96, 0, 0.9, mats.cap, `${name} cap`, 64); ring.position.y = s * (length / 2 + 0.45);
-      const face = tube(parent, r * 0.56, 0, 0.5, mats.capFace, `${name} cap face`, 48); face.position.y = s * (length / 2 + 0.95);
-      const seam = add(parent, new THREE.TorusGeometry(r * 0.565, 0.12, 8, 64), mats.cap, `${name} cap seam`); seam.rotation.x = Math.PI / 2; seam.position.y = s * (length / 2 + 0.95);
+      const ring = tube(parent, r * 0.94, -0.6, 0.6, mats.cap, `${name} cap`, 72, 0.45); ring.position.y = s * (length / 2 + 0.35);
+      const face = tube(parent, r * 0.55, -0.35, 0.35, mats.capFace, `${name} cap face`, 64, 0.3); face.position.y = s * (length / 2 + 0.85);
     }
   };
 
@@ -167,13 +186,13 @@ export function createCobot(m: Materials): Cobot {
 
   // The links hang from groups whose local +Y runs along the link.
   const upper = new THREE.Group(); root.add(upper);
-  tube(upper, 4.7, 4, UPPER - 4, mats.paint, 'Upper arm', 48, 4.4);
+  add(upper, flaredLink(UPPER, 6.0, 4.3, 5.3), mats.paint, 'Upper arm');
   const decal = new THREE.Mesh(new THREE.PlaneGeometry(10, 2.5), new THREE.MeshStandardMaterial({ map: wordmark(), color: 0xffffff, transparent: true, opacity: typeof document === 'undefined' ? 0 : 1, roughness: 0.4, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
   decal.name = 'Upper arm mark'; upper.add(decal);
   const elbowJoint = new THREE.Group(); elbowJoint.position.y = UPPER; upper.add(elbowJoint);
   joint(elbowJoint, 5.9, 11, 'Elbow');
   const fore = new THREE.Group(); root.add(fore);
-  tube(fore, 3.9, 3.6, FORE - 3.4, mats.paint, 'Forearm', 48, 3.7);
+  add(fore, flaredLink(FORE, 5.0, 3.6, 4.3), mats.paint, 'Forearm');
   const wrist = new THREE.Group(); root.add(wrist);
   joint(wrist, 4.7, 9.5, 'Wrist');
   // The wrist's last two joints and the tool flange, straight down to the tool.
@@ -183,8 +202,8 @@ export function createCobot(m: Materials): Cobot {
   tube(neckBody, 3.95, 1.9, 3.4, mats.cap, 'Wrist 3 seam', 48);
   tube(neckBody, 3.6, 0.9, 1.9, m.silver, 'Tool flange', 48);
   tube(neckBody, 3.85, 0.25, 0.9, mats.accent, 'Flange ring', 48);
-  const clamps = [0.3, 0.72].map(t => { const g = new THREE.Group(); upper.add(g); const c = tube(g, 1.25, -0.9, 0.9, mats.cap, 'Cable clamp', 16); c.rotation.z = 0; g.position.set(4.9, t * UPPER, 0); g.userData.t = t; return g; });
-  const foreClamp = new THREE.Group(); fore.add(foreClamp); tube(foreClamp, 1.1, -0.8, 0.8, mats.cap, 'Cable clamp', 16); foreClamp.position.set(4.1, FORE * 0.55, 0);
+  const clamps = [0.3, 0.72].map(t => { const g = new THREE.Group(); upper.add(g); const c = tube(g, 1.25, -0.9, 0.9, mats.cap, 'Cable clamp', 16); c.rotation.z = 0; g.position.set(4.55, t * UPPER, 0); g.userData.t = t; return g; });
+  const foreClamp = new THREE.Group(); fore.add(foreClamp); tube(foreClamp, 1.1, -0.8, 0.8, mats.cap, 'Cable clamp', 16); foreClamp.position.set(3.85, FORE * 0.55, 0);
 
   const cable = new ArmCable(m.rubber, 7, 0.85);
   root.add(cable.mesh);
@@ -212,7 +231,7 @@ export function createCobot(m: Materials): Cobot {
     // the joint housings on the links take their axis from the links' local Z
     for (const g of [elbowJoint]) g.rotation.set(Math.PI / 2, 0, 0);
     wrist.rotateX(Math.PI / 2); wrist.position.copy(pose.wrist);
-    decal.position.set(0, UPPER * 0.52, 4.72); decal.rotation.set(0, 0, -Math.PI / 2);
+    decal.position.set(0, UPPER * 0.52, 4.36); decal.rotation.set(0, 0, -Math.PI / 2);
     // the cable: out of the column's back, along the outside of both links, into the gripper's gland
     root.updateMatrixWorld(true);
     points[0].copy(pose.shoulder).addScaledVector(dir.set(Math.cos(pose.yaw), Math.sin(pose.yaw), 0), -7.4).add(up.set(0, 0, -6));
