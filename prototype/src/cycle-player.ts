@@ -1,48 +1,115 @@
-import { CYCLE_STEPS, processFrame } from './process.ts';
-import type { CycleCase, ProcessFrame } from './process.ts';
+import { CYCLE_STEPS, EXAMPLE_LIMITS, processFrame, processRecord, seatPoints } from './process.ts';
+import type { CycleCase, ProcessFrame, ProcessRecord } from './process.ts';
 import type { WorkcellScene } from './scene.ts';
+
 export function setupCycle(scene:WorkcellScene,onActivate:()=>void){
   const byId=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
-  let progress=44,kind:CycleCase='search',playing=false,active=true,request=0,last=0,lastContacts='',traceKind='';
   const slider=byId<HTMLInputElement>('cycle-scrub'),play=byId<HTMLButtonElement>('cycle-play');
+  const reset=byId<HTMLButtonElement>('cycle-reset'),clearFault=byId<HTMLButtonElement>('cycle-clear-fault');
+  const caseButtons=[...document.querySelectorAll<HTMLButtonElement>('[data-cycle-case]')];
+  const records:ProcessRecord[]=[];
+  let progress=44,kind:CycleCase='search',playing=false,active=true,request=0,last=0,lastContacts='',traceKind='';
+  let faultLocked=false,logged=false;
   const steps=byId('process-steps');
   steps.innerHTML=CYCLE_STEPS.map((s,i)=>`<button data-cycle-step="${i}" aria-current="false"><span>${String(i+1).padStart(2,'0')}</span><strong>${s[0]}</strong><small>${s[1]}–${i<9?CYCLE_STEPS[i+1][1]:100}%</small></button>`).join('');
+
   const draw=()=>{
-    if(!active)return;const f=processFrame(progress,kind);scene.setProcess(f);slider.value=String(progress);
-    byId('cycle-percent').textContent=`${Math.round(progress)}%`;byId('cycle-title').textContent=CYCLE_STEPS[f.step][0];
-    byId('cycle-index').textContent=`${String(f.step+1).padStart(2,'0')} / 10`;
-    byId('cycle-copy').textContent=f.message;byId('cycle-scope').textContent=CYCLE_STEPS[f.step][3];
-    byId('cycle-force').textContent=`${f.force.toFixed(1)} N`;byId('cycle-depth').textContent=`${f.depth.toFixed(1)} mm`;
-    byId('cycle-pull').textContent=`${f.pullForce.toFixed(1)} / 2.5 N`;
+    if(!active)return;
+    const f=processFrame(progress,kind);scene.setProcess(f);slider.value=String(progress);
+    byId('cycle-percent').textContent=`${Math.round(progress)}%`;
+    byId('cycle-title').textContent=f.title;byId('cycle-index').textContent=`${String(f.step+1).padStart(2,'0')} / 10`;
+    byId('cycle-copy').textContent=f.message;byId('cycle-scope').textContent=f.scope;
+    byId('cycle-force').textContent=`${f.force.toFixed(1)} / ${EXAMPLE_LIMITS.press.toFixed(1)} N`;
+    byId('cycle-depth').textContent=`${f.depth.toFixed(1)} mm`;
+    byId('cycle-pull').textContent=`${f.pullForce.toFixed(1)} / ${EXAMPLE_LIMITS.pull.toFixed(1)} N`;
+    byId('cycle-extraction').textContent=`${f.extractionForce.toFixed(1)} / ${EXAMPLE_LIMITS.extraction.toFixed(1)} N`;
+    byId('cycle-extraction-row').hidden=!f.retry;
     byId('cycle-tries').textContent=f.retry?'Retry 1 / 1':`${f.tries} / 48`;
-    for(const [id,value] of [['seat-result',f.seated],['pull-result',f.pull],['wiring-result',f.contacts.includes('fail')?'fail':f.contacts.every(x=>x==='pass')?'pass':'pending']]){byId(id).textContent=value==='pending'?'—':value.toUpperCase();byId(id).dataset.result=value;}
-    if(lastContacts!==f.contacts.join()){lastContacts=f.contacts.join();byId('contact-results').innerHTML=f.contacts.map((v,i)=>`<span data-result="${v}" aria-label="Contact ${i+1}: ${v}"><small>${i+1}</small>${v==='pending'?'·':v==='pass'?'✓':'×'}</span>`).join('');}
-    byId('cycle-verdict').textContent=f.accepted===true?'All three checks passed':f.accepted===false?'Rejected · operator action required':f.retry?'Check failed · one retry':f.step<5?'Preparing the unit':'Checks in progress';
-    byId('cycle-verdict').dataset.result=f.accepted===true?'pass':f.accepted===false?'fail':'pending';
+    for(const [id,value] of [['seat-result',f.seated],['pull-result',f.pull],['wiring-result',f.contacts.includes('fail')?'fail':f.contacts.every(x=>x==='pass')?'pass':'pending']]){
+      byId(id).textContent=value==='pending'?'—':value.toUpperCase();byId(id).dataset.result=value;
+    }
+    const contactKey=f.contacts.join()+f.contactFaults.join();
+    if(lastContacts!==contactKey){
+      lastContacts=contactKey;
+      byId('contact-results').innerHTML=f.contacts.map((v,i)=>`<span data-result="${v}" aria-label="Contact ${i+1}: ${f.contactFaults[i]??(v==='pending'?'untested':'open and short checks passed')}" title="${f.contactFaults[i]??(v==='pending'?'Untested':'Open and short checks passed')}"><small>${i+1}</small>${v==='pending'?'·':v==='pass'?'✓':'×'}</span>`).join('');
+    }
+    byId('cycle-contact-note').textContent=f.contactFaults.some(Boolean)?f.contactFaults.map((reason,i)=>reason?`${i+1}: ${reason}`:'').filter(Boolean).join(' · '):'Per wire: continuity + isolation';
+    const failed=f.pull==='fail'||f.contacts.includes('fail');
+    byId('cycle-verdict').textContent=f.accepted===true?'All three checks passed':f.accepted===false?'Rejected · operator action required':f.retry?'Attempt 2 · fresh checks':failed?'Check failed · stop this attempt':f.step<5?'Preparing the unit':'Checks in progress';
+    byId('cycle-verdict').dataset.result=f.accepted===true?'pass':f.accepted===false||failed?'fail':'pending';
     for(const button of steps.querySelectorAll('button'))button.setAttribute('aria-current',String(Number(button.dataset.cycleStep)===f.step));
-    play.textContent=playing?'Pause cycle':'Play full cycle';play.setAttribute('aria-pressed',String(playing));
-    const tour=byId('tour');tour.dataset.playing=String(playing);tour.setAttribute('aria-label',playing?'Pause full cycle':'Play full cycle');tour.setAttribute('aria-pressed',String(playing));byId('tour-label').textContent=playing?'Pause full cycle':'Play full cycle';
+    play.textContent=faultLocked?'Fault held':playing?'Pause cycle':'Play full cycle';play.setAttribute('aria-pressed',String(playing));play.disabled=faultLocked;
+    reset.disabled=faultLocked;clearFault.hidden=!faultLocked;
+    for(const button of caseButtons)button.disabled=faultLocked;
+    const tour=byId<HTMLButtonElement>('tour');tour.dataset.playing=String(playing);tour.disabled=faultLocked;
+    tour.setAttribute('aria-label',faultLocked?'Clear the fault before another cycle':playing?'Pause full cycle':'Play full cycle');tour.setAttribute('aria-pressed',String(playing));
+    byId('tour-label').textContent=faultLocked?'Fault held':playing?'Pause full cycle':'Play full cycle';
+    byId<HTMLButtonElement>('embed-run').disabled=faultLocked;
     drawTrace(f);
   };
   function drawTrace(f:ProcessFrame){
-    const trace=byId<SVGElement&HTMLElement>('cycle-trace'),cursor=byId<SVGElement&HTMLElement>('cycle-cursor');
-    if(traceKind!==kind){traceKind=kind;const points=Array.from({length:201},(_,i)=>{const sample=processFrame(i*.5,kind);return `${i*1.5},${42-sample.force*7.8}`;});
-    trace.setAttribute('points',points.join(' '));const x=kind==='latched'?180:216;byId('cycle-seat-point').setAttribute('transform',`translate(${x} 0)`);}cursor.setAttribute('x1',String(f.progress*3));cursor.setAttribute('x2',String(f.progress*3));
+    if(traceKind!==kind){
+      traceKind=kind;
+      byId('cycle-trace').setAttribute('points',Array.from({length:1001},(_,i)=>{const sample=processFrame(i/10,kind);return `${i*.3},${traceY(sample)}`;}).join(' '));
+      byId('cycle-seat-points').innerHTML=seatPoints(kind).map((p,i)=>`<g data-progress="${p}" transform="translate(${p*3} 0)"><line y1="4" y2="49" stroke="#426950" stroke-dasharray="2 2" opacity=".5"/><text x="-3" y="8" text-anchor="end" fill="#426950" font-size="8">seat ${i+1}</text></g>`).join('');
+    }
+    byId('cycle-trace-window').setAttribute('width',String(f.progress*3));
+    byId('cycle-cursor').setAttribute('x1',String(f.progress*3));byId('cycle-cursor').setAttribute('x2',String(f.progress*3));
+    for(const mark of byId('cycle-seat-points').children)mark.setAttribute('visibility',f.progress>=Number((mark as SVGElement).dataset.progress)?'visible':'hidden');
   }
+  function traceY(f:ProcessFrame){return 29-(f.force-f.pullForce-f.extractionForce)*4.5;}
   function stop(){playing=false;cancelAnimationFrame(request);request=0;draw();}
   function activate(){if(!active){active=true;document.body.classList.add('process-mode');onActivate();}document.body.classList.remove('tour-active');}
-  function tick(now:number){if(!playing)return;progress=Math.min(100,progress+Math.min(80,now-last)/600);last=now;draw();if(progress<100)request=requestAnimationFrame(tick);else{stop();log(processFrame(100,kind));}}
-  function toggle(){activate();if(playing){stop();return;}onActivate();if(progress>=100||progress===44)progress=0;playing=true;last=performance.now();draw();request=requestAnimationFrame(tick);}
+  function finish(){
+    if(!logged){logged=true;log();}
+    faultLocked=processFrame(100,kind).accepted===false;stop();
+  }
+  function tick(now:number){
+    if(!playing)return;
+    progress=Math.min(100,progress+Math.min(80,now-last)/600);last=now;draw();
+    if(progress<100)request=requestAnimationFrame(tick);else finish();
+  }
+  function toggle(){
+    if(faultLocked)return;
+    activate();if(playing){stop();return;}onActivate();
+    if(progress>=100||progress===44){progress=0;logged=false;}
+    playing=true;last=performance.now();draw();request=requestAnimationFrame(tick);
+  }
+  function restart(){if(faultLocked)return;activate();stop();progress=0;logged=false;draw();}
   function showStage(){document.querySelector('.stage')?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
-  function log(f:ProcessFrame){const row=document.createElement('li');row.textContent=`Illustration ${kind} · seat ${f.seated} · pull ${f.pull} · contacts ${f.contacts.join(', ')} · ${f.accepted?'accepted':'rejected'}${f.retry?' after one retry':''}.`;byId('cycle-log').prepend(row);}
-  slider.addEventListener('input',()=>{activate();const value=Number(slider.value);stop();progress=value;draw();});
-  play.addEventListener('click',toggle);
-  byId('cycle-reset').addEventListener('click',()=>{activate();stop();progress=0;draw();});
+  function log(){
+    const record=processRecord(records.length+1,kind);records.push(record);
+    const row=document.createElement('li'),title=document.createElement('strong');
+    title.textContent=`Illustrated unit ${String(record.id).padStart(3,'0')} · ${record.case} · ${record.accepted?'accepted':'rejected / operator clear required'}`;row.append(title);
+    for(const attempt of record.attempts){
+      const line=document.createElement('p');
+      const contacts=attempt.contacts.map((result,i)=>`${i+1} ${attempt.contactFaults[i]??(result==='pending'?'untested':result)}`).join(', ');
+      line.textContent=`Attempt ${attempt.number}: seat ${attempt.seated}, pull ${attempt.pull}; contacts ${contacts}. ${attempt.reason??'All three checks passed.'}`;row.append(line);
+    }
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 300 52');svg.setAttribute('class','record-trace');svg.setAttribute('role','img');svg.setAttribute('aria-label',`Illustrated force trace for unit ${record.id}, including ${record.attempts.length} attempt${record.attempts.length>1?'s':''}`);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','polyline');line.setAttribute('points',record.trace.map(s=>`${s.progress*3},${29-(s.press-s.pull-s.extraction)*4.5}`).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke','currentColor');line.setAttribute('stroke-width','1.2');svg.append(line);row.append(svg);
+    byId('cycle-log').prepend(row);byId<HTMLButtonElement>('cycle-export').disabled=false;
+    byId('cycle-log-status').textContent=`${records.length} illustrated unit${records.length>1?'s':''} recorded during this visit. Download to retain the checks and force traces.`;
+  }
+  slider.addEventListener('input',()=>{activate();const value=Number(slider.value);stop();progress=value;draw();if(progress===100)finish();});
+  play.addEventListener('click',toggle);reset.addEventListener('click',restart);
+  clearFault.addEventListener('click',()=>{faultLocked=false;restart();byId('cycle-log-status').textContent='Fault cleared by the viewer. Previous unit records and traces are retained below.';});
+  byId('cycle-export').addEventListener('click',()=>{
+    const url=URL.createObjectURL(new Blob([JSON.stringify({source:'Defex scripted cycle illustration',measurements:false,units:records},null,2)],{type:'application/json'}));
+    const a=document.createElement('a');a.href=url;a.download='defex-illustrated-unit-traces.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  });
   steps.addEventListener('click',e=>{const button=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-cycle-step]');if(button){activate();stop();progress=CYCLE_STEPS[Number(button.dataset.cycleStep)][1];draw();showStage();}});
-  for(const button of document.querySelectorAll<HTMLButtonElement>('[data-cycle-case]'))button.addEventListener('click',()=>{activate();stop();kind=button.dataset.cycleCase as CycleCase;progress=0;for(const b of document.querySelectorAll('[data-cycle-case]'))b.setAttribute('aria-pressed',String(b===button));draw();showStage();});
+  for(const button of caseButtons)button.addEventListener('click',()=>{
+    if(faultLocked)return;activate();stop();kind=button.dataset.cycleCase as CycleCase;progress=0;logged=false;
+    for(const b of caseButtons)b.setAttribute('aria-pressed',String(b===button));draw();showStage();
+  });
   for(const id of ['tour','embed-run'])byId(id).addEventListener('click',e=>{if(!active)return;e.stopImmediatePropagation();toggle();},true);
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)stop();});
-  document.addEventListener('keydown',e=>{if(!active||['INPUT','SELECT','TEXTAREA','BUTTON'].includes((e.target as HTMLElement).tagName))return;if(document.querySelector('.stage')!.getBoundingClientRect().bottom<innerHeight*.35)return;if(e.code==='Space'){e.preventDefault();e.stopImmediatePropagation();toggle();}else if(e.key.toLowerCase()==='r'){e.stopImmediatePropagation();stop();progress=0;draw();}},true);
+  document.addEventListener('keydown',e=>{
+    if(!active||['INPUT','SELECT','TEXTAREA','BUTTON'].includes((e.target as HTMLElement).tagName))return;
+    if(document.querySelector('.stage')!.getBoundingClientRect().bottom<innerHeight*.35)return;
+    if(e.code==='Space'){e.preventDefault();e.stopImmediatePropagation();toggle();}else if(e.key.toLowerCase()==='r'){e.stopImmediatePropagation();restart();}
+  },true);
   document.body.classList.add('process-mode');draw();
   return {refresh:draw,deactivate(){stop();active=false;document.body.classList.remove('process-mode');scene.setProcess(null);},isActive:()=>active};
 }

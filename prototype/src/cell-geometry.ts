@@ -68,7 +68,7 @@ export function createCell(pins=6){
   for(const [x,y] of [[17,6],[-19,6],[-20,-6]])for(const s of [-1,1])box(pcb,'Silkscreen footprint',[.14,4,.02],[x+s*4,y,9.68],ink,0);
   const header=new T.Group();root.add(header);header.name='Board header';
   const housing=new T.Group();header.add(housing);
-  for(const [sz,ps] of [[[1.2,10.4,10.8],[-8.5-extra,0,15.7]],[[1.2,10.4,10.8],[8.5+extra,0,15.7]],[[15.8+2*extra,1.2,10.8],[0,4.65,15.7]],[[6.2+extra,1.2,10.8],[-4.8-extra/2,-4.65,15.7]],[[6.2+extra,1.2,10.8],[4.8+extra/2,-4.65,15.7]]])box(housing,'Molded PBT header',sz,ps,M.polymer,.2);
+  for(const [sz,ps] of [[[1.2,10.4,11.7],[-8.5-extra,0,16.15]],[[1.2,10.4,11.7],[8.5+extra,0,16.15]],[[15.8+2*extra,1.2,11.7],[0,4.65,16.15]],[[6.2+extra,1.2,11.7],[-4.8-extra/2,-4.65,16.15]],[[6.2+extra,1.2,11.7],[4.8+extra/2,-4.65,16.15]]])box(housing,'Molded PBT header',sz,ps,M.polymer,.2);
   box(housing,'Header seating floor',[17+2*extra,10.4,1.2],[0,0,10.5],M.polymer,.15);
   box(housing,'Latch catch',[3.2,1,1.3],[0,-5.2,13.5],M.polymer,.15);
   for(const [x,y] of contactCenters(pins)){cyl(header,'Gold header pin',.35,5.5,[x,y,13.3],M.gold,16);cyl(pcb,'Header solder pad',.9,.08,[x,y,9.7],solder,16);}
@@ -81,8 +81,8 @@ export function createCell(pins=6){
   box(nest,'Housing recess',[16.8,8.9,.25],[0,0,5.15],M.bore,.3);
   for(const s of [-1,1])box(nest,'Nest locating ledge',[18,2,4],[0,s*5.5,14],M.polymer,.3);
   const comb=new T.Group();comb.position.set(-104,38,0);root.add(comb);
-  box(comb,'Cable comb base',[26,14,8],[0,0,4],M.polymer,.6);
-  for(let i=0;i<7;i++)box(comb,'Cable comb tooth',[1.3,13,7],[-9+i*3,0,10],M.polymer,.25);
+  box(comb,'Cable comb base',[pins*3+8,14,8],[0,0,4],M.polymer,.6);
+  for(let i=0;i<=pins;i++)box(comb,'Cable comb tooth',[1.3,13,7],[-pins*1.5+i*3,0,10],M.polymer,.25);
   for(const s of [-1,1])bolt(comb,s*16,0,1,1.8);
 
   const tester=new T.Group();root.add(tester);
@@ -91,8 +91,8 @@ export function createCell(pins=6){
   for(const x of [-136,-72])for(const y of [90,130])bolt(tester,x,y,35.7,1.4);
   const indicator=new T.MeshStandardMaterial({color:0x273c31,roughness:.28,metalness:.05,emissive:0x125832,emissiveIntensity:0});
   cyl(tester,'Indicator bezel',4.3,1.3,[-104,99,36],M.dark,32);cyl(tester,'Single pass indicator',3.2,1.1,[-104,99,36.9],indicator,32);
-  box(tester,'Harness tester connector',[24,6,11],[-104,79,16],M.dark,.5);
-  for(let i=0;i<pins;i++)cyl(tester,'Harness wire ferrule',.7,1,[-111.5+i*3,78,17],M.rubber,12);
+  box(tester,'Harness tester connector',[pins*3+6,6,11],[-104,79,16],M.dark,.5);
+  for(let i=0;i<pins;i++)cyl(tester,'Harness wire ferrule',.7,1,[-104+(i-(pins-1)/2)*3,78,17],M.rubber,12);
   box(tester,'Board test connector',[12,7,7],[-63,118,13],M.dark,.3);
   tube(tester,[[-62,118,13],[-39,114,9],[-35,50,3],[-22,28,6],[-20,22,8]],1.7,M.rubber);
   const bin=new T.Group();bin.position.set(REJECT[0],REJECT[1],0);root.add(bin);
@@ -119,7 +119,7 @@ export function createCell(pins=6){
   const arm=createCobot(M);arm.root.scale.setScalar(5);root.add(arm.root);
   const tool=createPrecisionTool(extra);root.add(tool.root);
   const plug=createPlug(pins);root.add(plug);
-  const wires=Array.from({length:pins},(_,i)=>{const mat=new T.MeshStandardMaterial({color:[0x9c6534,0x2c3234,0xc4b99e,0x697960,0x596c82,0x864d49,0x9c9b82,0x415451][i],roughness:.65});const w=new ArmCable(mat,7,.48,96);w.mesh.name=`Harness wire ${i+1}`;root.add(w.mesh);return w;});
+  const wires=Array.from({length:pins},(_,i)=>{const mat=new T.MeshStandardMaterial({color:[0x9c6534,0x2c3234,0xc4b99e,0x697960,0x596c82,0x864d49,0x9c9b82,0x415451][i],roughness:.65});const w=new ArmCable(mat,10,.48,128);w.mesh.name=`Harness wire ${i+1}`;root.add(w.mesh);return w;});
   return {root,bench,fixture,header,housing,pcb,nest,tester,bin,arm,tool,plug,wires,indicator,turnover,rotator,cradleJaws,pins};
 }
 export function createPlug(pins=6){
@@ -152,8 +152,8 @@ function createPrecisionTool(extra=0){
     const g=new T.Group();g.position.x=s*extra;g.userData.extra=s*extra;root.add(g);
     box(g,'Moving jaw carriage',[11,20,7],[s*14,0,30],M.dark,.45);
     box(g,'Brushed aluminium finger',[5.4,10,19],[s*13,0,18.5],M.silver,.5);
-    box(g,'Custom fingertip',[5.1,6.6,2],[s*10.5,0,7.5],M.silver,.32);
-    box(g,'Housing contact face',[.35,5.2,1.8],[s*7.68,0,7.4],M.rubber,.05);
+    box(g,'Custom fingertip',[5.1,6.6,2],[s*10.5,0,8],M.silver,.32);
+    box(g,'Housing contact face',[.35,5.2,1.8],[s*7.68,0,7.9],M.rubber,.05);
     box(g,'Insertion back stop',[1.6,2,1.2],[s*6.9,-2,8.8],M.silver,.12);
     for(const z of [16,24]){const b=cyl(g,'Finger mounting screw',1.5,.4,[s*13,-5.2,z],M.dark,20);b.rotation.x=0;}
     return g;
