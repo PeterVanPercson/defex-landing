@@ -13,7 +13,7 @@ class PrototypeTests(SimpleTestCase):
         self.assertEqual(response['X-Frame-Options'], 'SAMEORIGIN')
         self.assertIn('s-maxage=86400', response['Cache-Control'])
         self.assertNotIn('Set-Cookie', response)
-        self.assertContains(response, 'INTERACTIVE SOFTWARE PROTOTYPE')
+        self.assertContains(response, 'About this model.')
         self.assertContains(response, 'not a trained robot policy')
         self.assertContains(response, 'Interactive simulation')
         assets = Path(settings.BASE_DIR) / 'static' / 'prototype' / 'assets'

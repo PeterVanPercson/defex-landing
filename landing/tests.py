@@ -484,16 +484,17 @@ class SiteTests(SimpleTestCase):
             self.assertIn(f'aria-controls="meet-{key}"', body)
             self.assertIn(f'id="meet-{key}"', body)
         self.assertEqual(body.count('class="rb"'), 1)
-        # the same explorer is on home, after the case and Partners, and on
-        # Prototype before the experiment controls; its sheet never blocks first paint
+        # The shared explorer remains on home after the case and Partners.
         home = self.client.get("/").content.decode()
         self.assertLess(home.index('id="why"'), home.index('id="meet"'))
         self.assertLess(home.index('id="partners"'), home.index('id="meet"'))
         # the bar turns dark over it, like over the hero (hero-film.js)
         self.assertIn('id="meet" data-nav-dark', home)
         proto = self.client.get("/prototype/").content.decode()
-        self.assertLess(proto.index('id="meet"'), proto.index('class="tryit console"'))
-        for page in (body, home, proto):
+        self.assertLess(proto.index('class="process-guide"'), proto.index('class="tryit console"'))
+        self.assertIn('The complete cycle is a scripted illustration.', proto)
+        self.assertNotIn('aria-controls="meet-', proto)
+        for page in (body, home):
             self.assertEqual(page.count('class="rb"'), 1)
             self.assertEqual(page.count('aria-controls="meet-'), 6)
             self.assertIn("js/meet.js?v=", page)

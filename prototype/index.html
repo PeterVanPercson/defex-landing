@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#161918" />
-  <meta name="description" content="Explore the Defex connector lab: an interactive simulation of our robot's workcell. Shift the socket, compare two insertion methods, see inside every part, and watch the connection and pull tests." />
+  <meta name="description" content="An interactive simulation of the Defex connector cell: the robot plugs in a connector, pulls it and tests every wire." />
   <title>Prototype | Defex Robotics</title>
   <link rel="canonical" href="https://defexrobotics.com/prototype/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Defex Robotics" />
   <meta property="og:title" content="Prototype | Defex Robotics" />
-  <meta property="og:description" content="Explore the Defex connector lab: an interactive simulation of our robot's workcell. Shift the socket, compare two insertion methods, see inside every part, and watch the connection and pull tests." />
+  <meta property="og:description" content="An interactive simulation of the Defex connector cell: the robot plugs in a connector, pulls it and tests every wire." />
   <meta property="og:url" content="https://defexrobotics.com/prototype/" />
   <meta property="og:image" content="https://defexrobotics.com/static/img/og.jpg" />
   <meta property="og:image:type" content="image/jpeg" />
@@ -19,7 +19,7 @@
   <meta property="og:image:alt" content="Defex Robotics | Robots that plug in and check connectors" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Prototype | Defex Robotics" />
-  <meta name="twitter:description" content="Explore the Defex connector lab: an interactive simulation of our robot's workcell. Shift the socket, compare two insertion methods, see inside every part, and watch the connection and pull tests." />
+  <meta name="twitter:description" content="An interactive simulation of the Defex connector cell: the robot plugs in a connector, pulls it and tests every wire." />
   <meta name="twitter:image" content="https://defexrobotics.com/static/img/og.jpg" />
   <link rel="icon" type="image/svg+xml" href="/static/img/defex-mark.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32.png" />
@@ -42,14 +42,29 @@
       </header>
 
       <div class="headline">
-        <p class="eyebrow">Design study · 001</p><h1>Connector<br>workcell.</h1><p class="headline-note">Plug in. Test. Reset.</p>
+        <h1>Connector<br>workcell.</h1><p class="headline-note">Plug in. Pull. Test every wire.</p>
       </div>
       <aside class="stage-readout" aria-label="Simulated measurements">
-        <span class="readout-eyebrow">SIMULATED CYCLE</span>
+        
         <strong id="stage-state">Ready</strong>
         <dl><div><dt>Axial force</dt><dd id="stage-force">0.0 N</dd></div><div><dt>Insertion</dt><dd id="stage-depth">0.0 mm</dd></div></dl>
-        <span class="readout-note">Computed values · <span id="stage-speed">2× playback</span></span>
+        <span class="readout-note" hidden><span id="stage-speed"></span></span>
       </aside>
+      <aside class="process-readout" aria-label="Illustrated process signals">
+        <div class="process-heading"><b id="cycle-index">01</b></div>
+        <h2 id="cycle-title">Approach</h2><p id="cycle-copy"></p><span class="process-scope" id="cycle-scope"></span>
+        <details class="process-signals"><summary>Illustrated signals <span>+</span></summary>
+          <div class="signal-grid"><div>Press / example limit <b id="cycle-force">0.0 / 5.0 N</b></div><div>Depth <b id="cycle-depth">0.0 mm</b></div><div>Pull / example limit <b id="cycle-pull">0.0 / 2.5 N</b></div><div id="cycle-extraction-row" hidden>Extract / example limit <b id="cycle-extraction">0.0 / 4.0 N</b></div><div>Tries <b id="cycle-tries">1 / 48</b></div></div>
+          <svg class="process-chart" viewBox="0 0 300 52" role="img" aria-label="Illustrative axial force: press above zero, pull below zero, with seat markers"><defs><clipPath id="cycle-trace-clip"><rect id="cycle-trace-window" x="0" y="0" width="0" height="52"/></clipPath></defs><path d="M0 29H300" stroke="currentColor" opacity=".2"/><polyline id="cycle-trace" clip-path="url(#cycle-trace-clip)" fill="none" stroke="currentColor" stroke-width="1.3"/><g id="cycle-seat-points"></g><line id="cycle-cursor" y1="2" y2="49" stroke="#b96c3d" stroke-width="1"/></svg><small>Press ↑ · pull ↓ · illustrative, not measured</small>
+          <div class="process-checks"><div>Seated <b id="seat-result">—</b></div><div>Pull <b id="pull-result">—</b></div><div>Wiring <b id="wiring-result">—</b></div></div>
+          <div id="contact-results" aria-label="Six simulated contact checks"></div><small id="cycle-contact-note">Per wire: continuity + isolation</small><p id="cycle-verdict" role="status"></p>
+        </details>
+      </aside>
+      <div class="cycle-timeline">
+        <div class="cycle-transport"><button id="cycle-play" aria-pressed="false" hidden>Play</button><button id="cycle-reset" aria-label="Restart" hidden>↺</button><button id="cycle-clear-fault" hidden>Clear reject</button><output id="cycle-percent" hidden></output></div>
+        <input type="range" min="0" max="100" step="0.1" value="0" id="cycle-scrub" aria-label="Full cycle progress"/>
+        
+      </div>
       <div class="stage-error" id="stage-error" role="alert" hidden><strong>Simulation unavailable</strong><p id="stage-error-message"></p><button id="stage-retry">Reload simulation ↻</button></div>
 
       <div id="journey" class="journey">
@@ -58,49 +73,51 @@
         <div class="track"><i id="journey-progress"></i></div>
       </div>
       <div class="tour-story" id="tour-story" hidden><span class="tour-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span><strong id="tour-title" role="status"></strong><button id="stop-tour" aria-label="Exit demo">×</button><span class="quiet" id="tour-index"></span><span class="quiet" id="tour-live"></span><span class="quiet" id="tour-description"></span></div>
-      <div class="endcard" id="endcard" hidden><strong>Four cycles. One workcell.</strong><div class="endcard-actions"><a class="endcard-buy" href="/#contact" target="_top">Discuss a pilot ↗</a><button id="replay" class="endcard-replay">Replay</button></div></div>
+      <div class="endcard" id="endcard" hidden><strong>Done.</strong><div class="endcard-actions"><button id="replay" class="endcard-replay">Replay</button></div></div>
 
-      <div id="loading" class="loading"><i></i><span>Loading the simulation</span></div>
-      <div id="fallback" class="fallback" hidden><svg viewBox="0 0 420 300" role="img" aria-label="Live X/Z schematic of the simulated connector"><rect x="100" y="237" width="220" height="18" rx="2" fill="#3a4148"/><g id="schematic-socket" fill="#59616b"><rect id="schematic-wall-left" x="160" y="160" width="20" height="63" rx="2"/><rect id="schematic-wall-right" x="240" y="160" width="20" height="63" rx="2"/><rect id="schematic-seat" x="160" y="215" width="100" height="20" rx="2"/></g><g id="schematic-plug" transform="translate(210 60)"><rect id="schematic-housing" x="-28" y="-20" width="56" height="40" rx="2" fill="#e3e1d6" stroke="#8e969d" stroke-width="1.5"/><rect x="-18" y="-50" width="36" height="30" fill="#707986" stroke="#8e969d"/><path d="M-17 0v19 M0 0v19 M17 0v19" stroke="#d2ad68" stroke-width="3"/></g><text x="25" y="285" fill="#707986" font-size="10.5" font-family="'EB Garamond', Georgia, serif">X/Z SCHEMATIC · ILLUSTRATIVE GEOMETRY</text></svg><p id="fallback-title">3D unavailable; showing a live side view.</p><span>Physics and tests still run in your browser.</span></div>
+      <div id="loading" class="loading"><i></i><span>Loading</span></div>
+      <div id="fallback" class="fallback" hidden><svg viewBox="0 0 420 300" role="img" aria-label="Live X/Z schematic of the simulated connector"><rect x="100" y="237" width="220" height="18" rx="2" fill="#3a4148"/><g id="schematic-socket" fill="#59616b"><rect id="schematic-wall-left" x="160" y="160" width="20" height="63" rx="2"/><rect id="schematic-wall-right" x="240" y="160" width="20" height="63" rx="2"/><rect id="schematic-seat" x="160" y="215" width="100" height="20" rx="2"/></g><g id="schematic-plug" transform="translate(210 60)"><rect id="schematic-housing" x="-28" y="-20" width="56" height="40" rx="2" fill="#e3e1d6" stroke="#8e969d" stroke-width="1.5"/><rect x="-18" y="-50" width="36" height="30" fill="#707986" stroke="#8e969d"/><path d="M-17 0v19 M0 0v19 M17 0v19" stroke="#d2ad68" stroke-width="3"/></g></svg><p id="fallback-title">Side view.</p></div>
 
       <div class="hud-controls">
         <nav class="dock" aria-label="Workcell controls">
-          <button class="dock-item" data-view="connector" aria-pressed="false" aria-label="Inspect connector"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle class="focus-ring" cx="12" cy="12" r="8"/><circle class="focus-core" cx="12" cy="12" r="3"/><path class="focus-ticks" d="M12 1v4m0 14v4M1 12h4m14 0h4"/></svg></span><span class="dock-tip" aria-hidden="true">Inspect connector</span></button>
-          <button class="dock-item" data-mode="machine" aria-pressed="true" aria-label="Whole machine"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="machine-icon"><path d="M12 3 21 8v9l-9 5-9-5V8Z"/><path d="m3 8 9 5 9-5M12 13v9"/></g></svg></span><span class="dock-tip" aria-hidden="true">Whole machine</span></button>
-          <button class="dock-item" data-mode="inside" aria-pressed="false" aria-label="See inside"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path class="cut-half" d="M12 3.5a8.5 8.5 0 0 0 0 17Z"/><path class="cut-lines" d="M15 6v12m3-9v6"/></svg></span><span class="dock-tip" aria-hidden="true">See inside</span></button>
-          <button class="dock-item" data-mode="parts" aria-pressed="false" aria-label="Pull it apart"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="layer-top" d="m4 9 8-4 8 4-8 4Z"/><path class="layer-bottom" d="m4 15 8 4 8-4"/></svg></span><span class="dock-tip" aria-hidden="true">Pull it apart</span></button>
+          <button class="dock-item" data-view="connector" aria-pressed="false" aria-label="Inspect connector"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle class="focus-ring" cx="12" cy="12" r="8"/><circle class="focus-core" cx="12" cy="12" r="3"/><path class="focus-ticks" d="M12 1v4m0 14v4M1 12h4m14 0h4"/></svg></span><span class="dock-tip" aria-hidden="true">Close-up</span></button>
+          <button class="dock-item" data-mode="machine" aria-pressed="true" aria-label="Whole machine"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="machine-icon"><path d="M12 3 21 8v9l-9 5-9-5V8Z"/><path d="m3 8 9 5 9-5M12 13v9"/></g></svg></span><span class="dock-tip" aria-hidden="true">Machine</span></button>
+          <button class="dock-item" data-mode="inside" aria-pressed="false" aria-label="See inside"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path class="cut-half" d="M12 3.5a8.5 8.5 0 0 0 0 17Z"/><path class="cut-lines" d="M15 6v12m3-9v6"/></svg></span><span class="dock-tip" aria-hidden="true">Inside</span></button>
+          <button class="dock-item" data-mode="parts" aria-pressed="false" aria-label="Pull it apart"><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="layer-top" d="m4 9 8-4 8 4-8 4Z"/><path class="layer-bottom" d="m4 15 8 4 8-4"/></svg></span><span class="dock-tip" aria-hidden="true">Parts</span></button>
           <span class="dock-sep" aria-hidden="true"></span>
-          <button class="dock-item dock-demo" id="tour" aria-pressed="false" aria-label="Play demo" data-playing="false" disabled><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="play-shape" d="m8 5 11 7-11 7Z"/><g class="pause-shape"><path d="M8 6v12M16 6v12"/></g></svg></span><span class="dock-tip" aria-hidden="true" id="tour-label">Play demo</span></button>
+          <button class="dock-item dock-demo" id="tour" aria-pressed="false" aria-label="Play" data-playing="false" disabled><span class="dock-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="play-shape" d="m8 5 11 7-11 7Z"/><g class="pause-shape"><path d="M8 6v12M16 6v12"/></g></svg></span><span class="dock-tip" aria-hidden="true" id="tour-label">Play</span></button>
         </nav>
-        <span class="control-hint">Drag to rotate · Pinch to zoom</span>
+        
       </div>
-      <button id="embed-run" class="embed-run" disabled>▶ Play demo</button>
-      <footer class="stage-footer"><span>Interactive simulation</span><span class="footer-detail">DEFEX ROBOTICS / R&D</span></footer>
+      <button id="embed-run" class="embed-run" disabled>▶ Play</button>
+      <footer class="stage-footer"><button class="about-link" data-open-notes>Interactive simulation · About</button></footer>
     </section>
 
-    <section class="meet-sec" id="meet" aria-labelledby="meet-title">
-      <h2 class="meet-sec__h" id="meet-title">Meet the <em>robot</em>.</h2>
-      {% include "landing/_meet.html" %}
+    <section class="process-guide" aria-labelledby="process-title">
+      <div class="process-guide-head"><h2 id="process-title">One connector, start to finish.</h2></div>
+      <div class="cycle-cases" aria-label="Illustrated cycle cases"><button data-cycle-case="search" aria-pressed="true">Found after a search</button><button data-cycle-case="latched" aria-pressed="false">Pass, first try</button><button data-cycle-case="half-seat" aria-pressed="false">Half-seated</button><button data-cycle-case="open" aria-pressed="false">Open wire</button><button data-cycle-case="short" aria-pressed="false">Shorted wires</button></div>
+      <div id="process-steps" class="process-steps" aria-label="Ten cycle steps"></div>
+      <details class="illustration-log" hidden><summary>Unit records</summary><p id="cycle-log-status">No completed illustration yet. Each unit retains every attempt, contact result and example force trace during this visit.</p><button id="cycle-export" disabled>Download illustrated traces ↓</button><ol id="cycle-log"></ol></details>
     </section>
 
-    <details class="tryit console"><summary>Experiment controls <span>Offset, faults &amp; results</span></summary>
-      <div class="transport">
+    <details class="tryit console"><summary>Try it yourself</summary>
+      <button id="physics-demo" class="text-button" hidden>Play</button><div class="transport">
         <div class="run-controls"><button id="run" class="run-button" disabled><span id="run-icon" aria-hidden="true">▶</span><span id="run-label">Run attempt</span></button><button id="reset" class="reset-button" aria-label="Reset attempt" title="Reset attempt (R)" disabled>↺</button></div>
-        <span id="engine-status">Loading…</span>
-        <div class="cycle" aria-label="The loop"><span data-phase="insert"><i>01</i> Insert</span><b></b><span data-phase="electrical"><i>02</i> Connect</span><b></b><span data-phase="retention"><i>03</i> Pull test</span><b></b><span data-phase="reset"><i>04</i> Reset</span></div>
+        <span id="engine-status" hidden>Loading…</span>
+        
         <label class="speed-control" for="speed">Speed <select id="speed" disabled><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select></label>
       </div>
       <div class="console-grid">
         <div class="panel">
-          <div class="section-label">Try a scenario</div>
+          <div class="section-label">Scenario</div>
           <div class="presets" aria-label="Scenarios"><button data-preset="aligned">Aligned</button><button data-preset="shifted" aria-pressed="true">Misaligned</button><button data-preset="open">Open circuit</button><button data-preset="latch">No latch</button></div>
-          <div class="section-label">How the robot goes in</div>
+          <div class="section-label">Method</div>
           <div class="controllers" role="group" aria-label="Insertion method"><button data-controller="fixed" aria-pressed="true">Fixed path</button><button data-controller="search" aria-pressed="false">Find a fit</button><button data-controller="reuse" aria-pressed="false" disabled>Reuse fit</button></div>
-          <p id="controller-description">Follow the original path. Stop if the socket blocks it.</p>
+          <p id="controller-description">Straight in. Stops if blocked.</p>
           <div class="memory" id="memory" hidden><span>Saved fit <b id="memory-value"></b></span><button id="forget" aria-label="Forget saved fit">×</button></div>
         </div>
         <div class="panel">
-          <div class="outcome" id="outcome" role="status" aria-live="polite"><span class="outcome-symbol">↗</span><div><strong id="outcome-title">Ready when you are.</strong><p id="outcome-copy">Run one attempt, or play the four-step demo.</p></div></div>
+          <div class="outcome" id="outcome" role="status" aria-live="polite"><span class="outcome-symbol">↗</span><div><strong id="outcome-title">Ready.</strong><p id="outcome-copy"></p></div></div>
           <div class="checks" aria-label="Tests"><div><span>Connection</span><strong id="electrical-check">—</strong></div><div><span>Lock</span><strong id="retention-check">—</strong></div></div>
           <button id="retry" class="retry-button" hidden>Reload simulation ↻</button>
           <details class="advanced"><summary>Adjust the setup <span>+</span></summary>
@@ -113,19 +130,19 @@
           </details>
         </div>
         <div class="panel telemetry">
-          <div class="chart-label"><span>CONTACT FORCE</span><b><span id="force">0.0</span> <small>N</small></b></div>
+          <div class="chart-label"><span>Contact force</span><b><span id="force">0.0</span> <small>N</small></b></div>
           <canvas id="force-chart" aria-label="Computed push force over simulation time"></canvas>
-          <div class="chart-axis"><span id="chart-zero">0 s</span><span>SIMULATION TIME</span><span id="chart-end">0 s</span></div>
+          <div class="chart-axis"><span id="chart-zero">0 s</span><span></span><span id="chart-end">0 s</span></div>
           <div class="readouts"><div><span>Depth</span><strong><span id="depth">0.0</span><small> mm</small></strong></div><div><span>Tries</span><strong id="probes">—</strong></div><div><span>Time</span><strong><span id="elapsed">0.0</span><small> s</small></strong></div></div>
         </div>
       </div>
-      <p class="keyboard-hint"><kbd>Space</kbd> run / pause <span>·</span> <kbd>R</kbd> reset</p>
-    <section class="records" aria-labelledby="records-title"><div class="records-heading"><h2 id="records-title">Attempts <span id="record-count">00</span></h2><div class="record-actions"><button id="save-video" class="text-button" disabled>Record demo <span>↓</span></button><button id="export" class="text-button" disabled>Download data <span>↓</span></button></div></div><div class="table-scroll"><table><thead><tr><th>Run</th><th>Method</th><th>Conditions</th><th>Tries</th><th>Sim. time</th><th>Peak force</th><th>Result</th></tr></thead><tbody id="records-body"><tr class="empty-row"><td colspan="7">Your results show up here after each attempt.</td></tr></tbody></table></div></section>
+      
+    <section class="records" aria-labelledby="records-title"><div class="records-heading"><h2 id="records-title">Attempts <span id="record-count">00</span></h2><div class="record-actions"><button id="save-video" class="text-button" disabled>Record demo <span>↓</span></button><button id="export" class="text-button" disabled>Download data <span>↓</span></button></div></div><div class="table-scroll"><table><thead><tr><th>Run</th><th>Method</th><th>Conditions</th><th>Tries</th><th>Sim. time</th><th>Peak force</th><th>Result</th></tr></thead><tbody id="records-body"><tr class="empty-row"><td colspan="7">No attempts yet.</td></tr></tbody></table></div></section>
     </details>
 
-    <footer class="model-footer"><p>Simulation. The search saves an offset; it is not a trained robot policy.</p><button class="text-button" data-open-notes>About this model <span>↗</span></button></footer>
+    
   </main>
-  <dialog id="notes" aria-labelledby="notes-title"><div class="dialog-heading"><p class="eyebrow">INTERACTIVE SOFTWARE PROTOTYPE</p><button id="close-notes" aria-label="Close model notes">×</button></div><h2 id="notes-title">Inside the simulation.</h2><p>A tool pushes a connector into a socket. MuJoCo works out the motion and forces in your browser.</p><dl><dt>The search</dt><dd>If the plug hits, it backs off and tries a little to each side. When one spot works, it keeps it. It never sees where the socket is. This is a fixed search, not a learned skill.</dd><dt>The checks</dt><dd>Connected means the plug went in deep enough. Locked means it held when pulled. You can force either to fail. There is no real wiring or latch.</dd><dt>The limits</dt><dd>Sizes and forces are made up. Only the plug and socket touch; everything else is for show. No camera, no cables, no wear, no real robot. Reset pulls the same plug back out.</dd><dt>Next</dt><dd>Build the real robot and run it on customer parts. This page shows the idea, not how it does in a factory.</dd></dl><div class="dialog-actions"><button id="download-model" class="tour-button">Download physics model <span>↓</span></button><a href="?view=schematic">Use 2D view ↗</a><a href="https://github.com/google-deepmind/mujoco/tree/main/wasm" target="_blank" rel="noopener">MuJoCo WASM ↗</a></div></dialog>
+  <dialog id="notes" aria-labelledby="notes-title"><div class="dialog-heading"><h2 id="notes-title">About this model.</h2><button id="close-notes" aria-label="Close">×</button></div><dl><dt>What runs here</dt><dd>MuJoCo computes the plug and socket contact in your browser. Everything else in the cell is animated.</dd><dt>The search</dt><dd>When the plug is blocked, it backs off and tries the next spot. The spot that passes is saved for that fixture and checked on every part. A fixed search, not a trained robot policy.</dd><dt>The full cycle</dt><dd>The complete cycle is a scripted illustration. Forces are examples and timing is not to scale.</dd><dt>Not yet proven</dt><dd>False passes from half-seated plugs, damage at seating force, cycle time, and safety near people.</dd><dt>Next</dt><dd>Build the cell and run it on customer parts.</dd></dl><div class="dialog-actions"><button id="download-model" class="tour-button">Download physics model <span>↓</span></button><a href="?view=schematic">2D view ↗</a><a href="https://github.com/google-deepmind/mujoco/tree/main/wasm" target="_blank" rel="noopener">MuJoCo ↗</a></div></dialog>
   <noscript><div class="noscript">This simulation needs JavaScript.</div></noscript>
   <script type="module" src="/src/main.ts"></script>
 </body>

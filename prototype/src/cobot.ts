@@ -5,7 +5,9 @@ import * as THREE from 'three';
 // at the tool flange and an external cable. It is drawn, not simulated: every
 // frame it is posed so that its flange sits on the tool the physics moved.
 
-export const BASE = new THREE.Vector3(40, 31, 0.3);
+// At the back of the jig plate, centred behind the stations (world -10, 170 at the cell's x5 scale),
+// so the stations spread over a wider turn of the base and the arm works mid-reach.
+export const BASE = new THREE.Vector3(-2, 34, 0.3);
 export const SHOULDER_Z = 38;
 export const UPPER = 46;
 export const FORE = 40;
@@ -31,7 +33,9 @@ export function solveArm(flange: THREE.Vector3, out?: ArmPose): ArmPose {
   pose.shoulder.set(BASE.x, BASE.y, BASE.z + SHOULDER_Z);
   const dx = pose.wrist.x - pose.shoulder.x, dy = pose.wrist.y - pose.shoulder.y, dz = pose.wrist.z - pose.shoulder.z;
   const r = Math.hypot(dx, dy);
-  pose.yaw = Math.atan2(dy, dx);
+  // Unwrap against the previous pose so the turret never spins a full turn across +-180 degrees.
+  const raw = Math.atan2(dy, dx);
+  pose.yaw = out ? out.yaw + THREE.MathUtils.euclideanModulo(raw - out.yaw + Math.PI, 2 * Math.PI) - Math.PI : raw;
   const span = Math.min(Math.hypot(r, dz), UPPER + FORE - 1e-3);
   pose.reach = span / (UPPER + FORE);
   const cosBeta = THREE.MathUtils.clamp((span * span - UPPER * UPPER - FORE * FORE) / (2 * UPPER * FORE), -1, 1);
@@ -45,11 +49,11 @@ export function solveArm(flange: THREE.Vector3, out?: ArmPose): ArmPose {
 type Materials = Record<'dark' | 'edge' | 'silver' | 'rubber', THREE.MeshStandardMaterial>;
 
 export function cobotMaterials() {
-  const paint = new THREE.MeshPhysicalMaterial({ color: 0xeeede8, roughness: 0.42, metalness: 0, clearcoat: 0.55, clearcoatRoughness: 0.2, envMapIntensity: 1.15 });
+  const paint = new THREE.MeshPhysicalMaterial({ color: 0xdcdcd8, roughness: 0.4, metalness: 0, clearcoat: 0.2, clearcoatRoughness: 0.3 });
   paint.name = 'Cobot satin white';
-  const cap = new THREE.MeshPhysicalMaterial({ color: 0x141517, roughness: 0.5, metalness: 0, clearcoat: 0.3, clearcoatRoughness: 0.4 });
+  const cap = new THREE.MeshPhysicalMaterial({ color: 0x1c1d1f, roughness: 0.58, metalness: 0, clearcoat: 0.12, clearcoatRoughness: 0.5 });
   cap.name = 'Joint cap black';
-  const capFace = new THREE.MeshPhysicalMaterial({ color: 0xcfcfcb, roughness: 0.34, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.18 });
+  const capFace = new THREE.MeshPhysicalMaterial({ color: 0xd9dad6, roughness: 0.4, metalness: 0, clearcoat: 0.35, clearcoatRoughness: 0.25 });
   capFace.name = 'Joint cap face';
   const accent = new THREE.MeshStandardMaterial({ color: 0xe0601c, roughness: 0.4, metalness: 0 });
   accent.name = 'Flange ring orange';
@@ -66,6 +70,19 @@ export function roundedCylinder(r: number, a: number, b: number, fillet: number,
   for (let i = 0; i <= 8; i++) { const t = i / 8 * Math.PI / 2; pts.push(new THREE.Vector2(r - f + Math.cos(t) * f, b - f + Math.sin(t) * f)); }
   pts.push(new THREE.Vector2(0, b));
   return new THREE.LatheGeometry(pts, sides);
+}
+// The joint cover as cast: a black bezel with a rounded lip standing proud of the
+// housing, a shadow groove, then a slightly domed light cover. Profiles about +Y.
+const lathe = (pts: number[][], sides = 72) => new THREE.LatheGeometry(pts.map(([x, y]) => new THREE.Vector2(x, y)), sides);
+export function capRing(r: number) {
+  const pts: number[][] = [[r * 0.6, -0.05], [r * 0.985, -0.05], [r * 0.985, 0.25]];
+  for (let i = 0; i <= 6; i++) { const t = i / 6 * Math.PI / 2; pts.push([r * 0.985 - 0.5 + Math.cos(t) * 0.5, 0.25 + Math.sin(t) * 0.5]); }
+  pts.push([r * 0.66, 0.75], [r * 0.64, 0.6], [r * 0.6, 0.45]);
+  return lathe(pts);
+}
+export function capFace(r: number) {
+  const pts: number[][] = [[0, 0.95], [r * 0.3, 0.92], [r * 0.5, 0.84], [r * 0.565, 0.74], [r * 0.585, 0.6], [r * 0.6, 0.45], [r * 0.6, 0.3]];
+  return lathe(pts.reverse());
 }
 // A link about local Y, 0..length, that swells into the joint at each end.
 export function flaredLink(length: number, start: number, middle: number, end: number, sides = 64) {
@@ -145,7 +162,7 @@ export interface Cobot {
   cable: ArmCable;
   meshes: THREE.Mesh[];
   links: { upper: THREE.Group; fore: THREE.Group };
-  set(flange: THREE.Vector3, toolYaw: number): void;
+  set(flange: THREE.Vector3, toolYaw: number, cableEnd?: THREE.Vector3): void;
 }
 
 export function createCobot(m: Materials): Cobot {
@@ -163,8 +180,8 @@ export function createCobot(m: Materials): Cobot {
   const joint = (parent: THREE.Object3D, r: number, length: number, name: string) => {
     tube(parent, r, -length / 2, length / 2, mats.paint, `${name} housing`, 72, r * 0.16);
     for (const s of [-1, 1]) {
-      const ring = tube(parent, r * 0.94, -0.6, 0.6, mats.cap, `${name} cap`, 72, 0.45); ring.position.y = s * (length / 2 + 0.35);
-      const face = tube(parent, r * 0.55, -0.35, 0.35, mats.capFace, `${name} cap face`, 64, 0.3); face.position.y = s * (length / 2 + 0.85);
+      const ring = add(parent, capRing(r), mats.cap, `${name} cap`); ring.position.y = s * length / 2; if (s < 0) ring.rotation.x = Math.PI;
+      const face = add(parent, capFace(r), mats.capFace, `${name} cap face`); face.position.y = s * length / 2; if (s < 0) face.rotation.x = Math.PI;
     }
   };
 
@@ -219,7 +236,7 @@ export function createCobot(m: Materials): Cobot {
     group.quaternion.setFromRotationMatrix(basis); group.position.copy(from);
   };
 
-  function set(target: THREE.Vector3, toolYaw: number) {
+  function set(target: THREE.Vector3, toolYaw: number, cableEnd?: THREE.Vector3) {
     solveArm(target, pose);
     base.rotation.z = 0; turret.rotation.z = pose.yaw;
     across.set(-Math.sin(pose.yaw), Math.cos(pose.yaw), 0);
@@ -235,15 +252,16 @@ export function createCobot(m: Materials): Cobot {
     // the cable: out of the column's back, along the outside of both links, into the gripper's gland
     root.updateMatrixWorld(true);
     points[0].copy(pose.shoulder).addScaledVector(dir.set(Math.cos(pose.yaw), Math.sin(pose.yaw), 0), -7.4).add(up.set(0, 0, -6));
-    clamps[0].localToWorld(points[1].set(0, 0, 0));
-    clamps[1].localToWorld(points[2].set(0, 0, 0));
-    elbowJoint.localToWorld(points[3].set(0, 0, 0)); points[3].z += 7.2;
-    foreClamp.localToWorld(points[4].set(0, 0, 0));
+    clamps[0].localToWorld(points[1].set(0, 0, 0)); root.worldToLocal(points[1]);
+    clamps[1].localToWorld(points[2].set(0, 0, 0)); root.worldToLocal(points[2]);
+    elbowJoint.localToWorld(points[3].set(0, 0, 0)); root.worldToLocal(points[3]); points[3].z += 7.2;
+    foreClamp.localToWorld(points[4].set(0, 0, 0)); root.worldToLocal(points[4]);
     // down past the wrist on the gland's side, into the gripper's own cable
     // gland at (9, 3.6, 14.6) on the tool
     const c = Math.cos(toolYaw), s = Math.sin(toolYaw);
     points[5].set(pose.wrist.x + 6.2 * c - 3 * s, pose.wrist.y + 6.2 * s + 3 * c, pose.wrist.z - 3);
     points[6].set(target.x + 10 * c - 3.6 * s, target.y + 10 * s + 3.6 * c, target.z - FLANGE_Z + 14.6);
+    if (cableEnd) points[6].copy(cableEnd);
     cable.update(points);
   }
   set(pose.flange, 0);

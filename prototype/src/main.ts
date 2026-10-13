@@ -1,4 +1,6 @@
 import './style.css';
+import { CYCLE_STEPS } from './process.ts';
+import { setupCycle } from './cycle-player.ts';
 import { WorkcellScene } from './scene.ts';
 import type { Mode, View } from './scene.ts';
 import type { PartId } from './parts.ts';
@@ -13,9 +15,9 @@ const all=<T extends HTMLElement>(selector:string)=>Array.from(document.querySel
 const text=(id:string,value:string)=>{const node=el(id);if(node.textContent!==value)node.textContent=value;};
 const send=(data:object)=>worker.postMessage(data);
 const descriptions:Record<Controller,string>={
-  fixed:'Follow the original path. Stop if the socket blocks it.',
-  search:'Back off on contact, try a new position, and save the fit when both tests pass.',
-  reuse:'Use the last successful position. Test the connection and lock again.',
+  fixed:'Straight in. Stops if blocked.',
+  search:'Backs off and tries the next spot.',
+  reuse:'Starts at the saved fit.',
 };
 const settingInputs=all<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('.console input,.console select:not(#speed),[data-preset],[data-controller],#forget');
 const controllerButtons=all<HTMLButtonElement>('[data-controller]');
@@ -36,6 +38,7 @@ let state:Snapshot|null=null;
 let samples:Sample[]=[];
 let sampleEpoch=-1;
 let scene:WorkcellScene|null=null;
+let cyclePlayer:ReturnType<typeof setupCycle>|null=null;
 let tourIndex=-1,tourPaused=false,tourPending=false,halted=false;
 let tourTimer:ReturnType<typeof setTimeout>|null=null,tourDeadline=0,tourDelay=0;
 let configTimer:ReturnType<typeof setTimeout>|null=null;
@@ -51,7 +54,10 @@ if(new URLSearchParams(location.search).get('view')!=='schematic'){
   catch(error){console.warn('3D renderer unavailable',error);}
 }else text('fallback-title','Live side view of the simulation.');
 function useSchematic(){
-  scene?.dispose();scene=null;
+  cyclePlayer?.deactivate();cyclePlayer=null;scene?.dispose();scene=null;
+  document.body.classList.remove('process-mode');
+  document.querySelector<HTMLElement>('.cycle-cases')!.hidden=true;
+  el('process-steps').innerHTML=CYCLE_STEPS.map((s,i)=>`<div><span>${i+1}</span><strong>${s[0]}</strong><small>${s[2]}</small></div>`).join('');
   el('scene').replaceChildren();el('labels').replaceChildren();
   // Without the 3D view only the demo button means anything.
   el('fallback').hidden=false;[...cameraButtons,...modeButtons,...all('.dock-sep,.control-hint')].forEach(n=>n.hidden=true);
@@ -146,6 +152,7 @@ function film(){
 }
 // Running from the experiment controls keeps the page where it is: the result, tests and force plot are all there.
 function run(withConfig=false){
+  cyclePlayer?.deactivate();
   if(configTimer)commitConfig();halted=false;
   if(tourIndex<0){el('endcard').hidden=true;document.body.classList.remove('ended');}
   film();send({type:'run',controller,...(withConfig?{config}:{})});
@@ -159,6 +166,7 @@ function pause(){
   playing=false;send({type:'pause'});recorder?.pause();refreshControls();
 }
 function resume(){
+  cyclePlayer?.deactivate();
   if(currentMode==='parts')selectMode('machine',false);
   if(tourIndex>=0){tourPaused=false;if(tourPending)scheduleNext(tourDelay);else send({type:'resume'});}
   else send({type:'resume'});
@@ -203,10 +211,10 @@ el('download-model').addEventListener('click',()=>download(modelXML(config),'def
 // The demo ends on the saved fit passing first time. The open circuit comes third,
 // and only a search saves a fit, so step 4 still has the one step 2 found.
 const stories=[
-  ['01 — The fixed path meets an offset.','The tool detects contact and retracts.'],
-  ['02 — Search using contact feedback.','A deterministic search finds an offset that passes both checks.'],
-  ['03 — Reject the open circuit.','The injected open circuit fails the connection check.'],
-  ['04 — Repeat with the saved offset.','The saved offset succeeds in one simulated attempt.'],
+  ['Blocked.','The tool detects contact and retracts.'],
+  ['Searching for the fit.','A fixed search finds a spot that passes both checks.'],
+  ['Open wire: rejected.','The injected open circuit fails the connection check.'],
+  ['Saved fit: first try.','The saved spot passes in one attempt.'],
 ];
 const tourMethods:Controller[]=['fixed','search','fixed','reuse'],tourPasses=[false,true,false,true];
 function tourStep(){
@@ -227,7 +235,7 @@ function scheduleNext(delay:number){
     else{
       stopTour();
       el('endcard').hidden=false;document.body.classList.add('ended');
-      outcome('idle','Demo complete. Your turn.','Pick a scenario below and run it yourself.');
+      outcome('idle','Your turn.','');
     }
   },delay);
   refreshControls();
@@ -238,6 +246,7 @@ function startTour(){
   // The camera stays on the socket from step to step instead of pulling back to the whole machine.
   showStage();scene?.hold(true);film();tourStep();refreshControls();
 }
+el('physics-demo').addEventListener('click',startTour);
 el('replay').addEventListener('click',e=>{if(e.detail<2)startTour();});
 el('tour').addEventListener('click',e=>{if(e.detail<2)tourIndex>=0?togglePlayback():startTour();});
 el('embed-run').addEventListener('click',e=>{if(e.detail<2)startTour();});
@@ -266,9 +275,9 @@ function refreshControls(){
   el<HTMLSelectElement>('speed').disabled=!ready;
   el<HTMLButtonElement>('tour').disabled=!ready;all<HTMLButtonElement>('[data-start-tour]').forEach(b=>b.disabled=!ready);el<HTMLButtonElement>('embed-run').disabled=!ready;
   el('tour').setAttribute('aria-pressed',String(tourIndex>=0));
-  text('tour-label',tourIndex>=0?(tourPaused?'Resume demo':'Pause demo'):'Play demo');
+  text('tour-label',tourIndex>=0&&!tourPaused?'Pause':'Play');
   el('tour').dataset.playing=String(tourIndex>=0&&!tourPaused);
-  el('tour').setAttribute('aria-label',tourIndex>=0?(tourPaused?'Resume demo':'Pause demo'):'Play demo');
+  el('tour').setAttribute('aria-label',tourIndex>=0&&!tourPaused?'Pause':'Play');
   for(const input of settingInputs)input.disabled=!ready||unfinished||tourIndex>=0;
   reuseButton.disabled=!ready||unfinished||tourIndex>=0||!state?.calibration;
   reuseButton.title=state?.calibration?'Use the last accepted correction':'Run a successful search to save a fit';
@@ -291,23 +300,24 @@ function renderState(s:Snapshot,isPlaying:boolean,speed:number){
   phaseLabels.forEach(n=>n.classList.toggle('active',n.dataset.phase===phase));
   checks('electrical-check',s.continuity,s.phase==='electrical');checks('retention-check',s.retention,s.phase==='retention');
   refreshControls();
+  cyclePlayer?.refresh();
   if(!halted)narrate(s);
   if(performance.now()-lastChartDraw>80||!playing)drawChart();
 }
 function narrate(s:Snapshot){
-  if(s.phase==='ready')outcome('idle','Ready when you are.','Run one attempt, or play the four-step demo.');
-  else if(s.accepted!==null)outcome(s.accepted?'pass':'fail',s.accepted?'Both tests passed.':s.continuity===false?'Connection failed.':s.retention===false?'Lock failed.':'The connector couldn’t seat.',s.phase==='reset'?'Returning to the start.':s.accepted?'This fit passed the simulated connection and pull tests.':`${s.reason}.`);
-  else if(s.phase==='reset')outcome('idle','Resetting.','Returning to the start.');
+  if(s.phase==='ready')outcome('idle','Ready.','');
+  else if(s.accepted!==null)outcome(s.accepted?'pass':'fail',s.accepted?'Both tests passed.':s.continuity===false?'Connection failed.':s.retention===false?'Lock failed.':'The connector couldn’t seat.',s.phase==='reset'?'':s.accepted?'':`${s.reason}.`);
+  else if(s.phase==='reset')outcome('idle','Resetting.','');
   // During the move, probes already counts the try about to start.
-  else if(s.phase==='backoff'||s.phase==='move')outcome('idle',`Try ${s.phase==='move'?s.probes-1:s.probes} was blocked.`,'Back off and try the next position.');
-  else if(s.phase==='electrical')outcome('idle','Check the connection.','Testing the simulated electrical contact.');
-  else if(s.phase==='retention')outcome('idle','Give it a pull.','Checking whether the lock holds.');
-  else outcome('idle',controller==='search'?`Trying position ${s.probes}.`:'Inserting the connector.','Watching for contact with the socket.');
+  else if(s.phase==='backoff'||s.phase==='move')outcome('idle',`Try ${s.phase==='move'?s.probes-1:s.probes} was blocked.`,'');
+  else if(s.phase==='electrical')outcome('idle','Testing the connection.','');
+  else if(s.phase==='retention')outcome('idle','Pull test.','');
+  else outcome('idle',controller==='search'?`Try ${s.probes}.`:'Inserting.','');
 }
 const journeySteps:Record<string,[string,string,number]>={
   approach:['Insert','The robot lowers the connector.',.2],insert:['Insert','The robot lowers the connector.',.25],
   backoff:['Blocked. Backing off.','The socket edge stopped it.',.25],move:['Trying a new spot.','Small step to the side.',.25],
-  electrical:['Connection test','Is every contact in?',.5],retention:['Pull test','Does the lock hold?',.75],reset:['Reset','Back to the start.',.92],
+  electrical:['Connection test','Is every contact in?',.75],retention:['Pull test','Does the lock hold?',.5],reset:['Reset','Back to the start.',.92],
 };
 function journey(s:Snapshot){
   const box=el('journey');box.classList.toggle('visible',s.phase!=='ready');
@@ -345,9 +355,9 @@ function drawChart(){
   if(canvas.width!==Math.round(r.width*ratio)||canvas.height!==Math.round(r.height*ratio)){canvas.width=Math.round(r.width*ratio);canvas.height=Math.round(r.height*ratio);}
   const ctx=canvas.getContext('2d')!;ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,r.width,r.height);
   const width=r.width,height=r.height-6,max=samples.reduce((v,p)=>Math.max(v,p.force),6),end=Math.max(2,samples.at(-1)?.t??0),start=samples[0]?.t??0;
-  ctx.lineWidth=1;ctx.strokeStyle='#2a3036';ctx.setLineDash([2,4]);
+  ctx.lineWidth=1;ctx.strokeStyle='#1b3e2430';ctx.setLineDash([2,4]);
   for(let i=0;i<3;i++){const y=5+i*(height-5)/2;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke();}ctx.setLineDash([]);
-  if(samples.length>1){ctx.beginPath();samples.forEach((p,i)=>{const x=(p.t-start)/(end-start)*width,y=height-p.force/max*(height-7);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.strokeStyle='#ff7a1a';ctx.lineWidth=1.6;ctx.stroke();}
+  if(samples.length>1){ctx.beginPath();samples.forEach((p,i)=>{const x=(p.t-start)/(end-start)*width,y=height-p.force/max*(height-7);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.strokeStyle='#1f2b24';ctx.lineWidth=1.6;ctx.stroke();}
   text('chart-zero',`${start.toFixed(1)} s`);text('chart-end',`${(samples.at(-1)?.t??0).toFixed(1)} s`);
 }
 new ResizeObserver(drawChart).observe(el('force-chart'));
@@ -388,16 +398,22 @@ document.addEventListener('keydown',e=>{
   if(e.repeat||e.altKey||e.ctrlKey||e.metaKey||notes.open||!ready)return;
   const t=e.target instanceof HTMLElement?e.target:null;
   if(t?.closest('input:not([type=range]),select,textarea,[contenteditable]'))return;
-  if(e.code==='KeyR'){e.preventDefault();reset();return;}
+  if(e.code==='KeyR'){e.preventDefault();if(cyclePlayer?.isActive()&&!t?.closest('.console'))cyclePlayer.restart();else reset();return;}
   if(e.code!=='Space')return;
   const control=t?.closest('button,a,summary');
   if(control&&control!==clicked)return;
   // Reading further down, Space pages down as usual, except in the experiment controls.
   if(document.querySelector('.stage')!.getBoundingClientRect().bottom<=0&&!t?.closest('.console'))return;
-  e.preventDefault();spaceTaken=true;togglePlayback();
+  e.preventDefault();spaceTaken=true;
+  // One owner for Space: the full cycle while it is on the stage, otherwise the experiment.
+  if(cyclePlayer?.isActive()&&!t?.closest('.console'))cyclePlayer.toggle();else togglePlayback();
 });
 // A focused button would otherwise take the Space's keyup as a click.
 document.addEventListener('keyup',e=>{if(e.code==='Space'&&spaceTaken){spaceTaken=false;e.preventDefault();}});
 document.querySelector('.tryit')!.addEventListener('toggle',drawChart);
 setupDock(document.querySelector<HTMLElement>('.dock')!);
 settingInputs.forEach(input=>input.disabled=true);syncConfig();send({type:'init',config});
+
+if(scene)cyclePlayer=setupCycle(scene,()=>{stopTour();if(currentMode==='parts')selectMode('machine',false);send({type:'pause'});},
+  // Back from an experiment run: drop its end card and close-up camera.
+  ()=>{el('endcard').hidden=true;document.body.classList.remove('ended');scene?.direct(false);selectView('overview',false);});

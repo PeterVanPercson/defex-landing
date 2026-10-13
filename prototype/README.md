@@ -12,7 +12,7 @@ npm ci
 npm run dev
 ```
 
-Open the printed localhost URL. The simulation runs in a Web Worker, in the visitor's browser. No API keys or cloud GPU are needed. The initial WASM download is about 4.5 MB before compression and about 1.3 MB with gzip; `npm run build:site` drops its debug sections, which are 5.8 MB of the 10.3 MB file npm installs. The renderer is about 175 KB gzipped.
+Open the printed localhost URL. The simulation runs in a Web Worker, in the visitor's browser. No API keys or cloud GPU are needed. The initial WASM download is about 4.5 MB before compression and about 1.3 MB with gzip; `npm run build:site` drops its debug sections, which are 5.8 MB of the 10.3 MB file npm installs. The renderer bundle is about 188 KB gzipped.
 
 ## Build for the existing Django website
 
@@ -28,17 +28,18 @@ Use `/prototype/?view=schematic` for a lightweight 2D view. It runs the same phy
 
 ## Demonstration
 
-1. Click **Play demo**. Four actual simulation runs execute at the selected playback speed (2× by default): shifted fixed path, contact search, open-circuit rejection, and the saved correction reused. The camera stays on the socket from cycle to cycle, and the demo ends on the reused fit passing first time. Speed can be changed in **Experiment controls**, including during a run.
-2. Pick a scenario, choose **Fixed path** or **Find a fit**, and click **Run attempt**. **Adjust the setup** contains connector variants, offsets and fault settings. Try **No latch** to see why continuity alone is insufficient.
-3. **Inspect connector** frames the plug and socket. **See inside** makes the housings transparent. **Whole machine** restores the assembled overview, including after a part selection. **Pull it apart** separates the components; a run reassembles them first. Drag to rotate the view and pinch to zoom (Ctrl or ⌘ and the wheel with a mouse). On a phone a sideways drag turns the machine and an upward swipe scrolls the page. The mouse wheel scrolls the page, never the camera.
-4. **Download data** saves configuration, samples, outcomes and the current model XML in JSON. These records stay in browser memory and are cleared on reload.
-5. **Record demo** records that computed four-part sequence from the render canvas, with status overlays and a permanent simulation label. Keep the tab visible until the download finishes. Switching away pauses the sequence and recording; resume to continue from the same step. It captures no camera or microphone. Browser support for canvas capture and MediaRecorder is required.
+1. **Play full cycle** plays the explicitly labeled process illustration: load face-up, locate, pick, release into the turnover cradle, retract, turn, regrip, approach, press/search, pull, continuity, and release. The scrubber is cycle progress, not measured time. Four cases show search success, saved-fit success, half-seat rejection, and an open-circuit rejection, each with one retry before rejection. **Inspect connector** follows the part, including at the nest and cradle. The single tester lamp turns green only for an accepted unit. Open **Illustrated signals** for the illustrative force trace, seat marker, pull limit and six contact results.
+2. In **Experiment controls**, choose **Play contact experiment**. Four actual simulation runs execute at the selected playback speed (2× by default): shifted fixed path, contact search, open-circuit rejection, and the saved correction reused. The camera stays on the socket from cycle to cycle, and the demo ends on the reused fit passing first time. Speed can be changed in **Experiment controls**, including during a run.
+3. Pick a scenario, choose **Fixed path** or **Find a fit**, and click **Run attempt**. **Adjust the setup** contains connector variants, offsets and fault settings. Try **No latch** to see why continuity alone is insufficient.
+4. **Inspect connector** frames the plug and socket. **See inside** makes the housings transparent. **Whole machine** restores the assembled overview, including after a part selection. **Pull it apart** separates the components; a run reassembles them first. Drag to rotate the view and pinch to zoom (Ctrl or ⌘ and the wheel with a mouse). On a phone a sideways drag turns the machine and an upward swipe scrolls the page. The mouse wheel scrolls the page, never the camera.
+5. **Download data** saves configuration, samples, outcomes and the current model XML in JSON. These records stay in browser memory and are cleared on reload.
+6. **Record demo** records that computed four-part sequence from the render canvas, with status overlays and a permanent simulation label. Keep the tab visible until the download finishes. Switching away pauses the sequence and recording; resume to continue from the same step. It captures no camera or microphone. Browser support for canvas capture and MediaRecorder is required.
 
 Use **Pause / Resume** below the scene or on the demo button. Space toggles playback and R resets when focus is outside a form control; below the stage, Space pages down as usual unless you are in **Experiment controls**. Running from **Experiment controls** keeps the page where it is. Reset during a run releases the latch and retracts the tool along its normal path instead of jumping home. **Experiment controls** holds the live force plot.
 
 The renderer interpolates between computed poses with a 70 ms buffer and never extrapolates through contact. Camera damping uses elapsed time. The camera holds during pause and stays still at rest. Circular controls animate their icons with CSS transitions. Geometry is reused while adjusting offsets; the worker sends only new samples, and the renderer stops scheduling frames once the view settles. Loss of the WebGL context switches to the live 2D schematic without discarding the physics run.
 
-The illustrative robot is a six-joint cobot (src/cobot.ts), white with black-ringed joint caps, an orange flange ring and an external cable, as in the site's hero picture. It is drawn, not simulated: each frame an analytic elbow-up solution poses its base, shoulder, elbow and wrist so the tool flange sits on the pose MuJoCo computed for the plug, and the gripper turns with the computed yaw. Tests exercise 783 poses for rigid links, an upright elbow and clearance from the gripper, socket and table; the connector has a latch relief channel, and the arm cable ends in the gripper's gland, its tube rebuilt in reusable GPU buffers. The plug has bored female contacts opposite the socket pins, and its wires terminate at a strain relief. These rendered details do not add flexible-body or electrical physics. The stage shows computed force, depth and playback speed, including in close views.
+The illustrative robot is a six-joint cobot (src/cobot.ts), white with black-ringed joint caps, an orange flange ring and an external cable, as in the site's hero picture. It is drawn, not simulated: each frame an analytic elbow-up solution poses its base, shoulder, elbow and wrist so the tool flange sits on the pose MuJoCo computed for the plug, and the gripper turns with the computed yaw. Tests exercise 783 poses for rigid links, an upright elbow and clearance from the gripper, socket and table; the connector has a latch relief channel, and the arm cable ends in the gripper's gland, its tube rebuilt in reusable GPU buffers. The 15 mm six-contact plug has open contact bores and six routed wires terminating at the tester. The cell includes a green PCB, two locating pins, board clamps, housing nest, cable comb, turnover cradle and reject tray. An eight-contact variant is also rendered for the contact experiment. Daylight, a blurred empty factory hall, material roughness, contact shadows and depth of field provide the rendered setting. These rendered details do not add flexible-body or electrical physics. The stage shows computed force, depth and playback speed, including in close views.
 
 To package a built demo with an existing recording and evaluation output:
 
@@ -50,7 +51,7 @@ The ZIP includes the runtime assets, licenses, video, evidence and a Python 3 lo
 
 ## What the controller actually does
 
-The fixed controller approaches the nominal socket center. The search controller uses the same insertion controller, but retracts after blocked contact and tries 12 angles on each of four XY rings. It does not read the socket's configured translation. Once seating, continuity and retention pass, it saves that XY correction. Reuse is a single new, independently checked attempt with the saved correction. It can fail if the socket moves.
+The fixed controller approaches the nominal socket center. The search controller uses the same insertion controller, but retracts after blocked contact and tries XY rings, capped at 48 total attempts including the nominal center. The pull check precedes continuity, and a failed pull ends the attempt before electrical testing. It does not read the socket's configured translation. Once seating, continuity and retention pass, it saves that XY correction. Reuse is a single new, independently checked attempt with the saved correction. It can fail if the socket moves.
 
 This is deterministic feedback search and calibration. It is not RL, a learned neural policy, vision alignment, a competitive industrial baseline, or a demonstration of transfer to unseen connector families. Socket rotation can exceed what this XY-only search can handle.
 
@@ -72,19 +73,21 @@ npm run evaluate -- /absolute/path/to/evidence
 npm run build
 ```
 
-The evaluator exports five full demonstration traces and a fixed-seed, 32-case synthetic perturbation check across two variants, XY offsets, yaw and friction. The current model accepted 15/32 searches and 0/32 nominal fixed paths in that broad check. Those are software results on this chosen case set, not manufacturing reliability estimates. The default demo is a selected, reproducible example; the perturbation check includes its limitations.
+The evaluator exports five full demonstration traces and a fixed-seed, 32-case synthetic perturbation check across two variants, XY offsets, yaw and friction. The current v2 model accepted 13/32 searches and 0/32 nominal fixed paths in that broad check. Those are software results on this chosen case set, not manufacturing reliability estimates. The default demo is a selected, reproducible example; the perturbation check includes its limitations.
 
-Twenty-five tests cover display interpolation at 60/120 Hz, delayed updates, pose reset, camera damping, dock springs at 30/60/120 Hz, open contact bores, socket geometry, service-loop buffer reuse, static mesh batching, and numerical seating, blocked contact, correction reuse, a moved fixture, both fault models, both variants, search termination and finite values. Django tests check production asset availability, the WASM MIME type and stage labeling. CI runs the simulation tests and build before site regression tests.
+Thirty-one tests cover display interpolation at 60/120 Hz, delayed updates, pose reset, camera damping, dock springs at 30/60/120 Hz, open contact bores, socket geometry, service-loop buffer reuse, static mesh batching, and numerical seating, blocked contact, correction reuse, a moved fixture, both fault models, both variants, search termination and finite values. Process tests sample all four full-cell paths for reach and continuity, check turnover with the open tool retracted, test seated finger clearance and confirm acceptance/rejection and release behavior. Django tests check production asset availability, the WASM MIME type and stage labeling. CI runs the simulation tests and build before site regression tests.
 
 ## Files
 
 - `src/model.ts`: model dimensions, limits, MJCF and search locations.
 - `src/engine.ts`: deterministic simulation/controller and records.
 - `src/simulation.worker.ts`: browser clock and physics isolation.
-- `src/scene.ts`: original procedural geometry and rendering.
+- `src/scene.ts`: lighting, camera, postprocessing and motion rendering.
+- `src/cell-geometry.ts`: bench, PCB, fixture, tester, gripper, harness and turnover cradle.
+- `src/process.ts`: pure full-cycle illustration and rejection paths.
+- `src/cycle-player.ts`: progress, scenario and illustrative-signal controls.
 - `src/batching.ts`: static geometry batching with selection and animation boundaries.
 - `src/finishes.ts`: procedural material microtextures.
-- `src/tooling.ts`: mechanically separated carriage, bearings, saddle and gripper geometry.
 - `src/mechanism.ts`: molded connector geometry and deforming service-loop buffers.
 - `src/motion.ts`: buffered pose interpolation and time-based damping.
 - `src/main.ts`: controls, guided experiment, telemetry and exports.
@@ -97,3 +100,7 @@ Twenty-five tests cover display interpolation at 60/120 Hz, delayed updates, pos
 MuJoCo 3.14.0 is Apache-2.0; Three.js 0.186.1 is MIT. License copies are included in `../static/prototype/licenses/`. Geometry is original procedural code. This app includes no customer parts, proprietary factory data, company funding details or external model assets.
 
 The MuJoCo 3.14 WASM `eq_active` bool-array getter failed in this environment. `engine.ts` uses the supported `mj_setState` state API to toggle the same equality state; both latch tests cover that behavior. Vite reports that the package's Node-only `module` branch is externalized; the browser production worker was tested successfully.
+
+## Full-cycle design reference
+
+[The Defex Cycle](https://claude.ai/artifact/YYWC9yyACKmxekCzEzRr27) supplies the ten-step process and render direction. Husan explicitly requested face-up loading with an added turnover/regrasp step on October 12, 2026. The complete physical-cell sequence is a scripted illustration; the separate MuJoCo contact experiment remains the executable numerical model. The illustration's depth, force and pull values are illustrative examples, not validated process limits. The pose paths do not model flexible-wire dynamics, collisions with all tooling, robot control or safety.
