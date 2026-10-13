@@ -238,5 +238,8 @@ body .cycle-transport #cycle-clear-fault{margin:0;white-space:nowrap}
 td{color:#33423a}
 .records small{color:#5e6b5a}
 @media(max-width:600px){.cycle-cases{-webkit-mask-image:linear-gradient(90deg,#000 80%,transparent);mask-image:linear-gradient(90deg,#000 80%,transparent)}}
-.vignette{background:linear-gradient(90deg,#eef0ea8c,#eef0ea30 18%,transparent 28%),linear-gradient(180deg,#eef0ea66,transparent 110px),linear-gradient(0deg,#e9ece670,transparent 140px)}
-@media(max-width:900px){.vignette{background:linear-gradient(180deg,#eef0eae0 0,#eef0ea8c 180px,transparent 290px),linear-gradient(0deg,#e9ece670,transparent 160px)}}
+.vignette{background:linear-gradient(90deg,#eef0ea66,#eef0ea1a 16%,transparent 24%),linear-gradient(180deg,#eef0ea66,transparent 110px),linear-gradient(0deg,#e9ece670,transparent 140px)}
+@media(max-width:900px){.vignette{background:linear-gradient(180deg,#eef0ead0 0,#eef0ea66 165px,transparent 250px),linear-gradient(0deg,#e9ece670,transparent 160px)}}
+
+.stage-error strong,.stage-error button{color:#eef0ea}
+.tour-button{color:#f4f6f1}

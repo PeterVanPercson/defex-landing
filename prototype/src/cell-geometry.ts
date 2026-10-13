@@ -22,8 +22,8 @@ const pcbMaterial=new T.MeshPhysicalMaterial({color:0x164c38,metalness:.12,rough
 const grey=new T.MeshStandardMaterial({color:0x969b99,metalness:.15,roughness:.5});
 const solder=new T.MeshStandardMaterial({color:0xadada5,metalness:1,roughness:.28});
 const ink=new T.MeshStandardMaterial({color:0xbdcab4,roughness:.85});
-const jig=new T.MeshStandardMaterial({color:0x6c7175,metalness:.8,roughness:.55,name:'Cast jig plate'});
-const top=new T.MeshStandardMaterial({color:0x34373a,roughness:.5,metalness:0,name:'Phenolic worktop'});
+const jig=new T.MeshStandardMaterial({color:0x6d7174,metalness:.3,roughness:.42,name:'Cast jig plate'});
+const top=new T.MeshStandardMaterial({color:0x3a3d40,roughness:.6,metalness:0,envMapIntensity:1,name:'Phenolic worktop'});
 const cabinet=new T.MeshStandardMaterial({color:0x44494c,roughness:.5,metalness:.2,name:'Powder coated steel'});
 
 export function createCell(pins=6){

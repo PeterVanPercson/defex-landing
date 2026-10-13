@@ -53,22 +53,22 @@ function structure(m: Record<'deck' | 'paint' | 'wall' | 'steel' | 'panel' | 'gl
 export function createHall() {
   const hall = new T.Group(); hall.name = 'Empty factory hall';
   const make = (side: T.Side, dim = 1) => ({
-    deck: new T.MeshStandardMaterial({ color: new T.Color(0xa3a9ad).multiplyScalar(dim), roughness: .8, envMapIntensity: .5, side }),
-    paint: new T.MeshStandardMaterial({ color: new T.Color(0xf4f5f5).multiplyScalar(dim), roughness: .7, envMapIntensity: .8, side }),
-    wall: new T.MeshStandardMaterial({ color: new T.Color(0xa9afb3).multiplyScalar(dim), roughness: .9, envMapIntensity: .5, side }),
-    steel: new T.MeshStandardMaterial({ color: new T.Color(0xb3b9bd).multiplyScalar(dim), roughness: .55, metalness: .2, envMapIntensity: .5, side }),
+    deck: new T.MeshStandardMaterial({ color: new T.Color(0x5d6163).multiplyScalar(dim), roughness: .85, envMapIntensity: .5, side }),
+    paint: new T.MeshStandardMaterial({ color: new T.Color(0xffffff).multiplyScalar(dim), roughness: .6, envMapIntensity: 1.4, emissive: new T.Color(0x2c2d2d).multiplyScalar(dim), side }),
+    wall: new T.MeshStandardMaterial({ color: new T.Color(0xc2c3c3).multiplyScalar(dim), roughness: .9, envMapIntensity: .5, side }),
+    steel: new T.MeshStandardMaterial({ color: new T.Color(0x8f9395).multiplyScalar(dim), roughness: .55, metalness: .2, envMapIntensity: .5, side }),
     panel: new T.MeshBasicMaterial({ color: new T.Color(0xffffff).multiplyScalar(dim), toneMapped: false, side }),
     glass: new T.MeshBasicMaterial({ color: new T.Color(0xf2f6f8).multiplyScalar(dim), toneMapped: false, side }),
-    door: new T.MeshStandardMaterial({ color: new T.Color(0xb9bfc2).multiplyScalar(dim), roughness: .6, envMapIntensity: .5, side }),
+    door: new T.MeshStandardMaterial({ color: new T.Color(0xb4b5b5).multiplyScalar(dim), roughness: .6, envMapIntensity: .5, side }),
     pallet: new T.MeshStandardMaterial({ color: new T.Color(0x9a7f5e).multiplyScalar(dim), roughness: .9, envMapIntensity: .4, side }),
     wrap: new T.MeshStandardMaterial({ color: new T.Color(0xd9d6cf).multiplyScalar(dim), roughness: .5, envMapIntensity: .5, side }),
   });
   const up = structure(make(T.FrontSide));
   // the polished floor's reflection: the hall mirrored under a translucent floor
-  const down = structure(make(T.BackSide, .85)); down.name = 'Hall reflection';
+  const down = structure(make(T.BackSide, .78)); down.name = 'Hall reflection';
   down.scale.z = -1; down.position.z = 2 * FLOOR;
   const floor = new T.Mesh(new T.PlaneGeometry(SPAN, SPAN), new T.MeshPhysicalMaterial({
-    color: 0x9da2a4, roughness: .2, clearcoat: .8, clearcoatRoughness: .12, transparent: true, opacity: .76, envMapIntensity: .6,
+    color: 0x8e9193, roughness: .2, clearcoat: .8, clearcoatRoughness: .12, transparent: true, opacity: .6, envMapIntensity: .6,
   }));
   floor.name = 'Polished concrete floor'; floor.position.z = FLOOR; floor.receiveShadow = true;
   hall.add(up, down, floor);

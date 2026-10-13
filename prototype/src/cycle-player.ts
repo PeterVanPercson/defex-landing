@@ -1,6 +1,16 @@
-import { CYCLE_STEPS, EXAMPLE_LIMITS, processFrame, processRecord, seatPoints } from './process.ts';
+import { CYCLE_STEPS, EXAMPLE_LIMITS, processFrame, processRecord, recoveryStart, seatPoints } from './process.ts';
 import type { CycleCase, ProcessFrame, ProcessRecord } from './process.ts';
 import type { WorkcellScene } from './scene.ts';
+
+// Milliseconds per percent of the cycle, by step: the arm is moving within half a
+// second of Play, idle steps pass quickly and the fine moves keep time to read.
+// The whole pass takes about 26 s.
+const PACE=[50,190,290,420,190,400,380,240,240,280];
+export function pace(p:number,kind:CycleCase){
+  const start=recoveryStart(kind);
+  if(start!==null&&p>=start)return 300;
+  return PACE[processFrame(p,kind).step];
+}
 
 export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>void=()=>{}){
   const byId=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
@@ -66,12 +76,12 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   }
   function tick(now:number){
     if(!playing)return;
-    progress=Math.min(100,progress+Math.min(80,now-last)/600);last=now;draw();
+    progress=Math.min(100,progress+Math.min(80,now-last)/pace(progress,kind));last=now;draw();
     if(progress<100)request=requestAnimationFrame(tick);else finish();
   }
   function toggle(){
-    if(faultLocked)return;
-    activate();if(playing){stop();return;}onActivate();
+    // Bring the stage back first, so a held reject shows its Clear reject button again.
+    activate();if(faultLocked){draw();return;}if(playing){stop();return;}onActivate();
     if(progress>=100||!started){progress=0;logged=false;}started=true;
     playing=true;last=performance.now();draw();request=requestAnimationFrame(tick);
   }

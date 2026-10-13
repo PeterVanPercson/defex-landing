@@ -273,7 +273,7 @@ function refreshControls(){
   text('run-label',active?'Pause':unfinished||tourPaused?'Resume':'Run attempt');text('run-icon',active?'Ⅱ':'▶');
   el<HTMLButtonElement>('run').disabled=!ready;el<HTMLButtonElement>('reset').disabled=!ready;
   el<HTMLSelectElement>('speed').disabled=!ready;
-  el<HTMLButtonElement>('tour').disabled=!ready;all<HTMLButtonElement>('[data-start-tour]').forEach(b=>b.disabled=!ready);el<HTMLButtonElement>('embed-run').disabled=!ready;
+  el<HTMLButtonElement>('tour').disabled=!ready&&!cyclePlayer?.isActive();all<HTMLButtonElement>('[data-start-tour]').forEach(b=>b.disabled=!ready);el<HTMLButtonElement>('embed-run').disabled=!ready&&!cyclePlayer?.isActive();
   el('tour').setAttribute('aria-pressed',String(tourIndex>=0));
   text('tour-label',tourIndex>=0&&!tourPaused?'Pause':'Play');
   el('tour').dataset.playing=String(tourIndex>=0&&!tourPaused);
@@ -369,7 +369,8 @@ function error(message:string){
   el<HTMLButtonElement>('save-video').disabled=true;
   text('engine-status','Unavailable');el('engine-status').classList.add('error-notice');
   outcome('fail',loaded?'The simulation stopped.':'Couldn’t start the simulation.',advice);
-  el('stage-error').hidden=false;text('stage-error-message',advice);text('stage-state','Unavailable');
+  // The scripted cycle needs no physics, so it keeps the stage.
+  el('stage-error').hidden=!!cyclePlayer?.isActive();text('stage-error-message',advice);text('stage-state','Unavailable');
   refreshControls();text('engine-status','Unavailable');
 }
 worker.onerror=e=>error(e.message||'Reload the simulation to try again.');
@@ -395,10 +396,11 @@ let clicked:Element|null=null,spaceTaken=false;
 document.addEventListener('pointerdown',e=>{clicked=e.target instanceof Element?e.target.closest('button,a,summary'):null;},true);
 document.addEventListener('keydown',e=>{
   if(e.key==='Tab')clicked=null;
-  if(e.repeat||e.altKey||e.ctrlKey||e.metaKey||notes.open||!ready)return;
+  if(e.repeat||e.altKey||e.ctrlKey||e.metaKey||notes.open)return;
+  const cycle=!!cyclePlayer?.isActive();if(!ready&&!cycle)return;
   const t=e.target instanceof HTMLElement?e.target:null;
   if(t?.closest('input:not([type=range]),select,textarea,[contenteditable]'))return;
-  if(e.code==='KeyR'){e.preventDefault();if(cyclePlayer?.isActive()&&!t?.closest('.console'))cyclePlayer.restart();else reset();return;}
+  if(e.code==='KeyR'){e.preventDefault();if(cycle&&!t?.closest('.console'))cyclePlayer!.restart();else if(ready)reset();return;}
   if(e.code!=='Space')return;
   const control=t?.closest('button,a,summary');
   if(control&&control!==clicked)return;
@@ -406,7 +408,7 @@ document.addEventListener('keydown',e=>{
   if(document.querySelector('.stage')!.getBoundingClientRect().bottom<=0&&!t?.closest('.console'))return;
   e.preventDefault();spaceTaken=true;
   // One owner for Space: the full cycle while it is on the stage, otherwise the experiment.
-  if(cyclePlayer?.isActive()&&!t?.closest('.console'))cyclePlayer.toggle();else togglePlayback();
+  if(cycle&&!t?.closest('.console'))cyclePlayer!.toggle();else if(ready)togglePlayback();
 });
 // A focused button would otherwise take the Space's keyup as a click.
 document.addEventListener('keyup',e=>{if(e.code==='Space'&&spaceTaken){spaceTaken=false;e.preventDefault();}});

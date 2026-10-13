@@ -49,11 +49,11 @@ export function solveArm(flange: THREE.Vector3, out?: ArmPose): ArmPose {
 type Materials = Record<'dark' | 'edge' | 'silver' | 'rubber', THREE.MeshStandardMaterial>;
 
 export function cobotMaterials() {
-  const paint = new THREE.MeshPhysicalMaterial({ color: 0xdcdcd8, roughness: 0.4, metalness: 0, clearcoat: 0.2, clearcoatRoughness: 0.3 });
+  const paint = new THREE.MeshPhysicalMaterial({ color: 0xececE8, roughness: 0.34, metalness: 0, clearcoat: 0.35, clearcoatRoughness: 0.22, envMapIntensity: 1.3 });
   paint.name = 'Cobot satin white';
   const cap = new THREE.MeshPhysicalMaterial({ color: 0x1c1d1f, roughness: 0.58, metalness: 0, clearcoat: 0.12, clearcoatRoughness: 0.5 });
   cap.name = 'Joint cap black';
-  const capFace = new THREE.MeshPhysicalMaterial({ color: 0xd9dad6, roughness: 0.4, metalness: 0, clearcoat: 0.35, clearcoatRoughness: 0.25 });
+  const capFace = new THREE.MeshPhysicalMaterial({ color: 0xe6e7e3, roughness: 0.4, metalness: 0, clearcoat: 0.35, clearcoatRoughness: 0.25 });
   capFace.name = 'Joint cap face';
   const accent = new THREE.MeshStandardMaterial({ color: 0xe0601c, roughness: 0.4, metalness: 0 });
   accent.name = 'Flange ring orange';
