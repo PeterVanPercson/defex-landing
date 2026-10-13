@@ -74,6 +74,11 @@ class PrototypeTests(SimpleTestCase):
         self.assertNotIn('data-cycle-case="latched"', page)
         self.assertIn('<span id="cycle-detail" hidden></span>', page)
         self.assertNotIn('data-controller="reuse"', page)
+        # Nor do the downloaded records: no saved fit, calibration or reuse path in the engine or its export.
+        for name in ('src/engine.ts', 'src/simulation.worker.ts', 'src/model.ts'):
+            lowered = (root / name).read_text().lower()
+            for claim in ('correction', 'calibration', "'reuse'", 'forget'):
+                self.assertNotIn(claim, lowered, name)
 
     def test_the_demo_never_starts_by_itself(self):
         """His call, 2026-10-04: the prototype is shown, not played. Nothing links
@@ -84,3 +89,19 @@ class PrototypeTests(SimpleTestCase):
         for path in ('/', '/why-us/', '/prototype/', '/careers/', '/blog/'):
             self.assertNotIn('?play=1', self.client.get(path).content.decode(), path)
 
+
+    def test_the_line_keeps_making_units(self):
+        """2026-10-13: units ride on pallets through the cell, so Play keeps
+        producing units, the stage keeps a running tally, and the About notes
+        say how units flow and that pallet repeatability is not yet proven."""
+        root = Path(settings.BASE_DIR) / 'prototype'
+        page = (root / 'index.html').read_text()
+        self.assertIn('<p class="headline-note">Measures every unit. Checks every wire.</p>', page)
+        self.assertNotIn('Plug in. Pull. Test every wire.', page)
+        self.assertIn('id="line-status"', page)
+        self.assertIn('<dt>How units flow</dt>', page)
+        self.assertIn('pallet repeatability', page)
+        self.assertIn('max="108"', page)
+        process = (root / 'src/process.ts').read_text()
+        self.assertIn("'Locate the unit'", process)
+        self.assertIn("'Next unit'", process)

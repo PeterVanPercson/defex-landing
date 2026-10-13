@@ -14,12 +14,20 @@ const el=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const all=<T extends HTMLElement>(selector:string)=>Array.from(document.querySelectorAll<T>(selector));
 const text=(id:string,value:string)=>{const node=el(id);if(node.textContent!==value)node.textContent=value;};
 const send=(data:object)=>worker.postMessage(data);
+// After a pass the open hand waits above the seated plug. Anything that moves the plug again (a run, a reset, a new
+// setup) first closes the hand on it; what is sent meanwhile goes in order once the fingers are on the plug.
+let parked:object[]|null=null;
+function sendToPlug(data:object){
+  if(parked){parked.push(data);return;}
+  const wait=state?.released&&scene?scene.regrip():0;
+  if(wait<=0){send(data);return;}
+  parked=[data];setTimeout(()=>{const queue=parked??[];parked=null;queue.forEach(send);},wait);
+}
 const descriptions:Record<Controller,string>={
   fixed:'Straight in. Stops if blocked.',
   search:'Backs off and tries the next spot.',
-  reuse:'',
 };
-const names:Record<Controller,string>={fixed:'No search',search:'Search',reuse:'Reuse'};
+const names:Record<Controller,string>={fixed:'No search',search:'Search'};
 const settingInputs=all<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('.console input,.console select:not(#speed),[data-preset],[data-controller]');
 const controllerButtons=all<HTMLButtonElement>('[data-controller]');
 const phaseLabels=all('[data-phase]');
@@ -94,7 +102,7 @@ function syncConfig(){
 }
 function commitConfig(){
   if(configTimer)clearTimeout(configTimer);configTimer=null;
-  send({type:'config',config});samples=[];drawChart();
+  sendToPlug({type:'config',config});samples=[];drawChart();
 }
 // 'soon': a slider is still moving, so send once it rests. 'with-run': the next run carries it.
 function configure(next:Configuration,commit:'now'|'soon'|'with-run'='now'){
@@ -144,20 +152,20 @@ function stopTour(){
   el('tour-story').hidden=true;document.body.classList.remove('tour-active');scene?.hold(false);
   finishRecording();refreshControls();
 }
-// Runs always play on the assembled machine, with the camera following the plug.
+// Runs always play on the whole machine, with the camera following the plug.
 function film(){
   if(!scene)return;
   if(currentMode==='parts')selectMode('machine',false);
   currentView='overview';cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));syncModes();scene.direct(true);
 }
-// Running from the experiment controls keeps the page where it is: the result, tests and force plot are all there.
+// Every run plays framed on the stage, with the camera on the socket; the result, tests and force plot wait below.
 function run(withConfig=false){
   cyclePlayer?.deactivate();
   if(configTimer)commitConfig();halted=false;
   if(tourIndex<0){el('endcard').hidden=true;document.body.classList.remove('ended');}
-  film();send({type:'run',controller,...(withConfig?{config}:{})});
+  showStage();film();sendToPlug({type:'run',controller,...(withConfig?{config}:{})});
 }
-function reset(){halted=false;stopTour();dismissEnd();send({type:'reset'});selectView('overview',false);scene?.direct(false);}
+function reset(){halted=false;stopTour();dismissEnd();sendToPlug({type:'reset'});selectView('overview',false);scene?.direct(false);}
 function pause(){
   if(tourIndex>=0){
     tourPaused=true;

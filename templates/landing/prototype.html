@@ -5,13 +5,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#161918" />
-  <meta name="description" content="An interactive simulation of the Defex connector cell: the robot plugs in a connector, pulls it and tests every wire." />
+  <meta name="description" content="An interactive simulation of the Defex connector cell: it measures every unit, feels its way in, and checks every connection." />
   <title>Prototype | Defex Robotics</title>
   <link rel="canonical" href="https://defexrobotics.com/prototype/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Defex Robotics" />
   <meta property="og:title" content="Prototype | Defex Robotics" />
-  <meta property="og:description" content="An interactive simulation of the Defex connector cell: the robot plugs in a connector, pulls it and tests every wire." />
+  <meta property="og:description" content="An interactive simulation of the Defex connector cell: it measures every unit, feels its way in, and checks every connection." />
   <meta property="og:url" content="https://defexrobotics.com/prototype/" />
   <meta property="og:image" content="https://defexrobotics.com/static/img/og.jpg" />
   <meta property="og:image:type" content="image/jpeg" />
@@ -20,15 +20,15 @@
   <meta property="og:image:alt" content="Defex Robotics | Robots that plug in and check connectors" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Prototype | Defex Robotics" />
-  <meta name="twitter:description" content="An interactive simulation of the Defex connector cell: the robot plugs in a connector, pulls it and tests every wire." />
+  <meta name="twitter:description" content="An interactive simulation of the Defex connector cell: it measures every unit, feels its way in, and checks every connection." />
   <meta name="twitter:image" content="https://defexrobotics.com/static/img/og.jpg" />
   <link rel="icon" type="image/svg+xml" href="/static/img/defex-mark.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png" />
   <link rel="preload" href="/static/fonts/eb-garamond-400-normal.woff2" as="font" type="font/woff2" crossorigin />
-  <script type="module" crossorigin src="/static/prototype/assets/index-C6i1ygB_.js"></script>
-  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-C4YQtB15.css">
+  <script type="module" crossorigin src="/static/prototype/assets/index-tY2jHT6m.js"></script>
+  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-CH1aHDNW.css">
   <link rel="stylesheet" href="/static/css/orb-loader.css?v={{ asset_v }}" />
 </head>
 <body>
@@ -47,7 +47,7 @@
       </header>
 
       <div class="headline">
-        <h1>Connector<br>workcell.</h1><p class="headline-note">Plug in. Pull. Test every wire.</p>
+        <h1>Connector<br>workcell.</h1><p class="headline-note">Measures every unit. Checks every wire.</p>
       </div>
       <aside class="stage-readout" aria-label="Simulated measurements">
         
@@ -56,18 +56,19 @@
         <span class="readout-note" hidden><span id="stage-speed"></span></span>
       </aside>
       <aside class="process-readout" aria-label="Illustrated process signals">
-        <div class="process-heading"><b id="cycle-index">01</b></div>
-        <h2 id="cycle-title">Load the cell</h2><span id="cycle-detail" hidden></span><p id="cycle-copy"></p><span class="process-scope" id="cycle-scope"></span>
+        <div class="process-heading"><b id="cycle-index">01</b><i id="cycle-retry" hidden>retry</i></div>
+        <h2 id="cycle-title">Locate the unit</h2><span id="cycle-detail" hidden></span><p id="cycle-copy"></p><span class="process-scope" id="cycle-scope"></span>
         <details class="process-signals"><summary>Illustrated signals <span>+</span></summary>
-          <div class="signal-grid"><div>Press / example limit <b id="cycle-force">0.0 / 5.0 N</b></div><div>Depth <b id="cycle-depth">0.0 mm</b></div><div>Pull / example limit <b id="cycle-pull">0.0 / 2.5 N</b></div><div id="cycle-extraction-row" hidden>Extract / example limit <b id="cycle-extraction">0.0 / 4.0 N</b></div><div>Tries <b id="cycle-tries">1</b></div></div>
+          <div class="signal-grid"><div>Press / example limit <b id="cycle-force">0.0 / 60 N</b></div><div>Depth <b id="cycle-depth">0.0 mm</b></div><div>Pull / example limit <b id="cycle-pull">0.0 / 15 N</b></div><div id="cycle-extraction-row" hidden>Extract / example limit <b id="cycle-extraction">0.0 / 30 N</b></div><div>Tries <b id="cycle-tries">1</b></div></div>
           <svg class="process-chart" viewBox="0 0 300 52" role="img" aria-label="Illustrative axial force: press above zero, pull below zero, with seat markers"><defs><clipPath id="cycle-trace-clip"><rect id="cycle-trace-window" x="0" y="0" width="0" height="52"/></clipPath></defs><path d="M0 29H300" stroke="currentColor" opacity=".2"/><polyline id="cycle-trace" clip-path="url(#cycle-trace-clip)" fill="none" stroke="currentColor" stroke-width="1.3"/><g id="cycle-seat-points"></g><line id="cycle-cursor" y1="2" y2="49" stroke="#b96c3d" stroke-width="1"/></svg><small>Press ↑ · pull ↓ · illustrative, not measured</small>
           <div class="process-checks"><div>Seated <b id="seat-result">—</b></div><div>Pull <b id="pull-result">—</b></div><div>Wiring <b id="wiring-result">—</b></div></div>
           <div id="contact-results" aria-label="Six simulated contact checks"></div><small id="cycle-contact-note">Per wire: continuity + isolation</small><p id="cycle-verdict" role="status"></p>
         </details>
       </aside>
+      <p class="line-status" id="line-status">Unit 001 · 0 passed · 0 rejected</p>
       <div class="cycle-timeline">
         <div class="cycle-transport"><button id="cycle-play" aria-pressed="false" hidden>Play</button><button id="cycle-reset" aria-label="Restart" hidden>↺</button><button id="cycle-clear-fault" hidden>Clear reject</button><output id="cycle-percent" hidden></output></div>
-        <input type="range" min="0" max="100" step="0.1" value="0" id="cycle-scrub" aria-label="Full cycle progress"/>
+        <input type="range" min="0" max="108" step="0.1" value="0" id="cycle-scrub" aria-label="Full cycle progress"/>
         
       </div>
       <div class="stage-error" id="stage-error" role="alert" hidden><strong>Simulation unavailable</strong><p id="stage-error-message"></p><button id="stage-retry">Reload simulation ↻</button></div>
@@ -147,7 +148,7 @@
 
     
   </main>
-  <dialog id="notes" aria-labelledby="notes-title"><div class="dialog-heading"><h2 id="notes-title">About this model.</h2><button id="close-notes" aria-label="Close">×</button></div><dl><dt>What runs here</dt><dd>MuJoCo simulates only the plug and socket contact, in your browser. The complete cycle is a scripted illustration. Forces are examples and timing is not to scale.</dd><dt>How it places a connector</dt><dd>Two camera checks on every unit: the board, then the plug in the grip. The robot aims for the header and presses gently, so the chamfer guides the last fraction of a millimetre. A search is only a fallback: a fixed routine, not a trained robot policy.</dd><dt>What it checks</dt><dd>The latch force signature, a pull, and continuity on every wire.</dd><dt>Not yet proven</dt><dd>False passes from half-seated plugs, damage at seating force, cycle time, and safety near people.</dd><dt>Next</dt><dd>Build the cell and run it on customer parts. Track grip and header offsets across units to flag a worn fixture or gripper early.</dd></dl><div class="dialog-actions"><button id="download-model" class="tour-button">Download physics model <span>↓</span></button><a href="?view=schematic">2D view ↗</a><a href="https://github.com/google-deepmind/mujoco/tree/main/wasm" target="_blank" rel="noopener">MuJoCo ↗</a></div></dialog>
+  <dialog id="notes" aria-labelledby="notes-title"><div class="dialog-heading"><h2 id="notes-title">About this model.</h2><button id="close-notes" aria-label="Close">×</button></div><dl><dt>What runs here</dt><dd>MuJoCo simulates only the plug and socket contact, in your browser. The complete cycle is a scripted illustration. Forces are examples and timing is not to scale.</dd><dt>How it places a connector</dt><dd>Two camera checks on every unit: the board, then the plug in the grip. The robot aims for the header and presses gently, so the chamfer guides the last fraction of a millimetre. A search is only a fallback: a fixed routine, not a trained robot policy.</dd><dt>How units flow</dt><dd>Each unit rides on a pallet: the board in its fixture, the harness housing in a nest, its far end in a test adapter. A person loads pallets at the right and packs passed units at the left. The robot works one pallet while the next waits behind it, and empty pallets return under the bench. A reject stays in the tray and stops the line until a person clears it into the locked bin.</dd><dt>What it checks</dt><dd>The latch force signature, a pull, and continuity on every wire.</dd><dt>Not yet proven</dt><dd>False passes from half-seated plugs, damage at seating force, pallet repeatability, cycle time, and safety near people.</dd><dt>Next</dt><dd>Build the cell and run it on customer parts. Track grip and header offsets across units to flag a worn fixture or gripper early.</dd></dl><div class="dialog-actions"><button id="download-model" class="tour-button">Download physics model <span>↓</span></button><a href="?view=schematic">2D view ↗</a><a href="https://github.com/google-deepmind/mujoco/tree/main/wasm" target="_blank" rel="noopener">MuJoCo ↗</a></div></dialog>
   <noscript><div class="noscript">This simulation needs JavaScript.</div></noscript>
 </body>
 </html>

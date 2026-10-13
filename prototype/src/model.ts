@@ -1,4 +1,4 @@
-export type Controller = 'fixed' | 'search' | 'reuse';
+export type Controller = 'fixed' | 'search';
 export const METHOD_NAMES: Partial<Record<Controller, string>> = { fixed: 'No search', search: 'Search' };
 export type Fault = 'none' | 'open' | 'latch';
 export interface Configuration {

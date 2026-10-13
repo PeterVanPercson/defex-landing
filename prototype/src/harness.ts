@@ -3,9 +3,9 @@ import * as T from 'three';
 // Geometric cable dressing, not a cable dynamics model. The six wires leave the housing's wire face,
 // gather into a bundle (two rows, touching), hang from the housing to a touchdown point on the plate,
 // then lie on the plate: round the comb's far side in a tight S that takes up the slack, and back into
-// a short breakout that fans the wires into the comb. Each wire keeps its length; only the S's
+// a short breakout that fans the wires into the comb and on into the pallet's test adapter. Each wire keeps its length; only the S's
 // amplitude (capped) and, past the cap, the hanging span's sag change as the housing moves.
-export const HARNESS_LENGTH = 444;
+export const HARNESS_LENGTH = 429;
 // Control points per wire; dressHarness grows the caller's array to this length.
 export const HARNESS_POINTS = 72;
 export const WIRE_RADIUS = .48;
@@ -128,6 +128,9 @@ export function dressHarness(points: T.Vector3[], plug: T.Vector3, turn: number,
   return dressWire(points, plug, turn, yaw, contact, bundleSlot(index, pins), -104 + (index - (pins - 1) / 2) * 3, length, shared);
 }
 
+// The bundle's own S amplitude and hanging-span sag from the last dressHarness call (each wire varies a little round them).
+export function bundleFit() { return { amplitude: shared.amplitude, sag: shared.sag }; }
+
 function dressWire(points: T.Vector3[], plug: T.Vector3, turn: number, yaw: number, contact: number[], slot: [number, number], terminalX: number, length: number, fixed: { amplitude: number; sag: number } | null) {
   while (points.length < HARNESS_POINTS) points.push(new T.Vector3());
   const { poly, centre, v, w } = scratch;
@@ -156,7 +159,8 @@ function dressWire(points: T.Vector3[], plug: T.Vector3, turn: number, yaw: numb
     let k = bundle(poly, count, centre, first + span, slot, turn);
     // The breakout: the wires part from the bundle and climb into their own comb channels.
     vec(k, poly).set((poly[k - 1].x + terminalX) / 2, 22, poly[k - 1].z + .3); k++;
-    for (const [y, z] of [[25.5, 3.4], [29, 8.6], [38, 10.5], [78, 17]]) vec(k++, poly).set(terminalX, y, z);
+    // Out of the comb and down into its ferrule on the front face of the pallet's test adapter.
+    for (const [y, z] of [[25.5, 3.4], [29, 8.6], [38, 10.5], [50, 10.5], [63.5, 9]]) vec(k++, poly).set(terminalX, y, z);
     poly.length = k;
     // Nothing sinks into the plate where the bundle rests on it.
     for (let j = 0; j < k; j++) poly[j].z = Math.max(poly[j].z, WIRE_RADIUS + .12);

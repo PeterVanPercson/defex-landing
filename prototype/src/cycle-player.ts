@@ -1,46 +1,117 @@
 import { CYCLE_STEPS, EXAMPLE_LIMITS, processFrame, processRecord, recoveryStart, seatPoints } from './process.ts';
 import type { CycleCase, ProcessFrame, ProcessRecord } from './process.ts';
+import { CLEAR_SPAN, CYCLE_END, FIRST_UNIT, INDEX_START } from './line.ts';
+import type { LineState } from './line.ts';
 import type { WorkcellScene } from './scene.ts';
 
 // Milliseconds per percent of the cycle, by step: the arm is moving within half a second of Play, each
-// camera check holds its ring light for about 0.8 s and the press keeps time to read. A pass takes about
-// 21 s; the fallback search spends longer in the press, and a reject's retry takes about 11 s.
-const PACE=[120,240,220,320,250,250,200,180,150,160];
-const SEARCH_PRESS=500,RETRY_MS=11000;
+// camera check holds its ring light for about 1.3 s, the cradle places end slowly and the press keeps time to
+// read. The index to the next unit takes 3.2 s, so a pass takes about 25 s; the fallback search spends longer
+// in the press, and a reject's retry takes about 11 s.
+const PACE=[120,240,220,390,250,250,200,180,150,160,400];
+// A cleared reject: the person carries the harness to the bin over about 2 s before the pallets move.
+const SEARCH_PRESS=500,RETRY_MS=11000,CLEAR_MS=2600;
+export const isReject=(kind:CycleCase)=>recoveryStart(kind)!==null;
 export function pace(p:number,kind:CycleCase){
+  if(p>=INDEX_START)return isReject(kind)&&p<INDEX_START+CLEAR_SPAN*(CYCLE_END-INDEX_START)?CLEAR_MS:PACE[10];
   const start=recoveryStart(kind);
   if(start!==null&&p>=start)return RETRY_MS/(100-start);
   const step=Math.max(0,CYCLE_STEPS.filter(s=>p>=s[1]).length-1);
   return kind==='search'&&step===6?SEARCH_PRESS:PACE[step];
 }
 // Seconds a played cycle takes, as the player's clock runs it.
-export function cycleSeconds(kind:CycleCase,from=0,to=100){
+export function cycleSeconds(kind:CycleCase,from=0,to=CYCLE_END){
   let ms=0;for(let p=from;p<to;p+=.01)ms+=.01*pace(p+.005,kind);
   return ms/1000;
+}
+
+// A played line: the unit on the work pallet, how far its cycle has run, and what the line has made so far.
+// operator: how far the operator side had got on this unit before the robot's cycle was restarted on it.
+// next: a case chosen while this unit was already on its way out, for the next unit.
+// verdict: the last verdict this unit has shown; it stays counted through a scrub back, a restart or a case switch
+// until a newer verdict replaces it.
+export interface LineRun { progress:number; kind:CycleCase; line:LineState; held:boolean; cleared:boolean; logged:boolean; operator?:number; next?:CycleCase; verdict?:'pass'|'reject' }
+export const startRun=(kind:CycleCase='pass',line:LineState=FIRST_UNIT):LineRun=>({progress:0,kind,line,held:false,cleared:false,logged:false,operator:0});
+export const runFrame=(run:LineRun)=>processFrame(run.progress,run.kind,run.line,Math.max(run.progress,run.operator??0));
+// The line's counters as the readout shows them: the unit on the work pallet counts once it has its verdict.
+export function tally(run:LineRun,f:ProcessFrame=runFrame(run)){
+  const v=f.accepted===true?'pass':f.accepted===false?'reject':run.progress>=INDEX_START?(isReject(run.kind)?'reject':'pass'):run.verdict;
+  return {passed:run.line.passed+(v==='pass'?1:0),rejected:run.line.rejected+(v==='reject'?1:0)};
+}
+// Restart the robot's cycle on this unit, optionally with another case. A unit already logged and on its way out
+// is finished first, so the restart applies to the next unit and nothing is logged twice; otherwise the operator
+// side keeps its place.
+export function restartRun(run:LineRun,kind?:CycleCase):LineRun{
+  if(run.logged&&run.progress>=INDEX_START)return startRun(kind??run.next??'pass',nextLine(run.line,run.kind));
+  return {...run,kind:kind??run.kind,progress:0,logged:false,cleared:false,held:false,operator:Math.max(run.operator??0,Math.min(run.progress,INDEX_START))};
+}
+// Whether the unit's frames under `kind` match the current case's all the way to the current progress, so the case
+// can change in place without restarting the robot's cycle.
+export function sameSoFar(run:LineRun,kind:CycleCase){
+  const key=(f:ProcessFrame)=>[...f.tool,...f.plug,f.jaw,f.rotation,f.force,f.pullForce,f.detail,f.message,f.title,f.contacts.join(),f.seated,f.pull].map(v=>typeof v==='number'?v.toFixed(4):v).join();
+  if(run.progress>=INDEX_START)return false;
+  for(let p=0;p<=run.progress+1e-9;p+=.05)if(key(processFrame(p,run.kind,run.line))!==key(processFrame(p,kind,run.line)))return false;
+  return key(processFrame(run.progress,run.kind,run.line))===key(processFrame(run.progress,kind,run.line));
+}
+export function nextLine(line:LineState,kind:CycleCase):LineState {
+  const pass=!isReject(kind);
+  return {unit:line.unit+1,passed:line.passed+(pass?1:0),rejected:line.rejected+(pass?0:1),prev:pass?'pass':'reject'};
+}
+// How far the slider and the clock may run: a reject stops the line at 100 until a person clears it.
+export const runEnd=(run:LineRun)=>isReject(run.kind)&&!run.cleared?INDEX_START:CYCLE_END;
+export interface RunEvents { log?:(run:LineRun)=>void; hold?:(run:LineRun)=>void; next?:(run:LineRun)=>void }
+// Play the line on by ms. At 100 the unit is logged once; a reject then holds the line; at 108 the next unit
+// is in place, the counters move on and a fault case goes back to a pass, carrying the remaining time over.
+export function advanceRun(from:LineRun,ms:number,events:RunEvents={}):LineRun {
+  const run={...from};
+  while(ms>1e-9&&!run.held){
+    const boundary=run.progress<INDEX_START?INDEX_START:CYCLE_END,rate=pace(run.progress,run.kind);
+    const dp=Math.min(ms/rate,.25,boundary-run.progress);
+    run.progress+=dp;ms-=dp*rate;
+    if(boundary-run.progress<1e-9)run.progress=boundary;
+    if(run.progress>=INDEX_START&&!run.logged){run.logged=true;events.log?.(run);}
+    if(run.progress>=INDEX_START&&isReject(run.kind)&&!run.cleared){run.progress=INDEX_START;run.held=true;events.hold?.(run);break;}
+    if(run.progress>=CYCLE_END){
+      run.line=nextLine(run.line,run.kind);run.kind=run.next??'pass';run.next=undefined;run.progress=0;run.logged=false;run.cleared=false;run.operator=0;run.verdict=undefined;events.next?.(run);
+    }
+  }
+  return run;
 }
 
 export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>void=()=>{}){
   const byId=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
   const slider=byId<HTMLInputElement>('cycle-scrub'),play=byId<HTMLButtonElement>('cycle-play');
   const reset=byId<HTMLButtonElement>('cycle-reset'),clearFault=byId<HTMLButtonElement>('cycle-clear-fault');
+  const tour=byId<HTMLButtonElement>('tour');
   const caseButtons=[...document.querySelectorAll<HTMLButtonElement>('[data-cycle-case]')];
   const records:ProcessRecord[]=[];
-  let progress=0,kind:CycleCase='pass',playing=false,active=true,request=0,last=0,lastContacts='',traceKind='';
-  let faultLocked=false,logged=false,started=false;
+  let run=startRun(),playing=false,active=true,request=0,last=0,lastContacts='',traceKind='',started=false,nudgeTimer=0;
   const steps=byId('process-steps');
   steps.innerHTML=CYCLE_STEPS.map((s,i)=>`<button data-cycle-step="${i}" aria-current="false"><span>${String(i+1).padStart(2,'0')}</span><strong>${s[0]}</strong></button>`).join('');
+  const pad=(n:number)=>String(n).padStart(3,'0');
 
   const draw=()=>{
     if(!active)return;
-    const f=processFrame(progress,kind);scene.setProcess(f);slider.value=String(progress);slider.style.setProperty('--p',`${progress}%`);
-    byId('cycle-percent').textContent=`${Math.round(progress)}%`;
-    byId('cycle-title').textContent=f.accepted===true&&progress>=95?'Passed':f.rejected?'Rejected':f.title;byId('cycle-index').textContent=f.retry?'2nd':String(f.step+1).padStart(2,'0');
+    const {progress,kind,held}=run,f=runFrame(run),end=runEnd(run);
+    if(f.accepted!==null&&f.step<CYCLE_STEPS.length-1){const verdict=f.accepted?'pass':'reject';if(run.verdict!==verdict)run={...run,verdict};}
+    scene.setProcess(f);document.body.dataset.shot=f.shot;
+    // The slider always spans the whole unit; while a reject holds the line, the index part is shown locked.
+    if(slider.max!==String(CYCLE_END))slider.max=String(CYCLE_END);
+    slider.value=String(progress);slider.style.setProperty('--p',`${progress/CYCLE_END*100}%`);
+    slider.style.setProperty('--lock',`${end/CYCLE_END*100}%`);slider.dataset.locked=String(held);
+    byId('cycle-percent').textContent=`${Math.round(progress/CYCLE_END*100)}%`;
+    byId('cycle-title').textContent=f.step===CYCLE_STEPS.length-1?f.title:f.accepted===true&&progress>=95?'Passed':f.rejected?'Rejected':f.title;
+    byId('cycle-index').textContent=String(f.step+1).padStart(2,'0');
+    const retry=document.getElementById('cycle-retry');if(retry)retry.hidden=!f.retry||f.step===CYCLE_STEPS.length-1;
     const d=document.getElementById('cycle-detail');if(d){d.textContent=f.detail;d.hidden=!f.detail;}
+    const status=document.getElementById('line-status');
+    const count=tally(run,f);
+    if(status)status.textContent=`${f.unitLabel} · ${count.passed} passed · ${count.rejected} rejected${f.lineNote?` · ${f.lineNote}`:''}`;
     byId('cycle-copy').textContent=f.message;byId('cycle-scope').textContent=f.scope;
-    byId('cycle-force').textContent=`${f.force.toFixed(1)} / ${EXAMPLE_LIMITS.press.toFixed(1)} N`;
+    byId('cycle-force').textContent=`${f.force.toFixed(1)} / ${EXAMPLE_LIMITS.press.toFixed(0)} N`;
     byId('cycle-depth').textContent=`${f.depth.toFixed(1)} mm`;
-    byId('cycle-pull').textContent=`${f.pullForce.toFixed(1)} / ${EXAMPLE_LIMITS.pull.toFixed(1)} N`;
-    byId('cycle-extraction').textContent=`${f.extractionForce.toFixed(1)} / ${EXAMPLE_LIMITS.extraction.toFixed(1)} N`;
+    byId('cycle-pull').textContent=`${f.pullForce.toFixed(1)} / ${EXAMPLE_LIMITS.pull.toFixed(0)} N`;
+    byId('cycle-extraction').textContent=`${f.extractionForce.toFixed(1)} / ${EXAMPLE_LIMITS.extraction.toFixed(0)} N`;
     byId('cycle-extraction-row').hidden=!f.retry;
     byId('cycle-tries').textContent=f.retry?'Retry 1 / 1':String(f.tries);
     for(const [id,value] of [['seat-result',f.seated],['pull-result',f.pull],['wiring-result',f.contacts.includes('fail')?'fail':f.contacts.every(x=>x==='pass')?'pass':'pending']]){
@@ -53,52 +124,65 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
     }
     byId('cycle-contact-note').textContent=f.contactFaults.some(Boolean)?f.contactFaults.map((reason,i)=>reason?`${i+1}: ${reason}`:'').filter(Boolean).join(' · '):'Per wire: continuity + isolation';
     const failed=f.pull==='fail'||f.contacts.includes('fail');
-    byId('cycle-verdict').textContent=f.accepted===true?(kind==='search'?'All three checks passed · flagged: search used':'All three checks passed'):f.accepted===false?'Rejected · operator action required':f.retry?'Attempt 2 · fresh checks':failed?'Check failed · stop this attempt':f.step===1||f.step===4?'Measuring this unit':f.step<6?'Preparing the unit':'Checks in progress';
-    byId('cycle-verdict').dataset.result=f.accepted===true?'pass':f.accepted===false||failed?'fail':'pending';
+    const indexing=f.step===CYCLE_STEPS.length-1;
+    byId('cycle-verdict').textContent=indexing?(isReject(kind)?'Reject cleared · the line moves on':'The line moves the next unit in'):f.accepted===true?(kind==='search'?'All three checks passed · flagged: search used':'All three checks passed'):f.accepted===false?'Rejected · line stopped until a person clears it':f.step===CYCLE_STEPS.length-1?'The line moves the next unit in':f.retry?'Attempt 2 · fresh checks':failed?'Check failed · stop this attempt':f.step===1||f.step===4?'Measuring this unit':f.step<6?'Preparing the unit':'Checks in progress';
+    byId('cycle-verdict').dataset.result=indexing?'pending':f.accepted===true?'pass':f.accepted===false||failed?'fail':'pending';
     for(const button of steps.querySelectorAll('button'))button.setAttribute('aria-current',String(Number(button.dataset.cycleStep)===f.step));
-    play.textContent=playing?'Pause':'Play';play.setAttribute('aria-pressed',String(playing));play.disabled=faultLocked;
-    reset.disabled=faultLocked;clearFault.hidden=!faultLocked;
-    for(const button of caseButtons)button.disabled=faultLocked;slider.disabled=faultLocked;for(const button of steps.querySelectorAll('button'))button.disabled=faultLocked;
-    const tour=byId<HTMLButtonElement>('tour');tour.dataset.playing=String(playing);tour.disabled=faultLocked;
-    tour.setAttribute('aria-label',faultLocked?'Clear the reject first':playing?'Pause':'Play');tour.setAttribute('aria-pressed',String(playing));
-    byId('tour-label').textContent=faultLocked?'Clear the reject first':playing?'Pause':'Play';
-    byId<HTMLButtonElement>('embed-run').disabled=faultLocked;
+    play.textContent=playing?'Pause':'Play';play.setAttribute('aria-pressed',String(playing));play.disabled=held;
+    reset.disabled=held;clearFault.hidden=!held;
+    for(const button of caseButtons)button.disabled=held;slider.disabled=held;for(const button of steps.querySelectorAll('button'))button.disabled=held;
+    // A held reject leaves Play pressable, so a press can point at Clear reject instead of doing nothing.
+    tour.dataset.playing=String(playing);tour.disabled=false;tour.setAttribute('aria-disabled',String(held));
+    tour.setAttribute('aria-label',held?'Clear the reject first':playing?'Pause':'Play');tour.setAttribute('aria-pressed',String(playing));
+    byId('tour-label').textContent=held?'Clear the reject first':playing?'Pause':'Play';
+    byId<HTMLButtonElement>('embed-run').disabled=held;
     drawTrace(f);
   };
+  const traceX=(p:number)=>p*300/CYCLE_END;
   function drawTrace(f:ProcessFrame){
-    if(traceKind!==kind){
-      traceKind=kind;
-      byId('cycle-trace').setAttribute('points',Array.from({length:1001},(_,i)=>{const sample=processFrame(i/10,kind);return `${i*.3},${traceY(sample)}`;}).join(' '));
-      byId('cycle-seat-points').innerHTML=seatPoints(kind).map((p,i)=>`<g data-progress="${p}" transform="translate(${p*3} 0)"><line y1="4" y2="49" stroke="#426950" stroke-dasharray="2 2" opacity=".5"/><text x="-3" y="8" text-anchor="end" fill="#426950" font-size="8">seat ${i+1}</text></g>`).join('');
+    if(traceKind!==run.kind){
+      traceKind=run.kind;
+      byId('cycle-trace').setAttribute('points',Array.from({length:CYCLE_END*10+1},(_,i)=>{const sample=processFrame(i/10,run.kind);return `${traceX(i/10).toFixed(2)},${traceY(sample).toFixed(2)}`;}).join(' '));
+      byId('cycle-seat-points').innerHTML=seatPoints(run.kind).map((p,i)=>`<g data-progress="${p}" transform="translate(${traceX(p).toFixed(2)} 0)"><line y1="4" y2="49" stroke="#426950" stroke-dasharray="2 2" opacity=".5"/><text x="-3" y="8" text-anchor="end" fill="#426950" font-size="8">seat ${i+1}</text></g>`).join('');
     }
-    byId('cycle-trace-window').setAttribute('width',String(f.progress*3));
-    byId('cycle-cursor').setAttribute('x1',String(f.progress*3));byId('cycle-cursor').setAttribute('x2',String(f.progress*3));
+    byId('cycle-trace-window').setAttribute('width',String(traceX(f.progress)));
+    byId('cycle-cursor').setAttribute('x1',String(traceX(f.progress)));byId('cycle-cursor').setAttribute('x2',String(traceX(f.progress)));
     for(const mark of byId('cycle-seat-points').children)mark.setAttribute('visibility',f.progress>=Number((mark as SVGElement).dataset.progress)?'visible':'hidden');
   }
-  function traceY(f:ProcessFrame){return 29-(f.force-f.pullForce-f.extractionForce)*4.5;}
+  // Press up, pull and extraction down, at the newton scale of the example limits.
+  function traceY(f:{force:number;pullForce:number;extractionForce:number}){return 29-(f.force-f.pullForce-f.extractionForce)*.42;}
   function stop(){playing=false;cancelAnimationFrame(request);request=0;draw();}
   function activate(){if(!active){active=true;document.body.classList.add('process-mode');onActivate();onEnter();}document.body.classList.remove('tour-active');}
-  function finish(){
-    if(!logged){logged=true;log();}
-    faultLocked=processFrame(100,kind).accepted===false;stop();
-  }
+  function syncCases(kind=run.logged&&run.progress>=INDEX_START?run.next??'pass':run.kind){for(const b of caseButtons)b.setAttribute('aria-pressed',String(b.dataset.cycleCase===kind));}
+  const events:RunEvents={
+    log:r=>log(r),
+    hold:()=>{playing=false;},
+    next:r=>syncCases(r.kind),
+  };
   function tick(now:number){
     if(!playing)return;
-    progress=Math.min(100,progress+Math.min(80,now-last)/pace(progress,kind));last=now;draw();
-    if(progress<100)request=requestAnimationFrame(tick);else finish();
+    run=advanceRun(run,Math.min(80,now-last),events);last=now;
+    if(run.held){stop();return;}
+    draw();request=requestAnimationFrame(tick);
+  }
+  function go(){playing=true;last=performance.now();draw();cancelAnimationFrame(request);request=requestAnimationFrame(tick);}
+  // While a reject holds the line, Play and Restart point at the one control that moves it on.
+  function nudge(){
+    clearFault.classList.remove('nudge');void clearFault.offsetWidth;clearFault.classList.add('nudge');tour.classList.remove('tip-off');tour.classList.add('show-tip');
+    clearTimeout(nudgeTimer);nudgeTimer=window.setTimeout(()=>{clearFault.classList.remove('nudge');tour.classList.remove('show-tip');},1600);
   }
   function toggle(){
     // Bring the stage back first, so a held reject shows its Clear reject button again.
-    activate();if(faultLocked){draw();return;}if(playing){stop();return;}onActivate();
-    if(progress>=100||!started){progress=0;logged=false;}started=true;
-    playing=true;last=performance.now();draw();request=requestAnimationFrame(tick);
+    activate();if(run.held){nudge();draw();return;}if(playing){stop();return;}onActivate();
+    if(!started||run.progress>=runEnd(run))run=restartRun(run);started=true;
+    go();
   }
-  function restart(){if(faultLocked)return;activate();stop();progress=0;logged=false;draw();}
+  function restart(){if(run.held){activate();nudge();draw();return;}activate();stop();run=restartRun(run);syncCases();draw();}
   function showStage(){document.querySelector('.stage')?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
-  function log(){
-    const record=processRecord(records.length+1,kind);records.push(record);
+  function log(r:LineRun){
+    const record=processRecord(r.line.unit,r.kind);records.push(record);
     const row=document.createElement('li'),title=document.createElement('strong');
-    title.textContent=`Illustrated unit ${String(record.id).padStart(3,'0')} · ${record.case} · ${record.accepted?'accepted':'rejected / operator clear required'}${record.flag?` · flagged: ${record.flag.toLowerCase()}`:''}`;row.append(title);
+    title.textContent=`Illustrated unit ${pad(record.id)} · ${record.case} · ${record.accepted?'accepted':'rejected / operator clear required'}${record.flag?` · flagged: ${record.flag.toLowerCase()}`:''}`;row.append(title);
     const measured=document.createElement('p');measured.textContent=`Measured: header ${Math.hypot(...record.measured.header).toFixed(2)} mm from nominal, grip ${Math.hypot(...record.measured.grip).toFixed(2)} mm off centre.`;row.append(measured);
     for(const attempt of record.attempts){
       const line=document.createElement('p');
@@ -106,27 +190,33 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
       line.textContent=`Attempt ${attempt.number}: seat ${attempt.seated}, pull ${attempt.pull}; contacts ${contacts}. ${attempt.reason??'All three checks passed.'}`;row.append(line);
     }
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 300 52');svg.setAttribute('class','record-trace');svg.setAttribute('role','img');svg.setAttribute('aria-label',`Illustrated force trace for unit ${record.id}, including ${record.attempts.length} attempt${record.attempts.length>1?'s':''}`);
-    const line=document.createElementNS('http://www.w3.org/2000/svg','polyline');line.setAttribute('points',record.trace.map(s=>`${s.progress*3},${29-(s.press-s.pull-s.extraction)*4.5}`).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke','currentColor');line.setAttribute('stroke-width','1.2');svg.append(line);row.append(svg);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','polyline');line.setAttribute('points',record.trace.map(s=>`${s.progress*3},${traceY({force:s.press,pullForce:s.pull,extractionForce:s.extraction}).toFixed(2)}`).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke','currentColor');line.setAttribute('stroke-width','1.2');svg.append(line);row.append(svg);
     byId('cycle-log').prepend(row);byId<HTMLButtonElement>('cycle-export').disabled=false;
     byId('cycle-log-status').textContent=`${records.length} illustrated unit${records.length>1?'s':''} recorded during this visit. Download to retain the checks and force traces.`;
   }
-  // Scrubbing only looks; a unit is recorded, and a reject held, only when a played cycle ends.
-  slider.addEventListener('input',()=>{if(faultLocked)return;started=true;activate();const value=Number(slider.value);stop();progress=value;draw();});
+  // Scrubbing only looks; a unit is recorded, a reject held and the line moved on only by a played cycle.
+  slider.addEventListener('input',()=>{if(run.held)return;started=true;activate();const value=Number(slider.value);stop();run={...run,progress:Math.min(value,runEnd(run))};draw();});
   play.addEventListener('click',toggle);reset.addEventListener('click',restart);
-  clearFault.addEventListener('click',()=>{faultLocked=false;restart();byId('cycle-log-status').textContent='Fault cleared by the viewer. Previous unit records and traces are retained below.';});
+  // The person moves the rejected harness to the locked bin; the bare board then indexes out and the line runs on.
+  clearFault.addEventListener('click',()=>{
+    if(!run.held)return;run={...run,held:false,cleared:true};started=true;clearTimeout(nudgeTimer);clearFault.classList.remove('nudge');tour.classList.remove('show-tip');
+    byId('cycle-log-status').textContent='Reject cleared by the viewer. Previous unit records and traces are retained below.';activate();go();
+  });
   byId('cycle-export').addEventListener('click',()=>{
     const url=URL.createObjectURL(new Blob([JSON.stringify({source:'Defex scripted cycle illustration',measurements:false,units:records},null,2)],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;a.download='defex-illustrated-unit-traces.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
-  steps.addEventListener('click',e=>{const button=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-cycle-step]');if(button&&!faultLocked){started=true;activate();stop();progress=CYCLE_STEPS[Number(button.dataset.cycleStep)][1];draw();showStage();}});
+  steps.addEventListener('click',e=>{const button=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-cycle-step]');if(button&&!run.held){started=true;activate();stop();run={...run,progress:Math.min(CYCLE_STEPS[Number(button.dataset.cycleStep)][1],runEnd(run))};draw();showStage();}});
   for(const button of caseButtons)button.addEventListener('click',()=>{
-    // A switch while playing starts the new case at once.
-    if(faultLocked)return;const wasPlaying=playing;activate();stop();kind=button.dataset.cycleCase as CycleCase;progress=0;logged=false;started=true;
-    for(const b of caseButtons)b.setAttribute('aria-pressed',String(b===button));draw();showStage();if(wasPlaying)toggle();
+    // A switch changes this unit's case in place while the unit has not yet done anything that differs; otherwise
+    // the robot restarts this unit with the new case (the operator side keeps its place). While playing it plays on.
+    if(run.held)return;const kind=button.dataset.cycleCase as CycleCase,wasPlaying=playing;activate();stop();
+    run=run.logged&&run.progress>=INDEX_START?{...run,next:kind}:kind===run.kind?run:sameSoFar(run,kind)?{...run,kind}:restartRun(run,kind);started=true;
+    syncCases();draw();showStage();if(wasPlaying)go();
   });
   // The one play button always plays the full cycle, even after a contact experiment ran.
   for(const id of ['tour','embed-run'])byId(id).addEventListener('click',e=>{e.stopImmediatePropagation();if(e.detail<2)toggle();},true);
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)stop();});
   document.body.classList.add('process-mode');draw();
-  return {refresh:draw,toggle,restart,deactivate(){stop();active=false;document.body.classList.remove('process-mode');scene.setProcess(null);},isActive:()=>active};
+  return {refresh:draw,toggle,restart,deactivate(){stop();active=false;document.body.classList.remove('process-mode');scene.setProcess(null);},isActive:()=>active,isHeld:()=>run.held};
 }
