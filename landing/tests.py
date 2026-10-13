@@ -492,7 +492,7 @@ class SiteTests(SimpleTestCase):
         self.assertIn('id="meet" data-nav-dark', home)
         proto = self.client.get("/prototype/").content.decode()
         self.assertLess(proto.index('class="process-guide"'), proto.index('class="tryit console"'))
-        self.assertIn('The complete cycle above is a scripted illustration.', proto)
+        self.assertIn('The complete cycle is a scripted illustration.', proto)
         self.assertNotIn('aria-controls="meet-', proto)
         for page in (body, home):
             self.assertEqual(page.count('class="rb"'), 1)

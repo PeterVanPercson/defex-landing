@@ -4,6 +4,7 @@ import { finishes as M } from './finishes.ts';
 import { createCobot, ArmCable } from './cobot.ts';
 import { plugHousing, contactCenters } from './mechanism.ts';
 import { NEST, REJECT, TURNOVER } from './process.ts';
+import { HARNESS_POINTS, WIRE_RADIUS, setHarnessObstacles } from './harness.ts';
 
 const geometry=new Map<string,T.BufferGeometry>();
 function cached(key:string,make:()=>T.BufferGeometry){if(!geometry.has(key))geometry.set(key,make());return geometry.get(key)!;}
@@ -21,23 +22,23 @@ const pcbMaterial=new T.MeshPhysicalMaterial({color:0x164c38,metalness:.12,rough
 const grey=new T.MeshStandardMaterial({color:0x969b99,metalness:.15,roughness:.5});
 const solder=new T.MeshStandardMaterial({color:0xadada5,metalness:1,roughness:.28});
 const ink=new T.MeshStandardMaterial({color:0xbdcab4,roughness:.85});
+const jig=new T.MeshStandardMaterial({color:0x6c7175,metalness:.8,roughness:.55,name:'Cast jig plate'});
+const top=new T.MeshStandardMaterial({color:0x34373a,roughness:.5,metalness:0,name:'Phenolic worktop'});
+const cabinet=new T.MeshStandardMaterial({color:0x44494c,roughness:.5,metalness:.2,name:'Powder coated steel'});
 
 export function createCell(pins=6){
   const halfX=pins===8?9.5:7.5, extra=halfX-7.5;
   const root=new T.Group();root.name='Connector workcell';
   const bench=new T.Group();root.add(bench);
-  box(bench,'Black tooling plate',[610,470,18],[15,28,-9],M.base,2);
-  box(bench,'Machined plate edge',[611,471,2],[15,28,-19],M.dark,.5);
-  box(bench,'Bench frame',[600,455,58],[15,28,-49],M.body,2);
-  for(const x of [-252,282])for(const y of [-162,218]){
-    box(bench,'Bench leg',[40,40,640],[x,y,-398],M.body,1.8);
-    for(const d of [-1,1])box(bench,'Extrusion slot',[2,40.1,628],[x+d*11,y,-398],M.dark,.1);
-    cyl(bench,'Leveling foot',27,8,[x,y,-720],M.rubber);
-    bolt(bench,x,y,.2,4);
-  }
-  for(let x=-245;x<=270;x+=35)for(let y=-150;y<=230;y+=35){
-    if((Math.abs(x)<64&&Math.abs(y)<50)||(x>148&&y>95)||(x<-64&&x>-165&&y>-145&&y<155))continue;
-    cyl(bench,'Counterbored tooling hole',2.9,.12,[x,y,.08],M.edge,16);cyl(bench,'Threaded bore',2.4,.16,[x,y,.15],M.bore,16);
+  box(bench,'Aluminium jig plate',[570,380,12],[-17,30,-6],jig,1);
+  for(const x of [-292,258])for(const y of [-150,210])bolt(bench,x,y,.1,3.2);
+  box(bench,'Phenolic worktop',[1000,700,30],[40,30,-27],top,2);
+  box(bench,'Cabinet body',[970,660,630],[40,40,-357],cabinet,3);
+  box(bench,'Cabinet plinth',[930,600,60],[40,50,-705],M.rubber,1);
+  for(const [x,w] of [[-210,450],[275,450]])for(const [z,h] of [[-110,120],[-240,120],[-400,180],[-590,180]]){
+    box(bench,'Drawer front',[w,6,h],[x+5,-292,z],cabinet,2.5);
+    box(bench,'Drawer pull',[w*.45,10,8],[x+5,-299,z+h/2-22],M.silver,3);
+    box(bench,'Drawer label slot',[46,3,16],[x+5-w*.36,-296,z+h/2-22],M.dark,1);
   }
   const fixture=new T.Group();root.add(fixture);
   box(fixture,'Black fixture base',[94,78,5],[0,0,2.5],M.body,.9);
@@ -68,7 +69,7 @@ export function createCell(pins=6){
   for(const [x,y] of [[17,6],[-19,6],[-20,-6]])for(const s of [-1,1])box(pcb,'Silkscreen footprint',[.14,4,.02],[x+s*4,y,9.68],ink,0);
   const header=new T.Group();root.add(header);header.name='Board header';
   const housing=new T.Group();header.add(housing);
-  for(const [sz,ps] of [[[1.2,10.4,11.7],[-8.5-extra,0,16.15]],[[1.2,10.4,11.7],[8.5+extra,0,16.15]],[[15.8+2*extra,1.2,11.7],[0,4.65,16.15]],[[6.2+extra,1.2,11.7],[-4.8-extra/2,-4.65,16.15]],[[6.2+extra,1.2,11.7],[4.8+extra/2,-4.65,16.15]]])box(housing,'Molded PBT header',sz,ps,M.polymer,.2);
+  for(const [sz,ps] of [[[1.2,10.4,7.7],[-8.5-extra,0,14.15]],[[1.2,10.4,7.7],[8.5+extra,0,14.15]],[[15.8+2*extra,1.2,7.7],[0,4.65,14.15]],[[6.2+extra,1.2,7.7],[-4.8-extra/2,-4.65,14.15]],[[6.2+extra,1.2,7.7],[4.8+extra/2,-4.65,14.15]]])box(housing,'Molded PBT header',sz,ps,M.polymer,.2);
   box(housing,'Header seating floor',[17+2*extra,10.4,1.2],[0,0,10.5],M.polymer,.15);
   box(housing,'Latch catch',[3.2,1,1.3],[0,-5.2,13.5],M.polymer,.15);
   for(const [x,y] of contactCenters(pins)){cyl(header,'Gold header pin',.35,5.5,[x,y,13.3],M.gold,16);cyl(pcb,'Header solder pad',.9,.08,[x,y,9.7],solder,16);}
@@ -76,10 +77,13 @@ export function createCell(pins=6){
   const nest=new T.Group();nest.position.set(NEST[0],NEST[1],0);root.add(nest);
   box(nest,'Quick-change nest plate',[44,44,5],[0,0,2.5],M.body,.6);
   for(const x of [-17,17])for(const y of [-17,17])bolt(nest,x,y,5.2,1.8);
-  for(const x of [-12,12])box(nest,'Nest outer guide',[4,22,7],[x,0,8.5],M.polymer,.6);
+  // The guides stand 0.1 mm off the housing ends and rise past its lower edge, so they locate X.
+  for(const x of [-8.6,8.6])box(nest,'Nest end guide',[2,11,11],[x,0,10.5],M.polymer,.4);
   for(const x of [-6.8,6.8])box(nest,'Housing support rail',[1.2,7.2,7],[x,0,8.5],M.polymer,.2);
   box(nest,'Housing recess',[16.8,8.9,.25],[0,0,5.15],M.bore,.3);
-  for(const s of [-1,1])box(nest,'Nest locating ledge',[18,2,4],[0,s*5.5,14],M.polymer,.3);
+  box(nest,'Nest locating ledge',[18,2,4],[0,-5.5,14],M.polymer,.3);
+  // The far ledge is split so the wires leaving the underside of the face-up housing pass between its halves.
+  for(const x of [-7.5,7.5])box(nest,'Nest locating ledge',[3,2,4],[x,5.5,14],M.polymer,.3);
   const comb=new T.Group();comb.position.set(-104,38,0);root.add(comb);
   box(comb,'Cable comb base',[pins*3+8,14,8],[0,0,4],M.polymer,.6);
   for(let i=0;i<=pins;i++)box(comb,'Cable comb tooth',[1.3,13,7],[-pins*1.5+i*3,0,10],M.polymer,.25);
@@ -97,31 +101,44 @@ export function createCell(pins=6){
   tube(tester,[[-62,118,13],[-39,114,9],[-35,50,3],[-22,28,6],[-20,22,8]],1.7,M.rubber);
   const bin=new T.Group();bin.position.set(REJECT[0],REJECT[1],0);root.add(bin);
   box(bin,'Reject tray base',[69,53,3],[0,0,1.5],M.body,1);
-  for(const s of [-1,1]){box(bin,'Reject tray wall',[2.5,53,22],[s*33,0,12],M.body,.7);box(bin,'Reject tray wall',[65,2.5,22],[0,s*25,12],M.body,.7);}
+  // Walls 12 mm high: the harness of a rejected unit leaves over the far wall without touching it.
+  for(const s of [-1,1]){box(bin,'Reject tray wall',[2.5,53,12],[s*33,0,7],M.body,.7);box(bin,'Reject tray wall',[65,2.5,12],[0,s*25,7],M.body,.7);}
   box(bin,'Reject tray liner',[61,45,3],[0,0,4],M.rubber,.5);
-  const eStop=new T.Group();eStop.position.set(235,-135,0);root.add(eStop);
-  box(eStop,'Emergency stop base',[38,38,18],[0,0,9],new T.MeshStandardMaterial({color:0xc9aa35,roughness:.65}),2);
-  cyl(eStop,'Emergency stop collar',12,5,[0,0,20],M.dark,40);
-  cyl(eStop,'Emergency stop button',15,8,[0,0,26],new T.MeshStandardMaterial({color:0x8f3024,roughness:.65}),40);
   const turnover=new T.Group();turnover.name='Turnover cradle';turnover.position.set(TURNOVER[0],TURNOVER[1],0);root.add(turnover);
-  box(turnover,'Turnover base',[52,56,5],[0,0,2.5],M.body,.7);
-  for(const y of [-22,22]){box(turnover,'Turnover bearing support',[20,6,30],[0,y,20],M.silver,.6);const bearing=cyl(turnover,'Turnover bearing',7,8,[0,y,38],M.dark,40);bearing.rotation.x=0;}
+  // Cantilevered from the -y side: the harness leaves the housing towards +y, so that side stays open.
+  box(turnover,'Turnover base',[52,74,5],[0,-12,2.5],M.body,.7);
+  box(turnover,'Turnover bearing support',[20,6,30],[0,-22,20],M.silver,.6);
+  const bearing=cyl(turnover,'Turnover bearing',7,8,[0,-22,38],M.dark,40);bearing.rotation.x=0;
   const rotator=new T.Group();rotator.position.z=TURNOVER[2];turnover.add(rotator);
-  for(const y of [-12,12]){const shaft=cyl(rotator,'Cradle axle',3,22,[0,y,0],M.edge,32);shaft.rotation.x=0;}
+  // In the rotator's frame the housing spans x ±7.5, y ±3.6, z -4.05..8.25 at every angle.
+  const shaft=cyl(rotator,'Cradle axle',3,11,[0,-20.5,0],M.edge,32);shaft.rotation.x=0;
+  box(rotator,'Cradle hub',[16,4,12],[0,-15,0],M.dark,.6);
+  box(rotator,'Cradle slide block',[3,6,3],[-8.5,-14,2.15],M.dark,.3);
   const cradleJaws:T.Group[]=[];
   for(const y of [-6.3,6.3]){
     const jaw=new T.Group();rotator.add(jaw);cradleJaws.push(jaw);
     box(jaw,'Turnover clamping jaw',[11,3,10],[0,y,0],M.dark,.5);
-    for(const x of [-4,4])box(jaw,'Housing turnover pad',[2,1.7,8],[x,y-Math.sign(y)*1.6,0],M.rubber,.2);
+    for(const x of [-4,4])box(jaw,'Housing turnover pad',[2,1.7,8],[x,y-Math.sign(y)*1.85,0],M.rubber,.2);
+    // The open-side jaw rides on a carrier bar back into the hub's slide block. The bar passes the housing's
+    // end in the 1.3 mm band (z 1.5..2.8) that the closed fingers leave free both when placing and regripping.
+    if(y>0){box(jaw,'Jaw carrier web',[2.2,3,4],[-6.5,y,1],M.dark,.3);box(jaw,'Jaw carrier bar',[1.8,23.8,1.2],[-8.5,-4.1,2.15],M.silver,.2);}
   }
-  box(turnover,'Turnover actuator',[22,22,22],[0,39,38],M.body,1);
-  tube(turnover,[[10,39,38],[18,42,28],[20,40,4],[12,26,2]],1.2,M.rubber);
+  box(turnover,'Turnover actuator',[22,22,22],[0,-36,38],M.body,1);
+  tube(turnover,[[10,-36,38],[18,-39,28],[20,-37,4],[12,-23,2]],1.2,M.rubber);
   const arm=createCobot(M);arm.root.scale.setScalar(5);root.add(arm.root);
   const tool=createPrecisionTool(extra);root.add(tool.root);
   const plug=createPlug(pins);root.add(plug);
-  const wires=Array.from({length:pins},(_,i)=>{const mat=new T.MeshStandardMaterial({color:[0x9c6534,0x2c3234,0xc4b99e,0x697960,0x596c82,0x864d49,0x9c9b82,0x415451][i],roughness:.65});const w=new ArmCable(mat,10,.48,128);w.mesh.name=`Harness wire ${i+1}`;root.add(w.mesh);return w;});
-  return {root,bench,fixture,header,housing,pcb,nest,tester,bin,arm,tool,plug,wires,indicator,turnover,rotator,cradleJaws,pins};
+  const wires=Array.from({length:pins},(_,i)=>{const mat=new T.MeshStandardMaterial({color:[0x9c6534,0x2c3234,0xc4b99e,0x697960,0x596c82,0x864d49,0x9c9b82,0x415451][i],roughness:.65});const w=new ArmCable(mat,HARNESS_POINTS,WIRE_RADIUS,320);w.mesh.name=`Harness wire ${i+1}`;root.add(w.mesh);return w;});
+  const latch=plug.userData.latch as T.Group;
+  // What the hanging harness can come to rest on: the fixed hardware on the plate.
+  root.updateMatrixWorld(true);
+  const rests:T.Box3[]=[];
+  for(const g of [fixture,header,nest,comb,tester,bin,turnover])g.traverse(o=>{if(o instanceof T.Mesh&&!(o.geometry instanceof T.TubeGeometry)){for(let p:T.Object3D|null=o;p;p=p.parent)if(p===rotator)return;rests.push(new T.Box3().setFromObject(o));}});
+  setHarnessObstacles(rests);
+  return {root,bench,fixture,header,housing,pcb,nest,tester,bin,arm,tool,plug,latch,wires,indicator,turnover,rotator,cradleJaws,pins};
 }
+// Hold the latch released (1) or let it spring back (0).
+export function poseLatch(latch:T.Object3D,released:number){latch.rotation.x=.13*released;}
 export function createPlug(pins=6){
   const halfX=pins===8?9.5:7.5;
   const group=new T.Group();group.name='Six-wire connector';
@@ -132,7 +149,10 @@ export function createPlug(pins=6){
     cyl(group,'Wire entry seal',.62,.18,[x,y,8.25],M.ivory,20);
   }
   for(const s of [-1,1])box(group,'Molded keying rib',[.5,.45,5],[s*6.3,-3.65,-.3],M.ivory,.1);
-  box(group,'Free latch beam',[2,.55,5],[0,-4,-.3],M.ivory,.12);box(group,'Latch hook',[2.3,1,1],[0,-4.35,-2.6],M.ivory,.12);
+  // The beam pivots at its root (z 2.2); latch.rotation.x = 0.13 holds the hook 0.6 mm inward, released.
+  const latch=new T.Group();latch.name='Connector latch';latch.position.set(0,-4,2.2);group.add(latch);
+  box(latch,'Free latch beam',[2,.55,5],[0,0,-2.5],M.ivory,.12);box(latch,'Latch hook',[2.3,1,1],[0,-.35,-4.8],M.ivory,.12);
+  group.userData.latch=latch;
   return group;
 }
 function createPrecisionTool(extra=0){
@@ -152,8 +172,8 @@ function createPrecisionTool(extra=0){
     const g=new T.Group();g.position.x=s*extra;g.userData.extra=s*extra;root.add(g);
     box(g,'Moving jaw carriage',[11,20,7],[s*14,0,30],M.dark,.45);
     box(g,'Brushed aluminium finger',[5.4,10,19],[s*13,0,18.5],M.silver,.5);
-    box(g,'Custom fingertip',[5.1,6.6,2],[s*10.5,0,8],M.silver,.32);
-    box(g,'Housing contact face',[.35,5.2,1.8],[s*7.68,0,7.9],M.rubber,.05);
+    box(g,'Custom fingertip',[5.1,6.6,6],[s*10.5,0,6],M.silver,.32);
+    box(g,'Housing contact face',[.35,5.2,5.8],[s*7.68,0,5.9],M.rubber,.05);
     box(g,'Insertion back stop',[1.6,2,1.2],[s*6.9,-2,8.8],M.silver,.12);
     for(const z of [16,24]){const b=cyl(g,'Finger mounting screw',1.5,.4,[s*13,-5.2,z],M.dark,20);b.rotation.x=0;}
     return g;
@@ -170,7 +190,7 @@ function createPrecisionTool(extra=0){
 }
 
 export function disposeCell(root:T.Object3D){
-  const shared=new Set<T.Material>([...Object.values(M),pcbMaterial,grey,solder,ink]);
+  const shared=new Set<T.Material>([...Object.values(M),pcbMaterial,grey,solder,ink,jig,top,cabinet]);
   const cachedGeometry=new Set(geometry.values()),seenGeometry=new Set<T.BufferGeometry>(),seenMaterials=new Set<T.Material>();
   root.traverse(o=>{if(o instanceof T.Mesh){if(!cachedGeometry.has(o.geometry))seenGeometry.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])if(!shared.has(m))seenMaterials.add(m);}});
   seenGeometry.forEach(g=>g.dispose());seenMaterials.forEach(m=>m.dispose());
@@ -178,22 +198,35 @@ export function disposeCell(root:T.Object3D){
 
 export function createHall(){
   const hall=new T.Group();hall.name='Empty factory hall';
-  const plaster=new T.MeshStandardMaterial({color:0xaab2ae,roughness:.9});
-  const concrete=new T.MeshStandardMaterial({color:0x6a7472,roughness:.55,metalness:.04});
-  box(hall,'Factory floor',[14000,18000,30],[0,1800,-750],concrete,0);
-  box(hall,'Far wall',[14000,100,5800],[0,8500,2150],plaster,0);
-  const beam=new T.MeshStandardMaterial({color:0x9da5a4,roughness:.7,metalness:.2});
-  const windowMat=new T.MeshBasicMaterial({color:0xe5efef,toneMapped:false});
-  for(const x of [-4200,-2100,0,2100,4200]){
-    for(const y of [2100,4500,6900]){
-      box(hall,'Factory column',[95,110,5000],[x,y,1750],plaster,4);
-      box(hall,'Column footing',[150,160,180],[x,y,-645],plaster,3);
-      box(hall,'Roof beam',[4400,90,110],[x,y,4230],beam,0);
-    }
-    box(hall,'High daylight window',[1450,20,950],[x,8435,2400],windowMat,0);
-    for(let i=-2;i<=2;i++)box(hall,'Window mullion',[18,23,950],[x+i*290,8418,2400],beam,0);
-    box(hall,'Window transom',[1450,24,16],[x,8418,2400],beam,0);
+  const paint=new T.MeshStandardMaterial({color:0xe9ebeb,roughness:.8,envMapIntensity:.5});
+  const wall=new T.MeshStandardMaterial({color:0x9aa1a3,roughness:.9,envMapIntensity:.45});
+  const floor=new T.MeshPhysicalMaterial({color:0x7f8584,roughness:.38,metalness:0,clearcoat:.6,clearcoatRoughness:.22});
+  const steel=new T.MeshStandardMaterial({color:0x8b9194,roughness:.6,metalness:.3,envMapIntensity:.5});
+  const panel=new T.MeshBasicMaterial({color:0xffffff,toneMapped:false,fog:false});
+  const glass=new T.MeshBasicMaterial({color:new T.Color(0xf4f8fa),toneMapped:false});
+  box(hall,'Factory floor',[30000,30000,30],[0,6000,-750],floor,0);
+  for(let i=-3;i<=3;i++){box(hall,'Floor saw cut',[8,30000,1],[i*6000+1800,6000,-734.6],new T.MeshStandardMaterial({color:0x7d8281,roughness:.6}),0);box(hall,'Floor saw cut',[30000,8,1],[0,i*6000+5400,-734.6],new T.MeshStandardMaterial({color:0x7d8281,roughness:.6}),0);}
+  box(hall,'Far wall',[30000,100,9000],[0,14000,3700],wall,0);box(hall,'Wall dado',[30000,60,1200],[0,13930,-150],new T.MeshStandardMaterial({color:0x5c6265,roughness:.8,envMapIntensity:.4}),0);
+  for(const x of [-9600,-4800,0,4800,9600])for(const y of [3000,7500]){
+    box(hall,'Factory column',[300,300,8800],[x,y,3650],paint,0);
   }
-  for(const x of [-4600,4600])box(hall,'Side wall',[100,18000,5800],[x,1800,2150],plaster,0);
+  for(const y of [3000,7500])box(hall,'Roof girder',[30000,200,500],[0,y,7600],steel,0);
+  for(let x=-14400;x<=14400;x+=2400)box(hall,'Roof purlin',[120,16000,160],[x,8000,7900],steel,0);
+  box(hall,'Roof deck',[30000,30000,40],[0,6000,8100],wall,0);
+  for(let x=-12000;x<=12000;x+=2400)for(let y=0;y<=14400;y+=3600)box(hall,'LED high bay',[600,600,20],[x+1200,y+1200,7300],panel,0);
+  for(let x=-12000;x<=12000;x+=3000){box(hall,'Clerestory window',[2200,30,700],[x,13940,6200],glass,0);box(hall,'Ribbon window',[2400,30,1100],[x+1500,13940,1800],glass,0);for(let k=-2;k<=2;k++)box(hall,'Window mullion',[50,40,1100],[x+1500+k*600,13920,1800],steel,0);box(hall,'Window transom',[2400,40,50],[x+1500,13920,1800],steel,0);}
   return hall;
+}
+
+// A factory-hall light probe made of a few emissive boxes, rendered once to a PMREM.
+// y-up like RoomEnvironment; the scene rotates it to z-up.
+export function factoryEnvironment(){
+  const env=new T.Scene();
+  const lit=(c:number,k:number)=>new T.MeshBasicMaterial({color:new T.Color(c).multiplyScalar(k),side:T.BackSide});
+  const room=new T.Mesh(new T.BoxGeometry(60,16,60),[lit(0xd7dbdc,.5),lit(0xd7dbdc,.5),lit(0xc9cdce,.6),lit(0x80847f,.3),lit(0xd7dbdc,.45),lit(0xd7dbdc,.6)]);room.position.y=6;env.add(room);
+  const light=new T.MeshBasicMaterial({color:new T.Color(0xffffff).multiplyScalar(9)});
+  for(let x=-24;x<=24;x+=6)for(let z=-24;z<=24;z+=6){const m=new T.Mesh(new T.BoxGeometry(1.2,.1,1.2),light);m.position.set(x,13.8,z);env.add(m);}
+  const sky=new T.MeshBasicMaterial({color:new T.Color(0xf1f6fa).multiplyScalar(4)});
+  for(let x=-24;x<=24;x+=8){const w=new T.Mesh(new T.BoxGeometry(6,2.5,.1),sky);w.position.set(x,10,-29.8);env.add(w);}
+  return env;
 }

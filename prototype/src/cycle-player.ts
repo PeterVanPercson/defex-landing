@@ -2,22 +2,22 @@ import { CYCLE_STEPS, EXAMPLE_LIMITS, processFrame, processRecord, seatPoints } 
 import type { CycleCase, ProcessFrame, ProcessRecord } from './process.ts';
 import type { WorkcellScene } from './scene.ts';
 
-export function setupCycle(scene:WorkcellScene,onActivate:()=>void){
+export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>void=()=>{}){
   const byId=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
   const slider=byId<HTMLInputElement>('cycle-scrub'),play=byId<HTMLButtonElement>('cycle-play');
   const reset=byId<HTMLButtonElement>('cycle-reset'),clearFault=byId<HTMLButtonElement>('cycle-clear-fault');
   const caseButtons=[...document.querySelectorAll<HTMLButtonElement>('[data-cycle-case]')];
   const records:ProcessRecord[]=[];
-  let progress=44,kind:CycleCase='search',playing=false,active=true,request=0,last=0,lastContacts='',traceKind='';
-  let faultLocked=false,logged=false;
+  let progress=0,kind:CycleCase='search',playing=false,active=true,request=0,last=0,lastContacts='',traceKind='';
+  let faultLocked=false,logged=false,started=false;
   const steps=byId('process-steps');
-  steps.innerHTML=CYCLE_STEPS.map((s,i)=>`<button data-cycle-step="${i}" aria-current="false"><span>${String(i+1).padStart(2,'0')}</span><strong>${s[0]}</strong><small>${s[1]}–${i<9?CYCLE_STEPS[i+1][1]:100}%</small></button>`).join('');
+  steps.innerHTML=CYCLE_STEPS.map((s,i)=>`<button data-cycle-step="${i}" aria-current="false"><span>${String(i+1).padStart(2,'0')}</span><strong>${s[0]}</strong></button>`).join('');
 
   const draw=()=>{
     if(!active)return;
-    const f=processFrame(progress,kind);scene.setProcess(f);slider.value=String(progress);
+    const f=processFrame(progress,kind);scene.setProcess(f);slider.value=String(progress);slider.style.setProperty('--p',`${progress}%`);
     byId('cycle-percent').textContent=`${Math.round(progress)}%`;
-    byId('cycle-title').textContent=f.title;byId('cycle-index').textContent=`${String(f.step+1).padStart(2,'0')} / 10`;
+    byId('cycle-title').textContent=f.accepted===true&&progress>=95?'Passed':f.rejected?'Rejected':f.title;byId('cycle-index').textContent=String(f.step+1).padStart(2,'0');
     byId('cycle-copy').textContent=f.message;byId('cycle-scope').textContent=f.scope;
     byId('cycle-force').textContent=`${f.force.toFixed(1)} / ${EXAMPLE_LIMITS.press.toFixed(1)} N`;
     byId('cycle-depth').textContent=`${f.depth.toFixed(1)} mm`;
@@ -38,12 +38,12 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void){
     byId('cycle-verdict').textContent=f.accepted===true?'All three checks passed':f.accepted===false?'Rejected · operator action required':f.retry?'Attempt 2 · fresh checks':failed?'Check failed · stop this attempt':f.step<5?'Preparing the unit':'Checks in progress';
     byId('cycle-verdict').dataset.result=f.accepted===true?'pass':f.accepted===false||failed?'fail':'pending';
     for(const button of steps.querySelectorAll('button'))button.setAttribute('aria-current',String(Number(button.dataset.cycleStep)===f.step));
-    play.textContent=faultLocked?'Fault held':playing?'Pause cycle':'Play full cycle';play.setAttribute('aria-pressed',String(playing));play.disabled=faultLocked;
+    play.textContent=playing?'Pause':'Play';play.setAttribute('aria-pressed',String(playing));play.disabled=faultLocked;
     reset.disabled=faultLocked;clearFault.hidden=!faultLocked;
-    for(const button of caseButtons)button.disabled=faultLocked;
+    for(const button of caseButtons)button.disabled=faultLocked;slider.disabled=faultLocked;for(const button of steps.querySelectorAll('button'))button.disabled=faultLocked;
     const tour=byId<HTMLButtonElement>('tour');tour.dataset.playing=String(playing);tour.disabled=faultLocked;
-    tour.setAttribute('aria-label',faultLocked?'Clear the fault before another cycle':playing?'Pause full cycle':'Play full cycle');tour.setAttribute('aria-pressed',String(playing));
-    byId('tour-label').textContent=faultLocked?'Fault held':playing?'Pause full cycle':'Play full cycle';
+    tour.setAttribute('aria-label',faultLocked?'Clear the reject first':playing?'Pause':'Play');tour.setAttribute('aria-pressed',String(playing));
+    byId('tour-label').textContent=faultLocked?'Clear the reject first':playing?'Pause':'Play';
     byId<HTMLButtonElement>('embed-run').disabled=faultLocked;
     drawTrace(f);
   };
@@ -59,7 +59,7 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void){
   }
   function traceY(f:ProcessFrame){return 29-(f.force-f.pullForce-f.extractionForce)*4.5;}
   function stop(){playing=false;cancelAnimationFrame(request);request=0;draw();}
-  function activate(){if(!active){active=true;document.body.classList.add('process-mode');onActivate();}document.body.classList.remove('tour-active');}
+  function activate(){if(!active){active=true;document.body.classList.add('process-mode');onActivate();onEnter();}document.body.classList.remove('tour-active');}
   function finish(){
     if(!logged){logged=true;log();}
     faultLocked=processFrame(100,kind).accepted===false;stop();
@@ -72,7 +72,7 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void){
   function toggle(){
     if(faultLocked)return;
     activate();if(playing){stop();return;}onActivate();
-    if(progress>=100||progress===44){progress=0;logged=false;}
+    if(progress>=100||!started){progress=0;logged=false;}started=true;
     playing=true;last=performance.now();draw();request=requestAnimationFrame(tick);
   }
   function restart(){if(faultLocked)return;activate();stop();progress=0;logged=false;draw();}
@@ -91,25 +91,22 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void){
     byId('cycle-log').prepend(row);byId<HTMLButtonElement>('cycle-export').disabled=false;
     byId('cycle-log-status').textContent=`${records.length} illustrated unit${records.length>1?'s':''} recorded during this visit. Download to retain the checks and force traces.`;
   }
-  slider.addEventListener('input',()=>{activate();const value=Number(slider.value);stop();progress=value;draw();if(progress===100)finish();});
+  // Scrubbing only looks; a unit is recorded, and a reject held, only when a played cycle ends.
+  slider.addEventListener('input',()=>{if(faultLocked)return;started=true;activate();const value=Number(slider.value);stop();progress=value;draw();});
   play.addEventListener('click',toggle);reset.addEventListener('click',restart);
   clearFault.addEventListener('click',()=>{faultLocked=false;restart();byId('cycle-log-status').textContent='Fault cleared by the viewer. Previous unit records and traces are retained below.';});
   byId('cycle-export').addEventListener('click',()=>{
     const url=URL.createObjectURL(new Blob([JSON.stringify({source:'Defex scripted cycle illustration',measurements:false,units:records},null,2)],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;a.download='defex-illustrated-unit-traces.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
-  steps.addEventListener('click',e=>{const button=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-cycle-step]');if(button){activate();stop();progress=CYCLE_STEPS[Number(button.dataset.cycleStep)][1];draw();showStage();}});
+  steps.addEventListener('click',e=>{const button=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-cycle-step]');if(button&&!faultLocked){started=true;activate();stop();progress=CYCLE_STEPS[Number(button.dataset.cycleStep)][1];draw();showStage();}});
   for(const button of caseButtons)button.addEventListener('click',()=>{
-    if(faultLocked)return;activate();stop();kind=button.dataset.cycleCase as CycleCase;progress=0;logged=false;
+    if(faultLocked)return;activate();stop();kind=button.dataset.cycleCase as CycleCase;progress=0;logged=false;started=true;
     for(const b of caseButtons)b.setAttribute('aria-pressed',String(b===button));draw();showStage();
   });
-  for(const id of ['tour','embed-run'])byId(id).addEventListener('click',e=>{if(!active)return;e.stopImmediatePropagation();toggle();},true);
+  // The one play button always plays the full cycle, even after a contact experiment ran.
+  for(const id of ['tour','embed-run'])byId(id).addEventListener('click',e=>{e.stopImmediatePropagation();if(e.detail<2)toggle();},true);
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)stop();});
-  document.addEventListener('keydown',e=>{
-    if(!active||['INPUT','SELECT','TEXTAREA','BUTTON'].includes((e.target as HTMLElement).tagName))return;
-    if(document.querySelector('.stage')!.getBoundingClientRect().bottom<innerHeight*.35)return;
-    if(e.code==='Space'){e.preventDefault();e.stopImmediatePropagation();toggle();}else if(e.key.toLowerCase()==='r'){e.stopImmediatePropagation();restart();}
-  },true);
   document.body.classList.add('process-mode');draw();
-  return {refresh:draw,deactivate(){stop();active=false;document.body.classList.remove('process-mode');scene.setProcess(null);},isActive:()=>active};
+  return {refresh:draw,toggle,restart,deactivate(){stop();active=false;document.body.classList.remove('process-mode');scene.setProcess(null);},isActive:()=>active};
 }
