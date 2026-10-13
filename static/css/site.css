@@ -1637,6 +1637,11 @@ body { font: 400 16px/1.6 var(--font); }
 .steps.is-stacked .feature { position: sticky; top: calc(var(--nav) + 14px + var(--i) * 22px); height: min(calc(100svh - var(--nav) - 110px), 700px); transform: scale(var(--s, 1)); transform-origin: 50% 0; will-change: transform; box-shadow: 0 -10px 40px rgba(26, 24, 21, .12); }
 .steps.is-stacked .feature::after { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; background: #0B0A09; opacity: var(--dim, 0); pointer-events: none; }
 .steps.is-stacked .feature__art { min-height: 0; }
+/* wider than the text column (his call, 2026-10-12: "a bit wider"): from
+   1100px the cards break out to the page, up to 1600px, centred */
+@media (min-width: 1100px) {
+    .steps { width: min(calc(100vw - 96px), 1600px); left: 50%; translate: -50% 0; }
+}
 .feature { position: relative; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
 @media (max-width: 900px) {
     .steps.is-stacked .features { gap: 26svh; }
