@@ -46,23 +46,23 @@ self.onmessage = async ({data}) => {
       postMessage({type:'ready',version:MODEL_VERSION}); publish(); return;
     }
     if (!engine) return;
-    if (data.type === 'config') { setPlaying(false); engine.configure(data.config); }
+    // A seated plug from the last pass is lifted out first, so the clock runs until the engine is ready again.
+    if (data.type === 'config') { engine.setup(data.config); setPlaying(engine.phase!=='ready'&&engine.phase!=='complete'); }
     if (data.type === 'run') {
       // The demo sends each step's setup with its run, so no idle frame shows in between.
-      if (data.config) engine.configure(data.config);
+      if (data.config) engine.setup(data.config);
       engine.start(data.controller); remainder=0; setPlaying(true);
     }
     if (data.type === 'pause') setPlaying(false);
     if (data.type === 'resume') setPlaying(true);
     if (data.type === 'reset') { engine.stop(); setPlaying(engine.phase!=='ready'); }
     if (data.type === 'speed') speed=data.speed===2?2:data.speed===4?4:1;
-    if (data.type === 'forget') { engine.calibration=null; }
     if (data.type === 'export') postMessage({
       type:'export', report:{
         title:'Defex connector lab — simulation records', exportedAt:new Date().toISOString(),
         engine:'MuJoCo 3.14.0 WASM', modelVersion:MODEL_VERSION,
         limits:'Illustrative rigid connector and cartesian tool. Electrical continuity is a depth/fault model. Retention is an ideal constraint activated at seating. No real robot, sensor data, material deformation, damage, wear or manufacturing validation. The search is a fixed fallback pattern, not a trained robot policy.',
-        currentModelXML:modelXML(engine.config), calibration:engine.calibration, trials:engine.trials,
+        currentModelXML:modelXML(engine.config), trials:engine.trials,
       },
     });
     publish();

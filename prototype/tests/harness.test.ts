@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import { dressHarness,curveLength,HARNESS_LENGTH,HARNESS_POINTS,WIRE_RADIUS,SLACK_LIMIT } from '../src/harness.ts';
+import { bundleFit,dressHarness,curveLength,HARNESS_LENGTH,HARNESS_POINTS,WIRE_RADIUS,SLACK_LIMIT } from '../src/harness.ts';
 import { processFrame } from '../src/process.ts';
 import { contactCenters } from '../src/mechanism.ts';
-import { createCell } from '../src/cell-geometry.ts';
+import { applyLine,createCell,dressLiveHarness } from '../src/cell-geometry.ts';
+import { CYCLE_END,INDEX_START } from '../src/line.ts';
 
 createCell(6);
 const cases=['pass','search','half-seat','open','short'] as const;
@@ -13,12 +14,12 @@ const dress=(p:number,kind:typeof cases[number],i:number,points=Array.from({leng
   return {f,r,points,curve:new T.CatmullRomCurve3(points,false,'centripetal')};
 };
 
-test('harness wires stay attached, keep their length and stay on the jig plate',()=>{
+test('harness wires stay attached, keep their length and stay on the plate',()=>{
   for(const kind of cases)for(let p=0;p<=100;p+=.5)for(let i=0;i<6;i++){
     const {f,r,points,curve}=dress(p,kind,i),contact=contactCenters(6)[i];
     assert.equal(points.length,HARNESS_POINTS);
     const start=new T.Vector3(contact[0],contact[1],8.3).applyAxisAngle(new T.Vector3(0,1,0),f.rotation).add(new T.Vector3(...f.plug));
-    assert.ok(points[0].distanceTo(start)<1e-9);assert.deepEqual(points.at(-1)!.toArray(),[-111.5+i*3,78,17]);
+    assert.ok(points[0].distanceTo(start)<1e-9);assert.deepEqual(points.at(-1)!.toArray(),[-111.5+i*3,63.5,9]);
     const length=curveLength(curve,512);assert.ok(Math.abs(length-HARNESS_LENGTH)<.6,`${kind} ${p}: length ${length}`);
     assert.ok(r.amplitude>=0&&r.amplitude<=SLACK_LIMIT&&r.sag>=.5&&r.sag<=2,`${kind} ${p}: slack ${r.amplitude}, sag ${r.sag}`);
     for(let j=0;j<=400;j++){
@@ -65,5 +66,28 @@ test('both connector variants terminate within their tester connector and comb c
     const expected=-104+(i-(pins-1)/2)*3,curve=new T.CatmullRomCurve3(points,false,'centripetal');
     assert.equal(points.at(-1)!.x,expected);assert.ok(Math.abs(expected+104)<(pins*3+6)/2-.7);
     for(let j=0;j<=800;j++){const q=curve.getPoint(j/800);if(q.x< -90&&q.y>30&&q.y<46&&q.z>8)assert.ok(Math.abs(q.x-expected)<.4,`wire ${i} leaves its comb channel at ${q.toArray()}`);}
+  }
+});
+
+test('the S takes up the slack with room to spare both ways, picked from the nest and seated',()=>{
+  for(const p of [0,100]){dress(p,'pass',0);const {amplitude}=bundleFit();assert.ok(amplitude>=2&&amplitude<=20,`p ${p}: S amplitude ${amplitude.toFixed(2)}`);}
+});
+
+test('during the index the wires ride rigidly with the pallet, without being dressed again, clear of the dock head',()=>{
+  const cell=createCell(6),line={unit:8,passed:7,rejected:0,prev:'pass'} as const;
+  const at=(f:ReturnType<typeof processFrame>)=>{cell.plug.position.set(...f.plug);cell.plug.rotation.y=f.rotation;applyLine(cell,f);cell.root.updateMatrixWorld(true);};
+  const start=processFrame(INDEX_START,'pass',line);at(start);
+  const key=dressLiveHarness(cell);
+  const world=()=>cell.wires.map(w=>w.curve.points.map(q=>q.clone().add(w.mesh.position)));
+  const before=world();
+  for(let k=1;k<=80;k++){
+    const p=INDEX_START+k*(CYCLE_END-INDEX_START)/80,f=processFrame(p,'pass',line);at(f);
+    assert.equal(dressLiveHarness(cell,key),key,`re-dressed at ${p}`);
+    const head=new T.Box3().setFromObject(cell.dockHead).expandByScalar(WIRE_RADIUS);
+    world().forEach((points,i)=>points.forEach((q,j)=>{
+      assert.ok(q.distanceTo(before[i][j].clone().add(new T.Vector3(-f.shift,0,0)))<1e-9,`wire ${i+1} point ${j} at ${p}`);
+      assert.ok(!head.containsPoint(q),`wire ${i+1} touches the dock head at ${p}`);
+    }));
+    for(const w of cell.wires)assert.ok(new T.CatmullRomCurve3(w.curve.points).getPoints(200).every(q=>!head.containsPoint(q.clone().add(w.mesh.position))));
   }
 });

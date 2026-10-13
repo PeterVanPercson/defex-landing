@@ -120,7 +120,7 @@ body .process-readout>p,body .process-readout .process-scope,body .process-reado
 body .process-heading{display:block;font-size:13px;letter-spacing:0;color:#e2e7e0}
 body .process-readout h2{margin:0;font-size:22px;color:#f4f6f1;text-shadow:0 1px 14px #0009}
 body .process-heading b{text-shadow:0 1px 10px #0009}
-body.exploded .process-readout,body.tour-active .process-readout{display:none!important}
+body.tour-active .process-readout{display:none!important}
 body.process-mode .cycle-timeline{left:50%;right:auto;transform:translateX(-50%);bottom:118px;width:min(320px,calc(100% - 40px));padding:0;background:none;border:0;box-shadow:none}
 body .cycle-transport{justify-content:center}
 body .cycle-transport:not(:has(:not([hidden]))){display:none}
@@ -248,3 +248,42 @@ body .process-readout #cycle-detail{align-self:center;padding-left:12px;border-l
 body .process-readout #cycle-detail[hidden]{display:none}
 body .process-readout h2{white-space:nowrap}
 @media(max-width:600px){body .process-readout #cycle-detail{font-size:12.5px;padding-left:9px}body.process-mode .process-readout{gap:9px}}
+
+/* The line around the robot: one quiet line over the step, the unit and the tally */
+.line-status{display:none}
+body.process-mode .line-status{display:block;position:absolute;left:50%;transform:translateX(-50%);bottom:236px;z-index:3;margin:0;padding:3px 12px;border-radius:999px;background:#eef0eab8;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#33443a;font-size:13.5px;line-height:1.3;white-space:nowrap;font-variant-numeric:tabular-nums;pointer-events:none}
+body.tour-active .line-status,.embed .line-status{display:none!important}
+@media(min-width:1001px){body.process-mode .line-status{left:36px;transform:none;bottom:156px}}
+@media(min-width:1600px){body.process-mode .line-status{left:48px}}
+/* a retried step keeps its number, with a small tag */
+body .process-heading #cycle-retry{margin-left:6px;padding:1px 6px;border-radius:999px;background:#a54a351f;color:#8a3c2a;font-style:normal;font-size:11.5px;vertical-align:1px}
+body .process-heading #cycle-retry[hidden]{display:none}
+/* a held reject: one clear control, and Play or R points at it */
+body .cycle-transport #cycle-clear-fault{min-height:44px;padding:10px 20px;border-radius:999px;background:#8a3324;color:#fbf4f1;font-size:15px;text-decoration:none;box-shadow:0 4px 16px #5a1c1240}
+body .cycle-transport #cycle-clear-fault:hover{background:#6f281b}
+body .cycle-transport #cycle-clear-fault:focus-visible{outline:2px solid #1f2b24;outline-offset:3px}
+#cycle-clear-fault.nudge{animation:nudge .6s cubic-bezier(.3,.7,.4,1)}
+@keyframes nudge{0%,100%{transform:none}20%{transform:translateX(-5px) scale(1.04)}45%{transform:translateX(5px) scale(1.04)}70%{transform:translateX(-3px)}}
+.dock-demo[aria-disabled=true]{opacity:.45}
+.dock-demo[aria-disabled=true]:hover{background:#eef0ea}
+/* the dock is dark glass: its focus ring is light */
+.dock-item:focus-visible{outline:2px solid #f4f6f1;outline-offset:2px;box-shadow:0 0 0 5px #121714b3}
+/* the opening note and the contact link stay readable over the bright hall */
+.headline .headline-note{color:#26332b;text-shadow:0 0 12px #eef0ea,0 0 3px #eef0ea}
+.topbar .buy{color:#1d2a22;text-shadow:0 0 12px #eef0ea,0 0 3px #eef0ea}
+/* eleven steps: six to a row */
+@media(min-width:601px){.process-steps{grid-template-columns:repeat(6,1fr)}}
+@media(min-width:601px) and (max-width:900px){.process-steps{grid-template-columns:repeat(3,1fr)}}
+/* the held reject's larger control needs a taller row: the step and the tally move up to make room */
+body.process-mode:has(#cycle-clear-fault:not([hidden])) .process-readout{bottom:212px!important}
+body.process-mode:has(#cycle-clear-fault:not([hidden])) .line-status{bottom:256px}
+@media(min-width:1001px){
+  body.process-mode:has(#cycle-clear-fault:not([hidden])) .process-readout{bottom:128px!important}
+  body.process-mode:has(#cycle-clear-fault:not([hidden])) .line-status{bottom:172px}
+}
+/* the held-reject shot frames the tray and the locked bin on the left half: the headline steps aside for it */
+body.process-mode[data-shot="reject"] .headline{opacity:0;transform:translateY(-6px)}
+/* the slider spans the whole unit; while a reject holds the line, its index part is shown locked */
+body.process-mode .cycle-timeline input[data-locked="true"]::-webkit-slider-runnable-track{background:linear-gradient(90deg,#1f2b24 var(--p,44%),#1f2b2433 var(--p,44%) var(--lock,100%),transparent var(--lock,100%)),repeating-linear-gradient(135deg,#b2402c99 0 2px,#b2402c33 2px 4px)}
+/* phones: the timeline card sits where the Play tip would; the Clear reject button's nudge says it instead */
+@media(max-width:600px){#tour .dock-tip{display:none}}

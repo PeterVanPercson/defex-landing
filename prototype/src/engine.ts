@@ -10,15 +10,17 @@ export interface Sample { t: number; x: number; y: number; z: number; force: num
 export interface Trial {
   id: number; controller: Controller; config: Configuration; model: string;
   accepted: boolean; reason: string; probes: number; peakForce: number; duration: number;
-  continuity: boolean | null; retention: boolean | null; correction: [number, number] | null;
+  continuity: boolean | null; retention: boolean | null;
   samples: Sample[];
 }
 export interface Snapshot {
   phase: Phase; pose: [number, number, number, number]; target: [number, number, number, number];
+  // true while a passed plug stays seated on the header and the hand has let go of it
+  released: boolean;
   time: number; force: number; depth: number; peakForce: number; probes: number;
   continuity: boolean | null; retention: boolean | null; latchEngaged: boolean;
   controller: Controller; accepted: boolean | null; reason: string;
-  calibration: [number, number] | null; config: Configuration;
+  config: Configuration;
 }
 
 export class ConnectorEngine {
@@ -29,7 +31,6 @@ export class ConnectorEngine {
   controller: Controller = 'fixed';
   phase: Phase = 'ready';
   target: [number, number, number, number] = [0, 0, START_Z, 0];
-  calibration: [number, number] | null = null;
   trials: Trial[] = [];
   samples: Sample[] = [];
   points: [number, number][] = probePoints();
@@ -46,9 +47,13 @@ export class ConnectorEngine {
   latchEngaged = false;
   blockedTime = 0;
   completedTrial: Trial | null = null;
-  testedCorrection: [number, number] | null = null;
   returningHome = false;
   stopping = false;
+  // A passed plug stays latched on the header after the run; the next run or a reset lifts it out first.
+  holding = false;
+  queued: Controller | null = null;
+  // A setup changed while a passed plug was seated: applied once the plug is out and home.
+  pendingConfig: Configuration | null = null;
   plan: { from: number[]; to: number[]; start: number; duration: number } | null = null;
 
   constructor(mj: Module, config = DEFAULT_CONFIG) {
@@ -78,14 +83,25 @@ export class ConnectorEngine {
     this.accepted = null; this.reason = ''; this.latchEngaged = false;
     this.samples = []; this.lastSample = -1; this.blockedTime = 0; this.completedTrial = null;
     this.plan = null;
-    this.testedCorrection = null; this.returningHome = false; this.stopping = false;
+    this.returningHome = false; this.stopping = false; this.holding = false;
+  }
+
+  // A plug being lifted out after a pass: the engine is on its way home and nothing else may move the plug.
+  get releasing() { return this.stopping && this.phase === 'reset'; }
+
+  // A new setup rebuilds the model with the plug at its start. While a passed plug sits seated, or is on its way
+  // out, the setup waits until the plug is home, so the plug never jumps.
+  setup(config: Configuration) {
+    if (this.holding || this.releasing) { this.pendingConfig = validConfig(config); if (this.holding) this.release(); return; }
+    this.configure(config);
   }
 
   start(controller: Controller) {
-    if (controller === 'reuse' && !this.calibration) throw new Error('Complete an accepted search trial first.');
+    // A plug left seated by the last pass comes back out along the reset path, then this run begins.
+    if (this.holding || this.releasing) { this.queued = controller; if (this.holding) this.release(); return; }
     this.resetState();
     this.controller = controller;
-    this.points = controller === 'reuse' ? [this.calibration!.slice() as [number, number]] : probePoints();
+    this.points = probePoints();
     this.target[0] = this.data.qpos[0]; this.target[1] = this.data.qpos[1];
     this.enter('approach');
   }
@@ -123,19 +139,39 @@ export class ConnectorEngine {
   // finished cycle takes, up clear of the socket and then home, instead of
   // jumping there. No trial is recorded.
   stop() {
+    this.queued = null;
+    if (this.holding) { this.release(); return; }
+    if (this.releasing) return;
     if (this.phase === 'ready' || this.phase === 'complete') { this.resetState(); return; }
     this.stopping = true; this.accepted = null; this.reason = '';
     this.setLatch(false);
     this.enter('reset');
   }
 
+  // Let go of a seated plug: release the latch and leave along the reset path.
+  release() {
+    this.holding = false; this.stopping = true; this.accepted = null; this.reason = '';
+    this.setLatch(false); this.enter('reset');
+  }
+
   finish(reason: string) {
     this.reason = reason;
     this.accepted = this.continuity === true && this.retention === true;
-    this.testedCorrection = this.accepted ? [this.target[0], this.target[1]] : null;
-    if (this.accepted && this.controller === 'search') this.calibration = [this.target[0], this.target[1]];
+    // Both tests passed: the plug stays seated and latched, as it would on the line.
+    if (this.accepted) { this.holding = true; this.target[2] = SEATED_Z; this.complete(); return; }
     this.setLatch(false);
     this.enter('reset');
+  }
+
+  complete() {
+    this.enter('complete');
+    this.completedTrial = {
+      id: this.trials.length + 1, controller: this.controller, config: {...this.config}, model: MODEL_VERSION,
+      accepted: this.accepted === true, reason: this.reason, probes: this.probe + 1,
+      peakForce: this.peakForce, duration: this.clock, continuity: this.continuity, retention: this.retention,
+      samples: this.samples.slice(),
+    };
+    this.trials.push(this.completedTrial);
   }
 
   advance(steps = 32) {
@@ -196,15 +232,13 @@ export class ConnectorEngine {
           this.returningHome = true;
           this.glide([0, 0, START_Z], .72);
         } else if (settled && this.returningHome && q[2] > START_Z - 0.0001 && Math.hypot(q[0], q[1]) < .00003) {
-          if (this.stopping) { this.resetState(); return; }
-          this.enter('complete');
-          this.completedTrial = {
-            id: this.trials.length + 1, controller: this.controller, config: {...this.config}, model: MODEL_VERSION,
-            accepted: this.accepted === true, reason: this.reason, probes: this.probe + 1,
-            peakForce: this.peakForce, duration: this.clock, continuity: this.continuity, retention: this.retention,
-            correction: this.testedCorrection, samples: this.samples.slice(),
-          };
-          this.trials.push(this.completedTrial);
+          if (this.stopping) {
+            const next = this.queued, config = this.pendingConfig; this.queued = this.pendingConfig = null;
+            if (config) this.configure(config); else this.resetState();
+            if (next) this.start(next);
+            return;
+          }
+          this.complete();
         }
         break;
       }
@@ -226,11 +260,11 @@ export class ConnectorEngine {
 
   snapshot(): Snapshot {
     return {
-      phase: this.phase, pose: Array.from(this.data.qpos) as Snapshot['pose'], target: [...this.target],
+      phase: this.phase, pose: Array.from(this.data.qpos) as Snapshot['pose'], target: [...this.target], released: this.holding,
       time: this.clock, force: this.force, depth: Math.max(0, (TOP_Z - this.data.qpos[2] + PLUG_HALF_Z) * 1000),
       peakForce: this.peakForce, probes: this.probe + 1, continuity: this.continuity, retention: this.retention,
       latchEngaged: this.latchEngaged, controller: this.controller, accepted: this.accepted, reason: this.reason,
-      calibration: this.calibration, config: this.config,
+      config: this.config,
     };
   }
 
