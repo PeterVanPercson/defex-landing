@@ -1,4 +1,6 @@
 import './style.css';
+import { CYCLE_STEPS } from './process.ts';
+import { setupCycle } from './cycle-player.ts';
 import { WorkcellScene } from './scene.ts';
 import type { Mode, View } from './scene.ts';
 import type { PartId } from './parts.ts';
@@ -36,6 +38,7 @@ let state:Snapshot|null=null;
 let samples:Sample[]=[];
 let sampleEpoch=-1;
 let scene:WorkcellScene|null=null;
+let cyclePlayer:ReturnType<typeof setupCycle>|null=null;
 let tourIndex=-1,tourPaused=false,tourPending=false,halted=false;
 let tourTimer:ReturnType<typeof setTimeout>|null=null,tourDeadline=0,tourDelay=0;
 let configTimer:ReturnType<typeof setTimeout>|null=null;
@@ -51,7 +54,11 @@ if(new URLSearchParams(location.search).get('view')!=='schematic'){
   catch(error){console.warn('3D renderer unavailable',error);}
 }else text('fallback-title','Live side view of the simulation.');
 function useSchematic(){
-  scene?.dispose();scene=null;
+  cyclePlayer?.deactivate();cyclePlayer=null;scene?.dispose();scene=null;
+  document.body.classList.remove('process-mode');
+  document.querySelector<HTMLElement>('.cycle-cases')!.hidden=true;
+  document.querySelector<HTMLElement>('.process-guide-head>p')!.textContent='Read the full cycle below. The contact experiment runs in this side view.';
+  el('process-steps').innerHTML=CYCLE_STEPS.map((s,i)=>`<div><span>${i+1}</span><strong>${s[0]}</strong><small>${s[2]}</small></div>`).join('');
   el('scene').replaceChildren();el('labels').replaceChildren();
   // Without the 3D view only the demo button means anything.
   el('fallback').hidden=false;[...cameraButtons,...modeButtons,...all('.dock-sep,.control-hint')].forEach(n=>n.hidden=true);
@@ -146,6 +153,7 @@ function film(){
 }
 // Running from the experiment controls keeps the page where it is: the result, tests and force plot are all there.
 function run(withConfig=false){
+  cyclePlayer?.deactivate();
   if(configTimer)commitConfig();halted=false;
   if(tourIndex<0){el('endcard').hidden=true;document.body.classList.remove('ended');}
   film();send({type:'run',controller,...(withConfig?{config}:{})});
@@ -238,6 +246,7 @@ function startTour(){
   // The camera stays on the socket from step to step instead of pulling back to the whole machine.
   showStage();scene?.hold(true);film();tourStep();refreshControls();
 }
+el('physics-demo').addEventListener('click',startTour);
 el('replay').addEventListener('click',e=>{if(e.detail<2)startTour();});
 el('tour').addEventListener('click',e=>{if(e.detail<2)tourIndex>=0?togglePlayback():startTour();});
 el('embed-run').addEventListener('click',e=>{if(e.detail<2)startTour();});
@@ -291,6 +300,7 @@ function renderState(s:Snapshot,isPlaying:boolean,speed:number){
   phaseLabels.forEach(n=>n.classList.toggle('active',n.dataset.phase===phase));
   checks('electrical-check',s.continuity,s.phase==='electrical');checks('retention-check',s.retention,s.phase==='retention');
   refreshControls();
+  cyclePlayer?.refresh();
   if(!halted)narrate(s);
   if(performance.now()-lastChartDraw>80||!playing)drawChart();
 }
@@ -307,7 +317,7 @@ function narrate(s:Snapshot){
 const journeySteps:Record<string,[string,string,number]>={
   approach:['Insert','The robot lowers the connector.',.2],insert:['Insert','The robot lowers the connector.',.25],
   backoff:['Blocked. Backing off.','The socket edge stopped it.',.25],move:['Trying a new spot.','Small step to the side.',.25],
-  electrical:['Connection test','Is every contact in?',.5],retention:['Pull test','Does the lock hold?',.75],reset:['Reset','Back to the start.',.92],
+  electrical:['Connection test','Is every contact in?',.75],retention:['Pull test','Does the lock hold?',.5],reset:['Reset','Back to the start.',.92],
 };
 function journey(s:Snapshot){
   const box=el('journey');box.classList.toggle('visible',s.phase!=='ready');
@@ -401,3 +411,5 @@ document.addEventListener('keyup',e=>{if(e.code==='Space'&&spaceTaken){spaceTake
 document.querySelector('.tryit')!.addEventListener('toggle',drawChart);
 setupDock(document.querySelector<HTMLElement>('.dock')!);
 settingInputs.forEach(input=>input.disabled=true);syncConfig();send({type:'init',config});
+
+if(scene)cyclePlayer=setupCycle(scene,()=>{stopTour();if(currentMode==='parts')selectMode('machine',false);send({type:'pause'});});

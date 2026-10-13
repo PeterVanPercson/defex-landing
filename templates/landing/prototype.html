@@ -27,10 +27,8 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png" />
   <link rel="preload" href="/static/fonts/eb-garamond-400-normal.woff2" as="font" type="font/woff2" crossorigin />
-  <script type="module" crossorigin src="/static/prototype/assets/index-Dtbx51kG.js"></script>
-  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-DSBNvpu8.css">
-  <link rel="stylesheet" href="/static/css/meet.css?v={{ asset_v }}" />
-  <script src="/static/js/meet.js?v={{ asset_v }}" defer></script>
+  <script type="module" crossorigin src="/static/prototype/assets/index-BjXZvNKE.js"></script>
+  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-C8tP5qRF.css">
   <link rel="stylesheet" href="/static/css/orb-loader.css?v={{ asset_v }}" />
 </head>
 <body>
@@ -57,6 +55,21 @@
         <dl><div><dt>Axial force</dt><dd id="stage-force">0.0 N</dd></div><div><dt>Insertion</dt><dd id="stage-depth">0.0 mm</dd></div></dl>
         <span class="readout-note">Computed values · <span id="stage-speed">2× playback</span></span>
       </aside>
+      <aside class="process-readout" aria-label="Illustrated process signals">
+        <div class="process-heading"><span>PROCESS ILLUSTRATION</span><b id="cycle-index">05 / 10</b></div>
+        <h2 id="cycle-title">Approach</h2><p id="cycle-copy"></p><span class="process-scope" id="cycle-scope"></span>
+        <details class="process-signals"><summary>Illustrated signals <span>+</span></summary>
+          <div class="signal-grid"><div>Press force <b id="cycle-force">0.0 N</b></div><div>Depth <b id="cycle-depth">0.0 mm</b></div><div>Pull / example limit <b id="cycle-pull">0.0 / 2.5 N</b></div><div>Tries <b id="cycle-tries">1 / 48</b></div></div>
+          <svg class="process-chart" viewBox="0 0 300 52" role="img" aria-label="Illustrative force shape with the current cycle position"><path d="M0 43H300" stroke="currentColor" opacity=".2"/><polyline id="cycle-trace" fill="none" stroke="currentColor" stroke-width="1.3"/><g id="cycle-seat-point"><line y1="4" y2="43" stroke="#426950" stroke-dasharray="2 2" opacity=".5"/><text x="3" y="10" fill="#426950" font-size="9">seat</text></g><line id="cycle-cursor" y1="2" y2="49" stroke="#b96c3d" stroke-width="1"/></svg><small>Illustrative values and trace · not measurements</small>
+          <div class="process-checks"><div>Seated <b id="seat-result">—</b></div><div>Pull <b id="pull-result">—</b></div><div>Wiring <b id="wiring-result">—</b></div></div>
+          <div id="contact-results" aria-label="Six simulated contact checks"></div><p id="cycle-verdict" role="status"></p>
+        </details>
+      </aside>
+      <div class="cycle-timeline">
+        <div class="cycle-transport"><button id="cycle-play" aria-pressed="false">Play full cycle</button><button id="cycle-reset" aria-label="Restart full cycle">↺</button><label for="cycle-scrub">Cycle</label><output id="cycle-percent">44%</output></div>
+        <input type="range" min="0" max="100" step="0.1" value="44" id="cycle-scrub" aria-label="Full cycle progress"/>
+        <span>Steps, not seconds. Physical cycle time is not measured.</span>
+      </div>
       <div class="stage-error" id="stage-error" role="alert" hidden><strong>Simulation unavailable</strong><p id="stage-error-message"></p><button id="stage-retry">Reload simulation ↻</button></div>
 
       <div id="journey" class="journey">
@@ -65,7 +78,7 @@
         <div class="track"><i id="journey-progress"></i></div>
       </div>
       <div class="tour-story" id="tour-story" hidden><span class="tour-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span><strong id="tour-title" role="status"></strong><button id="stop-tour" aria-label="Exit demo">×</button><span class="quiet" id="tour-index"></span><span class="quiet" id="tour-live"></span><span class="quiet" id="tour-description"></span></div>
-      <div class="endcard" id="endcard" hidden><strong>Four cycles. One workcell.</strong><div class="endcard-actions"><a class="endcard-buy" href="/#contact" target="_top">Discuss a pilot ↗</a><button id="replay" class="endcard-replay">Replay</button></div></div>
+      <div class="endcard" id="endcard" hidden><strong>Contact experiment complete.</strong><div class="endcard-actions"><a class="endcard-buy" href="/#contact" target="_top">Discuss a pilot ↗</a><button id="replay" class="endcard-replay">Replay</button></div></div>
 
       <div id="loading" class="loading"><i></i><span>Loading the simulation</span></div>
       <div id="fallback" class="fallback" hidden><svg viewBox="0 0 420 300" role="img" aria-label="Live X/Z schematic of the simulated connector"><rect x="100" y="237" width="220" height="18" rx="2" fill="#3a4148"/><g id="schematic-socket" fill="#59616b"><rect id="schematic-wall-left" x="160" y="160" width="20" height="63" rx="2"/><rect id="schematic-wall-right" x="240" y="160" width="20" height="63" rx="2"/><rect id="schematic-seat" x="160" y="215" width="100" height="20" rx="2"/></g><g id="schematic-plug" transform="translate(210 60)"><rect id="schematic-housing" x="-28" y="-20" width="56" height="40" rx="2" fill="#e3e1d6" stroke="#8e969d" stroke-width="1.5"/><rect x="-18" y="-50" width="36" height="30" fill="#707986" stroke="#8e969d"/><path d="M-17 0v19 M0 0v19 M17 0v19" stroke="#d2ad68" stroke-width="3"/></g><text x="25" y="285" fill="#707986" font-size="10.5" font-family="'EB Garamond', Georgia, serif">X/Z SCHEMATIC · ILLUSTRATIVE GEOMETRY</text></svg><p id="fallback-title">3D unavailable; showing a live side view.</p><span>Physics and tests still run in your browser.</span></div>
@@ -85,16 +98,19 @@
       <footer class="stage-footer"><span>Interactive simulation</span><span class="footer-detail">DEFEX ROBOTICS / R&D</span></footer>
     </section>
 
-    <section class="meet-sec" id="meet" aria-labelledby="meet-title">
-      <h2 class="meet-sec__h" id="meet-title">Meet the <em>robot</em>.</h2>
-      {% include "landing/_meet.html" %}
+    <section class="process-guide" aria-labelledby="process-title">
+      <div class="process-guide-head"><div><p class="eyebrow">THE COMPLETE CYCLE</p><h2 id="process-title">One connector, start to finish.</h2></div><p>Choose a case. Scrub any step. Inspect the connector up close.</p></div>
+      <div class="cycle-cases" aria-label="Illustrated cycle cases"><button data-cycle-case="search" aria-pressed="true">Blocked → search → pass</button><button data-cycle-case="latched" aria-pressed="false">Saved fit → pass</button><button data-cycle-case="half-seat" aria-pressed="false">Half-seat → reject</button><button data-cycle-case="open" aria-pressed="false">Open circuit → reject</button></div>
+      <div id="process-steps" class="process-steps" aria-label="Ten cycle steps"></div>
+      <div class="process-boundaries"><div><h3>In the simulation today</h3><p>Rigid plug/socket contact, retract-and-search, an ideal latch and a depth-based continuity check with injected faults. The complete cycle above is a scripted illustration. Open the experiment below for computed contact forces.</p></div><div><h3>The first physical cell adds</h3><p>Operator loading, the nest and cable comb, vision registration, grasp checks, real force sensing, a wired tester, release and per-unit records. The turnover cradle adds a supported regrasp before insertion. A new part needs quick-change fingers, a nest insert, a board plate and taught targets, plus depth, press and pull limits from its datasheet and a pinout.</p></div><div><h3>Still to be proven</h3><p>False passes, latch and pin damage, cable loads, board flex, cycle time and a safety assessment. The saved fixture offset is calibration, not learning. Two passing checks out of three is a fail. Any failed check stops the unit: retry once, then extract under a force limit, reject and retain the trace for an operator to clear the fault.</p></div></div>
+      <details class="illustration-log"><summary>Illustration log</summary><p>Scripted outcomes, separate from the computed experiment records below.</p><ol id="cycle-log"></ol></details>
     </section>
 
     <details class="tryit console"><summary>Experiment controls <span>Offset, faults &amp; results</span></summary>
-      <div class="transport">
+      <button id="physics-demo" class="text-button">Play contact experiment ↗</button><div class="transport">
         <div class="run-controls"><button id="run" class="run-button" disabled><span id="run-icon" aria-hidden="true">▶</span><span id="run-label">Run attempt</span></button><button id="reset" class="reset-button" aria-label="Reset attempt" title="Reset attempt (R)" disabled>↺</button></div>
         <span id="engine-status">Loading…</span>
-        <div class="cycle" aria-label="The loop"><span data-phase="insert"><i>01</i> Insert</span><b></b><span data-phase="electrical"><i>02</i> Connect</span><b></b><span data-phase="retention"><i>03</i> Pull test</span><b></b><span data-phase="reset"><i>04</i> Reset</span></div>
+        <div class="cycle" aria-label="The loop"><span data-phase="insert"><i>01</i> Insert</span><b></b><span data-phase="retention"><i>02</i> Pull test</span><b></b><span data-phase="electrical"><i>03</i> Connect</span><b></b><span data-phase="reset"><i>04</i> Reset</span></div>
         <label class="speed-control" for="speed">Speed <select id="speed" disabled><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select></label>
       </div>
       <div class="console-grid">
@@ -132,7 +148,7 @@
 
     <footer class="model-footer"><p>Simulation. The search saves an offset; it is not a trained robot policy.</p><button class="text-button" data-open-notes>About this model <span>↗</span></button></footer>
   </main>
-  <dialog id="notes" aria-labelledby="notes-title"><div class="dialog-heading"><p class="eyebrow">INTERACTIVE SOFTWARE PROTOTYPE</p><button id="close-notes" aria-label="Close model notes">×</button></div><h2 id="notes-title">Inside the simulation.</h2><p>A tool pushes a connector into a socket. MuJoCo works out the motion and forces in your browser.</p><dl><dt>The search</dt><dd>If the plug hits, it backs off and tries a little to each side. When one spot works, it keeps it. It never sees where the socket is. This is a fixed search, not a learned skill.</dd><dt>The checks</dt><dd>Connected means the plug went in deep enough. Locked means it held when pulled. You can force either to fail. There is no real wiring or latch.</dd><dt>The limits</dt><dd>Sizes and forces are made up. Only the plug and socket touch; everything else is for show. No camera, no cables, no wear, no real robot. Reset pulls the same plug back out.</dd><dt>Next</dt><dd>Build the real robot and run it on customer parts. This page shows the idea, not how it does in a factory.</dd></dl><div class="dialog-actions"><button id="download-model" class="tour-button">Download physics model <span>↓</span></button><a href="?view=schematic">Use 2D view ↗</a><a href="https://github.com/google-deepmind/mujoco/tree/main/wasm" target="_blank" rel="noopener">MuJoCo WASM ↗</a></div></dialog>
+  <dialog id="notes" aria-labelledby="notes-title"><div class="dialog-heading"><p class="eyebrow">INTERACTIVE SOFTWARE PROTOTYPE</p><button id="close-notes" aria-label="Close model notes">×</button></div><h2 id="notes-title">Inside the simulation.</h2><p>A tool pushes a connector into a socket. MuJoCo works out the motion and forces in your browser.</p><dl><dt>The search</dt><dd>If the plug hits, it backs off and tries a little to each side. When one spot works, it keeps it. It never sees where the socket is. This is a fixed search, not a learned skill.</dd><dt>The checks</dt><dd>Connected means the plug went in deep enough. Locked means it held when pulled. You can force either to fail. There is no real wiring or latch.</dd><dt>The limits</dt><dd>Sizes and forces are made up. Only the plug and socket touch; everything else is for show. The full-cycle view illustrates the camera, cable handling and operator workflow. Those systems are not physically simulated. The contact experiment resets by extracting the same plug; the full-cycle illustration leaves an accepted plug seated.</dd><dt>Next</dt><dd>Build the real robot and run it on customer parts. This page shows the idea, not how it does in a factory.</dd></dl><div class="dialog-actions"><button id="download-model" class="tour-button">Download physics model <span>↓</span></button><a href="?view=schematic">Use 2D view ↗</a><a href="https://github.com/google-deepmind/mujoco/tree/main/wasm" target="_blank" rel="noopener">MuJoCo WASM ↗</a></div></dialog>
   <noscript><div class="noscript">This simulation needs JavaScript.</div></noscript>
 </body>
 </html>

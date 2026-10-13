@@ -161,7 +161,7 @@ export class ConnectorEngine {
         if (q[2] < SEATED_Z + 0.00025) {
           this.target[2] = SEATED_Z;
           if (this.config.fault !== 'latch') this.setLatch(true);
-          this.enter('electrical');
+          this.enter('retention');
         } else if (this.blockedTime > 0.015 || elapsed > 3.2) {
           if (this.controller === 'search' && this.probe < this.points.length - 1) {
             this.enter('backoff');
@@ -179,14 +179,15 @@ export class ConnectorEngine {
         this.target[2] = elapsed < 0.14 ? SEATED_Z - 0.00025 * Math.sin(Math.PI * elapsed / 0.14) : SEATED_Z;
         if (elapsed > 0.45) {
           this.continuity = this.config.fault !== 'open' && q[2] < SEATED_Z + 0.0003;
-          this.enter('retention');
+          this.finish(this.continuity ? 'Both tests passed' : this.config.fault === 'open' ? 'Open circuit' : 'Not seated deep enough');
         }
         break;
       case 'retention':
         this.follow();
         if (elapsed > 0.5) {
           this.retention = Math.abs(q[2] - SEATED_Z) < 0.0003;
-          this.finish(!this.continuity ? (this.config.fault === 'open' ? 'Open circuit' : 'Not seated deep enough') : !this.retention ? 'Latch did not hold' : 'Both tests passed');
+          if (this.retention) this.enter('electrical');
+          else this.finish('Latch did not hold');
         }
         break;
       case 'reset': {

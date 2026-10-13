@@ -1,837 +1,170 @@
-import * as THREE from 'three';
+import * as T from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { dimensions } from './model.ts';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { createCell, createHall, disposeCell } from './cell-geometry.ts';
+import { PoseStream, damping } from './motion.ts';
+import { processFrame } from './process.ts';
+import type { ProcessFrame } from './process.ts';
 import type { Configuration } from './model.ts';
 import type { Snapshot } from './engine.ts';
-import { PoseStream, damping } from './motion.ts';
-import { PARTS } from './parts.ts';
-import { RenderStats } from './render-stats.ts';
-import { finishes } from './finishes.ts';
-import { batchStaticMeshes } from './batching.ts';
-import { contactCenters, plugHousing, socketHousing } from './mechanism.ts';
 import type { PartId } from './parts.ts';
-import { createTooling } from './tooling.ts';
-import { createCobot, FLANGE_Z } from './cobot.ts';
-import type { Cobot } from './cobot.ts';
+import { PARTS } from './parts.ts';
+import { contactCenters } from './mechanism.ts';
+import { batchStaticMeshes } from './batching.ts';
 
-export type View = 'overview' | 'side' | 'top' | 'connector' | 'part';
-export type Mode = 'machine' | 'inside' | 'parts';
-export interface Hud { labels: HTMLElement; tooltip: HTMLElement; onPick?: (id: PartId) => void; onDirector?: (on: boolean) => void }
-
-// The signs and the HMI screen are set in the site's text face at its one
-// weight, like every other word on the site (his call, 2026-10-05).
-const FONT = "'EB Garamond', Georgia, serif";
-const mat = (color: number, metalness: number, roughness: number, extra: THREE.MeshStandardMaterialParameters = {}) =>
-  new THREE.MeshStandardMaterial({ color, metalness, roughness, ...extra });
-const M = finishes;
-const shared = new Set<THREE.Material>(Object.values(M));
-
-const geometries = new Map<string, THREE.BufferGeometry>();
-const cachedSet = new Set<THREE.BufferGeometry>();
-function cached(key: string, make: () => THREE.BufferGeometry) {
-  if (!geometries.has(key)) { const g = make(); geometries.set(key, g); cachedSet.add(g); }
-  return geometries.get(key)!;
-}
-function box(parent: THREE.Object3D, name: string, size: number[], pos: number[], material: THREE.Material, radius = 0.3) {
-  const r = Math.min(radius, size[0] / 3, size[1] / 3, size[2] / 3);
-  const geo = cached(`b${size}${r}`, () => r > 0.02 ? new RoundedBoxGeometry(size[0], size[1], size[2], 2, r) : new THREE.BoxGeometry(size[0], size[1], size[2]));
-  const mesh = new THREE.Mesh(geo, material);
-  mesh.name = name; mesh.position.set(pos[0], pos[1], pos[2]); mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh);
-  return mesh;
-}
-function cylinder(parent: THREE.Object3D, radius: number, height: number, pos: number[], material: THREE.Material, segments = 24, axis: 'z' | 'x' = 'z') {
-  const mesh = new THREE.Mesh(cached(`c${radius},${height},${segments}`, () => new THREE.CylinderGeometry(radius, radius, height, segments)), material);
-  if (axis === 'z') mesh.rotation.x = Math.PI / 2; else mesh.rotation.z = Math.PI / 2;
-  mesh.position.set(pos[0], pos[1], pos[2]); mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh);
-  return mesh;
-}
-function screw(parent: THREE.Object3D, x: number, y: number, z: number) {
-  cylinder(parent, 1.4, 0.45, [x, y, z], M.silver, 16);
-  cylinder(parent, 0.58, 0.1, [x, y, z + 0.26], M.dark, 6);
-}
-function line(parent: THREE.Object3D, points: THREE.Vector3[], color: number, opacity = 1) {
-  const obj = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color, transparent: opacity < 1, opacity }));
-  parent.add(obj); return obj;
-}
-function cable(parent: THREE.Object3D, points: number[][], color: number, radius = 0.32) {
-  const curve = new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(p[0], p[1], p[2])));
-  const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 28, radius, 8, false), new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.1 }));
-  mesh.castShadow = true; parent.add(mesh);
-}
-function canvasTexture(w: number, h: number) {
-  const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
-  const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 8;
-  return { canvas, texture, ctx: canvas.getContext('2d')! };
-}
-function print(c: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, color: string) {
-  c.fillStyle = color; c.font = `400 ${size}px ${FONT}`; c.fillText(text, x, y);
-}
-
-const EXPLODE_ORDER: PartId[] = ['socket', 'tester', 'connector', 'gripper', 'arm'];
-const ease = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-const step = (value: number, goal: number, amount: number) => value < goal ? Math.min(goal, value + amount) : Math.max(goal, value - amount);
-const toY = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 1, 0)), fromY = toY.clone().invert();
-const sa = new THREE.Spherical(), sb = new THREE.Spherical();
-function orbitBlend(a: THREE.Vector3, b: THREE.Vector3, t: number, out: THREE.Vector3) {
-  sa.setFromVector3(a.applyQuaternion(toY)); sb.setFromVector3(b.applyQuaternion(toY));
-  let turn = sb.theta - sa.theta; turn -= Math.round(turn / (Math.PI * 2)) * Math.PI * 2;
-  out.setFromSphericalCoords(Math.exp(THREE.MathUtils.lerp(Math.log(sa.radius), Math.log(sb.radius), t)), THREE.MathUtils.lerp(sa.phi, sb.phi, t), sa.theta + turn * t).applyQuaternion(fromY);
-}
-
-interface Part { id: PartId; name: string; line: string; group: THREE.Group; offset: THREE.Vector3; anchor: THREE.Vector3; side: 1 | -1; label: HTMLElement }
-
+export type View='overview'|'side'|'top'|'connector'|'part';
+export type Mode='machine'|'inside'|'parts';
+export interface Hud {labels:HTMLElement;tooltip:HTMLElement;onPick?:(id:PartId)=>void;onDirector?:(on:boolean)=>void}
 export class WorkcellScene {
-  renderer: THREE.WebGLRenderer;
-  stats: RenderStats;
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(30, 1, 1, 4000);
-  controls: OrbitControls;
-  cell = new THREE.Group();
-  fixture = new THREE.Group();
-  socket = new THREE.Group();
-  tool = new THREE.Group();
-  cobot!: Cobot;
-  armTarget = new THREE.Vector3();
-  armPose = '';
-  rotaryGripper = new THREE.Group();
-  plug = new THREE.Group();
-  parts = new Map<PartId, Part>();
-  shells: THREE.Mesh[] = [];
-  socketCover: THREE.Mesh[] = [];
-  plugCover: THREE.Mesh[] = [];
-  ledMaterial = mat(0xe7aa45, 0.1, 0.4, { emissive: 0xc77917, emissiveIntensity: 0.5 });
-  // Unlit lenses are dark tinted plastic; a lit one glows below the tone curve's shoulder so it stays saturated.
-  stack = [0x4fd08a, 0xffb02e, 0xff4b3a].map(c => mat(new THREE.Color(c).multiplyScalar(0.05).getHex(), 0, 0.28, { emissive: c, emissiveIntensity: 0 }));
-  hmi = canvasTexture(640, 420);
-  plate = canvasTexture(1536, 172);
-  config: Configuration;
-  state: Snapshot | null = null;
-  mode: Mode = 'machine';
-  viewMode: View = 'overview';
-  focus: PartId = 'socket';
-  spread = 0;
-  cut = 0;
-  poses = new PoseStream();
-  lastVariant: Configuration['variant'] | null = null;
-  connectorMaterials = new Set<THREE.Material>();
-  resizeObserver: ResizeObserver;
-  intersection: IntersectionObserver;
-  container: HTMLElement;
-  hud: Hud | null;
-  frame = 0;
-  lastFrame = performance.now();
-  lastHmi = 0;
-  visible = true;
-  width = 1;
-  height = 1;
-  baseDistance = 260;
-  shift = 0;
-  wide = false;
-  contactMaterial: THREE.MeshBasicMaterial | null = null;
-  floorMaterial = new THREE.ShadowMaterial({ opacity: 0.18 });
-  desiredPosition = new THREE.Vector3();
-  desiredTarget = new THREE.Vector3(0, 0, 30);
-  animating = false;
-  tween: { from: THREE.Vector3; fromTarget: THREE.Vector3; start: number; duration: number } | null = null;
-  shadowPose = '';
-  dragging = false;
-  pressed = false;
-  touches = new Set<number>();
-  lastInteraction = performance.now();
-  hovered: PartId | null = null;
-  pointer: { x: number; y: number } | null = null;
-  pointerType = 'mouse';
-  pointerMoved = false;
-  pickFrame = 0;
-  lastPick = 0;
-  tipTimer = 0;
-  down: { x: number; y: number; moved: boolean; pointerId: number | null } = { x: 0, y: 0, moved: false, pointerId: null };
-  reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  embed: boolean;
-  pixelRatio: number;
-  screenRatio: number;
-  frames = 0;
-  measured = 0;
-  renderCost = 0;
-  slow = 0;
-  raycaster = new THREE.Raycaster();
-  direction = new THREE.Vector3(0.62, -0.78, 0.5).normalize();
-  labelWidths = new Map<PartId, number>();
-  director = false;
-  directorHasRun = false;
-  tourHold = false;
-  dirPos = new THREE.Vector3();
-  dirTarget = new THREE.Vector3();
-  phase = 'ready';
-  phaseStart = performance.now();
-  clickAt = -1e9;
-  latched = false;
-  latchParts: { mesh: THREE.Mesh; y: number }[] = [];
-  flex = 0;
-  playing = false;
-  visualTime = 0;
-  playbackSpeed = 1;
-  disposed = false;
-  compiling = false;
-  isOffline = false;
-  dprQuery: MediaQueryList | null = null;
-  rendering = false;
-  afterRender: (() => void) | null = null;
-  lastLabels = 0;
-  onContextLost = (event: Event) => {
-    event.preventDefault();
-    this.container.dispatchEvent(new CustomEvent('renderer-lost'));
+  renderer:T.WebGLRenderer;
+  scene=new T.Scene(); camera=new T.PerspectiveCamera(25,1,1,16000);
+  controls:OrbitControls; composer:EffectComposer; ao:GTAOPass; bokeh:BokehPass;
+  rig=createCell(); hall=createHall(); config:Configuration;
+  poses=new PoseStream(); state:Snapshot|null=null; playing=false; afterRender:(()=>void)|null=null;
+  mode:Mode='machine'; viewMode:View='overview'; focus:PartId='socket';
+  process:ProcessFrame|null=processFrame(44); director=false; disposed=false;
+  private container:HTMLElement; private hud:Hud|null; private embed:boolean;
+  private frame=0; private last=0; private width=1; private height=1;
+  private cameraMoving=true; private spread=0; private cut=0; private renderedPose='';
+  private target=new T.Vector3();private position=new T.Vector3();private ro:ResizeObserver;
+  private wirePoints=Array.from({length:7},()=>new T.Vector3());
+  private labels=new Map<PartId,HTMLElement>();
+  private basePose=[0,0,42,0];
+  private ray=new T.Raycaster();private down=[0,0];
+  private reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  constructor(container:HTMLElement,config:Configuration,hud:Hud|null=null,embed=false){
+    this.container=container;this.config=config;this.hud=hud;this.embed=embed;
+    this.renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));this.renderer.outputColorSpace=T.SRGBColorSpace;
+    this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=.92;
+    this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFShadowMap;this.renderer.shadowMap.autoUpdate=false;
+    container.append(this.renderer.domElement);this.renderer.domElement.setAttribute('role','img');
+    this.renderer.domElement.setAttribute('aria-label','Interactive rendered connector workcell in an empty factory hall. White six-joint arm, two-finger gripper, six-wire harness, green circuit board, fixture, tester and reject tray.');
+    this.camera.up.set(0,0,1);this.scene.background=new T.Color(0xcbd2d0);this.scene.fog=new T.FogExp2(0xcbd2d0,.000045);
+    this.controls=new OrbitControls(this.camera,this.renderer.domElement);
+    Object.assign(this.controls,{enableDamping:true,dampingFactor:.08,enablePan:false,minDistance:80,maxDistance:3000,minPolarAngle:.06,maxPolarAngle:Math.PI*.49,rotateSpeed:.45,zoomSpeed:.6});
+    this.controls.touches={ONE:T.TOUCH.ROTATE,TWO:T.TOUCH.DOLLY_ROTATE};if(embed)this.controls.enableZoom=false;
+    this.renderer.domElement.style.touchAction='pan-y';
+    this.controls.addEventListener('start',()=>{this.cameraMoving=false;this.director=false;});this.controls.addEventListener('change',this.wake);
+    container.addEventListener('wheel',this.wheel,{capture:true,passive:true});
+    this.renderer.domElement.addEventListener('pointerdown',this.pointerDown);this.renderer.domElement.addEventListener('pointerup',this.pointerUp);
+    this.renderer.domElement.addEventListener('webglcontextlost',this.contextLost);
+    const env=new RoomEnvironment(),pmrem=new T.PMREMGenerator(this.renderer);
+    this.scene.environment=pmrem.fromScene(env,.035).texture;this.scene.environmentIntensity=.58;this.scene.environmentRotation.x=Math.PI/2;env.dispose();pmrem.dispose();
+    const key=new T.DirectionalLight(0xfff7ea,2.1);key.position.set(-550,-250,1100);key.target.position.set(0,0,80);key.castShadow=true;
+    key.shadow.mapSize.set(4096,4096);Object.assign(key.shadow.camera,{left:-520,right:520,top:600,bottom:-600,near:100,far:2300});key.shadow.normalBias=.12;key.shadow.bias=-.000035;
+    this.scene.add(key,key.target);const fill=new T.HemisphereLight(0xe6eef4,0x485249,.55);fill.position.set(0,0,1000);this.scene.add(fill);
+    const rim=new T.DirectionalLight(0xe7eff6,.9);rim.position.set(250,550,600);this.scene.add(rim);
+    this.scene.add(this.hall,this.rig.root);
+    for(const g of [this.rig.bench,this.rig.fixture,this.rig.nest,this.rig.bin,this.hall])batchStaticMeshes(g,new Set());
+    const groups:Record<PartId,T.Object3D>={arm:this.rig.arm.root,gripper:this.rig.tool.root,connector:this.rig.plug,socket:this.rig.header,tester:this.rig.tester};
+    for(const [id,g] of Object.entries(groups)){g.traverse(o=>o.userData.part=id);const label=document.createElement('div');label.className='cell-label';label.textContent=PARTS.find(p=>p.id===id)?.name??id;hud?.labels.append(label);this.labels.set(id as PartId,label);}
+    this.composer=new EffectComposer(this.renderer,new T.WebGLRenderTarget(1,1,{samples:4,type:T.HalfFloatType}));
+    this.composer.addPass(new RenderPass(this.scene,this.camera));
+    this.ao=new GTAOPass(this.scene,this.camera,1,1);this.ao.blendIntensity=.55;
+    this.ao.updateGtaoMaterial({radius:10,distanceExponent:1.6,thickness:1.5,distanceFallOff:1,scale:1,samples:8,screenSpaceRadius:false});this.ao.updatePdMaterial({radius:3,rings:2,samples:8});this.composer.addPass(this.ao);
+    this.bokeh=new BokehPass(this.scene,this.camera,{focus:1200,aperture:.000007,maxblur:.006});this.composer.addPass(this.bokeh);this.composer.addPass(new OutputPass());
+    this.configure(config);this.applyProcess(this.process!);
+    this.ro=new ResizeObserver(this.layout);this.ro.observe(container);document.addEventListener('visibilitychange',this.wake);
+    this.layout();this.camera.position.copy(this.position);this.controls.target.copy(this.target);this.controls.update();this.wake();
+  }
+  wheel=(e:WheelEvent)=>{if(!e.ctrlKey&&!e.metaKey)e.stopPropagation();};
+  contextLost=(e:Event)=>{e.preventDefault();this.container.dispatchEvent(new CustomEvent('renderer-lost'));};
+  pointerDown=(e:PointerEvent)=>{this.down=[e.clientX,e.clientY];};
+  pointerUp=(e:PointerEvent)=>{
+    if(Math.hypot(e.clientX-this.down[0],e.clientY-this.down[1])>5)return;
+    const r=this.renderer.domElement.getBoundingClientRect();this.ray.setFromCamera(new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),this.camera);
+    const hit=this.ray.intersectObject(this.rig.root,true).find(h=>h.object.userData.part);if(hit){this.focusPart(hit.object.userData.part);this.hud?.onPick?.(hit.object.userData.part);}
   };
-
-  constructor(container: HTMLElement, config: Configuration, hud: Hud | null = null, embed = false) {
-    this.container = container; this.config = config; this.hud = hud; this.embed = embed;
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance', preserveDrawingBuffer: false });
-    this.stats = new RenderStats(container, this.renderer);
-    this.pixelRatio = this.screenRatio = Math.min(devicePixelRatio, 2);
-    this.renderer.setPixelRatio(this.pixelRatio);
-    this.renderer.setClearColor(0x000000, 0);
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.shadowMap.enabled = true; this.renderer.shadowMap.type = THREE.PCFShadowMap; this.renderer.shadowMap.autoUpdate = false; this.renderer.shadowMap.needsUpdate = true;
-    this.renderer.toneMapping = THREE.NeutralToneMapping; this.renderer.toneMappingExposure = 1;
-    container.append(this.renderer.domElement);
-    this.renderer.domElement.setAttribute('role', 'img');
-    this.renderer.domElement.setAttribute('aria-label', 'Interactive 3D simulation of a connector workcell. Drag to rotate, pinch to zoom, hover a part to name it.');
-    this.camera.up.set(0, 0, 1);
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    Object.assign(this.controls, { enableDamping: true, dampingFactor: 0.07, enablePan: false, minDistance: 45, maxDistance: 520, maxPolarAngle: Math.PI * 0.49, minPolarAngle: 0.02, rotateSpeed: 0.55, zoomSpeed: 0.7 });
-    if (embed) this.controls.enableZoom = false;
-    // One finger turns the machine while an upward swipe still scrolls the page; two fingers pinch and twist.
-    this.controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE }; this.renderer.domElement.style.touchAction = 'pan-y';
-    // A press may turn out to be a page scroll or a click on a part, so the camera
-    // is handed over once it drags (onPointerMove); a wheel or pinch takes it at once.
-    this.controls.addEventListener('start', () => { this.lastInteraction = performance.now(); if (!this.pressed) this.takeCamera(); });
-    this.controls.addEventListener('end', () => { this.dragging = false; this.lastInteraction = performance.now(); });
-    this.controls.addEventListener('change', this.wake);
-    // The page scrolls over the stage. A trackpad pinch (a wheel with ctrlKey) or Ctrl/⌘ and the wheel zoom.
-    container.addEventListener('wheel', this.onWheel, { capture: true, passive: true });
-    container.addEventListener('pointerdown', this.onPointerDown, { capture: true });
-
-    const env = new RoomEnvironment(), pmrem = new THREE.PMREMGenerator(this.renderer);
-    this.scene.environment = pmrem.fromScene(env, 0.04).texture; this.scene.environmentIntensity = 1; this.scene.environmentRotation.set(Math.PI / 2, 0, 0); env.dispose(); pmrem.dispose();
-    const key = new THREE.DirectionalLight(0xfff5e9, 3.4); key.position.set(-40, -70, 140); key.castShadow = true;
-    key.shadow.mapSize.set(4096, 4096); Object.assign(key.shadow.camera, { left: -95, right: 95, top: 95, bottom: -95, near: 20, far: 320 });
-    key.shadow.normalBias = 0.12; key.shadow.bias = -0.0002; key.shadow.radius = 7; key.shadow.blurSamples = 16; this.scene.add(key);
-    const rim = new THREE.DirectionalLight(0xe1eafa, 1.6); rim.position.set(60, 90, 80); this.scene.add(rim);
-
-    this.backdrop();
-    this.scene.add(this.cell);
-    this.buildGround(); this.buildTable(); this.buildArm(); this.buildTool(); this.buildTester(); this.buildConnector();
-    batchStaticMeshes(this.cell, new Set([...this.shells, ...this.socketCover, ...this.plugCover, ...this.latchParts.map(p => p.mesh), this.cobot.cable.mesh])); this.tagParts();
-    this.tool.position.z = 42; this.poseArm();
-    this.drawPlate(); this.drawHmi();
-    document.fonts?.ready.then(() => { if (!this.disposed) { this.drawPlate(); this.drawHmi(); this.wake(); } });
-    this.measureAnchors();
-    // Both the ghosted and the solid shaders compile off this thread (KHR_parallel_shader_compile)
-    // while the loading screen is up; frames start once they are ready.
-    this.cut = 1; this.applyCut(true); const ghosted = this.renderer.compileAsync(this.scene, this.camera);
-    this.cut = 0; this.applyCut(true); const solid = this.renderer.compileAsync(this.scene, this.camera);
-    this.compiling = true;
-    Promise.all([ghosted, solid]).catch(() => {}).then(() => { this.compiling = false; this.wake(); });
-
-    this.resizeObserver = new ResizeObserver(() => this.layout()); this.resizeObserver.observe(container);
-    this.intersection = new IntersectionObserver(([entry]) => { this.visible = entry.isIntersecting; this.wake(); }, { threshold: 0.01 });
-    this.intersection.observe(container);
-    document.addEventListener('visibilitychange', this.wake);
-    const canvas = this.renderer.domElement;
-    canvas.addEventListener('webglcontextlost', this.onContextLost);
-    canvas.addEventListener('pointermove', this.onPointerMove);
-    canvas.addEventListener('pointerleave', this.onPointerLeave);
-    canvas.addEventListener('pointerup', this.onPointerUp);
-    canvas.addEventListener('pointercancel', this.onPointerCancel);
-    this.layout(); this.watchPixelRatio();
-    this.camera.position.copy(this.desiredPosition); this.controls.target.copy(this.desiredTarget); this.controls.update();
-    this.wake();
+  private ensureVariant(pins:number){
+    if(this.rig.pins===pins)return;
+    disposeCell(this.rig.root);this.scene.remove(this.rig.root);this.rig=createCell(pins);this.scene.add(this.rig.root);
+    for(const g of [this.rig.bench,this.rig.fixture,this.rig.nest,this.rig.bin])batchStaticMeshes(g,new Set());
+    const groups={arm:this.rig.arm.root,gripper:this.rig.tool.root,connector:this.rig.plug,socket:this.rig.header,tester:this.rig.tester};
+    for(const [id,g] of Object.entries(groups))g.traverse(o=>o.userData.part=id);
+    this.renderedPose='';this.cut=-1;
   }
-
-  backdrop() {
-    const bg = canvasTexture(1280, 800), g = bg.ctx.createRadialGradient(704, 440, 0, 704, 440, 900);
-    g.addColorStop(0, '#303432'); g.addColorStop(0.5, '#1b1e1d'); g.addColorStop(1, '#0c0e0e');
-    bg.ctx.fillStyle = g; bg.ctx.fillRect(0, 0, 1280, 800);
-    const pixels = bg.ctx.getImageData(0, 0, 1280, 800);
-    for (let i = 0; i < pixels.data.length; i += 4) { const n = (Math.random() - 0.5) * 3; pixels.data[i] += n; pixels.data[i + 1] += n; pixels.data[i + 2] += n; }
-    bg.ctx.putImageData(pixels, 0, 0); bg.texture.needsUpdate = true;
-    this.scene.background = bg.texture;
+  configure(config:Configuration){this.config=config;if(!this.process){this.ensureVariant(config.variant==='eight'?8:6);this.rig.header.position.set(config.offsetX,config.offsetY,0);this.rig.header.rotation.z=config.yaw*Math.PI/180;}this.wake();}
+  update(state:Snapshot,epoch:number,playing=false,_speed=1){this.state=state;this.playing=playing;if(!this.process){this.poses.push(state.pose,performance.now(),epoch);this.wake();}}
+  setProcess(f:ProcessFrame|null){this.process=f;if(f){this.ensureVariant(6);this.rig.header.position.set(1.2,.65,0);this.rig.header.rotation.z=0;this.rig.tool.root.rotation.z=this.rig.plug.rotation.z=0;}else this.configure(this.config);if(f){this.applyProcess(f);if(this.viewMode==='connector')this.goal();}else if(this.state)this.poses.push(this.state.pose,performance.now(),Date.now());this.wake();}
+  private applyProcess(f:ProcessFrame){
+    this.rig.tool.root.position.set(...f.tool);this.rig.plug.position.set(...f.plug);this.rig.plug.rotation.y=f.rotation;this.rig.rotator.rotation.y=f.cradle;
+    this.rig.tool.fingers.forEach((g,i)=>g.position.x=(i?1:-1)*f.jaw*7);
+    this.rig.cradleJaws.forEach((g,i)=>g.position.y=(i?1:-1)*f.cradleGrip*5);
+    this.rig.indicator.color.setHex(f.accepted===true?0x379761:0x273c31);
+    this.rig.indicator.emissive.setHex(f.accepted===true?0x248440:0x000000);this.rig.indicator.emissiveIntensity=f.accepted===null?0:.3;
   }
-
-  part(id: PartId) {
-    const info = PARTS.find(p => p.id === id)!;
-    const group = new THREE.Group(); group.name = info.name;
-    const label = document.createElement('div');
-    label.className = 'part-label';
-    label.innerHTML = `<div class="stem"></div><div class="label-card"><div class="label-title"><span>${String(PARTS.indexOf(info) + 1).padStart(2, '0')}</span>${info.name}</div></div>`;
-    const side = (['arm', 'connector', 'tester'] as PartId[]).includes(id) ? 1 : -1;
-    label.classList.add(side > 0 ? 'right' : 'left');
-    this.hud?.labels.append(label);
-    const offsets: Record<PartId, number[]> = { socket: [0, 0, 8], connector: [0, 0, 22], gripper: [0, 0, 36], arm: [6, 8, 30], tester: [22, -14, 6] };
-    this.parts.set(id, { ...info, group, offset: new THREE.Vector3(...offsets[id]), anchor: new THREE.Vector3(), side, label });
-    return group;
-  }
-  shell(mesh: THREE.Mesh) {
-    mesh.material = (mesh.material as THREE.Material).clone(); this.shells.push(mesh); return mesh;
-  }
-
-  buildGround() {
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), this.floorMaterial);
-    floor.position.z = -10.4; floor.receiveShadow = true; this.scene.add(floor);
-    const shadow = canvasTexture(128, 128), g = shadow.ctx.createRadialGradient(64, 64, 10, 64, 64, 64);
-    g.addColorStop(0, 'rgba(0,0,0,.85)'); g.addColorStop(.55, 'rgba(0,0,0,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-    shadow.ctx.fillStyle = g; shadow.ctx.fillRect(0, 0, 128, 128); shadow.texture.needsUpdate = true;
-    const contact = new THREE.Mesh(new THREE.PlaneGeometry(170, 135), new THREE.MeshBasicMaterial({ map: shadow.texture, transparent: true, depthWrite: false, opacity: 0.7 }));
-    contact.position.z = -10.3; this.scene.add(contact);
-    const soft = canvasTexture(64, 64), sg = soft.ctx.createRadialGradient(32, 32, 4, 32, 32, 32);
-    sg.addColorStop(0, 'rgba(0,0,0,1)'); sg.addColorStop(.45, 'rgba(0,0,0,.55)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
-    soft.ctx.fillStyle = sg; soft.ctx.fillRect(0, 0, 64, 64); soft.texture.needsUpdate = true;
-    this.contactMaterial = new THREE.MeshBasicMaterial({ map: soft.texture, transparent: true, depthWrite: false, opacity: .5, polygonOffset: true, polygonOffsetFactor: -2 });
-    const blob = new THREE.PlaneGeometry(1, 1);
-    for (const [w, h, x, y, z] of [[72, 58, 0, 0, .34], [36, 30, 0, 0, 4.03], [13, 22, 22, -5, 4.03], [24, 24, 40, 31, .34], [11, 11, 45, -27, .34], [8.5, 8.5, -44, 31, .34]]) {
-      const m = new THREE.Mesh(blob, this.contactMaterial); m.scale.set(w, h, 1); m.position.set(x, y, z); m.renderOrder = -1; this.cell.add(m);
+  private poseRig(){
+    const tool=this.rig.tool.root,plug=this.rig.plug,flange=tool.position.clone().add(new T.Vector3(0,0,80)).divideScalar(5);
+    const cableEnd=this.rig.tool.gland.clone().applyAxisAngle(new T.Vector3(0,0,1),tool.rotation.z).add(tool.position).add(new T.Vector3(3,0,0)).divideScalar(5);
+    this.rig.arm.set(flange,tool.rotation.z,cableEnd);
+    const key=[...tool.position.toArray(),...plug.position.toArray(),plug.rotation.y,plug.rotation.z,tool.rotation.z,this.spread].map(v=>v.toFixed(4)).join();
+    if(key===this.renderedPose)return;this.renderedPose=key;
+    const contacts=contactCenters(this.rig.pins);
+    for(let i=0;i<this.rig.pins;i++){
+      const [x,y]=contacts[i],pts=this.wirePoints;
+      pts[0].set(x,y,8.3).applyAxisAngle(new T.Vector3(0,1,0),plug.rotation.y).applyAxisAngle(new T.Vector3(0,0,1),plug.rotation.z).add(plug.position);
+      pts[1].set(x,y+9,9).applyAxisAngle(new T.Vector3(0,1,0),plug.rotation.y).applyAxisAngle(new T.Vector3(0,0,1),plug.rotation.z).add(plug.position);
+      pts[2].set(plug.position.x-16+(i-2.5)*1.2,plug.position.y+24,Math.max(30,plug.position.z+17));
+      pts[3].set((plug.position.x-104)/2+(i-2.5)*1.7,35,Math.max(13,plug.position.z*.45));
+      pts[4].set(-111.5+i*3,38,10.5);pts[5].set(-111.5+i*3,60,11.5);pts[6].set(-111.5+i*3,78,17);
+      this.rig.wires[i].update(pts);this.rig.wires[i].mesh.visible=this.spread<.01;
     }
+    this.renderer.shadowMap.needsUpdate=true;
   }
-
-  buildTable() {
-    const t = this.cell;
-    box(t, 'Machine table', [112, 86, 5], [0, 0, -3.2], M.base, 1.6);
-    box(t, 'Table edge', [110.6, 84.6, 0.55], [0, 0, -0.55], M.edge, 1.2);
-    box(t, 'Table top', [109.2, 83.2, 0.8], [0, 0, -0.1], M.base, 0.2);
-    box(t, 'Table underside', [110, 84, 0.5], [0, 0, -5.9], M.dark, 0.6);
-    box(t, 'Front edge inset', [104, 0.4, 1.2], [0, -43.05, -3.6], M.dark, 0.08);
-    for (const x of [-48, 48]) for (const y of [-34, 34]) {
-      cylinder(t, 4.2, 3.6, [x, y, -7.9], M.rubber); cylinder(t, 3.1, 1, [x, y, -10], M.dark);
+  setMode(mode:Mode){this.mode=mode;this.wake();}
+  setInspect(on:boolean){this.setMode(on?'inside':'machine');}
+  view(mode:View|'cell'|'close'){this.viewMode=mode==='cell'?'overview':mode==='close'?'connector':mode;this.director=false;this.goal();}
+  focusPart(id:PartId){this.focus=id;this.viewMode='part';this.goal();}
+  direct(on:boolean){this.director=on;this.hud?.onDirector?.(on);if(on){this.viewMode='connector';this.goal();}}
+  hold(_on:boolean){}
+  offline(){this.playing=false;this.wake();}
+  private goal(){
+    const fit=Math.max(1,1.12/(this.width/this.height));
+    if(this.viewMode==='connector'){
+      const f=this.process;
+      this.target.set(f?.plug[0]??0,f?.plug[1]??0,Math.max(29,(f?.plug[2]??15)+15));
+      this.position.copy(this.target).add(new T.Vector3(100,-175,99).multiplyScalar(fit));
+    }else if(this.viewMode==='part'){
+      const groups={arm:this.rig.arm.root,gripper:this.rig.tool.root,connector:this.rig.plug,socket:this.rig.header,tester:this.rig.tester};
+      const bounds=new T.Box3().setFromObject(groups[this.focus]);bounds.getCenter(this.target);
+      const d=Math.max(100,bounds.getSize(new T.Vector3()).length()*2.4)*fit;this.position.copy(this.target).addScaledVector(new T.Vector3(.4,-.85,.35).normalize(),d);
+    }else{
+      this.target.set(10,25,200);const d=Math.max(1490,1270*fit)*(this.mode==='parts'?1.2:1);
+      const dir=this.viewMode==='top'?new T.Vector3(0,-.02,1):this.viewMode==='side'?new T.Vector3(.7,-1,.13):new T.Vector3(.52,-1,.26);
+      this.position.copy(this.target).addScaledVector(dir.normalize(),d);
     }
-    for (const x of [-52, 52]) for (const y of [-39, 39]) screw(t, x, y, 0.5);
-    for (let x = -50; x <= 50; x += 10) for (let y = -35; y <= 35; y += 10) {
-      if ((Math.abs(x) < 36 && Math.abs(y) < 30) || (x > 28 && y > 20) || (y < -30 && x < 25) || (x > 36 && y < -12) || (x < -36 && y > 22)) continue;
-      cylinder(t, 1.02, 0.06, [x, y, 0.31], M.edge, 20); cylinder(t, 0.86, 0.12, [x, y, 0.33], M.bore, 20);
-    }
-    const plate = new THREE.Mesh(new THREE.PlaneGeometry(56, 6.3), new THREE.MeshBasicMaterial({ map: this.plate.texture, toneMapped: false }));
-    plate.position.set(-8, -36.6, 0.34); t.add(plate);
-    for (let i = 0; i < 16; i++) box(t, 'Scale mark', [0.18, 0.8 + (i % 4) * 0.35, 0.1], [-50 + i * 0.9, -36.6, 0.34], M.edge, 0);
+    this.cameraMoving=true;this.wake();
   }
-
-  drawPlate() {
-    const c = this.plate.ctx, w = 1536, h = 172;
-    c.fillStyle = '#20252b'; c.fillRect(0, 0, w, h);
-    c.strokeStyle = '#4d545c'; c.lineWidth = 3; c.strokeRect(3, 3, w - 6, h - 6);
-    print(c, 'DEFEX', 44, 80, 46, '#e4e2d8');
-    print(c, '·  connector lab  ·  insert  ·  test  ·  reset', 250, 80, 38, '#b8bdc1');
-    print(c, 'CONNECTOR WORKCELL   /   SIMULATION', 46, 134, 21, '#737e88');
-    print(c, 'No. 001', 1350, 132, 26, '#ff7a1a');
-    this.plate.texture.needsUpdate = true;
-  }
-
-  // The robot (his call, 2026-10-12): the cobot from the home page, not a
-  // gantry. Only the plug and socket are simulated; the arm is posed each
-  // frame so its flange sits on the tool the physics moved (cobot.ts).
-  buildArm() {
-    const arm = this.part('arm'); this.cell.add(arm);
-    this.cobot = createCobot(M); arm.add(this.cobot.root);
-  }
-  poseArm() {
-    const grip = this.parts.get('gripper')!.group, arm = this.parts.get('arm')!.group;
-    this.armTarget.copy(this.tool.position).add(grip.position).sub(arm.position); this.armTarget.z += FLANGE_Z;
-    const key = `${this.armTarget.x.toFixed(4)},${this.armTarget.y.toFixed(4)},${this.armTarget.z.toFixed(4)},${this.rotaryGripper.rotation.z.toFixed(5)}`;
-    if (key === this.armPose) return false;
-    this.armPose = key; this.cobot.set(this.armTarget, this.rotaryGripper.rotation.z);
-    return true;
-  }
-
-  buildTool() {
-    const grip = this.part('gripper'), connector = this.part('connector');
-    const tooling = createTooling(M);
-    this.cell.add(this.tool); this.tool.add(grip, connector); connector.add(this.plug);
-    grip.add(tooling.spindle);
-    // the adapter between the gripper and the arm's tool flange, turning with the gripper
-    cylinder(tooling.spindle, 3.8, 3.6, [0, 0, FLANGE_Z - 1.8], M.edge, 40);
-    this.rotaryGripper = tooling.spindle;
-  }
-
-  buildTester() {
-    const f = this.fixture, tester = this.part('tester'), socket = this.part('socket');
-    this.cell.add(f, tester, socket); socket.add(this.socket);
-    box(f, 'Aluminium fixture', [62, 48, 4], [0, 0, 2], M.silver, 0.7);
-    box(f, 'Fixture footing', [59, 45, 1.2], [0, 0, 0.7], M.body, 0.4);
-    for (const x of [-26, 26]) for (const y of [-19, 19]) screw(f, x, y, 4.25);
-    for (const x of [-22, -16, 16]) for (const y of [-12, -6, 0, 6, 12]) { cylinder(f, 0.68, 0.05, [x, y, 4.04], M.edge, 16); cylinder(f, 0.5, 0.12, [x, y, 4.08], M.bore, 16); }
-    box(f, 'Socket carrier', [29, 23, 4.5], [0, 0, 6.25], M.body, 0.4);
-    for (const x of [-12, 12]) for (const y of [-9, 9]) screw(f, x, y, 8.5);
-    line(f, [new THREE.Vector3(-8, -19, 4.1), new THREE.Vector3(8, -19, 4.1)], 0x8a949c, 0.7);
-    for (let x = -8; x <= 8; x += 2) line(f, [new THREE.Vector3(x, -19, 4.1), new THREE.Vector3(x, -20, 4.1)], 0x8a949c, 0.7);
-
-    box(tester, 'Test module', [8, 17, 7], [22, -5, 7.5], M.body, 0.6);
-    box(tester, 'Indicator window', [4, 7, 0.2], [22, -5, 11.1], M.dark, 0.2);
-    cylinder(tester, 0.8, 0.3, [22, -3.5, 11.25], this.ledMaterial);
-    for (const x of [-3, 0, 3]) cable(tester, [[x, 7, 9], [x, 12, 8], [15, 13, 6], [20, 3, 7]], 0x2a3036, 0.3);
-    cable(tester, [[26, -5, 6], [34, -8, 3], [40, -18, 1.2], [46, -24, 3]], 0x1a1f24, 0.45);
-    const hmi = new THREE.Group(); hmi.position.set(45, -27, 0); hmi.rotation.z = 0.67; tester.add(hmi);
-    cylinder(hmi, 3.4, 1.2, [0, 0, 0.9], M.body, 28);
-    cylinder(hmi, 1, 15, [0, 3, 8.5], M.silver, 16);
-    const head = new THREE.Group(); head.position.set(0, 3, 22); head.rotation.x = -0.24; hmi.add(head);
-    box(head, 'Screen bezel', [27, 1.8, 18.4], [0, 0.4, 0], M.dark, 0.7);
-    const screen = new THREE.Mesh(new THREE.PlaneGeometry(25, 16.4), new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffffff, emissiveMap: this.hmi.texture, roughness: 0.16, metalness: 0, envMapIntensity: 0.55, toneMapped: false }));
-    screen.rotation.x = Math.PI / 2; screen.position.y = -0.55; head.add(screen);
-
-    const tower = new THREE.Group(); tower.position.set(-44, 31, 0); tester.add(tower);
-    cylinder(tower, 2.6, 2, [0, 0, 1.1], M.body, 28);
-    cylinder(tower, 0.9, 24, [0, 0, 14], M.silver, 16);
-    [0, 1, 2].forEach((i, k) => {
-      cylinder(tower, 2.5, 4, [0, 0, 28.3 + k * 4.4], this.stack[i], 28);
-      cylinder(tower, 2.7, 0.4, [0, 0, 26.1 + k * 4.4], M.edge, 28);
-    });
-    cylinder(tower, 2.7, 1.2, [0, 0, 41], M.dark, 28);
-  }
-
-  drawHmi() {
-    const c = this.hmi.ctx, w = 640, h = 420, s = this.state;
-    c.fillStyle = '#0f1519'; c.fillRect(0, 0, w, h);
-    print(c, 'DEFEX · CONNECTOR LAB', 30, 48, 20, '#8e9aa0');
-    const running = !!s && s.phase !== 'ready' && s.phase !== 'complete';
-    c.fillStyle = running && this.playing ? '#ff7a1a' : '#4a555c'; c.beginPath(); c.arc(600, 41, 7, 0, Math.PI * 2); c.fill();
-    const phaseName: Record<string, string> = { ready: 'READY', approach: 'INSERT', insert: 'INSERT', backoff: 'BLOCKED', move: 'NEW TRY', electrical: 'CONNECTION', retention: 'PULL TEST', reset: 'RESET', complete: 'DONE' };
-    // The verdict stays up while the tool retracts.
-    const done = s?.phase === 'complete' || (s?.phase === 'reset' && s.accepted != null);
-    const label = this.isOffline ? 'OFFLINE' : done ? (s!.accepted ? 'PASS' : 'REJECT') : running && !this.playing ? 'PAUSED' : phaseName[s?.phase ?? 'ready'];
-    print(c, label, 30, 128, 64, this.isOffline ? '#5b676d' : done ? (s!.accepted ? '#58d494' : '#ff5a45') : s?.phase === 'backoff' ? '#ff9b5c' : '#f1eee5');
-    print(c, `${(s?.force ?? 0).toFixed(1)} N`, 30, 186, 34, '#ff7a1a');
-    print(c, `${(s?.depth ?? 0).toFixed(1)} mm`, 250, 186, 34, '#c9ced2');
-    print(c, `TRY ${s && s.phase !== 'ready' ? Math.max(1, s.probes) : 0}`, 470, 186, 34, '#c9ced2');
-    const row = (name: string, value: boolean | null, y: number) => {
-      c.fillStyle = '#1b252b'; c.beginPath(); c.roundRect(24, y, 592, 64, 10); c.fill();
-      print(c, name, 46, y + 42, 26, '#b9c2c4');
-      const text = value === true ? 'PASS' : value === false ? 'FAIL' : '—';
-      print(c, text, 480, y + 42, 28, value === true ? '#58d494' : value === false ? '#ff5a45' : '#5b676d');
-    };
-    row('Connection', s?.continuity ?? null, 222);
-    row('Lock', s?.retention ?? null, 298);
-    c.fillStyle = '#26323a'; c.fillRect(24, 390, 592, 6);
-    const order = ['ready', 'approach', 'electrical', 'retention', 'reset', 'complete'];
-    const k = Math.max(0, order.indexOf(s?.phase === 'insert' || s?.phase === 'backoff' || s?.phase === 'move' ? 'approach' : s?.phase ?? 'ready'));
-    c.fillStyle = '#ff7a1a'; c.fillRect(24, 390, 592 * k / 5, 6);
-    this.hmi.texture.needsUpdate = true;
-  }
-
-  buildConnector() {
-    const remove = (group: THREE.Group) => { for (const child of [...group.children]) { child.traverse(o => { if (o instanceof THREE.Mesh && !cachedSet.has(o.geometry)) o.geometry.dispose(); }); group.remove(child); } };
-    remove(this.socket); remove(this.plug); this.socketCover = []; this.plugCover = [];
-    this.connectorMaterials.forEach(material => material.dispose()); this.connectorMaterials.clear();
-    const d = dimensions(this.config.variant), sx = d.socketX * 1000, sy = d.socketY * 1000;
-    const socketBody = new THREE.Mesh(cached(`socket-${d.pins}`, () => socketHousing(sx, sy)), M.polymer.clone());
-    socketBody.name = 'Molded socket housing'; socketBody.position.z = 10.2; socketBody.castShadow = true; socketBody.receiveShadow = true;
-    this.socket.add(socketBody); this.socketCover.push(socketBody);
-    box(this.socket, 'Socket floor', [sx * 2 + 8, sy * 2 + 8, 4], [0, 0, 9], M.polymer, 0.2);
-    box(this.socket, 'Polarizing key', [2.4, .8, 2.8], [0, -sy - 4, 18.4], M.polymer, .12);
-    for (const x of [-sx - 3.9, sx + 3.9]) for (const y of [-sy + 1, 0, sy - 1]) box(this.socket, 'Socket molding rib', [.65, .7, 9.2], [x, y, 16], M.polymer, .1);
-    box(this.socket, 'Mold parting line', [sx * 2 + 7.9, .08, .12], [0, -sy - 3.8, 12], M.body, 0);
-    for (const [i, [x, y]] of contactCenters(d.pins).entries()) {
-      cylinder(this.socket, 0.37, 5, [x, y, 13], M.gold, 16);
-      const sleeve = new THREE.Mesh(cached('female-contact', () => {
-        const section = new THREE.Shape(); section.absarc(0, 0, .56, 0, Math.PI * 2, false);
-        const hole = new THREE.Path(); hole.absarc(0, 0, .39, 0, Math.PI * 2, true); section.holes.push(hole);
-        return new THREE.ExtrudeGeometry(section, { depth: 4.2, bevelEnabled: false, curveSegments: 12 });
-      }), M.gold);
-      sleeve.name = 'Female crimp contact'; sleeve.position.set(x, y, -4.05); this.plug.add(sleeve);
-      cylinder(this.plug, .39, .05, [x, y, .12], M.dark, 16);
-      cylinder(this.plug, 0.7, 0.3, [x, y, 4.3], M.body, 16);
-      const side = Math.sign(y);
-      cable(this.plug, [[x, y, 4.4], [x, side * 3.1, 6.5], [x * .85, side * 5.6, 9], [x * .35, side * 5.6, 13.4]], i % 3 === 0 ? 0xb35725 : i % 3 === 1 ? 0x343b40 : 0xbcb8a7, 0.24);
-    }
-    const housing = M.ivory.clone();
-    const plugBody = new THREE.Mesh(cached(`plug-${d.pins}`, () => plugHousing(d.halfX * 1000, d.halfY * 1000, d.pins)), housing);
-    plugBody.name = 'Molded connector with contact bores'; plugBody.position.z = -3.9; plugBody.castShadow = true; plugBody.receiveShadow = true;
-    this.plug.add(plugBody); this.plugCover.push(plugBody);
-    box(this.plug, 'Grasp bridge', [11.2, 1.5, 6.5], [0, 0, 7.25], M.ivory, 0.25);
-    for (const x of [-d.halfX * 1000 + .6, d.halfX * 1000 - .6]) box(this.plug, 'Mold rib', [.5, .55, 6], [x, -d.halfY * 1000 - .1, 0], M.ivory, .14);
-    this.latchParts = [box(this.plug, 'Latch tab', [2, .7, 5], [0, -d.halfY * 1000 - .45, -.3], M.ivory, .15), box(this.plug, 'Latch hook', [2.3, 1, 1], [0, -d.halfY * 1000 - .55, -2.6], M.ivory, .2)].map(mesh => ({ mesh, y: mesh.position.y }));
-    for (const group of [this.socket, this.plug]) group.traverse(object => {
-      if (object instanceof THREE.Mesh) for (const m of [object.material].flat()) if (!shared.has(m)) this.connectorMaterials.add(m);
-    });
-    this.socket.position.set(this.config.offsetX, this.config.offsetY, 0); this.socket.rotation.z = this.config.yaw * Math.PI / 180;
-    this.tagParts(); this.applyCut(true);
-    this.latchParts.forEach(({mesh}) => { mesh.visible = this.config.fault !== 'latch'; });
-    batchStaticMeshes(this.socket, new Set(this.socketCover));
-    batchStaticMeshes(this.plug, new Set([...this.plugCover, ...this.latchParts.map(p => p.mesh)])); this.tagParts();
-    this.lastVariant = this.config.variant;
-  }
-
-  tagParts() {
-    for (const p of this.parts.values()) p.group.traverse(o => { o.userData.part = p.id; });
-  }
-  measureAnchors() {
-    const anchors: Record<PartId, [number, number, number]> = {
-      arm: [this.cobot.pose.elbow.x, this.cobot.pose.elbow.y, this.cobot.pose.elbow.z + 6],
-      gripper: [-8, -3, 13], connector: [5, -3, 0], socket: [-9, -4, 17], tester: [47, -27, 23],
-    };
-    for (const p of this.parts.values()) p.anchor.set(...anchors[p.id]);
-  }
-
-  configure(config: Configuration) {
-    this.config = config;
-    if (this.lastVariant !== config.variant) this.buildConnector();
-    this.socket.position.set(config.offsetX, config.offsetY, 0); this.socket.rotation.z = config.yaw * Math.PI / 180;
-    this.latchParts.forEach(({mesh}) => { mesh.visible = config.fault !== 'latch'; });
-    this.measureAnchors();
-    this.renderer.shadowMap.needsUpdate = true;
-    this.wake();
-  }
-  applyCut(force = false) {
-    const on = this.cut > 0.5, opacity = 1 - this.cut * 0.84;
-    for (const mesh of [...this.socketCover, ...this.plugCover, ...this.shells]) {
-      const m = mesh.material as THREE.MeshStandardMaterial;
-      if (force || m.transparent !== this.cut > 0.01) { m.transparent = this.cut > 0.01; m.needsUpdate = true; }
-      m.opacity = opacity; m.depthWrite = !on; mesh.castShadow = !on;
-    }
-  }
-  setMode(mode: Mode) {
-    this.mode = mode; this.lastInteraction = performance.now();
-    if (this.viewMode !== 'part' && this.viewMode !== 'connector') this.goal();
-    this.startTween(); this.wake();
-  }
-  setInspect(on: boolean) { this.setMode(on ? 'inside' : 'machine'); }
-  view(mode: View | 'cell' | 'close') {
-    this.direct(false);
-    const next = mode === 'cell' ? 'overview' : mode === 'close' ? 'connector' : mode;
-    this.viewMode = next;
-    this.lastInteraction = performance.now();
-    this.goal(); this.startTween();
-    if (this.reduceMotion) this.snap();
-    this.wake();
-  }
-  direct(on: boolean) {
-    const next = on && !this.reduceMotion;
-    if (next) this.directorHasRun = false;
-    if (next && !this.director) { this.viewMode = 'overview'; this.tween = null; this.dirPos.copy(this.camera.position); this.dirTarget.copy(this.controls.target); }
-    if (next !== this.director) { this.director = next; this.hud?.onDirector?.(next); }
-    this.wake();
-  }
-  hold(on: boolean) { this.tourHold = on; this.wake(); }
-  offline() { this.isOffline = true; this.drawHmi(); this.wake(); }
-  takeCamera() { this.direct(false); this.dragging = true; this.down.moved = true; this.animating = false; this.tween = null; }
-  directorGoal(now: number) {
-    const age = (now - this.phaseStart) / 1000, k = Math.max(1, 0.92 / this.camera.aspect), socket = this.socket.getWorldPosition(new THREE.Vector3());
-    let az = 0, el = 0.5, dist = this.baseDistance, target = new THREE.Vector3(0, 0, 30);
-    // Held through the demo, the shot stays on the socket between cycles.
-    const close = ['insert', 'backoff', 'move', 'electrical', 'retention'].includes(this.phase) || (this.phase === 'reset' && age < 0.5) || (this.tourHold && this.phase !== 'approach');
-    if (this.phase === 'approach') { target.set(socket.x, socket.y, 28); dist = (195 - Math.min(1, age / 1.4) * 35) * k; az = -0.18; el = 0.43; }
-    else if (close) { target.set(socket.x, socket.y, 25); dist = 155 * k; az = -0.18; el = 0.43; }
-    else { this.desiredTarget.copy(target); this.desiredPosition.copy(this.direction).multiplyScalar(dist).add(target); return; }
-    if (this.width < 700) target.z -= 5;
-    const b = Math.atan2(this.direction.y, this.direction.x) + az;
-    this.desiredTarget.copy(target);
-    this.desiredPosition.set(Math.cos(b) * Math.cos(el), Math.sin(b) * Math.cos(el), Math.sin(el)).multiplyScalar(dist).add(target);
-  }
-  focusPart(id: PartId) { this.focus = id; this.view('part'); }
-  snap() { this.camera.position.copy(this.desiredPosition); this.controls.target.copy(this.desiredTarget); this.animating = false; this.tween = null; }
-  startTween() {
-    this.animating = true;
-    const from = this.camera.position.clone().sub(this.controls.target), to = this.desiredPosition.clone().sub(this.desiredTarget);
-    const turn = from.angleTo(to), zoom = Math.abs(Math.log(to.length() / Math.max(1, from.length())));
-    this.tween = { from: this.camera.position.clone(), fromTarget: this.controls.target.clone(), start: performance.now(), duration: this.reduceMotion ? 0 : THREE.MathUtils.clamp(520 + turn * 260 + zoom * 320, 520, 1150) };
-  }
-
-  goal() {
-    const expand = this.mode === 'parts' ? (this.width < 700 ? 1.3 : 1.42) : 1, d = this.baseDistance * expand;
-    const lift = this.mode === 'parts' ? 34 : 0;
-    if (this.viewMode === 'part' || this.viewMode === 'connector') {
-      const p = this.parts.get(this.viewMode === 'connector' ? 'socket' : this.focus)!;
-      this.scene.updateMatrixWorld(true);
-      const bounds = new THREE.Box3().setFromObject(p.group), size = bounds.getSize(new THREE.Vector3()).length();
-      bounds.getCenter(this.desiredTarget);
-      if (this.viewMode === 'connector') this.desiredTarget.set(this.desiredTarget.x, this.desiredTarget.y, 30 + (this.mode === 'parts' ? 8 : 0));
-      const fit = Math.max(1, 0.95 / this.camera.aspect);
-      const dist = (this.viewMode === 'connector' ? 155 : Math.max(95, size * 2.6)) * fit;
-      const dir = this.viewMode === 'connector' ? new THREE.Vector3(0.18, -0.9, 0.5).normalize() : this.direction;
-      this.desiredPosition.copy(this.desiredTarget).addScaledVector(dir, Math.min(dist, d));
-      return;
-    }
-    this.desiredTarget.set(0, 0, 30 + lift);
-    const dir = this.viewMode === 'side' ? new THREE.Vector3(1, -0.16, 0.2) : this.viewMode === 'top' ? new THREE.Vector3(0.001, -0.08, 1) : this.direction;
-    this.desiredPosition.copy(dir).normalize().multiplyScalar(this.viewMode === 'top' ? this.baseDistance * (this.mode === 'parts' ? 1.02 : 0.92) : d).add(this.desiredTarget);
-  }
-
-  shiftGoal() {
-    if (!this.wide) return 0;
-    if (this.mode === 'parts') return 0;
-    return -this.width * (this.viewMode === 'overview' && !this.director ? 0.095 : 0.035);
-  }
-  applyShift() {
-    this.camera.setViewOffset(this.width, this.height, this.shift, this.width > 900 ? this.height * 0.025 : -this.height * 0.025, this.width, this.height);
-    this.camera.updateProjectionMatrix();
-  }
-
-  layout() {
-    const r = this.container.getBoundingClientRect();
-    if (!r.width || !r.height) return;
-    this.width = r.width; this.height = r.height;
-    this.renderer.setSize(r.width, r.height);
-    this.labelWidths.clear();
-    this.camera.aspect = r.width / r.height;
-    this.wide = r.width > 1100 && !this.embed;
-    this.shift = this.shiftGoal();
-    this.applyShift();
-    const t = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)), radius = 70;
-    const usableW = r.width > 900 ? 0.78 : 0.94, usableH = r.width > 900 ? 0.83 : 0.62;
-    this.baseDistance = Math.max(radius / (t * this.camera.aspect * usableW), radius / (t * usableH));
-    this.controls.maxDistance = Math.max(600, this.baseDistance * 2.5);
-    this.goal();
-    if (this.frames || this.measured) this.startTween(); else this.snap();
-    this.wake();
-  }
-
-  // Follow the window to a display with another pixel density, or a browser zoom: the
-  // media query reports it while idle, and every frame checks too (see animate).
-  watchPixelRatio() {
-    this.dprQuery?.removeEventListener('change', this.onPixelRatio);
-    this.dprQuery = matchMedia(`(resolution: ${devicePixelRatio}dppx)`);
-    this.dprQuery.addEventListener('change', this.onPixelRatio);
-  }
-  onPixelRatio = () => {
-    if (this.disposed) return;
-    this.pixelRatio = this.screenRatio = Math.min(devicePixelRatio, 2); this.slow = 0;
-    this.renderer.setPixelRatio(this.pixelRatio); this.labelWidths.clear();
-    this.watchPixelRatio(); this.wake();
+  layout=()=>{
+    const r=this.container.getBoundingClientRect();if(!r.width||!r.height)return;
+    this.width=r.width;this.height=r.height;this.camera.aspect=r.width/r.height;this.camera.updateProjectionMatrix();
+    this.renderer.setSize(r.width,r.height);this.composer.setSize(r.width,r.height);
+    this.camera.setViewOffset(r.width,r.height,r.width>1000&&!this.embed?-r.width*.075:0,r.height*.01,r.width,r.height);this.goal();
   };
-
-  update(state: Snapshot, epoch: number, playing = false, speed = 1) {
-    this.playing = playing; this.playbackSpeed = speed;
-    if (this.director && playing && state.phase !== 'ready' && state.phase !== 'complete') this.directorHasRun = true;
-    const now0 = this.visualTime, phaseChanged = state.phase !== this.phase;
-    if (phaseChanged) { this.phase = state.phase; this.phaseStart = now0; }
-    if (state.latchEngaged && !this.latched) this.clickAt = now0;
-    this.latched = state.latchEngaged;
-    this.state = state;
-    this.poses.push(state.pose, performance.now(), epoch);
-    const c = state.accepted === true ? 0x4fd08a : state.accepted === false ? 0xff4b3a : state.phase === 'electrical' ? 0xffc04a : 0x8a918b;
-    this.ledMaterial.color.setHex(c); this.ledMaterial.emissive.setHex(c);
-    const now = performance.now();
-    // Readings refresh about 11 times a second; a new phase shows at once, in step with the page.
-    if (phaseChanged || now - this.lastHmi > 90 || !playing || state.phase === 'ready' || state.phase === 'complete') { this.lastHmi = now; this.drawHmi(); }
-    this.wake();
-  }
-
-  onWheel = (e: WheelEvent) => { if (!e.ctrlKey && !e.metaKey) e.stopPropagation(); };
-  onPointerMove = (e: PointerEvent) => {
-    const r = this.renderer.domElement.getBoundingClientRect();
-    this.pointer = { x: e.clientX - r.left, y: e.clientY - r.top }; this.pointerMoved = true; this.pointerType = e.pointerType;
-    const dx = Math.abs(this.pointer.x - this.down.x), dy = Math.abs(this.pointer.y - this.down.y);
-    if (Math.hypot(dx, dy) > 5) this.down.moved = true;
-    // A sideways touch drag turns the machine; an upward one is the page scrolling.
-    if (this.pressed && !this.dragging && (e.pointerType === 'touch' ? dx > 10 && dx > dy : dx + dy > 3)) this.takeCamera();
-    // Hovering a still scene only needs a pick, not a new frame.
-    if (this.frame || this.dragging) this.wake();
-    else if (!this.pickFrame) this.pickFrame = requestAnimationFrame(this.pickOnly);
+  wake=()=>{if(!this.frame&&!this.disposed&&!document.hidden)this.frame=requestAnimationFrame(this.animate);};
+  private animate=(now:number)=>{
+    this.frame=0;if(this.disposed||document.hidden)return;const dt=Math.min(50,now-(this.last||now-16));this.last=now;
+    if(!this.process){const pose=this.poses.sample(now);if(pose)this.basePose=[pose[0]*1000,pose[1]*1000,pose[2]*1000,pose[3]];
+      this.rig.tool.root.rotation.z=this.rig.plug.rotation.z=this.basePose[3];this.rig.plug.rotation.y=0;this.rig.tool.fingers.forEach(g=>g.position.x=g.userData.extra||0);
+      this.rig.indicator.emissive.setHex(0);this.rig.indicator.color.setHex(this.state?.accepted===true?0x379761:0x273c31);}
+    const targetSpread=this.mode==='parts'?1:0,oldSpread=this.spread;this.spread+=(targetSpread-this.spread)*damping(dt,190);if(Math.abs(targetSpread-this.spread)<.001)this.spread=targetSpread;
+    this.rig.header.position.z=this.spread*18;this.rig.fixture.position.z=this.spread*5;this.rig.tester.position.x=this.spread*70;
+    if(this.process)this.applyProcess(this.process);else{this.rig.tool.root.position.set(this.basePose[0],this.basePose[1],this.basePose[2]);this.rig.plug.position.copy(this.rig.tool.root.position);}
+    this.rig.tool.root.position.z+=this.spread*120;this.rig.plug.position.z+=this.spread*55;
+    const cut=this.mode==='inside';if(Number(cut)!==this.cut){this.cut=Number(cut);for(const group of [this.rig.housing,this.rig.plug])group.traverse(o=>{if(o instanceof T.Mesh&&(o.name.includes('housing')||o.name.includes('PBT'))){const m=o.material as T.MeshStandardMaterial;if(!o.userData.unique){o.material=m.clone();o.userData.unique=true;}const material=o.material as T.MeshStandardMaterial;material.transparent=cut;material.opacity=cut?.15:1;material.depthWrite=!cut;material.needsUpdate=true;}});}
+    this.poseRig();
+    if(this.cameraMoving){const a=this.reduceMotion?1:damping(dt,200);this.camera.position.lerp(this.position,a);this.controls.target.lerp(this.target,a);if(this.camera.position.distanceTo(this.position)<.04)this.cameraMoving=false;}
+    const orbit=this.controls.update();const uniforms=this.bokeh.uniforms as Record<string,{value:number}>;uniforms.focus.value=this.camera.position.distanceTo(this.controls.target);uniforms.aperture.value=this.viewMode==='overview'?.000006:.000035;
+    this.bokeh.enabled=this.mode!=='inside'&&this.mode!=='parts';this.ao.enabled=this.mode!=='inside';
+    const groups={arm:this.rig.arm.root,gripper:this.rig.tool.root,connector:this.rig.plug,socket:this.rig.header,tester:this.rig.tester};
+    for(const [id,label] of this.labels){label.hidden=this.mode!=='parts';if(!label.hidden){const point=new T.Box3().setFromObject(groups[id]).getCenter(new T.Vector3()).project(this.camera);label.style.transform=`translate(${(point.x*.5+.5)*this.width}px,${(-point.y*.5+.5)*this.height}px)`;}}
+    this.composer.render();this.afterRender?.();if(this.playing&&!this.process||this.cameraMoving||orbit||oldSpread!==this.spread||this.poses.pending(now)&&!this.process||this.afterRender)this.wake();
   };
-  pickOnly = () => {
-    this.pickFrame = 0;
-    if (this.frame || this.disposed || !this.pointer || !this.pointerMoved || this.pressed || this.pointerType === 'touch') return;
-    this.pointerMoved = false; this.lastPick = performance.now(); this.setHover(this.pick(this.pointer.x, this.pointer.y));
-  };
-  onPointerLeave = (e: PointerEvent) => { if (e.pointerType === 'touch') return; this.pointer = null; this.setHover(null); };
-  onPointerDown = (e: PointerEvent) => {
-    const r = this.renderer.domElement.getBoundingClientRect();
-    this.down = { x: e.clientX - r.left, y: e.clientY - r.top, moved: false, pointerId: e.pointerId };
-    this.pressed = true;
-    if (e.pointerType === 'touch') { this.touches.add(e.pointerId); if (this.touches.size > 1) this.takeCamera(); }
-    clearTimeout(this.tipTimer); this.hud?.tooltip.classList.remove('visible');
-  };
-  release(e: PointerEvent) { this.touches.delete(e.pointerId); if (!this.touches.size) this.pressed = false; }
-  onPointerUp = (e: PointerEvent) => {
-    this.release(e);
-    if (this.down.pointerId !== e.pointerId) return;
-    this.down.pointerId = null;
-    const r = this.renderer.domElement.getBoundingClientRect();
-    if (this.down.moved || Math.hypot(e.clientX - r.left - this.down.x, e.clientY - r.top - this.down.y) > 5) return;
-    const id = this.pick(e.clientX - r.left, e.clientY - r.top);
-    if (!id) return;
-    this.focusPart(id); this.hud?.onPick?.(id);
-    // A touch has no hover, so a tap names the part for a moment.
-    if (e.pointerType === 'touch') {
-      this.pointer = { x: e.clientX - r.left, y: e.clientY - r.top }; this.setHover(id);
-      this.tipTimer = window.setTimeout(() => { this.pointer = null; this.setHover(null); }, 1800);
-    }
-  };
-  onPointerCancel = (e: PointerEvent) => { this.release(e); this.down.pointerId = null; };
-  pick(x: number, y: number): PartId | null {
-    this.raycaster.setFromCamera(new THREE.Vector2(x / this.width * 2 - 1, -y / this.height * 2 + 1), this.camera);
-    const hit = this.raycaster.intersectObjects([...this.parts.values()].map(p => p.group), true).find(h => h.object.visible && (h.object as THREE.Mesh).isMesh && (((h.object as THREE.Mesh).material as THREE.Material).opacity ?? 1) > 0.5);
-    return (hit?.object.userData.part as PartId) ?? null;
-  }
-  setHover(id: PartId | null) {
-    this.hovered = id;
-    this.renderer.domElement.style.cursor = id ? 'pointer' : '';
-    const tip = this.hud?.tooltip; if (!tip) return;
-    tip.classList.toggle('visible', !!id);
-    if (!id || !this.pointer) return;
-    const p = this.parts.get(id)!;
-    tip.querySelector('strong')!.innerHTML = `<span>${String(PARTS.findIndex(x => x.id === id) + 1).padStart(2, '0')}</span>${p.name}`;
-    tip.querySelector('p')!.textContent = p.line;
-    tip.style.transform = `translate(${Math.min(this.width - 250, Math.max(10, this.pointer.x + 18))}px,${Math.max(10, Math.min(this.height - 100, this.pointer.y - 70))}px)`;
-  }
-
-  // A recording keeps drawing while the stage is scrolled out of view.
-  wake = () => {
-    if (!this.disposed && !this.frame && !this.rendering && (this.visible || this.afterRender) && !document.hidden) { this.lastFrame = performance.now(); this.frame = requestAnimationFrame(this.animate); }
-  };
-  animate = (now: number) => {
-    this.frame = 0;
-    if ((!this.visible && !this.afterRender) || document.hidden || this.compiling) return;
-    this.rendering = true;
-    if (Math.min(devicePixelRatio, 2) !== this.screenRatio) this.onPixelRatio();
-    const elapsed = Math.max(1, now - this.lastFrame);
-    const dt = Math.min(50, elapsed); this.lastFrame = now;
-    if (this.playing) this.visualTime += dt * this.playbackSpeed;
-    const spreadGoal = this.mode === 'parts' ? 1 : 0, cutGoal = this.mode === 'inside' ? 1 : 0;
-    const moving = this.spread !== spreadGoal || this.cut !== cutGoal;
-    this.spread = this.reduceMotion ? spreadGoal : step(this.spread, spreadGoal, dt / 800);
-    const cutBefore = this.cut;
-    this.cut = this.reduceMotion ? cutGoal : step(this.cut, cutGoal, dt / 300);
-    if (cutBefore !== this.cut) this.applyCut();
-    if (moving) {
-      EXPLODE_ORDER.forEach((id, k) => {
-        const local = THREE.MathUtils.clamp((this.spread - k * 0.07) / (1 - 0.42), 0, 1);
-        this.parts.get(id)!.group.position.copy(this.parts.get(id)!.offset).multiplyScalar(ease(local));
-      });
-      this.renderer.shadowMap.needsUpdate = true;
-    }
-    const pose = this.poses.sample(now);
-    if (pose) {
-      this.tool.position.set(pose[0] * 1000, pose[1] * 1000, pose[2] * 1000);
-      this.rotaryGripper.rotation.z = pose[3]; this.plug.rotation.z = pose[3];
-      const key = pose.map(v => v.toFixed(6)).join();
-      if (key !== this.shadowPose) { this.shadowPose = key; this.renderer.shadowMap.needsUpdate = true; }
-    }
-    if (this.poseArm()) this.renderer.shadowMap.needsUpdate = true;
-    this.cobot.cable.mesh.visible = this.spread < .01;
-    // Parts pulled apart leave the table, so their contact shade and the floor shadow fade.
-    if (this.contactMaterial) this.contactMaterial.opacity = .5 * (1 - Math.min(1, this.spread * 4));
-    this.floorMaterial.opacity = 0.18 * (1 - 0.75 * this.spread);
-    // One lamp at a time: green ready or passed, amber blinking while it works, red rejected.
-    const running = !!this.state && this.state.phase !== 'ready' && this.state.phase !== 'complete';
-    const accepted = this.isOffline ? undefined : this.state?.accepted;
-    const blink = this.reduceMotion ? 1 : 0.5 - 0.5 * Math.cos(this.visualTime / 260);
-    this.stack[0].emissiveIntensity = accepted === true ? 1.05 : accepted === null && !running ? 0.7 : 0;
-    this.stack[1].emissiveIntensity = running && accepted === null ? 0.3 + blink * 0.8 : 0;
-    this.stack[2].emissiveIntensity = accepted === false ? 1.05 : 0;
-
-    if (moving && this.viewMode === 'part') this.goal();
-    const paused = running && !this.playing;
-    if (this.director && !this.dragging && !paused) {
-      this.tween = null;
-      this.directorGoal(this.visualTime);
-      const a = damping(dt, 180);
-      const fromOff = this.dirPos.clone().sub(this.dirTarget), toOff = this.desiredPosition.clone().sub(this.desiredTarget);
-      this.dirTarget.lerp(this.desiredTarget, a); orbitBlend(fromOff, toOff, a, this.dirPos); this.dirPos.add(this.dirTarget);
-      this.camera.position.lerp(this.dirPos, a); this.controls.target.lerp(this.dirTarget, a);
-      if (this.phase === 'complete' && this.directorHasRun && !this.tourHold) { this.direct(false); this.viewMode = 'overview'; this.goal(); this.startTween(); }
-    }
-    if (this.tween && !this.dragging) {
-      const k = this.tween.duration ? Math.min(1, (now - this.tween.start) / this.tween.duration) : 1, e = ease(k);
-      this.controls.target.lerpVectors(this.tween.fromTarget, this.desiredTarget, e);
-      orbitBlend(this.tween.from.clone().sub(this.tween.fromTarget), this.desiredPosition.clone().sub(this.desiredTarget), e, this.camera.position);
-      this.camera.position.add(this.controls.target);
-      if (k >= 1) { this.tween = null; this.animating = false; }
-    }
-    this.controls.dampingFactor = damping(dt, 170);
-    const shiftGoal = this.shiftGoal(), shifting = !this.reduceMotion && Math.abs(shiftGoal - this.shift) > 0.25;
-    if (shifting) { this.shift += (shiftGoal - this.shift) * damping(dt, 150); this.applyShift(); }
-    else if (this.shift !== shiftGoal) { this.shift = shiftGoal; this.applyShift(); }
-    const orbitChanged = this.controls.update(dt / 1000);
-
-    // A part under a resting pointer changes as the camera flies, so pick again every 100 ms.
-    const flying = !!(this.director || this.tween || orbitChanged);
-    if (this.pointer && !this.pressed && this.pointerType !== 'touch' && (this.pointerMoved || (flying && now - this.lastPick > 100))) { this.pointerMoved = false; this.lastPick = now; this.setHover(this.pick(this.pointer.x, this.pointer.y)); }
-    if (now - this.lastLabels > 40 || !this.playing) { this.placeLabels(); this.lastLabels = now; }
-    this.animateLatch(this.visualTime, this.playing ? dt * this.playbackSpeed : 0);
-    const renderStarted = performance.now();
-    this.renderer.info.autoReset = false; this.renderer.info.reset();
-    this.stats.begin();
-    this.renderer.render(this.scene, this.camera);
-    this.stats.end();
-    this.renderCost += performance.now() - renderStarted;
-    this.stats.record(now, performance.now() - renderStarted, this.renderer);
-    this.afterRender?.();
-    this.rendering = false;
-    if (this.state) { this.frames++; this.measured += elapsed; }
-    if (this.measured > 4000) {
-      // A background tab can be capped at 30 Hz even with cheap frames. Preserve detail in that case.
-      const expensive = this.stats.gpuMs > 18 || this.renderCost / Math.max(1, this.frames) > 12;
-      this.slow = expensive && this.frames / (this.measured / 1000) < 45 ? this.slow + 1 : 0;
-      if (this.slow >= 2 && this.pixelRatio > 1.5) { this.pixelRatio = Math.max(1.5, this.pixelRatio - 0.25); this.renderer.setPixelRatio(this.pixelRatio); this.renderer.setSize(this.width, this.height); this.slow = 0; }
-      this.frames = 0; this.measured = 0; this.renderCost = 0;
-    }
-    if (!this.frame && (this.playing || moving || shifting || this.tween || (this.director && !paused) || this.dragging || orbitChanged || this.poses.pending(now))) this.frame = requestAnimationFrame(this.animate);
-  };
-
-  animateLatch(now: number, dt: number) {
-    const depth = this.state?.depth ?? 0, since = now - this.clickAt;
-    if (this.latched && since < 700) this.flex = Math.exp(-since / 90) * Math.cos(since / 26);
-    else this.flex += ((depth > 0.4 && !this.latched ? 1 : 0) - this.flex) * damping(dt, 60);
-    for (const { mesh, y } of this.latchParts) mesh.position.y = y + 0.22 * this.flex;
-  }
-
-  placeLabels() {
-    if (!this.hud) return;
-    const show = this.spread > .6, point = new THREE.Vector3();
-    const placed: { p: Part; x: number; y: number; anchorX: number; anchorY: number }[] = [];
-    this.cell.updateMatrixWorld(true);
-    for (const p of this.parts.values()) {
-      p.label.classList.toggle('visible', show);
-      if (!show) continue;
-      point.copy(p.anchor).applyMatrix4(p.group.matrixWorld).project(this.camera);
-      const anchorX = (point.x * .5 + .5) * this.width, anchorY = (-point.y * .5 + .5) * this.height;
-      if (point.z < -1 || point.z > 1 || anchorX < 0 || anchorX > this.width || anchorY < 0 || anchorY > this.height) { p.label.classList.remove('visible'); continue; }
-      let width = this.labelWidths.get(p.id);
-      if (!width) { width = p.label.offsetWidth; this.labelWidths.set(p.id, width); }
-      const x = p.side > 0 ? Math.min(anchorX + 28, this.width - width - 12) : Math.max(anchorX - 28, width + 12);
-      placed.push({ p, x, y: anchorY, anchorX, anchorY });
-    }
-    const gap = this.width < 700 ? 32 : 40, top = 106, bottom = this.height - 160;
-    for (const side of [1, -1]) {
-      const column = placed.filter(l => l.p.side === side).sort((a, b) => a.y - b.y);
-      column.forEach((l, i) => { l.y = Math.max(l.y, top, i ? column[i - 1].y + gap : top); });
-      for (let i = column.length - 1; i >= 0; i--) column[i].y = Math.min(column[i].y, bottom - (column.length - 1 - i) * gap);
-    }
-    for (const { p, x, y, anchorX, anchorY } of placed) {
-      p.label.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(${p.side > 0 ? '0' : '-100%'},-50%)`;
-      const stem = p.label.querySelector<HTMLElement>('.stem')!;
-      stem.style.width = `${Math.hypot(anchorX - x, anchorY - y)}px`;
-      stem.style.transform = `rotate(${Math.atan2(anchorY - y, anchorX - x)}rad)`;
-    }
-  }
-
-  dispose() {
-    this.stats.dispose();
-    this.disposed = true;
-    cancelAnimationFrame(this.frame); cancelAnimationFrame(this.pickFrame); clearTimeout(this.tipTimer);
-    document.removeEventListener('visibilitychange', this.wake);
-    this.dprQuery?.removeEventListener('change', this.onPixelRatio);
-    this.container.removeEventListener('wheel', this.onWheel, { capture: true });
-    this.container.removeEventListener('pointerdown', this.onPointerDown, { capture: true });
-    const canvas = this.renderer.domElement;
-    canvas.removeEventListener('pointermove', this.onPointerMove); canvas.removeEventListener('pointerleave', this.onPointerLeave);
-    canvas.removeEventListener('pointerup', this.onPointerUp);
-    canvas.removeEventListener('pointercancel', this.onPointerCancel);
-    canvas.removeEventListener('webglcontextlost', this.onContextLost);
-    this.resizeObserver.disconnect(); this.intersection.disconnect(); this.controls.dispose();
-    const materials = new Set<THREE.Material>(), textures = new Set<THREE.Texture>();
-    this.scene.traverse(o => {
-      if (o instanceof THREE.Mesh || o instanceof THREE.Line || o instanceof THREE.Sprite) {
-        if ('geometry' in o && !cachedSet.has(o.geometry)) o.geometry.dispose();
-        for (const material of [o.material].flat()) if (!shared.has(material)) materials.add(material);
-      }
-    });
-    materials.forEach(material => {
-      for (const value of Object.values(material)) if (value instanceof THREE.Texture) textures.add(value);
-      material.dispose();
-    });
-    textures.forEach(texture => texture.dispose());
-    this.scene.environment?.dispose(); if (this.scene.background instanceof THREE.Texture) this.scene.background.dispose();
-    this.parts.forEach(part => part.label.remove());
-    this.renderer.dispose(); canvas.remove();
-  }
+  dispose(){this.disposed=true;cancelAnimationFrame(this.frame);this.ro.disconnect();this.controls.dispose();disposeCell(this.rig.root);this.scene.environment?.dispose();this.composer.dispose();this.ao.dispose();this.bokeh.dispose();this.renderer.dispose();document.removeEventListener('visibilitychange',this.wake);this.container.removeEventListener('wheel',this.wheel,{capture:true});this.renderer.domElement.remove();this.labels.forEach(l=>l.remove());}
 }

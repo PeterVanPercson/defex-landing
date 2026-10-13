@@ -58,7 +58,10 @@ for (const fault of ['open','latch'] as const) test(`${fault} fault is rejected 
   const t=run(e,'fixed');
   assert.equal(t.accepted,false);
   assert.equal(fault==='open'?t.continuity:t.retention,false);
-  assert.equal(fault==='open'?t.retention:t.continuity,true);
+  assert.equal(fault==='open'?t.retention:t.continuity,fault==='open'?true:null);
+  const phases=t.samples.map(s=>s.phase);
+  if(fault==='open') assert.ok(phases.indexOf('retention')<phases.indexOf('electrical'));
+  else assert.ok(!phases.includes('electrical'));
   e.dispose();
 });
 
@@ -94,7 +97,7 @@ test('search terminates and stays finite across displacement and rotation limits
   const configs=[{offsetX:2,offsetY:2,yaw:5},{offsetX:-2,offsetY:-2,yaw:-5},{offsetX:-1.2,offsetY:.65,yaw:0},{offsetX:0,offsetY:0,yaw:5}];
   for(const config of configs){
     const e=new ConnectorEngine(mj,{...DEFAULT_CONFIG,...config,variant:'eight'});
-    const t=run(e,'search');assert.ok(t.probes<=49);assert.ok(t.duration<125);
+    const t=run(e,'search');assert.ok(t.probes<=48);assert.ok(t.duration<125);
     assert.ok(Number.isFinite(t.peakForce));
     if(t.accepted){assert.equal(t.continuity,true);assert.equal(t.retention,true);}
     e.dispose();

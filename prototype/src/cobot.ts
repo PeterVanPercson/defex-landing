@@ -45,7 +45,7 @@ export function solveArm(flange: THREE.Vector3, out?: ArmPose): ArmPose {
 type Materials = Record<'dark' | 'edge' | 'silver' | 'rubber', THREE.MeshStandardMaterial>;
 
 export function cobotMaterials() {
-  const paint = new THREE.MeshPhysicalMaterial({ color: 0xeeede8, roughness: 0.42, metalness: 0, clearcoat: 0.55, clearcoatRoughness: 0.2, envMapIntensity: 1.15 });
+  const paint = new THREE.MeshPhysicalMaterial({ color: 0xd8d9d5, roughness: 0.34, metalness: 0.04, clearcoat: 0.26, clearcoatRoughness: 0.2, envMapIntensity: 1.15 });
   paint.name = 'Cobot satin white';
   const cap = new THREE.MeshPhysicalMaterial({ color: 0x141517, roughness: 0.5, metalness: 0, clearcoat: 0.3, clearcoatRoughness: 0.4 });
   cap.name = 'Joint cap black';
@@ -145,7 +145,7 @@ export interface Cobot {
   cable: ArmCable;
   meshes: THREE.Mesh[];
   links: { upper: THREE.Group; fore: THREE.Group };
-  set(flange: THREE.Vector3, toolYaw: number): void;
+  set(flange: THREE.Vector3, toolYaw: number, cableEnd?: THREE.Vector3): void;
 }
 
 export function createCobot(m: Materials): Cobot {
@@ -219,7 +219,7 @@ export function createCobot(m: Materials): Cobot {
     group.quaternion.setFromRotationMatrix(basis); group.position.copy(from);
   };
 
-  function set(target: THREE.Vector3, toolYaw: number) {
+  function set(target: THREE.Vector3, toolYaw: number, cableEnd?: THREE.Vector3) {
     solveArm(target, pose);
     base.rotation.z = 0; turret.rotation.z = pose.yaw;
     across.set(-Math.sin(pose.yaw), Math.cos(pose.yaw), 0);
@@ -235,15 +235,16 @@ export function createCobot(m: Materials): Cobot {
     // the cable: out of the column's back, along the outside of both links, into the gripper's gland
     root.updateMatrixWorld(true);
     points[0].copy(pose.shoulder).addScaledVector(dir.set(Math.cos(pose.yaw), Math.sin(pose.yaw), 0), -7.4).add(up.set(0, 0, -6));
-    clamps[0].localToWorld(points[1].set(0, 0, 0));
-    clamps[1].localToWorld(points[2].set(0, 0, 0));
-    elbowJoint.localToWorld(points[3].set(0, 0, 0)); points[3].z += 7.2;
-    foreClamp.localToWorld(points[4].set(0, 0, 0));
+    clamps[0].localToWorld(points[1].set(0, 0, 0)); root.worldToLocal(points[1]);
+    clamps[1].localToWorld(points[2].set(0, 0, 0)); root.worldToLocal(points[2]);
+    elbowJoint.localToWorld(points[3].set(0, 0, 0)); root.worldToLocal(points[3]); points[3].z += 7.2;
+    foreClamp.localToWorld(points[4].set(0, 0, 0)); root.worldToLocal(points[4]);
     // down past the wrist on the gland's side, into the gripper's own cable
     // gland at (9, 3.6, 14.6) on the tool
     const c = Math.cos(toolYaw), s = Math.sin(toolYaw);
     points[5].set(pose.wrist.x + 6.2 * c - 3 * s, pose.wrist.y + 6.2 * s + 3 * c, pose.wrist.z - 3);
     points[6].set(target.x + 10 * c - 3.6 * s, target.y + 10 * s + 3.6 * c, target.z - FLANGE_Z + 14.6);
+    if (cableEnd) points[6].copy(cableEnd);
     cable.update(points);
   }
   set(pose.flange, 0);

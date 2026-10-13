@@ -13,7 +13,7 @@ export interface Configuration {
 export const DEFAULT_CONFIG: Configuration = {
   variant: 'six', offsetX: 1.2, offsetY: 0.65, yaw: 1.5, friction: 0.35, fault: 'none',
 };
-export const MODEL_VERSION = 'connector-contact-v1';
+export const MODEL_VERSION = 'connector-contact-v2';
 export const DT = 0.0005;
 export const START_Z = 0.042;
 export const SEATED_Z = 0.0151;
@@ -22,8 +22,8 @@ export const PLUG_HALF_Z = 0.004;
 
 export function dimensions(variant: Configuration['variant']) {
   return variant === 'six'
-    ? { halfX: 0.0056, halfY: 0.0036, socketX: 0.006, socketY: 0.004, pins: 6 }
-    : { halfX: 0.0076, halfY: 0.0036, socketX: 0.008, socketY: 0.004, pins: 8 };
+    ? { halfX: 0.0075, halfY: 0.0036, socketX: 0.0079, socketY: 0.004, pins: 6 }
+    : { halfX: 0.0095, halfY: 0.0036, socketX: 0.0099, socketY: 0.004, pins: 8 };
 }
 
 export function validConfig(c: Configuration): Configuration {
@@ -78,5 +78,5 @@ export function probePoints(): [number, number][] {
   for (const r of [0.0007, 0.0014, 0.0021, 0.0028]) {
     for (let i = 0; i < 12; i++) points.push([r * Math.cos(i * Math.PI / 6), r * Math.sin(i * Math.PI / 6)]);
   }
-  return points;
+  return points.slice(0, 48);
 }
