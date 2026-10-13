@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import { processFrame,HEADER } from '../src/process.ts';
+import { processFrame,HEADER,UPCAM } from '../src/process.ts';
 import type { CycleCase,ProcessFrame } from '../src/process.ts';
 import { createCell,poseLatch } from '../src/cell-geometry.ts';
 import { dressHarness } from '../src/harness.ts';
@@ -10,12 +10,14 @@ import { contactCenters } from '../src/mechanism.ts';
 // Sampled interpenetration of the rendered meshes over the scripted cycle. Each mesh is tested in its own
 // frame as a box (its geometry bounds) or an exact cylinder; moving meshes are sampled on their surfaces.
 const LIMIT=.3;
-const cases:CycleCase[]=['search','latched','half-seat','open','short'];
+const cases:CycleCase[]=['pass','search','half-seat','open','short'];
 const cell=createCell(6);cell.header.position.set(HEADER[0],HEADER[1],0);
 const under=(o:T.Object3D,root:T.Object3D)=>{for(let x:T.Object3D|null=o;x;x=x.parent)if(x===root)return true;return false;};
 const meshes=(root:T.Object3D)=>{const out:T.Mesh[]=[];root.traverse(o=>{if(o instanceof T.Mesh)out.push(o);});return out;};
 const wire=(o:T.Mesh)=>cell.wires.some(w=>w.mesh===o);
 const bench=(o:T.Mesh)=>under(o,cell.bench);
+// The upward camera's whole allowed footprint, 22 x 22 mm up to its window, as a solid block.
+const upcam=new T.Mesh(new T.BoxGeometry(22,22,UPCAM[2]));upcam.name='Upward camera footprint';upcam.position.set(UPCAM[0],UPCAM[1],UPCAM[2]/2);cell.root.add(upcam);
 const statics=meshes(cell.root).filter(o=>!under(o,cell.plug)&&!under(o,cell.tool.root)&&!under(o,cell.arm.root)&&!wire(o)&&o.geometry.type!=='TubeGeometry');
 const plugParts=meshes(cell.plug),toolParts=meshes(cell.tool.root);
 const samples=new Map<T.Mesh,T.Vector3[]>();
@@ -45,7 +47,8 @@ function pose(f:ProcessFrame){
   cell.root.updateMatrixWorld(true);for(const m of [...statics,...plugParts,...toolParts])inverse.set(m,m.matrixWorld.clone().invert());
 }
 const box=new T.Box3(),other=new T.Box3();
-function* progress(kind:CycleCase){for(let i=0;i<=500;i++)yield i/5;if(kind==='search')for(let i=2800;i<=4000;i++)yield i/100;}
+// Every 0.2 %, plus every 0.01 % through the turnover and the presses, where the clearances are tight.
+function* progress(kind:CycleCase){for(let i=0;i<=500;i++)yield i/5;for(let i=2300;i<=3400;i+=2)yield i/100;for(let i=5000;i<=6200;i+=kind==='search'?1:4)yield i/100;}
 
 test('the connector and the gripper never pass through the cell or each other',()=>{
   const worst=new Map<string,number>();
@@ -66,8 +69,8 @@ test('the connector and the gripper never pass through the cell or each other',(
 test('the harness wires never pass through the cell, the gripper or their own housing',()=>{
   const points=Array.from({length:10},()=>new T.Vector3()),contacts=contactCenters(6),wires=new Map<string,[number,number]>();
   const targets=[...statics,...toolParts,...plugParts];
-  for(const kind of cases)for(const p of progress(kind)){
-    if(kind!=='search'&&p%1!==0&&p<50)continue;
+  const harnessProgress=function*(kind:CycleCase){for(let i=0;i<=500;i++)if(i>=250||i%5===0)yield i/5;if(kind==='search')for(let i=500;i<=620;i++)yield i/10;};
+  for(const kind of cases)for(const p of harnessProgress(kind)){
     const f=processFrame(p,kind);pose(f);
     const bounds=targets.map(m=>new T.Box3().setFromObject(m).expandByScalar(.48));
     for(let i=0;i<6;i++){

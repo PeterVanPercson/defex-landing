@@ -27,8 +27,8 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png" />
   <link rel="preload" href="/static/fonts/eb-garamond-400-normal.woff2" as="font" type="font/woff2" crossorigin />
-  <script type="module" crossorigin src="/static/prototype/assets/index-DCN_oEQv.js"></script>
-  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-CsfgL8NU.css">
+  <script type="module" crossorigin src="/static/prototype/assets/index-C6i1ygB_.js"></script>
+  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-C4YQtB15.css">
   <link rel="stylesheet" href="/static/css/orb-loader.css?v={{ asset_v }}" />
 </head>
 <body>
@@ -57,9 +57,9 @@
       </aside>
       <aside class="process-readout" aria-label="Illustrated process signals">
         <div class="process-heading"><b id="cycle-index">01</b></div>
-        <h2 id="cycle-title">Approach</h2><p id="cycle-copy"></p><span class="process-scope" id="cycle-scope"></span>
+        <h2 id="cycle-title">Load the cell</h2><span id="cycle-detail" hidden></span><p id="cycle-copy"></p><span class="process-scope" id="cycle-scope"></span>
         <details class="process-signals"><summary>Illustrated signals <span>+</span></summary>
-          <div class="signal-grid"><div>Press / example limit <b id="cycle-force">0.0 / 5.0 N</b></div><div>Depth <b id="cycle-depth">0.0 mm</b></div><div>Pull / example limit <b id="cycle-pull">0.0 / 2.5 N</b></div><div id="cycle-extraction-row" hidden>Extract / example limit <b id="cycle-extraction">0.0 / 4.0 N</b></div><div>Tries <b id="cycle-tries">1 / 48</b></div></div>
+          <div class="signal-grid"><div>Press / example limit <b id="cycle-force">0.0 / 5.0 N</b></div><div>Depth <b id="cycle-depth">0.0 mm</b></div><div>Pull / example limit <b id="cycle-pull">0.0 / 2.5 N</b></div><div id="cycle-extraction-row" hidden>Extract / example limit <b id="cycle-extraction">0.0 / 4.0 N</b></div><div>Tries <b id="cycle-tries">1</b></div></div>
           <svg class="process-chart" viewBox="0 0 300 52" role="img" aria-label="Illustrative axial force: press above zero, pull below zero, with seat markers"><defs><clipPath id="cycle-trace-clip"><rect id="cycle-trace-window" x="0" y="0" width="0" height="52"/></clipPath></defs><path d="M0 29H300" stroke="currentColor" opacity=".2"/><polyline id="cycle-trace" clip-path="url(#cycle-trace-clip)" fill="none" stroke="currentColor" stroke-width="1.3"/><g id="cycle-seat-points"></g><line id="cycle-cursor" y1="2" y2="49" stroke="#b96c3d" stroke-width="1"/></svg><small>Press ↑ · pull ↓ · illustrative, not measured</small>
           <div class="process-checks"><div>Seated <b id="seat-result">—</b></div><div>Pull <b id="pull-result">—</b></div><div>Wiring <b id="wiring-result">—</b></div></div>
           <div id="contact-results" aria-label="Six simulated contact checks"></div><small id="cycle-contact-note">Per wire: continuity + isolation</small><p id="cycle-verdict" role="status"></p>
@@ -100,12 +100,12 @@
 
     <section class="process-guide" aria-labelledby="process-title">
       <div class="process-guide-head"><h2 id="process-title">One connector, start to finish.</h2></div>
-      <div class="cycle-cases" aria-label="Illustrated cycle cases"><button data-cycle-case="search" aria-pressed="true">Found after a search</button><button data-cycle-case="latched" aria-pressed="false">Pass, first try</button><button data-cycle-case="half-seat" aria-pressed="false">Half-seated</button><button data-cycle-case="open" aria-pressed="false">Open wire</button><button data-cycle-case="short" aria-pressed="false">Shorted wires</button></div>
-      <div id="process-steps" class="process-steps" aria-label="Ten cycle steps"></div>
+      <div class="cycle-cases" aria-label="Illustrated cycle cases"><button data-cycle-case="pass" aria-pressed="true">Pass</button><button data-cycle-case="search" aria-pressed="false">Needs a search</button><button data-cycle-case="half-seat" aria-pressed="false">Half-seated</button><button data-cycle-case="open" aria-pressed="false">Open wire</button><button data-cycle-case="short" aria-pressed="false">Shorted wires</button></div>
+      <div id="process-steps" class="process-steps" aria-label="Cycle steps"></div>
       <details class="illustration-log" hidden><summary>Unit records</summary><p id="cycle-log-status">No completed illustration yet. Each unit retains every attempt, contact result and example force trace during this visit.</p><button id="cycle-export" disabled>Download illustrated traces ↓</button><ol id="cycle-log"></ol></details>
     </section>
 
-    <details class="tryit console"><summary>Try it yourself</summary>
+    <details class="tryit console"><summary>Try it yourself <span>The fallback search, when the plug misses the chamfer</span></summary>
       <button id="physics-demo" class="text-button" hidden>Play</button><div class="transport">
         <div class="run-controls"><button id="run" class="run-button" disabled><span id="run-icon" aria-hidden="true">▶</span><span id="run-label">Run attempt</span></button><button id="reset" class="reset-button" aria-label="Reset attempt" title="Reset attempt (R)" disabled>↺</button></div>
         <span id="engine-status" hidden>Loading…</span>
@@ -116,10 +116,10 @@
         <div class="panel">
           <div class="section-label">Scenario</div>
           <div class="presets" aria-label="Scenarios"><button data-preset="aligned">Aligned</button><button data-preset="shifted" aria-pressed="true">Misaligned</button><button data-preset="open">Open circuit</button><button data-preset="latch">No latch</button></div>
-          <div class="section-label">Method</div>
-          <div class="controllers" role="group" aria-label="Insertion method"><button data-controller="fixed" aria-pressed="true">Fixed path</button><button data-controller="search" aria-pressed="false">Find a fit</button><button data-controller="reuse" aria-pressed="false" disabled>Reuse fit</button></div>
+          <div class="section-label">When the plug misses</div>
+          <div class="controllers" role="group" aria-label="When the plug misses"><button data-controller="fixed" aria-pressed="true">No search</button><button data-controller="search" aria-pressed="false">Search</button></div>
           <p id="controller-description">Straight in. Stops if blocked.</p>
-          <div class="memory" id="memory" hidden><span>Saved fit <b id="memory-value"></b></span><button id="forget" aria-label="Forget saved fit">×</button></div>
+          
         </div>
         <div class="panel">
           <div class="outcome" id="outcome" role="status" aria-live="polite"><span class="outcome-symbol">↗</span><div><strong id="outcome-title">Ready.</strong><p id="outcome-copy"></p></div></div>
@@ -127,9 +127,9 @@
           <button id="retry" class="retry-button" hidden>Reload simulation ↻</button>
           <details class="advanced"><summary>Adjust the setup <span>+</span></summary>
             <label class="field-label" for="variant">Connector <select id="variant"><option value="six">6 contacts</option><option value="eight">8 contacts</option></select></label>
-            <div class="range-field"><label for="offsetX">Socket shift X <output id="offsetX-value">+1.20 mm</output></label><input id="offsetX" type="range" min="-2" max="2" step="0.05" value="1.2"></div>
-            <div class="range-field"><label for="offsetY">Socket shift Y <output id="offsetY-value">+0.65 mm</output></label><input id="offsetY" type="range" min="-2" max="2" step="0.05" value="0.65"></div>
-            <div class="range-field"><label for="yaw">Socket rotation <output id="yaw-value">+1.5°</output></label><input id="yaw" type="range" min="-5" max="5" step="0.5" value="1.5"></div>
+            <div class="range-field"><label for="offsetX">Socket shift X <output id="offsetX-value">+0.95 mm</output></label><input id="offsetX" type="range" min="-2" max="2" step="0.05" value="0.95"></div>
+            <div class="range-field"><label for="offsetY">Socket shift Y <output id="offsetY-value">+0.55 mm</output></label><input id="offsetY" type="range" min="-2" max="2" step="0.05" value="0.55"></div>
+            <div class="range-field"><label for="yaw">Socket rotation <output id="yaw-value">0.0°</output></label><input id="yaw" type="range" min="-5" max="5" step="0.5" value="0"></div>
             <label class="field-label" for="fault">Injected fault <select id="fault"><option value="none">None</option><option value="open">Open circuit</option><option value="latch">No latch</option></select></label>
             <div class="range-field"><label for="friction">Contact friction <output id="friction-value">0.35</output></label><input id="friction" type="range" min="0.1" max="0.8" step="0.05" value="0.35"></div>
           </details>
@@ -147,7 +147,7 @@
 
     
   </main>
-  <dialog id="notes" aria-labelledby="notes-title"><div class="dialog-heading"><h2 id="notes-title">About this model.</h2><button id="close-notes" aria-label="Close">×</button></div><dl><dt>What runs here</dt><dd>MuJoCo computes the plug and socket contact in your browser. Everything else in the cell is animated.</dd><dt>The search</dt><dd>When the plug is blocked, it backs off and tries the next spot. The spot that passes is saved for that fixture and checked on every part. A fixed search, not a trained robot policy.</dd><dt>The full cycle</dt><dd>The complete cycle is a scripted illustration. Forces are examples and timing is not to scale.</dd><dt>Not yet proven</dt><dd>False passes from half-seated plugs, damage at seating force, cycle time, and safety near people.</dd><dt>Next</dt><dd>Build the cell and run it on customer parts.</dd></dl><div class="dialog-actions"><button id="download-model" class="tour-button">Download physics model <span>↓</span></button><a href="?view=schematic">2D view ↗</a><a href="https://github.com/google-deepmind/mujoco/tree/main/wasm" target="_blank" rel="noopener">MuJoCo ↗</a></div></dialog>
+  <dialog id="notes" aria-labelledby="notes-title"><div class="dialog-heading"><h2 id="notes-title">About this model.</h2><button id="close-notes" aria-label="Close">×</button></div><dl><dt>What runs here</dt><dd>MuJoCo simulates only the plug and socket contact, in your browser. The complete cycle is a scripted illustration. Forces are examples and timing is not to scale.</dd><dt>How it places a connector</dt><dd>Two camera checks on every unit: the board, then the plug in the grip. The robot aims for the header and presses gently, so the chamfer guides the last fraction of a millimetre. A search is only a fallback: a fixed routine, not a trained robot policy.</dd><dt>What it checks</dt><dd>The latch force signature, a pull, and continuity on every wire.</dd><dt>Not yet proven</dt><dd>False passes from half-seated plugs, damage at seating force, cycle time, and safety near people.</dd><dt>Next</dt><dd>Build the cell and run it on customer parts. Track grip and header offsets across units to flag a worn fixture or gripper early.</dd></dl><div class="dialog-actions"><button id="download-model" class="tour-button">Download physics model <span>↓</span></button><a href="?view=schematic">2D view ↗</a><a href="https://github.com/google-deepmind/mujoco/tree/main/wasm" target="_blank" rel="noopener">MuJoCo ↗</a></div></dialog>
   <noscript><div class="noscript">This simulation needs JavaScript.</div></noscript>
 </body>
 </html>

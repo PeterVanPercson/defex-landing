@@ -59,6 +59,22 @@ class PrototypeTests(SimpleTestCase):
         self.assertIn(main, page)
         self.assertNotIn('Assembly', source)
 
+    def test_the_story_is_measure_feel_and_check(self):
+        """His call, 2026-10-13: the robot measures every unit, feels its way in
+        and checks every connection. A saved correction only fixes a constant
+        bias, so the page never says the robot learns or reuses a fit."""
+        root = Path(settings.BASE_DIR) / 'prototype'
+        page = (root / 'index.html').read_text()
+        script = (root / 'src/main.ts').read_text()
+        for source in (page, script):
+            lowered = source.lower()
+            for claim in ('learn', 'teach', 'correction', 'first try', 'saved fit', 'reuse fit'):
+                self.assertNotIn(claim, lowered)
+        self.assertIn('<button data-cycle-case="pass" aria-pressed="true">Pass</button>', page)
+        self.assertNotIn('data-cycle-case="latched"', page)
+        self.assertIn('<span id="cycle-detail" hidden></span>', page)
+        self.assertNotIn('data-controller="reuse"', page)
+
     def test_the_demo_never_starts_by_itself(self):
         """His call, 2026-10-04: the prototype is shown, not played. Nothing links
         to ?play=1, and the prototype ignores it, so old links open it idle too."""

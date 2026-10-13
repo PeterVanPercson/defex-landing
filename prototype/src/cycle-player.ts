@@ -2,14 +2,21 @@ import { CYCLE_STEPS, EXAMPLE_LIMITS, processFrame, processRecord, recoveryStart
 import type { CycleCase, ProcessFrame, ProcessRecord } from './process.ts';
 import type { WorkcellScene } from './scene.ts';
 
-// Milliseconds per percent of the cycle, by step: the arm is moving within half a
-// second of Play, idle steps pass quickly and the fine moves keep time to read.
-// The whole pass takes about 26 s.
-const PACE=[50,190,290,420,190,400,380,240,240,280];
+// Milliseconds per percent of the cycle, by step: the arm is moving within half a second of Play, each
+// camera check holds its ring light for about 0.8 s and the press keeps time to read. A pass takes about
+// 21 s; the fallback search spends longer in the press, and a reject's retry takes about 11 s.
+const PACE=[120,240,220,320,250,250,200,180,150,160];
+const SEARCH_PRESS=500,RETRY_MS=11000;
 export function pace(p:number,kind:CycleCase){
   const start=recoveryStart(kind);
-  if(start!==null&&p>=start)return 300;
-  return PACE[processFrame(p,kind).step];
+  if(start!==null&&p>=start)return RETRY_MS/(100-start);
+  const step=Math.max(0,CYCLE_STEPS.filter(s=>p>=s[1]).length-1);
+  return kind==='search'&&step===6?SEARCH_PRESS:PACE[step];
+}
+// Seconds a played cycle takes, as the player's clock runs it.
+export function cycleSeconds(kind:CycleCase,from=0,to=100){
+  let ms=0;for(let p=from;p<to;p+=.01)ms+=.01*pace(p+.005,kind);
+  return ms/1000;
 }
 
 export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>void=()=>{}){
@@ -18,7 +25,7 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   const reset=byId<HTMLButtonElement>('cycle-reset'),clearFault=byId<HTMLButtonElement>('cycle-clear-fault');
   const caseButtons=[...document.querySelectorAll<HTMLButtonElement>('[data-cycle-case]')];
   const records:ProcessRecord[]=[];
-  let progress=0,kind:CycleCase='search',playing=false,active=true,request=0,last=0,lastContacts='',traceKind='';
+  let progress=0,kind:CycleCase='pass',playing=false,active=true,request=0,last=0,lastContacts='',traceKind='';
   let faultLocked=false,logged=false,started=false;
   const steps=byId('process-steps');
   steps.innerHTML=CYCLE_STEPS.map((s,i)=>`<button data-cycle-step="${i}" aria-current="false"><span>${String(i+1).padStart(2,'0')}</span><strong>${s[0]}</strong></button>`).join('');
@@ -27,14 +34,15 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
     if(!active)return;
     const f=processFrame(progress,kind);scene.setProcess(f);slider.value=String(progress);slider.style.setProperty('--p',`${progress}%`);
     byId('cycle-percent').textContent=`${Math.round(progress)}%`;
-    byId('cycle-title').textContent=f.accepted===true&&progress>=95?'Passed':f.rejected?'Rejected':f.title;byId('cycle-index').textContent=String(f.step+1).padStart(2,'0');
+    byId('cycle-title').textContent=f.accepted===true&&progress>=95?'Passed':f.rejected?'Rejected':f.title;byId('cycle-index').textContent=f.retry?'2nd':String(f.step+1).padStart(2,'0');
+    const d=document.getElementById('cycle-detail');if(d){d.textContent=f.detail;d.hidden=!f.detail;}
     byId('cycle-copy').textContent=f.message;byId('cycle-scope').textContent=f.scope;
     byId('cycle-force').textContent=`${f.force.toFixed(1)} / ${EXAMPLE_LIMITS.press.toFixed(1)} N`;
     byId('cycle-depth').textContent=`${f.depth.toFixed(1)} mm`;
     byId('cycle-pull').textContent=`${f.pullForce.toFixed(1)} / ${EXAMPLE_LIMITS.pull.toFixed(1)} N`;
     byId('cycle-extraction').textContent=`${f.extractionForce.toFixed(1)} / ${EXAMPLE_LIMITS.extraction.toFixed(1)} N`;
     byId('cycle-extraction-row').hidden=!f.retry;
-    byId('cycle-tries').textContent=f.retry?'Retry 1 / 1':`${f.tries} / 48`;
+    byId('cycle-tries').textContent=f.retry?'Retry 1 / 1':String(f.tries);
     for(const [id,value] of [['seat-result',f.seated],['pull-result',f.pull],['wiring-result',f.contacts.includes('fail')?'fail':f.contacts.every(x=>x==='pass')?'pass':'pending']]){
       byId(id).textContent=value==='pending'?'—':value.toUpperCase();byId(id).dataset.result=value;
     }
@@ -45,7 +53,7 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
     }
     byId('cycle-contact-note').textContent=f.contactFaults.some(Boolean)?f.contactFaults.map((reason,i)=>reason?`${i+1}: ${reason}`:'').filter(Boolean).join(' · '):'Per wire: continuity + isolation';
     const failed=f.pull==='fail'||f.contacts.includes('fail');
-    byId('cycle-verdict').textContent=f.accepted===true?'All three checks passed':f.accepted===false?'Rejected · operator action required':f.retry?'Attempt 2 · fresh checks':failed?'Check failed · stop this attempt':f.step<5?'Preparing the unit':'Checks in progress';
+    byId('cycle-verdict').textContent=f.accepted===true?(kind==='search'?'All three checks passed · flagged: search used':'All three checks passed'):f.accepted===false?'Rejected · operator action required':f.retry?'Attempt 2 · fresh checks':failed?'Check failed · stop this attempt':f.step===1||f.step===4?'Measuring this unit':f.step<6?'Preparing the unit':'Checks in progress';
     byId('cycle-verdict').dataset.result=f.accepted===true?'pass':f.accepted===false||failed?'fail':'pending';
     for(const button of steps.querySelectorAll('button'))button.setAttribute('aria-current',String(Number(button.dataset.cycleStep)===f.step));
     play.textContent=playing?'Pause':'Play';play.setAttribute('aria-pressed',String(playing));play.disabled=faultLocked;
@@ -90,7 +98,8 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   function log(){
     const record=processRecord(records.length+1,kind);records.push(record);
     const row=document.createElement('li'),title=document.createElement('strong');
-    title.textContent=`Illustrated unit ${String(record.id).padStart(3,'0')} · ${record.case} · ${record.accepted?'accepted':'rejected / operator clear required'}`;row.append(title);
+    title.textContent=`Illustrated unit ${String(record.id).padStart(3,'0')} · ${record.case} · ${record.accepted?'accepted':'rejected / operator clear required'}${record.flag?` · flagged: ${record.flag.toLowerCase()}`:''}`;row.append(title);
+    const measured=document.createElement('p');measured.textContent=`Measured: header ${Math.hypot(...record.measured.header).toFixed(2)} mm from nominal, grip ${Math.hypot(...record.measured.grip).toFixed(2)} mm off centre.`;row.append(measured);
     for(const attempt of record.attempts){
       const line=document.createElement('p');
       const contacts=attempt.contacts.map((result,i)=>`${i+1} ${attempt.contactFaults[i]??(result==='pending'?'untested':result)}`).join(', ');
@@ -111,8 +120,9 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   });
   steps.addEventListener('click',e=>{const button=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-cycle-step]');if(button&&!faultLocked){started=true;activate();stop();progress=CYCLE_STEPS[Number(button.dataset.cycleStep)][1];draw();showStage();}});
   for(const button of caseButtons)button.addEventListener('click',()=>{
-    if(faultLocked)return;activate();stop();kind=button.dataset.cycleCase as CycleCase;progress=0;logged=false;started=true;
-    for(const b of caseButtons)b.setAttribute('aria-pressed',String(b===button));draw();showStage();
+    // A switch while playing starts the new case at once.
+    if(faultLocked)return;const wasPlaying=playing;activate();stop();kind=button.dataset.cycleCase as CycleCase;progress=0;logged=false;started=true;
+    for(const b of caseButtons)b.setAttribute('aria-pressed',String(b===button));draw();showStage();if(wasPlaying)toggle();
   });
   // The one play button always plays the full cycle, even after a contact experiment ran.
   for(const id of ['tour','embed-run'])byId(id).addEventListener('click',e=>{e.stopImmediatePropagation();if(e.detail<2)toggle();},true);

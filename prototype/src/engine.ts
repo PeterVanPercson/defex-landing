@@ -82,7 +82,7 @@ export class ConnectorEngine {
   }
 
   start(controller: Controller) {
-    if (controller === 'reuse' && !this.calibration) throw new Error('Complete an accepted search trial before reusing its correction.');
+    if (controller === 'reuse' && !this.calibration) throw new Error('Complete an accepted search trial first.');
     this.resetState();
     this.controller = controller;
     this.points = controller === 'reuse' ? [this.calibration!.slice() as [number, number]] : probePoints();

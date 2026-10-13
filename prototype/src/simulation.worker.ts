@@ -61,7 +61,7 @@ self.onmessage = async ({data}) => {
       type:'export', report:{
         title:'Defex connector lab — simulation records', exportedAt:new Date().toISOString(),
         engine:'MuJoCo 3.14.0 WASM', modelVersion:MODEL_VERSION,
-        limits:'Illustrative rigid connector and cartesian tool. Electrical continuity is a depth/fault model. Retention is an ideal constraint activated at seating. No real robot, sensor data, material deformation, damage, wear or manufacturing validation. Search calibrates an XY correction; it is not a trained neural policy.',
+        limits:'Illustrative rigid connector and cartesian tool. Electrical continuity is a depth/fault model. Retention is an ideal constraint activated at seating. No real robot, sensor data, material deformation, damage, wear or manufacturing validation. The search is a fixed fallback pattern, not a trained robot policy.',
         currentModelXML:modelXML(engine.config), calibration:engine.calibration, trials:engine.trials,
       },
     });
