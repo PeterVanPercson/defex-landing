@@ -20,7 +20,7 @@ class SiteTests(SimpleTestCase):
         self.assertNotContains(home, "self-teaching")
         # the case in the pitch's own words: what it does for a factory, as ruled rows
         for claim in ("The robot plugs it in.", "It checks every one.",
-                      "Every test teaches it.", "A new part is not a new project."):
+                      "It measures every unit.", "A new part is not a new project."):
             self.assertContains(home, f'class="feature__t engraved">{claim}</h3>')
         for slop in ("walk away from", "feel what", "A new way, not a new project", "harder to fixture",
                      "Bad parts never ship", "No one stands over it", "stand over it", "Self-teaching"):
@@ -802,6 +802,18 @@ class SiteTests(SimpleTestCase):
             import re
             words = re.sub(r"<[^>]+>", " ", header).split()
             self.assertLessEqual(len(words), 12, f"nav on {path} carries {len(words)} words: {' '.join(words)[:120]}")
+
+    def test_no_page_says_the_robot_teaches_itself(self):
+        """His call, 2026-10-13: a saved correction only fixes a constant bias,
+        so nothing says the robot learns from its tests. It measures every
+        unit, feels its way in and checks every connection."""
+        for path in ("/", "/why-us/", "/company.json", "/llms.txt"):
+            body = self.client.get(path).content.decode().lower()
+            for claim in ("teaches it", "teaches the next try", "learns from each test",
+                          "learn from each test", "learning from each test", "self-teaching",
+                          "every miss makes it"):
+                self.assertNotIn(claim, body, f"{claim!r} is back on {path}")
+        self.assertIn("measure every unit and check every connection", self.client.get("/company.json").json()["description"])
 
     def test_emails_carry_the_current_positioning(self):
         """The auto-reply asked visitors for "photos of typical defects, the
