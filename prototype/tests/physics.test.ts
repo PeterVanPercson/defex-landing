@@ -79,10 +79,10 @@ test('a saved correction is still tested and rejected after the fixture moves', 
   const e=new ConnectorEngine(mj);
   assert.equal(run(e,'search').accepted,true);
   const saved=[...e.calibration!];
-  e.configure({...DEFAULT_CONFIG,offsetX:-1.2,offsetY:-.65});
+  e.configure({...DEFAULT_CONFIG,offsetX:-.95,offsetY:-.55});
   const t=run(e,'reuse');
   assert.equal(t.accepted,false);assert.deepEqual(e.calibration,saved);
-  assert.equal(e.trials.length,2);assert.equal(e.trials[0].config.offsetX,1.2);
+  assert.equal(e.trials.length,2);assert.equal(e.trials[0].config.offsetX,.95);
   e.dispose();
 });
 

@@ -6,7 +6,7 @@ import type { Mode, View } from './scene.ts';
 import type { PartId } from './parts.ts';
 import { DemoRecorder } from './recording.ts';
 import { setupDock } from './dock.ts';
-import { DEFAULT_CONFIG, METHOD_NAMES as names, modelXML } from './model.ts';
+import { DEFAULT_CONFIG, modelXML } from './model.ts';
 import type { Configuration, Controller } from './model.ts';
 import type { Sample, Snapshot, Trial } from './engine.ts';
 
@@ -17,16 +17,16 @@ const send=(data:object)=>worker.postMessage(data);
 const descriptions:Record<Controller,string>={
   fixed:'Straight in. Stops if blocked.',
   search:'Backs off and tries the next spot.',
-  reuse:'Starts at the saved fit.',
+  reuse:'',
 };
-const settingInputs=all<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('.console input,.console select:not(#speed),[data-preset],[data-controller],#forget');
+const names:Record<Controller,string>={fixed:'No search',search:'Search',reuse:'Reuse'};
+const settingInputs=all<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('.console input,.console select:not(#speed),[data-preset],[data-controller]');
 const controllerButtons=all<HTMLButtonElement>('[data-controller]');
 const phaseLabels=all('[data-phase]');
 const cameraButtons=all<HTMLButtonElement>('[data-view]');
 const modeButtons=all<HTMLButtonElement>('[data-mode]');
 const partButtons=all<HTMLButtonElement>('[data-part]');
 const presetButtons=all<HTMLButtonElement>('[data-preset]');
-const reuseButton=document.querySelector<HTMLButtonElement>('[data-controller="reuse"]')!;
 const isEmbed=new URLSearchParams(location.search).has('embed');
 let config:Configuration={...DEFAULT_CONFIG};
 let currentView:View|'part'='overview';
@@ -192,7 +192,6 @@ for(const b of controllerButtons)b.addEventListener('click',()=>{stopTour();choo
 el('run').addEventListener('click',e=>{if(e.detail<2)togglePlayback();});
 el('reset').addEventListener('click',reset);
 el('speed').addEventListener('change',()=>send({type:'speed',speed:Number(el<HTMLSelectElement>('speed').value)}));
-el('forget').addEventListener('click',()=>{stopTour();send({type:'forget'});if(controller==='reuse')choose('fixed');});
 for(const b of cameraButtons)b.addEventListener('click',()=>selectView(currentView===b.dataset.view?'overview':b.dataset.view as View));
 for(const b of modeButtons)b.addEventListener('click',()=>selectMode(b.dataset.mode as Mode));
 for(const b of partButtons)b.addEventListener('click',()=>showPart(b.dataset.part as PartId));
@@ -208,21 +207,20 @@ function download(content:string,name:string,type:string){downloadBlob(new Blob(
 el('export').addEventListener('click',()=>send({type:'export'}));
 el('download-model').addEventListener('click',()=>download(modelXML(config),'defex-illustrative-connector.xml','application/xml'));
 
-// The demo ends on the saved fit passing first time. The open circuit comes third,
-// and only a search saves a fit, so step 4 still has the one step 2 found.
 const stories=[
-  ['Blocked.','The tool detects contact and retracts.'],
-  ['Searching for the fit.','A fixed search finds a spot that passes both checks.'],
-  ['Open wire: rejected.','The injected open circuit fails the connection check.'],
-  ['Saved fit: first try.','The saved spot passes in one attempt.'],
+  ['On the chamfer: straight in.','Aimed right, the plug seats with no search.'],
+  ['Off the chamfer: it stops.','The robot feels the edge and backs off.'],
+  ['Fallback search: seated.','It tries nearby spots until the plug drops in.'],
+  ['Open wire: rejected.','The open circuit fails the connection check.'],
 ];
-const tourMethods:Controller[]=['fixed','search','fixed','reuse'],tourPasses=[false,true,false,true];
+const tourMethods:Controller[]=['fixed','fixed','search','fixed'],tourPasses=[true,false,true,false];
+const tourPresets=['aligned','shifted','shifted','open'];
 function tourStep(){
   if(tourIndex<0)return;
   tourPending=false;tourTimer=null;
   text('tour-index',`${tourIndex+1} / 4`);document.querySelectorAll('.tour-dots i').forEach((d,i)=>d.classList.toggle('on',i<=tourIndex));text('tour-title',stories[tourIndex][0]);text('tour-description',stories[tourIndex][1]);
   if(recorder){recorder.title=stories[tourIndex][0];recorder.description=stories[tourIndex][1];}
-  configure(preset(tourIndex===2?'open':'shifted'),'with-run');
+  configure(preset(tourPresets[tourIndex]),'with-run');
   choose(tourMethods[tourIndex]);run(true);
 }
 function scheduleNext(delay:number){
@@ -279,10 +277,6 @@ function refreshControls(){
   el('tour').dataset.playing=String(tourIndex>=0&&!tourPaused);
   el('tour').setAttribute('aria-label',tourIndex>=0&&!tourPaused?'Pause':'Play');
   for(const input of settingInputs)input.disabled=!ready||unfinished||tourIndex>=0;
-  reuseButton.disabled=!ready||unfinished||tourIndex>=0||!state?.calibration;
-  reuseButton.title=state?.calibration?'Use the last accepted correction':'Run a successful search to save a fit';
-  el('memory').hidden=!state?.calibration;
-  if(state?.calibration)text('memory-value',`X ${signed(state.calibration[0]*1000)} / Y ${signed(state.calibration[1]*1000)} mm`);
   const status=!ready?'Loading…':tourPaused?'Paused':tourPending?'Next step…':playing?'Running':unfinished?'Paused':state?.phase==='complete'?'Complete':'Ready';
   text('engine-status',status);
   text('hud-status',!ready?'Loading':tourIndex>=0&&!tourPaused?'Demo running':playing?'Robot running':unfinished||tourPaused?'Robot paused':'Robot ready');
@@ -321,7 +315,7 @@ const journeySteps:Record<string,[string,string,number]>={
 };
 function journey(s:Snapshot){
   const box=el('journey');box.classList.toggle('visible',s.phase!=='ready');
-  const [title,detail,progress]=s.phase==='complete'?[s.accepted?'Passed.':'Rejected.',s.accepted?(s.controller==='search'?'Both tests passed. Fit saved.':'Both tests passed.'):s.reason,1] as [string,string,number]:journeySteps[s.phase]??['Ready','',0];
+  const [title,detail,progress]=s.phase==='complete'?[s.accepted?'Passed.':'Rejected.',s.accepted?'Both tests passed.':s.reason,1] as [string,string,number]:journeySteps[s.phase]??['Ready','',0];
   text('journey-title',s.phase==='move'?`Try ${s.probes}.`:title);text('tour-live',s.phase==='move'?`Try ${s.probes}`:title.replace(/\.$/,''));text('journey-detail',detail);
   box.dataset.status=s.accepted===true?'pass':s.accepted===false?'fail':'run';
   el('journey-progress').style.width=`${progress*100}%`;

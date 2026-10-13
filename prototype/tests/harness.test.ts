@@ -7,7 +7,7 @@ import { contactCenters } from '../src/mechanism.ts';
 import { createCell } from '../src/cell-geometry.ts';
 
 createCell(6);
-const cases=['search','latched','half-seat','open','short'] as const;
+const cases=['pass','search','half-seat','open','short'] as const;
 const dress=(p:number,kind:typeof cases[number],i:number,points=Array.from({length:10},()=>new T.Vector3()))=>{
   const f=processFrame(p,kind);const r=dressHarness(points,new T.Vector3(...f.plug),f.rotation,0,contactCenters(6)[i],i);
   return {f,r,points,curve:new T.CatmullRomCurve3(points,false,'centripetal')};

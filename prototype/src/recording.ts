@@ -48,7 +48,7 @@ export class DemoRecorder {
     c.fillStyle='#1b2026';c.fillRect(64,214,131,29);c.fillStyle='#d6ddcd';c.font='12.5px "EB Garamond", Georgia, serif';c.fillText(`SIMULATION · ${this.speed}×`,75,233);
     const x=1130;
     c.fillStyle='#75806a';c.font='13.5px "EB Garamond", Georgia, serif';c.fillText('CURRENT ATTEMPT',x,221);
-    c.fillStyle='#f4f1ea';c.font='400 28px "EB Garamond", Georgia, serif';c.fillText(s?METHOD_NAMES[s.controller]:'Preparing',x,263);
+    c.fillStyle='#f4f1ea';c.font='400 28px "EB Garamond", Georgia, serif';c.fillText(s?METHOD_NAMES[s.controller]??'Search':'Preparing',x,263);
     const values=[['TRIES',String(s?.probes??0)],['SIMULATION TIME',`${(s?.time??0).toFixed(1)} s`],['AXIAL FORCE',`${(s?.force??0).toFixed(2)} N`],['CONNECTION',s?.continuity===true?'PASS':s?.continuity===false?'FAIL':'NOT TESTED'],['LOCK',s?.retention===true?'PASS':s?.retention===false?'FAIL':'NOT TESTED']];
     values.forEach(([name,value],i)=>{const y=315+i*66;c.strokeStyle='#2a3036';c.beginPath();c.moveTo(x,y+36);c.lineTo(1547,y+36);c.stroke();c.font='12.5px "EB Garamond", Georgia, serif';c.fillStyle='#89937c';c.fillText(name,x,y);c.font='21px "EB Garamond", Georgia, serif';c.fillStyle=value==='FAIL'?'#d38b73':value==='PASS'?'#85b997':'#f4f1ea';c.fillText(value,x,y+25);});
     c.font='400 24px "EB Garamond", Georgia, serif';c.fillStyle=s?.accepted===true?'#85b997':s?.accepted===false?'#d38b73':'#69745d';c.fillText(s?.accepted===true?'Passed in simulation':s?.accepted===false?'Rejected in simulation':'Attempt in progress',x,691);

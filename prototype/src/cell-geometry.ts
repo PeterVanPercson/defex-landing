@@ -3,7 +3,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { finishes as M } from './finishes.ts';
 import { createCobot, ArmCable } from './cobot.ts';
 import { plugHousing, contactCenters } from './mechanism.ts';
-import { NEST, REJECT, TURNOVER } from './process.ts';
+import { NEST, REJECT, TURNOVER, UPCAM } from './process.ts';
 import { HARNESS_POINTS, WIRE_RADIUS, setHarnessObstacles } from './harness.ts';
 
 const geometry=new Map<string,T.BufferGeometry>();
@@ -25,6 +25,72 @@ const ink=new T.MeshStandardMaterial({color:0xbdcab4,roughness:.85});
 const jig=new T.MeshStandardMaterial({color:0x6d7174,metalness:.3,roughness:.42,name:'Cast jig plate'});
 const top=new T.MeshStandardMaterial({color:0x3a3d40,roughness:.6,metalness:0,envMapIntensity:1,name:'Phenolic worktop'});
 const cabinet=new T.MeshStandardMaterial({color:0x44494c,roughness:.5,metalness:.2,name:'Powder coated steel'});
+const lensGlass=new T.MeshPhysicalMaterial({color:0x14272d,metalness:.25,roughness:.06,clearcoat:1,name:'Coated lens glass'});
+const windowGlass=new T.MeshPhysicalMaterial({color:0xeef6f8,metalness:0,roughness:.03,transparent:true,opacity:.1,depthWrite:false,envMapIntensity:.9,name:'Protective window glass'});
+// Twelve SMD LEDs behind a frosted diffuser: when lit it glows evenly with faint beads over each LED.
+const ledBeads=(()=>{
+  const n=64,data=new Uint8Array(n*n*4);
+  for(let j=0;j<n;j++)for(let i=0;i<n;i++){
+    const x=(i+.5)/n*2-1,y=(j+.5)/n*2-1,r=Math.hypot(x,y),a=Math.atan2(y,x),d=Math.abs(((a/(Math.PI*2)*12)%1+1)%1-.5)*2;
+    const v=Math.round(255*Math.min(1,(.74+.26*Math.exp(-(((1-d)*3.2)**2)))*Math.min(1,Math.max(0,1-Math.abs(r-.81)/.2))*1.06));
+    const k=(j*n+i)*4;data[k]=data[k+1]=data[k+2]=v;data[k+3]=255;
+  }
+  const t=new T.DataTexture(data,n,n);t.magFilter=T.LinearFilter;t.needsUpdate=true;return t;
+})();
+// Off: a dark frosted diffuser with a soft sheen. Lit: cool white, tone mapped so it glows without clipping.
+export function ringLightMaterial(beads=true){
+  return new T.MeshStandardMaterial({color:0x1b1e20,roughness:.42,metalness:0,emissive:0xdff3ff,emissiveMap:beads?ledBeads:null,emissiveIntensity:0,name:'LED ring light diffuser'});
+}
+// A lathe about local Y stood on Z: profile points are [radius, z].
+function ring(parent:T.Object3D,name:string,profile:number[][],pos:number[],mat:T.Material,sides=48){
+  const o=new T.Mesh(cached(`l${profile}/${sides}`,()=>new T.LatheGeometry(profile.map(([r,z])=>new T.Vector2(r,z)),sides)),mat);
+  o.name=name;o.rotation.x=Math.PI/2;o.position.set(...pos as [number,number,number]);o.castShadow=o.receiveShadow=true;parent.add(o);return o;
+}
+function flatRing(parent:T.Object3D,name:string,r0:number,r1:number,pos:number[],mat:T.Material,down=false){
+  const o=new T.Mesh(cached(`r${r0}/${r1}`,()=>new T.RingGeometry(r0,r1,48,1)),mat);o.name=name;o.position.set(...pos as [number,number,number]);if(down)o.rotation.x=Math.PI;o.receiveShadow=true;parent.add(o);return o;
+}
+// The upward-looking grip-check camera: a compact 18 mm board camera on a machined adapter plate,
+// an M12 lens inside a low annular ring light, a protective window on top at UPCAM[2], and its M8 cable
+// clipped along the plate to a grommet in the worktop.
+function createUpCamera(){
+  const [cx,cy,top]=UPCAM;
+  const g=new T.Group();g.name='Grip check camera';g.position.set(cx,cy,0);
+  const plate=1.2,ringH=Math.min(3.4,top*.34),bodyTop=Math.max(plate+2.6,top-ringH),front=.8,bodyH=bodyTop-plate-front;
+  box(g,'Camera adapter plate',[22,22,plate],[0,0,plate/2],M.silver,.5);
+  for(const x of [-9.9,9.9])for(const y of [-9.9,9.9]){cyl(g,'Adapter cap screw',.85,.7,[x,y,plate+.35],M.dark,20);cyl(g,'Cap screw socket',.4,.06,[x,y,plate+.71],M.bore,6);}
+  box(g,'Board camera housing',[18,18,bodyH],[0,0,plate+bodyH/2],M.base,.7);
+  box(g,'Camera front plate',[18,18,front],[0,0,bodyTop-front/2],M.dark,.35);
+  for(const s of [-1,1])for(const k of [.33,.66]){
+    box(g,'Housing cooling groove',[14,.2,.22],[0,s*9.02,plate+bodyH*k],M.bore,0);
+    box(g,'Housing cooling groove',[.2,14,.22],[s*9.02,0,plate+bodyH*k],M.bore,0);
+  }
+  const status=new T.MeshStandardMaterial({color:0x163a22,emissive:0x2bd36a,emissiveIntensity:.8,roughness:.3,name:'Camera power LED'});
+  box(g,'Camera power LED',[1.1,.16,.7],[5.5,-9.05,bodyTop-front-.8],status,0);
+  // M8 connector on the -x face, its cable away from the turnover cradle.
+  const zc=plate+bodyH/2;
+  const socket=cyl(g,'M8 camera socket',1.9,1,[-9.5,0,zc],M.silver,24);socket.rotation.set(0,0,Math.PI/2);
+  const nut=cyl(g,'M8 coupling nut',2.25,2,[-11,0,zc],M.edge,12);nut.rotation.set(0,0,Math.PI/2);
+  const boot=cyl(g,'M8 cable overmould',1.75,4,[-14,0,zc],M.rubber,24);boot.rotation.set(0,0,Math.PI/2);
+  // The ring light: a black housing with a bezel, the LED diffuser in its floor, a baffle round the lens.
+  const floor=top-1.1;
+  ring(g,'Ring light housing',[[4.5,bodyTop],[8.5,bodyTop],[8.5,top-.3],[8.42,top-.08],[8.15,top],[7.9,top],[7.9,floor],[4.9,floor],[4.9,top-.7],[4.5,top-.7],[4.5,bodyTop]],[0,0,0],M.dark,64);
+  const light=ringLightMaterial();
+  flatRing(g,'Ring light LEDs',4.95,7.85,[0,0,floor+.02],light);
+  cyl(g,'M12 lens barrel',4.4,top-.8-bodyTop,[0,0,(top-.8+bodyTop)/2],M.dark,40);
+  flatRing(g,'Lens retaining ring',2.7,4.4,[0,0,top-.79],M.dark);
+  flatRing(g,'Lens front chamfer',3.6,3.75,[0,0,top-.785],M.edge);
+  cyl(g,'Camera lens glass',2.7,.12,[0,0,top-.8],lensGlass,40);
+  const glass=cyl(g,'Protective window',7.9,.3,[0,0,top-.35],windowGlass,64);glass.castShadow=false;
+  tube(g,[[-16,0,zc],[-18.6,-.3,zc-.6],[-20.5,-2.2,1.5],[-21,-8,1.3],[-21,-40,1.3],[-21,-80,1.3],[-21,-108.6,1.3],[-21,-112.6,-.2],[-21,-114.3,-4],[-21,-114.6,-9],[-21,-117,-10.7],[-21,-132,-10.7],[-21,-141,-11],[-21,-144,-13.5]],1.25,M.rubber);
+  for(const y of [-30,-84]){
+    box(g,'Cable clip base',[10,4,.6],[-21,y,.3],M.dark,.2);
+    box(g,'Cable clip saddle',[3.6,4,3.3],[-21,y,1.65],M.dark,.5);
+    for(const x of [-25,-17])cyl(g,'Clip screw',.8,.6,[x,y,.9],M.silver,16);
+  }
+  ring(g,'Worktop cable grommet',[[5.4,-12],[5.4,-11.3],[5,-10.9],[3.4,-10.9],[3,-11.2],[3,-12]],[-21,-144,0],M.rubber,40);
+  cyl(g,'Grommet bore',2.95,.1,[-21,-144,-11.9],M.bore,32);
+  return {group:g,light};
+}
 
 export function createCell(pins=6){
   const halfX=pins===8?9.5:7.5, extra=halfX-7.5;
@@ -125,6 +191,7 @@ export function createCell(pins=6){
   }
   box(turnover,'Turnover actuator',[22,22,22],[0,-36,38],M.body,1);
   tube(turnover,[[10,-36,38],[18,-39,28],[20,-37,4],[12,-23,2]],1.2,M.rubber);
+  const {group:upcam,light:upcamLight}=createUpCamera();root.add(upcam);
   const arm=createCobot(M);arm.root.scale.setScalar(5);root.add(arm.root);
   const tool=createPrecisionTool(extra);root.add(tool.root);
   const plug=createPlug(pins);root.add(plug);
@@ -133,9 +200,9 @@ export function createCell(pins=6){
   // What the hanging harness can come to rest on: the fixed hardware on the plate.
   root.updateMatrixWorld(true);
   const rests:T.Box3[]=[];
-  for(const g of [fixture,header,nest,comb,tester,bin,turnover])g.traverse(o=>{if(o instanceof T.Mesh&&!(o.geometry instanceof T.TubeGeometry)){for(let p:T.Object3D|null=o;p;p=p.parent)if(p===rotator)return;rests.push(new T.Box3().setFromObject(o));}});
+  for(const g of [fixture,header,nest,comb,tester,bin,turnover,upcam])g.traverse(o=>{if(o instanceof T.Mesh&&!(o.geometry instanceof T.TubeGeometry)){for(let p:T.Object3D|null=o;p;p=p.parent)if(p===rotator)return;rests.push(new T.Box3().setFromObject(o));}});
   setHarnessObstacles(rests);
-  return {root,bench,fixture,header,housing,pcb,nest,tester,bin,arm,tool,plug,latch,wires,indicator,turnover,rotator,cradleJaws,pins};
+  return {root,bench,fixture,header,housing,pcb,nest,tester,bin,arm,tool,plug,latch,wires,indicator,turnover,rotator,cradleJaws,pins,upcam,upcamLight,wristLight:tool.light,wristStatus:tool.status};
 }
 // Hold the latch released (1) or let it spring back (0).
 export function poseLatch(latch:T.Object3D,released:number){latch.rotation.x=.13*released;}
@@ -182,15 +249,22 @@ function createPrecisionTool(extra=0){
   box(camera,'Wrist camera bracket',[18,5,4],[29,3,61],M.silver,.3);
   box(camera,'Wrist camera',[16,17,22],[34,5,45],M.dark,1.2);
   cyl(camera,'Camera lens barrel',5.8,6,[34,5,31],M.dark,40);
-  cyl(camera,'Camera lens glass',4.3,.4,[34,5,27.8],new T.MeshPhysicalMaterial({color:0x14272d,metalness:.25,roughness:.06,clearcoat:1}),40);
+  cyl(camera,'Camera lens glass',4.3,.4,[34,5,27.8],lensGlass,40);
+  // A low ring light round the lens nose, flush under the body, its LEDs facing down at the board.
+  ring(camera,'Wrist ring light housing',[[6,34],[6,29.2],[6.4,29.2],[6.4,29.7],[7.5,29.7],[7.5,29.2],[7.72,29.2],[7.95,29.42],[8,29.7],[8,34],[6,34]],[34,5,0],M.dark,64);
+  // The frosted diffuser stands 0.5 mm proud of the housing, so its lit edge shows from above the bench.
+  const light=ringLightMaterial(false);
+  ring(camera,'Wrist ring light diffuser',[[6.45,29.7],[6.45,28.7],[7.5,28.7],[7.5,29.7]],[34,5,0],light,64);
+  const status=new T.MeshStandardMaterial({color:0x17251c,emissive:0x2bd36a,emissiveIntensity:0,roughness:.3,name:'Camera status LED'});
+  box(camera,'Camera status LED',[.16,1.2,.9],[42.06,10.2,53.6],status,0);
   tube(root,[[34,12,51],[31,21,58],[23,19,63],[24,16,70]],1.1,M.rubber);
   const gland=new T.Vector3(28,9,50);
   const g=cyl(root,'Gripper cable gland',3,6,gland.toArray(),M.edge,32);g.rotation.z=Math.PI/2;g.rotation.x=0;
-  return {root,fingers,gland};
+  return {root,fingers,gland,light,status};
 }
 
 export function disposeCell(root:T.Object3D){
-  const shared=new Set<T.Material>([...Object.values(M),pcbMaterial,grey,solder,ink,jig,top,cabinet]);
+  const shared=new Set<T.Material>([...Object.values(M),pcbMaterial,grey,solder,ink,jig,top,cabinet,lensGlass,windowGlass]);
   const cachedGeometry=new Set(geometry.values()),seenGeometry=new Set<T.BufferGeometry>(),seenMaterials=new Set<T.Material>();
   root.traverse(o=>{if(o instanceof T.Mesh){if(!cachedGeometry.has(o.geometry))seenGeometry.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])if(!shared.has(m))seenMaterials.add(m);}});
   seenGeometry.forEach(g=>g.dispose());seenMaterials.forEach(m=>m.dispose());

@@ -8,7 +8,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { createCell, disposeCell, factoryEnvironment, poseLatch } from './cell-geometry.ts';
 import { createHall } from './hall.ts';
 import { PoseStream, damping } from './motion.ts';
-import { processFrame, HEADER } from './process.ts';
+import { processFrame, HEADER, UPCAM } from './process.ts';
 import type { ProcessFrame } from './process.ts';
 import type { Configuration } from './model.ts';
 import type { Snapshot } from './engine.ts';
@@ -43,10 +43,12 @@ export class WorkcellScene {
   private lens=35;private shownLens=35;
   // A slow GPU (an old laptop, a projector at 4K) steps down: defocus off, then ambient occlusion and pixels.
   private quality=0;private slowFrames=0;private seenFrames=0;private seenTime=0;
-  private isWide(){const p=this.process?.progress;return this.mode!=='parts'&&p!==undefined&&(p<10||p>=96);}
+  private isWide(){const p=this.process?.progress;return this.mode!=='parts'&&p!==undefined&&(p<2||p>=96&&this.process?.accepted!==false);}
   private focalPoint=new T.Vector3();
   private ray=new T.Raycaster();private down=[0,0];
   private reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Additive cards that suggest each ring light's spill: no lights, no shadows, hidden from AO and defocus.
+  private glow=createGlow();
   constructor(container:HTMLElement,config:Configuration,hud:Hud|null=null,embed=false){
     this.container=container;this.config=config;this.hud=hud;this.embed=embed;
     this.renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
@@ -71,8 +73,8 @@ export class WorkcellScene {
     key.shadow.mapSize.setScalar(2048);Object.assign(key.shadow.camera,{left:-900,right:900,top:900,bottom:-900,near:300,far:2900});key.shadow.normalBias=.12;key.shadow.bias=-.0001;key.shadow.radius=8;
     this.scene.add(key,key.target);const fill=new T.HemisphereLight(0xf3f6f7,0x5d625f,.35);fill.position.set(0,0,1000);this.scene.add(fill);
     const windowLight=new T.DirectionalLight(0xeaf1f6,.7);windowLight.position.set(300,1400,700);this.scene.add(windowLight);
-    this.scene.add(this.hall,this.rig.root);
-    for(const g of [this.rig.bench,this.rig.fixture,this.rig.nest,this.rig.bin])batchStaticMeshes(g,new Set());
+    this.scene.add(this.hall,this.rig.root,this.glow.root);
+    for(const g of [this.rig.bench,this.rig.fixture,this.rig.nest,this.rig.bin,this.rig.upcam])batchStaticMeshes(g,new Set());
     const groups:Record<PartId,T.Object3D>={arm:this.rig.arm.root,gripper:this.rig.tool.root,connector:this.rig.plug,socket:this.rig.header,tester:this.rig.tester};
     for(const [id,g] of Object.entries(groups)){g.traverse(o=>o.userData.part=id);const label=document.createElement('div');label.className='cell-label';label.textContent=PARTS.find(p=>p.id===id)?.name??id;hud?.labels.append(label);this.labels.set(id as PartId,label);}
     this.composer=new EffectComposer(this.renderer,new T.WebGLRenderTarget(1,1,{samples:this.light?2:4,type:T.HalfFloatType}));
@@ -83,6 +85,7 @@ export class WorkcellScene {
     // Thin-lens defocus in scene millimetres, using the guideline's 100 mm f/2.8 lens.
     this.bokeh.materialBokeh.fragmentShader=this.bokeh.materialBokeh.fragmentShader.replace('float factor = ( focus + viewZ );','float factor = ( focus + viewZ ) / max( -viewZ, 1.0 );');
     this.composer.addPass(this.bokeh);this.composer.addPass(new OutputPass());
+    for(const pass of [this.ao,this.bokeh]){const render=pass.render.bind(pass);pass.render=(...args)=>{const shown=this.glow.root.visible;this.glow.root.visible=false;render(...args);this.glow.root.visible=shown;};}
     this.configure(config);this.applyProcess(this.process!);
     this.ro=new ResizeObserver(this.layout);this.ro.observe(container);
     this.io=new IntersectionObserver(([e])=>{this.visible=e.isIntersecting;this.wake();});this.io.observe(container);document.addEventListener('visibilitychange',this.wake);
@@ -102,7 +105,7 @@ export class WorkcellScene {
   private ensureVariant(pins:number){
     if(this.rig.pins===pins)return;
     disposeCell(this.rig.root);this.scene.remove(this.rig.root);this.rig=createCell(pins);this.scene.add(this.rig.root);
-    for(const g of [this.rig.bench,this.rig.fixture,this.rig.nest,this.rig.bin])batchStaticMeshes(g,new Set());
+    for(const g of [this.rig.bench,this.rig.fixture,this.rig.nest,this.rig.bin,this.rig.upcam])batchStaticMeshes(g,new Set());
     const groups={arm:this.rig.arm.root,gripper:this.rig.tool.root,connector:this.rig.plug,socket:this.rig.header,tester:this.rig.tester};
     for(const [id,g] of Object.entries(groups))g.traverse(o=>o.userData.part=id);
     this.renderedPose='';this.cut=-1;
@@ -116,6 +119,18 @@ export class WorkcellScene {
     this.rig.cradleJaws.forEach((g,i)=>g.position.y=(i?1:-1)*f.cradleGrip*5);poseLatch(this.rig.latch,f.latch);
     this.rig.indicator.color.setHex(f.accepted===true?0x379761:f.accepted===false?0xb2402c:0x273c31);
     this.rig.indicator.emissive.setHex(f.accepted===true?0x248440:f.accepted===false?0xa0301c:0x000000);this.rig.indicator.emissiveIntensity=f.accepted===null?0:.9;
+    this.lights(f.headerCheck,f.graspCheck,f.camera,f.plug[2]-(Math.abs(f.rotation)<.5?4.05:8.25));
+  }
+  // The two ring lights: cool white while each camera measures, a dark diffuser otherwise.
+  private lights(board:number,grip:number,armed:boolean,plugUnderside=UPCAM[2]+30){
+    const level=(v:number)=>Math.max(0,Math.min(1,v||0));
+    this.rig.wristLight.emissiveIntensity=1.5*level(board);this.rig.upcamLight.emissiveIntensity=1.5*level(grip);
+    this.rig.wristStatus.emissiveIntensity=armed?1.2:0;
+    this.glow.cone.visible=level(grip)>0;this.glow.coneMaterial.opacity=.04*level(grip);
+    // The cone stops at the plug's underside, so it never draws over the plug or the fingers.
+    const h=Math.max(4,Math.min(40,plugUnderside-UPCAM[2]-.3));this.glow.cone.scale.set(1,h,1);this.glow.cone.position.z=UPCAM[2]+h/2;
+    this.glow.pool.visible=level(board)>0;this.glow.pool.position.z=9.76+this.rig.fixture.position.z;this.glow.poolMaterial.opacity=.32*level(board);
+    this.glow.root.visible=this.glow.cone.visible||this.glow.pool.visible;
   }
   private poseRig(){
     const tool=this.rig.tool.root,plug=this.rig.plug,flange=tool.position.clone().add(new T.Vector3(0,0,80)).divideScalar(5);
@@ -145,8 +160,13 @@ export class WorkcellScene {
     const lensScale=Math.tan(25*Math.PI/360)/Math.tan(this.camera.fov*Math.PI/360);this.camera.setFocalLength(this.shownLens);
     if(this.viewMode==='connector'){
       const f=this.process;
-      this.target.set(f?.plug[0]??0,f?.plug[1]??0,Math.max(29,(f?.plug[2]??15)+15)+(this.mode==='parts'?55:0));
-      this.position.copy(this.target).add(new T.Vector3(100,-175,60).multiplyScalar(fit*lensScale));
+      let z=Math.max(29,(f?.plug[2]??15)+15);
+      // Over the grip camera the shot drops to frame the plug and the camera under it together.
+      if(f){const w=T.MathUtils.smoothstep(30-Math.hypot(f.plug[0]-UPCAM[0],f.plug[1]-UPCAM[1]),4,26);z+=(Math.max(UPCAM[2]+8,(f.plug[2]+UPCAM[2])/2+2)-z)*w;}
+      // While the wrist camera reads the board, the close-up looks at the board and the camera over it.
+      const board=f?.step===1;
+      if(board)this.target.set(HEADER[0],HEADER[1],40);else this.target.set(f?.plug[0]??0,f?.plug[1]??0,z+(this.mode==='parts'?55:0));
+      this.position.copy(this.target).add(new T.Vector3(100,-175,60).multiplyScalar(fit*lensScale*(board?1.8:1)));
     }else if(this.viewMode==='part'){
       const groups={arm:this.rig.arm.root,gripper:this.rig.tool.root,connector:this.rig.plug,socket:this.rig.header,tester:this.rig.tester};
       const bounds=new T.Box3().setFromObject(groups[this.focus]);bounds.getCenter(this.target);
@@ -180,7 +200,7 @@ export class WorkcellScene {
     this.frame=0;if(this.disposed||document.hidden||!this.visible)return;const raw=now-this.last;if(this.last&&raw<3000)this.watchSpeed(raw);const dt=Math.min(50,now-(this.last||now-16));this.last=now;
     if(!this.process){const pose=this.poses.sample(now);if(pose)this.basePose=[pose[0]*1000,pose[1]*1000,pose[2]*1000,pose[3]];
       this.rig.tool.root.rotation.z=this.rig.plug.rotation.z=this.basePose[3];this.rig.plug.rotation.y=0;this.rig.tool.fingers.forEach(g=>g.position.x=g.userData.extra||0);
-      this.rig.indicator.emissive.setHex(0);this.rig.indicator.color.setHex(this.state?.accepted===true?0x379761:0x273c31);}
+      this.rig.indicator.emissive.setHex(0);this.rig.indicator.color.setHex(this.state?.accepted===true?0x379761:0x273c31);this.lights(0,0,false);}
     const targetSpread=this.mode==='parts'?1:0,oldSpread=this.spread;this.spread+=(targetSpread-this.spread)*damping(dt,190);if(Math.abs(targetSpread-this.spread)<.001)this.spread=targetSpread;
     this.rig.header.position.z=this.spread*18;this.rig.fixture.position.z=this.spread*5;this.rig.tester.position.x=this.spread*70;
     if(this.process)this.applyProcess(this.process);else{this.rig.tool.root.position.set(this.basePose[0],this.basePose[1],this.basePose[2]);this.rig.plug.position.copy(this.rig.tool.root.position);}
@@ -189,7 +209,7 @@ export class WorkcellScene {
     this.poseRig();
     if(this.cameraMoving){const a=this.reduceMotion?1:damping(dt,this.viewMode==='overview'?650:260);this.camera.position.lerp(this.position,a);this.controls.target.lerp(this.target,a);
       this.shownLens+=(this.lens-this.shownLens)*a;this.camera.setFocalLength(this.shownLens);
-      if(this.camera.position.distanceTo(this.position)<.4&&this.controls.target.distanceTo(this.target)<.2&&Math.abs(this.lens-this.shownLens)<.02){this.camera.position.copy(this.position);this.controls.target.copy(this.target);this.shownLens=this.lens;this.camera.setFocalLength(this.lens);this.cameraMoving=false;}}
+      if(this.camera.position.distanceTo(this.position)<Math.max(.4,this.position.distanceTo(this.target)*.0008)&&this.controls.target.distanceTo(this.target)<Math.max(.2,this.position.distanceTo(this.target)*.0004)&&Math.abs(this.lens-this.shownLens)<.02){this.camera.position.copy(this.position);this.controls.target.copy(this.target);this.shownLens=this.lens;this.camera.setFocalLength(this.lens);this.cameraMoving=false;}}
     const orbit=this.controls.update(),uniforms=this.bokeh.uniforms as Record<string,{value:number}>;
     this.focalPoint.copy(this.viewMode==='part'?this.controls.target:this.rig.plug.position);
     if(this.viewMode!=='part'){
@@ -209,4 +229,23 @@ export class WorkcellScene {
     this.composer.render();this.afterRender?.();if(this.playing&&!this.process||this.cameraMoving||orbit||oldSpread!==this.spread||this.poses.pending(now)&&!this.process||this.afterRender)this.wake();
   };
   dispose(){this.disposed=true;cancelAnimationFrame(this.frame);this.ro.disconnect();this.io.disconnect();this.controls.dispose();disposeCell(this.rig.root);this.scene.environment?.dispose();this.composer.dispose();this.ao.dispose();this.bokeh.dispose();this.renderer.dispose();document.removeEventListener('visibilitychange',this.wake);this.container.removeEventListener('wheel',this.wheel,{capture:true});this.renderer.domElement.remove();this.labels.forEach(l=>l.remove());}
+}
+
+function fade(size:number,value:(u:number,v:number)=>number){
+  const data=new Uint8Array(size*size*4);
+  for(let j=0;j<size;j++)for(let i=0;i<size;i++){const k=(j*size+i)*4;data[k]=data[k+1]=data[k+2]=Math.round(255*Math.max(0,Math.min(1,value((i+.5)/size,(j+.5)/size))));data[k+3]=255;}
+  const t=new T.DataTexture(data,size,size);t.magFilter=t.minFilter=T.LinearFilter;t.needsUpdate=true;return t;
+}
+function createGlow(){
+  const root=new T.Group();root.name='Ring light spill';root.visible=false;
+  const additive={color:0xdff3ff,transparent:true,depthWrite:false,blending:T.AdditiveBlending,fog:false};
+  // Above the grip camera: a faint, short cone of cool light that dies out within 30 mm.
+  const coneMaterial=new T.MeshBasicMaterial({...additive,side:T.DoubleSide,opacity:0,alphaMap:fade(16,(_u,v)=>(1-.8*v)**1.6)});
+  const cone=new T.Mesh(new T.CylinderGeometry(10.5,7.6,1,48,1,true),coneMaterial);cone.name='Grip camera light cone';
+  cone.rotation.x=Math.PI/2;cone.position.set(UPCAM[0],UPCAM[1],UPCAM[2]+15);cone.renderOrder=2;
+  // On the board under the wrist camera: a soft pool, brightest over the header.
+  const poolMaterial=new T.MeshBasicMaterial({...additive,opacity:0,polygonOffset:true,polygonOffsetFactor:-4,alphaMap:fade(64,(u,v)=>{const r=Math.hypot((u-.5)*58,(v-.5)*44);return Math.exp(-((r/16)**2));})});
+  const pool=new T.Mesh(new T.PlaneGeometry(58,44),poolMaterial);pool.name='Wrist ring light pool';pool.position.set(0,0,9.76);pool.renderOrder=2;
+  for(const o of [cone,pool]){o.visible=false;o.castShadow=o.receiveShadow=false;o.frustumCulled=true;root.add(o);}
+  return {root,cone,coneMaterial,pool,poolMaterial};
 }

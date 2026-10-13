@@ -57,7 +57,7 @@ h2{font-size:32px;line-height:1.1;letter-spacing:0;font-weight:400}
 .presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:28px}.presets button{border:1px solid #ffffff1a;text-align:left;font-size:18px;padding:15px 14px;border-radius:9px;color:#c8cac6}.presets button:hover:enabled{background:#ffffff08;border-color:#ffffff30}.presets button[aria-pressed=true]{border-color:#f3f3f4;background:#ffffff10;color:#f3f3f4}
 .controllers{display:flex;border:1px solid #ffffff1a;border-radius:10px;padding:4px;gap:4px}.controllers button{flex:1;font-size:17px;border-radius:7px;min-height:44px;padding:8px 4px;color:#b8bbb8}.controllers button[aria-pressed=true]{background:var(--white);color:#111}.controllers button:hover:enabled:not([aria-pressed=true]){background:#ffffff0c}
 #controller-description{font-size:18px;color:var(--muted);line-height:1.5;min-height:48px;margin:14px 0 0}
-.memory{margin-top:14px;padding:11px 13px;background:#4fd08a14;border:1px solid #4fd08a40;border-radius:8px;font-size:15.5px;color:var(--green);display:flex;justify-content:space-between;align-items:center;line-height:1.5}.memory b{font:400 14.5px var(--mono);display:block}.memory button{font-size:20px;padding:6px}
+
 .outcome{display:flex;gap:14px;min-height:112px}.outcome-symbol{font-size:30px;line-height:1;color:#6f757d}.outcome strong{font-size:clamp(24px,2vw,30px);font-weight:400;letter-spacing:0;line-height:1.1;display:block}.outcome p{font-size:18px;line-height:1.5;color:var(--muted);margin:8px 0 0}.outcome[data-status=pass] .outcome-symbol,.outcome[data-status=pass] strong{color:var(--green)}.outcome[data-status=fail] .outcome-symbol,.outcome[data-status=fail] strong{color:var(--red)}
 .checks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0 8px}.checks>div{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border:1px solid #ffffff14;border-radius:9px;font-size:18px;background:#ffffff05}.checks strong{font:400 15.5px var(--mono);color:#6f757d}.checks strong[data-status=pass]{color:var(--green)}.checks strong[data-status=fail]{color:var(--red)}.checks strong[data-status=testing]{color:#ffc04a}
 .retry-button{border:1px solid var(--amber);border-radius:9px;color:var(--amber);padding:13px;width:100%;font-size:17px;margin-top:8px}
@@ -243,3 +243,8 @@ td{color:#33423a}
 
 .stage-error strong,.stage-error button{color:#eef0ea}
 .tour-button{color:#f4f6f1}
+/* a measured value beside the step name: quiet, same pill */
+body .process-readout #cycle-detail{align-self:center;padding-left:12px;border-left:1px solid #1f2b2433;font-size:14px;line-height:1.2;color:#56645a;font-variant-numeric:tabular-nums;white-space:nowrap}
+body .process-readout #cycle-detail[hidden]{display:none}
+body .process-readout h2{white-space:nowrap}
+@media(max-width:600px){body .process-readout #cycle-detail{font-size:12.5px;padding-left:9px}body.process-mode .process-readout{gap:9px}}

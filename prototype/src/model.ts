@@ -1,5 +1,5 @@
 export type Controller = 'fixed' | 'search' | 'reuse';
-export const METHOD_NAMES: Record<Controller, string> = { fixed: 'Fixed path', search: 'Find a fit', reuse: 'Reuse fit' };
+export const METHOD_NAMES: Partial<Record<Controller, string>> = { fixed: 'No search', search: 'Search' };
 export type Fault = 'none' | 'open' | 'latch';
 export interface Configuration {
   variant: 'six' | 'eight';
@@ -11,7 +11,7 @@ export interface Configuration {
 }
 
 export const DEFAULT_CONFIG: Configuration = {
-  variant: 'six', offsetX: 1.2, offsetY: 0.65, yaw: 1.5, friction: 0.35, fault: 'none',
+  variant: 'six', offsetX: 0.95, offsetY: 0.55, yaw: 0, friction: 0.35, fault: 'none',
 };
 export const MODEL_VERSION = 'connector-contact-v2';
 export const DT = 0.0005;
