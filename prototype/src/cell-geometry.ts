@@ -526,7 +526,56 @@ function holed(parent:T.Object3D,name:string,[x0,x1,y0,y1,z0,z1]:number[],mat:T.
   // square edges where the pieces meet, so no seam shows on the surface
   slab(x0,hx0,y0,y1,0);slab(hx1,x1,y0,y1,0);slab(hx0,hx1,y0,hy0,0);slab(hx0,hx1,hy1,y1,0);
 }
-const bristle=new T.MeshStandardMaterial({color:0x2b2e30,roughness:1,name:'Brush bristles'});
+// The brush's strands: nylon, a little lighter than the bin's dark inside, a thin ribbon each, seen from both sides.
+const bristle=new T.MeshStandardMaterial({color:0x7a7f83,roughness:.8,side:T.DoubleSide,vertexColors:true,name:'Brush bristles'});
+// The strip brush's bristles, one mesh built up front (its points move in place as the rows part). Two rows, one from
+// each long side of the opening, in two staggered layers, each strand a thin ribbon from its root in the holder down and
+// in to its tip at the slit. Bin coordinates (the bin's centre at x = y = 0).
+const BRISTLE={rows:2,layers:2,strands:64,width:.2,sections:4,droop:4} as const;
+function createBrush(){
+  const [ox,oy]=REJECT_BIN.opening,{layers,strands,width,sections}=BRISTLE,per=(sections+1)*2,count=BRISTLE.rows*layers*strands;
+  const rest=new Float32Array(count*per*3),index:number[]=[],root:{x:number;y:number;z:number;s:number}[]=[];
+  // a fixed scatter (no random numbers): strand k's small offsets
+  const jitter=(k:number,m:number)=>((k*7919+m*104729)%997)/997-.5;
+  let k=0;
+  for(const s of [-1,1])for(let l=0;l<layers;l++)for(let i=0;i<strands;i++,k++){
+    const x=-ox/2+1+(ox-2)*(i+.5*l+.25+.3*jitter(k,1))/strands,y=s*(oy/2-2.2),z=BRUSH.z[1]-1.1-l*1.5+.3*jitter(k,2);
+    root.push({x,y,z,s});
+    const tipY=s*(.3+.8*(jitter(k,3)+.5)),tipZ=z-BRISTLE.droop+.6*jitter(k,4);
+    for(let j=0;j<=sections;j++){const t=j/sections,cy=y+(tipY-y)*t,cz=z+(tipZ-z)*t*t;for(const side of [-1,1]){const o=(k*per+j*2+(side>0?1:0))*3;rest[o]=x+side*width/2;rest[o+1]=cy;rest[o+2]=cz;}}
+    for(let j=0;j<sections;j++){const a=k*(sections+1)*2+j*2;index.push(a,a+1,a+2,a+1,a+3,a+2);}
+  }
+  const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(rest.slice(),3));
+  const normals=new Float32Array(rest.length);for(let i=2;i<normals.length;i+=3)normals[i]=1;
+  g.setAttribute('normal',new T.BufferAttribute(normals,3));g.setIndex(index);g.computeBoundingSphere();
+  // each strand its own shade of the nylon, a little lighter at the tip
+  const colour=new Float32Array(rest.length);
+  for(let k=0;k<count;k++){const v=.82+.3*jitter(k,5);for(let j=0;j<=sections;j++)for(let q=0;q<2;q++){const o=(k*per+j*2+q)*3,c=v*(.85+.15*j/sections);colour[o]=colour[o+1]=colour[o+2]=c;}}
+  g.setAttribute('color',new T.BufferAttribute(colour,3));
+  (g.attributes.position as T.BufferAttribute).setUsage(T.DynamicDrawUsage);
+  const mesh=new T.Mesh(g,bristle);mesh.name='Brush seal bristles';mesh.receiveShadow=true;mesh.position.set(REJECT_BIN.x,REJECT_BIN.y,0);
+  let parted=false;
+  // Part the rows round what goes through (boxes [x0,x1,y0,y1,z0,z1] and round bundles [x,y,z,r], bin coordinates):
+  // a strand whose tip would lie in one bends back toward its root until its tip lies against its side, and springs
+  // back once it has gone by.
+  const part=(boxes:number[][],bundles:number[][])=>{
+    const pos=g.attributes.position as T.BufferAttribute,a=pos.array as Float32Array;
+    if(!boxes.length&&!bundles.length){if(parted){a.set(rest);pos.needsUpdate=true;parted=false;}return;}
+    for(let k=0;k<count;k++){
+      const r=root[k],o=k*per*3,tipY=rest[o+sections*6+1],z0=rest[o+sections*6+2],z1=r.z;
+      let need=tipY;
+      for(const b of boxes){if(b[4]>z1+.5||b[5]<z0-.5)continue;const dx=Math.max(b[0]-r.x,r.x-b[1],0);if(dx>1.2)continue;const e=1-dx/1.2,w=e*e*(3-2*e);
+        const edge=r.s>0?b[3]+.25:b[2]-.25;if(r.s>0?edge>need:edge<need)need=need+(edge-need)*w;}
+      for(const c of bundles){if(c[2]>z1+c[3]||c[2]<z0-c[3])continue;const dx=Math.abs(c[0]-r.x);if(dx>=c[3])continue;const half=Math.sqrt(c[3]*c[3]-dx*dx),edge=r.s>0?c[1]+half:c[1]-half;if(r.s>0?edge>need:edge<need)need=edge;}
+      // no further back than near its root
+      need=r.s>0?Math.min(need,r.y-1.5):Math.max(need,r.y+1.5);
+      const d=need-tipY;
+      for(let j=0;j<=sections;j++){const t=j/sections,bend=t*t;for(let q=0;q<2;q++){const v=o+(j*2+q)*3;a[v+1]=rest[v+1]+d*bend;}}
+    }
+    pos.needsUpdate=true;parted=true;
+  };
+  return {mesh,part};
+}
 function createRejectBin(){
   const g=new T.Group();g.name='Locked reject bin';g.position.set(REJECT_BIN.x,REJECT_BIN.y,0);
   const [w,d]=BIN_SIZE,low=REJECT_BIN.floor-12,h=BIN_TOP-low,inner=new T.MeshStandardMaterial({color:0x141515,roughness:.95,name:'Bin interior'});
@@ -541,7 +590,12 @@ function createRejectBin(){
   for(const s of [-1,1]){box(g,'Bin opening throat',[.6,oy-1.2,16],[s*(ox/2-.3),0,REJECT_BIN.lid-8.05],inner,0);box(g,'Bin opening throat',[ox-1.2,.6,16],[0,s*(oy/2-.3),REJECT_BIN.lid-8.05],inner,0);}
   // the brush seal: a row of bristles from each long side, meeting in the middle; the strip's back and its tips
   const [b0,b1]=BRUSH.z;
-  for(const s of [-1,1]){box(g,'Brush seal strip',[ox-1.2,1.6,b1-b0],[0,s*(oy/2-1.4),(b0+b1)/2],M.rubber,0);box(g,'Brush seal bristles',[ox-1.4,oy/2-2.4,b1-b0-2],[0,s*(oy/4-.1),(b0+b1)/2],bristle,0);}
+  // the strip brush's holders, a folded steel channel along each long side clamping the bristles' roots (the bristles
+  // are their own mesh, createBrush)
+  for(const s of [-1,1]){
+    box(g,'Brush seal holder',[ox-1.2,1.8,3.6],[0,s*(oy/2-1.5),b1-1.8],M.silver,.3);
+    box(g,'Brush seal holder lip',[ox-1.2,.5,.6],[0,s*(oy/2-2.55),b1-.3],M.silver,.1);
+  }
   // the hasp on the lid's front edge and its padlock resting on the bench in front of it
   box(g,'Bin hasp',[9,2,8],[0,-ld/2+1,REJECT_BIN.lid+3],M.silver,.4);
   box(g,'Padlock body',[12,5,11],[0,-ld/2-3.5,5.5],M.silver,.8);
@@ -661,8 +715,10 @@ export function createCell(pins=6){
   const toteLine=createToteLine(bench,root),picker=createPicker();root.add(picker.root);
   const tote={...toteLine.totes.fill,out:toteLine.totes.out,spare:toteLine.totes.spare,shutters:toteLine.shutters,mouth:toteLine.mouth,transfer:toteLine.transfer,slots:{fill:[],out:[]}} as LineRig['tote'];
   const rejectBin=createRejectBin();root.add(rejectBin);
+  // the brush's bristles move, so they are not merged with the bin
+  const brush=createBrush();root.add(brush.mesh);
   for(const w of carried.wires)root.add(w.mesh);
-  const rig={root,bench,pallet,plate,fixture,header,housing,pcb,nest,comb,adapter,ferrule:ferruleClamp,tester,dockHead,bin,arm,tool,plug,latch,wires,indicator,turnover,rotator,cradleJaws,pins,upcam,upcamLight,wristLight:tool.light,wristStatus:tool.status,units,lifts,tote,rejectBin,belts,picker,carried};
+  const rig={root,bench,pallet,plate,fixture,header,housing,pcb,nest,comb,adapter,ferrule:ferruleClamp,tester,dockHead,bin,arm,tool,plug,latch,wires,indicator,turnover,rotator,cradleJaws,pins,upcam,upcamLight,wristLight:tool.light,wristStatus:tool.status,units,lifts,tote,rejectBin,brush,belts,picker,carried};
   // Everything the line will show is built now, under the loader: the packed copies in every slot (their harnesses as
   // the simulation leaves them, filled in when it is done), and the simulated harness of each pack and of a post.
   (rig as LineRig).post={track:null,u:-1};
@@ -909,10 +965,19 @@ export interface LineRig {
   // a cleared reject's post: its simulated harness, and the seconds into it shown (-1: none)
   post?:{track:(HarnessTrack&{hiddenAt:number})|null;u:number};units:Record<'unload'|'queue'|'load'|'carried',PalletUnit>;lifts:{unload:T.Object3D;load:T.Object3D};dockHead:T.Object3D;
   belts:{line:T.MeshStandardMaterial;unload:T.MeshStandardMaterial;load:T.MeshStandardMaterial;tunnel:T.MeshStandardMaterial};
-  picker:ReturnType<typeof createPicker>;carried:ReturnType<typeof createCarried>;
+  picker:ReturnType<typeof createPicker>;carried:ReturnType<typeof createCarried>;brush:ReturnType<typeof createBrush>;
   tote:Tote&{out:Tote;spare:Tote;shutters:T.Mesh[];mouth:number[];transfer:{lifts:T.Object3D[];belt:T.MeshStandardMaterial};slots:{fill:Slots;out:Slots}};
 }
 const at=new T.Matrix4(),tilted=new T.Matrix4(),toLocal=new T.Matrix4(),world=new T.Vector3(),rigid=new T.Vector3();
+let brushScratch=new Float64Array(0);
+// The plug's bounds in its own frame (as its housing is placed by a post track), once.
+const plugBoxes=new WeakMap<T.Object3D,T.Box3>();
+function plugBounds(plug:T.Object3D){
+  let b=plugBoxes.get(plug);if(b)return b;
+  b=new T.Box3();plug.updateMatrixWorld(true);const inv=plug.matrixWorld.clone().invert(),m=new T.Matrix4();
+  plug.traverse(o=>{if(o instanceof T.Mesh){o.geometry.boundingBox??o.geometry.computeBoundingBox();b!.union(o.geometry.boundingBox!.clone().applyMatrix4(m.multiplyMatrices(inv,o.matrixWorld)));}});
+  plugBoxes.set(plug,b);return b;
+}
 export function applyLine(rig:LineRig,f:LineFrame&{progress?:number;post?:number}){
   // The index runs on the robot's clock; the operator side (picker, lifts, return run, totes) on its own, which a
   // restart of the robot's cycle does not rewind.
@@ -920,14 +985,23 @@ export function applyLine(rig:LineRig,f:LineFrame&{progress?:number;post?:number
   rig.pallet.position.x=-s;
   rig.plug.visible=f.liveHarness;
   // A cleared reject's post: the ferrule clamp lets the far end go and closes on the empty adapter once the harness is
-  // away; let go over the bin, the plug falls with its harness, and once both are inside they are no longer drawn.
+  // away; let go in the bin's brush seal, the plug sinks through it drawing its harness in, and once both are inside
+  // they are no longer drawn.
   const u=f.post??-1;if(u>=0&&rig.post&&!rig.post.track)finishTracks(rig);
   const pt=rig.post?.track;
   if(rig.post)rig.post.u=pt?u:-1;
   rig.ferrule.position.z=u>=0?FERRULE_LIFT*ease(u,POST.clamp-.3,POST.clamp)*(1-ease(u,CLEAR_SECONDS-.4,CLEAR_SECONDS)):0;
   if(u>=0&&pt){
     if(u>=pt.hiddenAt)rig.plug.visible=false;
-  }
+    // the brush's rows part round the housing going down through them and close on the harness behind it
+    const boxes:number[][]=[],bundles:number[][]=[],{x:bx,y:by}=REJECT_BIN;
+    const lb=plugBounds(rig.plug);pt.housing(u,at);
+    const q=new T.Box3().copy(lb).applyMatrix4(at);boxes.push([q.min.x-bx,q.max.x-bx,q.min.y-by,q.max.y-by,q.min.z,q.max.z]);
+    const n=pt.rope.n;if(brushScratch.length<n*3)brushScratch=new Float64Array(n*3);
+    const c=sampleRope(pt.rope,u,brushScratch);
+    for(let i=0;i<n;i++){const z=c[i*3+2];if(z>BRUSH.z[1]+2||z<BRUSH.z[0]-BRISTLE.droop-2)continue;bundles.push([c[i*3]-bx,c[i*3+1]-by,z,1.9]);}
+    rig.brush.part(boxes,bundles);
+  }else rig.brush.part([],[]);
   for(const w of rig.wires)w.mesh.position.x=-s;
   const {unload,queue,load,carried}=rig.units;
   // Down at the bottom of its lift, an empty pallet runs off into the return tunnel under the bench; the next one,

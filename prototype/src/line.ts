@@ -33,7 +33,7 @@ export interface LineFrame {
 // robot posts the rejected harness into the locked bin; then the bare board indexes on over the rest.
 export const CLEAR_SPAN = .5;
 // How long the post takes, as played (cycle-player pace).
-export const CLEAR_SECONDS = 8.8;
+export const CLEAR_SECONDS = 6.1;
 
 // The operator side runs on its own clock in seconds, so its moves keep a steady speed across the robot's step
 // boundaries. The ms per percent of steps 0..5, as the player runs them (cycle-player PACE).

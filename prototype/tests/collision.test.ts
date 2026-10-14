@@ -123,7 +123,7 @@ test('a cleared reject: the harness hangs from the plug in the fingers, goes dow
         if(v<.05&&/finger|Housing contact|back stop/i.test(m.name)||v>.93&&/tester connector|ferrule/i.test(m.name))continue;
         checked++;const d=depth(m,point,.48),key=`wire ${i+1} / ${m.name}`;if(d>.9&&d>(worst.get(key)??0)){worst.set(key,d);where.set(key,`u ${v.toFixed(2)} at ${u.toFixed(2)} s`);}}}});
   }
-  assert.ok(checked>500,`${checked} wire points near something`);
+  assert.ok(checked>300,`${checked} wire points near something`);
   assert.deepEqual([...worst].slice(0,10).map(([k,d])=>`${k}: ${d.toFixed(2)} mm (${where.get(k)})`),[]);
 });
 
