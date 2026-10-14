@@ -310,3 +310,47 @@ body.process-mode .cycle-timeline input[data-locked="true"]::-webkit-slider-runn
   /* the tap tip opens under the dock, clear of the slider row above it */
   .dock-tip{bottom:auto;top:calc(100% + 8px);transform:translate(-50%,-4px)}
 }
+/* phones: the readouts float on the scene with no cards behind them; light type with a soft shadow, and a dark
+   fade at the very bottom so it reads over the bench and the hall alike. The stack sits lower and tighter. */
+@media(max-width:600px){
+  body .vignette{background:linear-gradient(180deg,#eef0ead0 0,#eef0ea66 165px,transparent 250px),linear-gradient(0deg,#0c110e8c 0,#0c110e40 150px,transparent 260px)}
+  /* once the headline has stepped aside, only the logo needs the light wash */
+  body.process-mode:not([data-shot="wide"]) .vignette,body.free-view .vignette{background:linear-gradient(180deg,#eef0eab3 0,transparent 110px),linear-gradient(0deg,#0c110e8c 0,#0c110e40 150px,transparent 260px)}
+  body.process-mode .line-status,body.process-mode .process-readout,body.process-mode.focused .process-readout,body.process-mode .cycle-timeline,body .about-link,.topbar .buy{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;border:0}
+  body.process-mode .line-status,body.process-mode .process-readout,body.process-mode .process-readout h2,body .process-heading,body .about-link,body .about-link:hover{color:#f4f6f1;text-shadow:0 1px 2px #000b,0 0 14px #0009}
+  body .process-readout #cycle-detail{color:#e2e7e0;border-left-color:#f4f6f166}
+  body .process-heading #cycle-retry{background:#b2402c;color:#fff;text-shadow:none}
+  body.process-mode .line-status{bottom:186px;padding:0;font-size:13px}
+  body.process-mode .process-readout,body.process-mode.focused .process-readout{bottom:150px;padding:0}
+  body.process-mode .cycle-timeline{bottom:108px!important;padding:4px 6px}
+  body.process-mode .cycle-timeline input::-webkit-slider-thumb{background:#f4f6f1;box-shadow:0 1px 6px #000a}
+  body.process-mode .cycle-timeline input{filter:drop-shadow(0 1px 3px #000a)}
+  body.process-mode .cycle-timeline input::-webkit-slider-runnable-track{background:linear-gradient(90deg,#f4f6f1 var(--p,44%),#f4f6f159 var(--p,44%))}
+  body.process-mode .cycle-timeline input[data-locked="true"]::-webkit-slider-runnable-track{background:linear-gradient(90deg,#f4f6f1 var(--p,44%),#f4f6f159 var(--p,44%) var(--lock,100%),transparent var(--lock,100%)),repeating-linear-gradient(135deg,#ff8a7299 0 2px,#ff8a7233 2px 4px)}
+  body.process-mode:has(#cycle-clear-fault:not([hidden])) .process-readout{bottom:164px!important}
+  body.process-mode:has(#cycle-clear-fault:not([hidden])) .line-status{bottom:200px}
+  body .about-link{padding:4px 0}
+  .topbar .buy{color:#1d2a22;text-shadow:0 0 10px #eef0ea,0 0 3px #eef0ea}
+  /* the tap tip shows above the dock for a moment, over the slider, never on the About link */
+  .dock-tip{top:auto;bottom:calc(100% + 10px);transform:translate(-50%,4px)}
+}
+/* a phone on its side: the stage is the screen, so every control stays in view */
+@media(orientation:landscape) and (max-height:500px){
+  .stage{min-height:0!important}
+  /* the readouts go to a column on the left, floating like on a phone held upright, so the arm stays clear */
+  body.process-mode .line-status,body.process-mode .process-readout,body.process-mode.focused .process-readout,body.process-mode .cycle-timeline,body .about-link{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;border:0}
+  body.process-mode .line-status,body.process-mode .process-readout,body.process-mode .process-readout h2,body .process-heading,body .about-link,body .about-link:hover{color:#f4f6f1;text-shadow:0 1px 2px #000b,0 0 14px #0009}
+  body .process-readout #cycle-detail{color:#e2e7e0;border-left-color:#f4f6f166}
+  body .vignette{background:linear-gradient(90deg,#eef0eab3,transparent 40%),linear-gradient(0deg,#0c110e99 0,#0c110e40 120px,transparent 200px)}
+  body.process-mode .line-status{left:24px;transform:none;bottom:118px;padding:0;font-size:13px}
+  body.process-mode .process-readout,body.process-mode.focused .process-readout{left:24px;transform:none;bottom:84px!important;padding:0}
+  body.process-mode .cycle-timeline{left:18px;transform:none;bottom:46px!important;width:260px;padding:4px 6px}
+  body.process-mode:has(#cycle-clear-fault:not([hidden])) .cycle-timeline{width:auto}
+  body.process-mode .cycle-timeline input::-webkit-slider-runnable-track{background:linear-gradient(90deg,#f4f6f1 var(--p,44%),#f4f6f159 var(--p,44%))}
+  body.process-mode .cycle-timeline input::-webkit-slider-thumb{background:#f4f6f1;box-shadow:0 1px 6px #000a}
+  body .hud-controls{left:auto;right:16px;bottom:14px;align-items:flex-end}
+  body .stage-footer{left:24px;right:auto;bottom:12px;justify-content:flex-start}
+  body .headline{top:70px}
+  body.process-mode:not([data-shot="wide"]) .headline,body.free-view .headline{opacity:0}
+  .guided-view{top:16px;bottom:auto}
+}
