@@ -29,27 +29,20 @@ export const REJECT = [-125, -90, 9.5] as const;
 // plate), its floor (its body goes down through the bench into the cabinet, so a harness hangs into it at length)
 // and the opening in its lid (x, y).
 export const REJECT_BIN = { x: -200, y: -85, lid: 6, floor: -520, opening: [30, 34] } as const;
-// A cleared reject: the robot posts the harness into the bin, in seconds from the start of the post, at the arm's
-// usual speeds: it comes over the tray and grips the plug, and the ferrule clamp lets the far end go (clamp); it
-// lifts the plug and carries it over the bin, the harness hanging and its end drawn along after it; it lowers the plug
-// into the opening's brush seal and lets go (release); from `sink` the plug goes down through the brush at the steady
-// pace the bristles let it, and draws the harness in after it, through the brush, until the end is in (..home: the arm
-// rises clear and waits). The arm goes home as the bare board indexes on.
-export const POST = { hover: 1.2, grip: 1.85, closed: 2.05, lifted: 3.3, over: 4.5, posting: 4.75, posted: 6.15, release: 6.25, clear: 6.45, sink: 6.35, clamp: 4.75, home: 7.5 };
+// A cleared reject: the robot posts the harness into the bin, in seconds from the start of the post, at no more than
+// 350 mm/s: it comes over the tray (hover) and down onto the plug (grip), and closes on it; the ferrule clamp lets the
+// far end go (clamp); it lifts the plug just clear of the tray (lifted), carries it over the bin's opening, low, the
+// harness drawn along the bench after it (over), and pushes it down into the opening's brush seal (posted); it lets go
+// (release..clear) and rises clear of the plug (up), then goes straight home (home) while from `sink` the plug goes down
+// through the brush at the steady pace the bristles let it and draws the harness in after it, until the end is in.
+export const POST = { hover: 1.3, grip: 1.75, closed: 1.95, clamp: 2.05, lifted: 2.4, over: 2.95, posted: 3.45, release: 3.55, sink: 3.65, clear: 3.75, up: 4.05, home: 5.65 };
 // The plug's way down through the brush to the bin's floor (the housing's origin rests 4.15 mm over it): it eases up to
 // `fast` (mm/s), slows to `slow` from `depth` mm down, the pace at which the harness's end comes in off the bench
 // (drawn in faster, the end of a pulled harness whips round as it straightens), and eases to rest over `out` s.
 export const POST_SINK = { fast: 260, ramp: .4, depth: 280, slow: 170, turn: .3, out: .8, z: REJECT_BIN.floor + 4.15 };
-// The harness's two lowest swing periods hanging from the plug (s): the carry is shaped so it leaves neither going.
-export const POST_SWING = [1.02, .44] as const;
-function shaped(u:number,a:number,b:number){
-  const [p1,p2]=POST_SWING,lag=(p1+p2)/2,move=b-a-lag;let x=0;
-  for(const d of [0,p1/2,p2/2,lag])x+=.25*smooth((u-a-d)/move);
-  return x;
-}
-// The tool over the bin: the plug 8 mm toward -y of the opening's middle, so the harness beside it hangs into it too;
-// as high as the arm reaches there. Posted, the plug's wire face is 2 mm inside the lid.
-export const POST_Z = 238;
+// The height the plug is carried at from the tray to the bin: just clear of the tray's walls and the bin's lid. Posted,
+// the plug's wire face is 2 mm inside the lid, its bottom in the brush.
+export const POST_Z = 45;
 // The upward-looking camera that checks the plug in the fingers: centre x, y and the top of its ring light (scene mm).
 export const UPCAM = [-62, -48, 10] as const;
 // Where this board's header really is.
@@ -275,7 +268,7 @@ function lineFrame(f:ProcessFrame,p:number,kind:CycleCase,line:LineState,op:numb
   }
   // A passed plug rides out with its pallet; a rejected one is in the bin, and the arm goes home from it.
   if(!reject)f.plug=[plug[0]-f.shift,plug[1],plug[2]];
-  else{f.plug=postedPlug(CLEAR_SECONDS);f.jaw=1;f.tool=mix(POST_CLEAR,HOME,x);}
+  else{f.plug=postedPlug(CLEAR_SECONDS);f.jaw=1;f.tool=[...HOME];}
   f.focus=lerp(reject?postedPlug():f.plug,[NEST[0]+PALLET_PITCH-f.shift,NEST[1],NEST[2]],smooth(x/.35));
   f.message=reject?`Reject cleared. The board goes back for a new harness; ${next} moves in.`:`Passed. ${f.unitLabel} moves out to be packed; ${next} moves in.`;
   // Once the tester has let go of the pallet, the cell is ready for a fresh unit.
@@ -307,7 +300,7 @@ const postedPlug=(u=0):Point=>[POST_TOOL[0]+GRASP[0],POST_TOOL[1]+GRASP[1],POSTE
 const POST_CLEAR:Point=[POST_TOOL[0],POST_TOOL[1],POSTED_Z+40];
 function post(f:ProcessFrame,u:number){
   f.post=u;f.rejected=false;f.accepted=false;
-  const hover:Point=[POST_TRAY[0],POST_TRAY[1],120],up:Point=[POST_TRAY[0],POST_TRAY[1],210],posted:Point=[POST_TOOL[0],POST_TOOL[1],POSTED_Z];
+  const hover:Point=[POST_TRAY[0],POST_TRAY[1],60],up:Point=[POST_TRAY[0],POST_TRAY[1],POST_Z],posted:Point=[POST_TOOL[0],POST_TOOL[1],POSTED_Z];
   f.jaw=1;f.plug=[...REJECT];
   if(u<POST.hover)f.tool=mix(HOME,hover,u/POST.hover);
   else if(u<POST.grip)f.tool=mix(hover,POST_TRAY,(u-POST.hover)/(POST.grip-POST.hover));
@@ -316,15 +309,14 @@ function post(f:ProcessFrame,u:number){
     f.jaw=0;
     // the fingers shut, then a beat, then the lift
     if(u<POST.lifted)f.tool=mix(POST_TRAY,up,(u-POST.closed-.1)/(POST.lifted-POST.closed-.1));
-    else if(u<POST.over)f.tool=lerp(up,POST_TOOL,shaped(u,POST.lifted,POST.over));
-    else if(u<POST.posting)f.tool=[...POST_TOOL];
-    else f.tool=mix(POST_TOOL,posted,(u-POST.posting)/(POST.posted-POST.posting));
+    else if(u<POST.over)f.tool=mix(up,POST_TOOL,(u-POST.lifted)/(POST.over-POST.lifted));
+    else f.tool=mix(POST_TOOL,posted,(u-POST.over)/(POST.posted-POST.over));
     held(f);
   }
   else{
-    // open, then straight up clear of the lid; it goes home as the board indexes on (afterPost)
+    // open, straight up clear of the plug, then home while the plug sinks on through the brush
     f.jaw=smooth((u-POST.release)/(POST.clear-POST.release));f.plug=postedPlug(u);
-    f.tool=u<POST.clear?[...posted]:mix(posted,POST_CLEAR,(u-POST.clear)/(POST.home-POST.clear));
+    f.tool=u<POST.clear?[...posted]:u<POST.up?mix(posted,POST_CLEAR,(u-POST.clear)/(POST.up-POST.clear)):mix(POST_CLEAR,HOME,(u-POST.up)/(POST.home-POST.up));
   }
 }
 
