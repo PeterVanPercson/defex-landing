@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { PoseStream, damping, settleSpring, isClick, isDrag, lensShift } from '../src/motion.ts';
+import { PoseStream, damping, settleSpring, isClick, isDrag, lensShift, idleWait, spreadSee } from '../src/motion.ts';
 
 test('interpolates computed motion at either display refresh rate',()=>{
   for(const hz of [60,120]){
@@ -99,4 +99,16 @@ test('the lens shift brings the look point to the centre of the frame', () => {
   const p = look.clone().project(camera);
   assert.ok(Math.hypot(p.x, p.y) < 1e-3, `look point at ${p.x.toFixed(4)}, ${p.y.toFixed(4)}`);
   assert.ok(Math.abs(target.clone().project(camera).y) > .1, 'the camera turns about a point below it');
+});
+
+test('a free camera goes back after 8 s with no input, never while a pointer is down',()=>{
+  assert.equal(idleWait(8000,false),0);assert.equal(idleWait(12000,false),0);
+  assert.equal(idleWait(3000,false),5000);assert.equal(idleWait(7900,false),250);
+  // held down: always wait, however long ago the last move was
+  assert.ok(idleWait(20000,true)>0);assert.ok(idleWait(0,true)>0);
+});
+
+test('the live wires fade over the first part of the spread and are back before it ends, with no step',()=>{
+  assert.equal(spreadSee(0),1);assert.equal(spreadSee(.7),0);assert.equal(spreadSee(1),0);
+  let last=1;for(let s=0;s<=1;s+=.001){const v=spreadSee(s);assert.ok(v<=last+1e-12);assert.ok(last-v<.004);last=v;}
 });

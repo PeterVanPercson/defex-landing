@@ -58,3 +58,9 @@ export function lensShift(position:Vector3,target:Vector3,look:Vector3,filmWidth
   const depth=-p.z;if(depth<=0)return new Vector2();
   return new Vector2(p.x/depth*lens/filmWidth,-p.y/depth*lens/filmHeight);
 }
+
+// A free camera goes back to the guided shots once nobody has touched it for `idle` ms and no pointer is down:
+// returns 0 when it should go now, otherwise how long to wait before asking again.
+export function idleWait(sinceInput:number,pointerDown:boolean,idle=8000){return pointerDown?Math.max(250,idle-sinceInput):sinceInput>=idle-1?0:Math.max(250,idle-sinceInput);}
+// How much of the live harness shows while Parts pulls the cell apart: gone by 70 % of the spread, back by its end.
+export const spreadSee=(spread:number)=>{const t=Math.max(0,Math.min(1,spread/.7));return 1-t*t*(3-2*t);};

@@ -13,7 +13,10 @@ import type { Sample, Snapshot, Trial } from './engine.ts';
 const el=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const all=<T extends HTMLElement>(selector:string)=>Array.from(document.querySelectorAll<T>(selector));
 const text=(id:string,value:string)=>{const node=el(id);if(node.textContent!==value)node.textContent=value;};
-const send=(data:object)=>worker.postMessage(data);
+// The physics worker starts only once the stage is up (it fetches the 4.5 MB engine at once, which would take the
+// bandwidth the scene needs first); what is sent before then waits for it, in order.
+let worker:Worker|null=null;const unsent:object[]=[];
+const send=(data:object)=>{if(worker)worker.postMessage(data);else unsent.push(data);};
 // After a pass the open hand waits above the seated plug. Anything that moves the plug again (a run, a reset, a new
 // setup) first closes the hand on it; what is sent meanwhile goes in order once the fingers are on the plug.
 let parked:object[]|null=null;
@@ -45,7 +48,7 @@ const syncModes=()=>modeButtons.forEach(b=>b.setAttribute('aria-pressed',String(
 // Inside frames the connector itself, so only Inside shows pressed, not Close-up too.
 const syncCamera=()=>{cameraButtons.forEach(b=>b.setAttribute('aria-pressed',String(!free&&currentMode!=='inside'&&b.dataset.view===currentView)));syncModes();};
 let controller:Controller='fixed';
-let ready=false,playing=false;
+let ready=false,playing=false,failed=false;
 let state:Snapshot|null=null;
 let samples:Sample[]=[];
 let sampleEpoch=-1;
@@ -56,20 +59,21 @@ let tourTimer:ReturnType<typeof setTimeout>|null=null,tourDeadline=0,tourDelay=0
 let configTimer:ReturnType<typeof setTimeout>|null=null;
 let recorder:DemoRecorder|null=null;
 let lastChartDraw=0,trialCount=0;
-const worker=new Worker(new URL('./simulation.worker.ts',import.meta.url),{type:'module'});
 if(isEmbed)document.body.classList.add('embed');
-// Let the worker start fetching the physics engine before the scene build ties up this thread.
-await new Promise(resolve=>setTimeout(resolve));
 
 if(new URLSearchParams(location.search).get('view')!=='schematic'){
   try{scene=new WorkcellScene(el('scene'),config,{labels:el('labels'),tooltip:el('tooltip'),onDirector:on=>document.body.classList.toggle('focused',on||currentView!=='overview'),
     // The connector and gripper move all cycle: a pick of either follows them in the close-up.
     onPick:id=>id==='connector'||id==='gripper'?selectView('connector',false):showPart(id),
-    onFree:on=>{free=on;el('guided-view').hidden=!on;document.body.classList.toggle('free-view',on);syncCamera();}},isEmbed);}
+    onFree:on=>{free=on;el('guided-view').hidden=!on;document.body.classList.toggle('free-view',on);syncCamera();},
+    // The shot the camera has arrived at: the headline waits for it, not just for the shot the cycle asks for.
+    onSettle:shot=>{document.body.dataset.cam=shot;}},isEmbed);}
   catch(error){console.warn('3D renderer unavailable',error);}
 }else text('fallback-title','Live side view of the simulation.');
 function useSchematic(){
-  cyclePlayer?.deactivate();cyclePlayer=null;scene?.dispose();scene=null;
+  // The cycle's own listeners go with it, so Play can't run a cycle nobody sees over the schematic.
+  cyclePlayer?.dispose();cyclePlayer=null;scene?.dispose();scene=null;
+  el('loading').hidden=ready||failed;startWorker();
   document.body.classList.remove('process-mode');
   document.querySelector<HTMLElement>('.cycle-cases')!.hidden=true;
   el('process-steps').innerHTML=CYCLE_STEPS.map((s,i)=>`<div><span>${i+1}</span><strong>${s[0]}</strong><small>${s[2]}</small></div>`).join('');
@@ -216,7 +220,8 @@ scrubber.addEventListener('pointerdown',()=>scene?.setScrubbing(true));scrubber.
 addEventListener('pointerup',letGoOfScrub);addEventListener('pointercancel',letGoOfScrub);
 // The first time a pointer or finger comes onto the stage, say how the camera is moved; it fades after 3 s.
 {const hint=el('stage-hint'),stageEl=el('scene');let shown=false;
-  if(matchMedia('(pointer: coarse)').matches)hint.textContent='Drag to turn · pinch to zoom';
+  const apple=/Mac|iPhone|iPad|iPod/i.test((navigator as Navigator&{userAgentData?:{platform?:string}}).userAgentData?.platform||navigator.platform||navigator.userAgent);
+  hint.textContent=matchMedia('(pointer: coarse)').matches?'Drag to turn · pinch to zoom':`Drag to turn · pinch or ${apple?'⌘':'Ctrl'}-scroll to zoom`;
   const show=()=>{if(shown||isEmbed||!scene)return;shown=true;hint.classList.add('visible');setTimeout(()=>hint.classList.remove('visible'),3000);};
   stageEl.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')show();});stageEl.addEventListener('touchstart',show,{passive:true});}
 for(const b of modeButtons)b.addEventListener('click',()=>selectMode(b.dataset.mode as Mode));
@@ -225,7 +230,10 @@ el('retry').addEventListener('click',()=>location.reload());
 el('stage-retry').addEventListener('click',()=>location.reload());
 
 const notes=el<HTMLDialogElement>('notes');
-all('[data-open-notes]').forEach(b=>b.addEventListener('click',()=>notes.showModal()));
+// A dialog taller than the screen scrolls its text under a soft fade; the actions stay in view below it.
+{const body=notes.querySelector('dl')!,more=()=>{body.toggleAttribute('data-more',body.scrollHeight-body.scrollTop-body.clientHeight>2);};
+  body.addEventListener('scroll',more,{passive:true});new ResizeObserver(more).observe(body);
+  all('[data-open-notes]').forEach(b=>b.addEventListener('click',()=>{notes.showModal();body.scrollTop=0;more();}));}
 el('close-notes').addEventListener('click',()=>notes.close());
 notes.addEventListener('click',e=>{if(e.target===notes){const r=notes.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)notes.close();}});
 function downloadBlob(blob:Blob,name:string){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
@@ -384,7 +392,9 @@ new ResizeObserver(drawChart).observe(el('force-chart'));
 function error(message:string){
   console.error(message);
   const loaded=ready,advice=loaded?'The simulation stopped. Reload to start it again.':'The physics engine didn’t load. Check your connection, then reload.';
-  ready=false;playing=false;stopTour();el('loading').hidden=true;el('retry').hidden=false;
+  ready=false;failed=true;playing=false;stopTour();el('retry').hidden=false;
+  // The scripted cycle needs no physics: the stage comes up when the scene has drawn, never as an empty grey frame.
+  if(scene&&cyclePlayer)stageReady.then(()=>{el('loading').hidden=true;});else el('loading').hidden=true;
   if(scene){scene.playing=false;scene.direct(false);scene.offline();}
   el<HTMLButtonElement>('save-video').disabled=true;
   text('engine-status','Unavailable');el('engine-status').classList.add('error-notice');
@@ -393,11 +403,16 @@ function error(message:string){
   el('stage-error').hidden=!!cyclePlayer?.isActive();text('stage-error-message',advice);text('stage-state','Unavailable');
   refreshControls();text('engine-status','Unavailable');
 }
-worker.onerror=e=>error(e.message||'Reload the simulation to try again.');
-worker.onmessage=({data})=>{
+function startWorker(){
+  if(worker)return;worker=new Worker(new URL('./simulation.worker.ts',import.meta.url),{type:'module'});
+  worker.onerror=e=>error(e.message||'Reload the simulation to try again.');worker.onmessage=onWorker;
+  for(const data of unsent.splice(0))worker.postMessage(data);
+}
+function onWorker({data}:MessageEvent){
   if(data.type==='ready'){
-    // The stage stays under the loader until the scene has compiled, chosen its quality and drawn its first frames.
-    ready=true;(scene?.ready??Promise.resolve()).then(()=>{if(ready)el('loading').hidden=true;});
+    // The worker only gates the physics controls (Try it yourself); the 3D stage came up on its own. Without the 3D
+    // view the schematic needs the physics, so it waits for it.
+    ready=true;if(!scene)el('loading').hidden=true;
     el<HTMLButtonElement>('save-video').disabled=!scene||typeof MediaRecorder==='undefined';refreshControls();
   }
   if(data.type==='state'){
@@ -435,8 +450,21 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('keyup',e=>{if(e.code==='Space'&&spaceTaken){spaceTaken=false;e.preventDefault();}});
 document.querySelector('.tryit')!.addEventListener('toggle',drawChart);
 setupDock(document.querySelector<HTMLElement>('.dock')!);
+// The Guided view chip sits beside the dock: where the dock ends and how high its middle is, kept up to date.
+{const stage=document.querySelector<HTMLElement>('.stage')!,dock=document.querySelector<HTMLElement>('.dock')!;
+  const place=()=>{const s=stage.getBoundingClientRect(),d=dock.getBoundingClientRect();if(!d.width)return;stage.style.setProperty('--dock-r',`${Math.round(d.right-s.left)}px`);stage.style.setProperty('--dock-cy',`${Math.round(s.bottom-(d.top+d.bottom)/2)}px`);};
+  const ro=new ResizeObserver(place);ro.observe(stage);ro.observe(dock);}
 settingInputs.forEach(input=>input.disabled=true);syncConfig();send({type:'init',config});
+// Without the 3D view the schematic needs the physics at once.
+if(!scene)startWorker();
 
+// The scripted cycle needs no physics: the stage stays under the loader until the scene has compiled, chosen its
+// quality and drawn its first frames, and the simulated harnesses are built (so no scrub stalls on them), however
+// long the physics engine takes.
+// The stage shows once the scene has compiled and drawn; the rope tracks finish in the background (Clear reject waits on
+// them in the rare case it comes first).
+const stageReady=scene?scene.ready:Promise.resolve();
+stageReady.then(()=>{if(scene&&cyclePlayer)el('loading').hidden=true;startWorker();});
 if(scene)cyclePlayer=setupCycle(scene,()=>{stopTour();if(currentMode==='parts')selectMode('machine',false);send({type:'pause'});},
   // Back from an experiment run: drop its end card and close-up camera.
   ()=>{el('endcard').hidden=true;document.body.classList.remove('ended');scene?.direct(false);selectView('overview',false);});

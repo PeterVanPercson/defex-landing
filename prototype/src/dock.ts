@@ -1,15 +1,11 @@
+// A tip names a dock button on hover. A touch screen shows none after a tap: the button shows pressed, and a tip
+// above the dock would land on the slider.
 export function setupDock(root: HTMLElement) {
   const items = Array.from(root.querySelectorAll<HTMLButtonElement>('.dock-item'));
-  let timeout: ReturnType<typeof setTimeout>;
+  const hover = () => matchMedia('(hover: hover)').matches;
   items.forEach(item => {
     item.addEventListener('pointerleave', () => item.classList.remove('tip-off'));
-    item.addEventListener('pointerdown', () => { if (matchMedia('(hover: hover)').matches) item.classList.add('tip-off'); });
+    item.addEventListener('pointerdown', () => { if (hover()) item.classList.add('tip-off'); });
+    item.addEventListener('click', () => { if (hover()) item.classList.add('tip-off'); });
   });
-  items.forEach(item => item.addEventListener('click', () => {
-    if (matchMedia('(hover: hover)').matches) { item.classList.add('tip-off'); return; }
-    clearTimeout(timeout);
-    items.forEach(other => other.classList.remove('show-tip'));
-    item.classList.add('show-tip');
-    timeout = setTimeout(() => item.classList.remove('show-tip'), 1200);
-  }));
 }
