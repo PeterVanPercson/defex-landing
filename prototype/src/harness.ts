@@ -6,8 +6,9 @@ import * as T from 'three';
 // a short breakout that fans the wires into the comb and on into the pallet's test adapter. Each wire keeps its length; only the S's
 // amplitude (capped) and, past the cap, the hanging span's sag change as the housing moves.
 export const HARNESS_LENGTH = 440;
-// Control points per wire; dressHarness grows the caller's array to this length.
-export const HARNESS_POINTS = 72;
+// Control points per wire, about 3.1 mm apart; dressHarness grows the caller's array to this length. One per node of
+// the simulated harness (rope.ts), so a carried or posted harness is drawn through every node it is simulated with.
+export const HARNESS_POINTS = 143;
 export const WIRE_RADIUS = .48;
 export const SLACK_LIMIT = 26;
 // How far the hanging span's first handle falls toward the plate (0 stiff, 1 straight down).

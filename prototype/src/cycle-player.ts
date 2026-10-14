@@ -1,6 +1,6 @@
 import { CYCLE_STEPS, EXAMPLE_LIMITS, processFrame, processRecord, recoveryStart, seatPoints } from './process.ts';
 import type { CycleCase, ProcessFrame, ProcessRecord } from './process.ts';
-import { CLEAR_SPAN, CYCLE_END, FIRST_UNIT, INDEX_START } from './line.ts';
+import { CLEAR_SECONDS, CLEAR_SPAN, CYCLE_END, FIRST_UNIT, INDEX_START } from './line.ts';
 import type { LineState } from './line.ts';
 import type { WorkcellScene } from './scene.ts';
 
@@ -9,11 +9,13 @@ import type { WorkcellScene } from './scene.ts';
 // read. The index to the next unit takes 3.2 s, so a pass takes about 25 s; the fallback search spends longer
 // in the press, and a reject's retry takes about 11 s.
 export const PACE=[120,240,220,390,250,250,200,180,150,160,400];
-// A cleared reject: the operator takes the harness out of the tray over 0.8 s, a beat, then the pallets move.
-const SEARCH_PRESS=500,RETRY_MS=11000,CLEAR_MS=1250;
+// A cleared reject: the first CLEAR_SPAN of its index is the robot posting the harness into the bin, CLEAR_SECONDS
+// (line.ts); the bare board's index over the rest takes as long as a pass's whole index, so the pallets move at the
+// same speed either way.
+const SEARCH_PRESS=500,RETRY_MS=11000,CLEAR_MS=CLEAR_SECONDS*1000/(CLEAR_SPAN*(CYCLE_END-INDEX_START)),REJECT_INDEX=PACE[10]/(1-CLEAR_SPAN);
 export const isReject=(kind:CycleCase)=>recoveryStart(kind)!==null;
 export function pace(p:number,kind:CycleCase){
-  if(p>=INDEX_START)return isReject(kind)&&p<INDEX_START+CLEAR_SPAN*(CYCLE_END-INDEX_START)?CLEAR_MS:PACE[10];
+  if(p>=INDEX_START)return isReject(kind)?p<INDEX_START+CLEAR_SPAN*(CYCLE_END-INDEX_START)?CLEAR_MS:REJECT_INDEX:PACE[10];
   const start=recoveryStart(kind);
   if(start!==null&&p>=start)return RETRY_MS/(100-start);
   const step=Math.max(0,CYCLE_STEPS.filter(s=>p>=s[1]).length-1);
@@ -46,10 +48,10 @@ export function tally(run:LineRun,f:ProcessFrame=runFrame(run)){
 export const finished=(run:LineRun)=>run.logged||verdict(run)!==null;
 // Restart the robot's cycle on this unit, optionally with another case. A unit that has its verdict is finished
 // first (the caller logs it if it was not yet), so the restart applies to the next unit and nothing is counted
-// twice; otherwise the operator side keeps its place.
+// twice; otherwise the operator side keeps its place, and a case queued for the next unit applies to this one now.
 export function restartRun(run:LineRun,kind?:CycleCase):LineRun{
   if(finished(run))return startRun(kind??run.next??'pass',nextLine(run.line,run.kind));
-  return {...run,kind:kind??run.kind,progress:0,logged:false,cleared:false,held:false,operator:Math.max(run.operator??0,Math.min(run.progress,INDEX_START))};
+  return {...run,kind:kind??run.next??run.kind,next:undefined,progress:0,logged:false,cleared:false,held:false,operator:Math.max(run.operator??0,Math.min(run.progress,INDEX_START))};
 }
 // Whether the unit's frames under `kind` match the current case's all the way to the current progress, so the case
 // can change in place without restarting the robot's cycle.
@@ -91,6 +93,34 @@ export function advanceRun(from:LineRun,ms:number,events:RunEvents={}):LineRun {
   return run;
 }
 
+// Play starts the next unit only from the very end of this one. Anywhere before, it plays on from where it is, so a
+// reject scrubbed to 100 is logged and holds the line for Clear reject, as a played one does.
+export const restartsOnPlay=(run:LineRun)=>run.progress>=CYCLE_END;
+// Reset: a reject that has its verdict but has not been cleared goes to the held line (only Clear reject moves it
+// on); anything else restarts as restartRun does.
+export function resetRun(run:LineRun):LineRun{
+  if(isReject(run.kind)&&!run.cleared&&finished(run))return {...run,progress:INDEX_START,held:true};
+  return restartRun(run);
+}
+// A case picked while the robot works applies at once only while this unit has done nothing that would differ;
+// otherwise, and once the unit has its verdict, it is queued for the next unit, so the arm never jumps.
+export function pickCase(run:LineRun,kind:CycleCase):LineRun{
+  if(finished(run))return {...run,next:kind};
+  if(kind===run.kind)return {...run,next:undefined};
+  return sameSoFar(run,kind)?{...run,kind,next:undefined}:{...run,next:kind};
+}
+// A scrub only looks. One back into a unit that has no verdict yet drops a case queued for the next unit.
+export function scrubRun(run:LineRun,value:number):LineRun{
+  const r={...run,progress:Math.min(value,runEnd(run))};
+  return finished(r)?r:{...r,next:undefined};
+}
+// The case the buttons show pressed: one queued for the next unit, else what this unit runs.
+export const pressedCase=(run:LineRun):CycleCase=>run.next??run.kind;
+export const CASE_NAMES:Record<CycleCase,string>={pass:'Pass',search:'Needs a search','half-seat':'Half-seated',open:'Open wire',short:'Shorted wires'};
+export const queuedNote=(run:LineRun)=>run.next?`${CASE_NAMES[run.next]} next`:'';
+// The step's retry tag: through the second attempt, gone once the unit is rejected and through the index.
+export const retryShown=(f:ProcessFrame)=>!!f.retry&&!f.rejected&&f.accepted!==false&&f.step!==CYCLE_STEPS.length-1;
+
 export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>void=()=>{}){
   const byId=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
   const slider=byId<HTMLInputElement>('cycle-scrub'),play=byId<HTMLButtonElement>('cycle-play');
@@ -98,7 +128,9 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   const tour=byId<HTMLButtonElement>('tour');
   const caseButtons=[...document.querySelectorAll<HTMLButtonElement>('[data-cycle-case]')];
   const records:ProcessRecord[]=[];
-  let run=startRun(),playing=false,active=true,request=0,last=0,lastContacts='',traceKind='',started=false,nudgeTimer=0;
+  // Every listener the player adds goes with dispose().
+  const ctl=new AbortController(),on={signal:ctl.signal};
+  let run=startRun(),disposed=false,playing=false,active=true,request=0,last=0,lastContacts='',traceKind='',started=false,nudgeTimer=0;
   const steps=byId('process-steps');
   steps.innerHTML=CYCLE_STEPS.map((s,i)=>`<button data-cycle-step="${i}" aria-current="false"><span>${String(i+1).padStart(2,'0')}</span><strong>${s[0]}</strong></button>`).join('');
   const pad=(n:number)=>String(n).padStart(3,'0');
@@ -114,11 +146,12 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
     byId('cycle-percent').textContent=`${Math.round(progress/CYCLE_END*100)}%`;
     byId('cycle-title').textContent=f.step===CYCLE_STEPS.length-1?f.title:f.accepted===true&&progress>=95?'Passed':f.rejected?'Rejected':f.title;
     byId('cycle-index').textContent=String(f.step+1).padStart(2,'0');
-    const retry=document.getElementById('cycle-retry');if(retry)retry.hidden=!f.retry||f.step===CYCLE_STEPS.length-1;
+    const retry=document.getElementById('cycle-retry');if(retry)retry.hidden=!retryShown(f);
     const d=document.getElementById('cycle-detail');if(d){d.textContent=f.detail;d.hidden=!f.detail;}
     const status=document.getElementById('line-status');
     const count=tally(run,f);
-    if(status)status.textContent=`${f.unitLabel} · ${count.passed} passed · ${count.rejected} rejected${f.lineNote?` · ${f.lineNote}`:''}`;
+    const queued=queuedNote(run);
+    if(status)status.textContent=`${f.unitLabel} · ${count.passed} passed · ${count.rejected} rejected${f.lineNote?` · ${f.lineNote}`:''}${queued?` · ${queued}`:''}`;
     byId('cycle-copy').textContent=f.message;byId('cycle-scope').textContent=f.scope;
     byId('cycle-force').textContent=`${f.force.toFixed(1)} / ${EXAMPLE_LIMITS.press.toFixed(0)} N`;
     byId('cycle-depth').textContent=`${f.depth.toFixed(1)} mm`;
@@ -165,7 +198,7 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   function traceY(f:{force:number;pullForce:number;extractionForce:number}){return 29-(f.force-f.pullForce-f.extractionForce)*.42;}
   function stop(){playing=false;cancelAnimationFrame(request);request=0;draw();}
   function activate(){if(!active){active=true;document.body.classList.add('process-mode');onActivate();onEnter();}document.body.classList.remove('tour-active');}
-  function syncCases(kind=finished(run)?run.next??'pass':run.kind){for(const b of caseButtons)b.setAttribute('aria-pressed',String(b.dataset.cycleCase===kind));}
+  function syncCases(kind=pressedCase(run)){for(const b of caseButtons)b.setAttribute('aria-pressed',String(b.dataset.cycleCase===kind));}
   const events:RunEvents={
     log:r=>log(r),
     hold:()=>{playing=false;},
@@ -186,10 +219,14 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   function toggle(){
     // Bring the stage back first, so a held reject shows its Clear reject button again.
     activate();if(run.held){nudge();draw();return;}if(playing){stop();return;}onActivate();
-    if(!started||run.progress>=runEnd(run)){finish();run=restartRun(run);}started=true;
+    if(!started||restartsOnPlay(run)){finish();run=restartRun(run);syncCases();}started=true;
     go();
   }
-  function restart(){if(run.held){activate();nudge();draw();return;}activate();stop();finish();run=restartRun(run);syncCases();draw();}
+  // Reset: an uncleared reject with its verdict is logged and holds the line for Clear reject, never skipped.
+  function restart(){
+    if(run.held){activate();nudge();draw();return;}activate();stop();
+    const next=resetRun(run);finish();run={...next,logged:next.held||next.logged};syncCases();draw();if(run.held)nudge();
+  }
   // A unit with its verdict is logged once before the line moves on past it.
   function finish(){if(finished(run)&&!run.logged){run={...run,logged:true};log(run);}}
   function showStage(){document.querySelector('.stage')?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
@@ -209,33 +246,41 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
     byId('cycle-log-status').textContent=`${records.length} illustrated unit${records.length>1?'s':''} recorded during this visit. Download to retain the checks and force traces.`;
   }
   // Scrubbing only looks; a unit is recorded, a reject held and the line moved on only by a played cycle.
-  slider.addEventListener('input',()=>{if(run.held)return;started=true;activate();const value=Number(slider.value);stop();run={...run,progress:Math.min(value,runEnd(run))};draw();});
-  play.addEventListener('click',toggle);reset.addEventListener('click',restart);
-  // The operator takes the rejected harness to the locked bin; the bare board then indexes out and the line runs on.
+  slider.addEventListener('input',()=>{if(run.held)return;started=true;activate();const value=Number(slider.value);stop();run=scrubRun(run,value);syncCases();draw();},on);
+  play.addEventListener('click',toggle,on);reset.addEventListener('click',restart,on);
+  // A person clears the reject; the robot then posts the harness into the locked bin and the bare board indexes on.
+  // The post's rope track finishes building in the background after the reveal; on the rare early clear it waits.
+  let clearing=false;
   clearFault.addEventListener('click',()=>{
-    if(!run.held)return;run={...run,held:false,cleared:true};started=true;clearTimeout(nudgeTimer);clearFault.classList.remove('nudge');tour.classList.remove('show-tip');
+    if(!run.held||clearing)return;
+    const built=scene.tracksBuilt?.();
+    if(built&&!scene.tracksDone?.()){clearing=true;clearFault.setAttribute('aria-busy','true');built.then(()=>{clearing=false;clearFault.removeAttribute('aria-busy');clearFault.click();});return;}
+    run={...run,held:false,cleared:true};started=true;clearTimeout(nudgeTimer);clearFault.classList.remove('nudge');tour.classList.remove('show-tip');
     byId('cycle-log-status').textContent='Reject cleared by the viewer. Previous unit records and traces are retained below.';activate();go();
-  });
+  },on);
   byId('cycle-export').addEventListener('click',()=>{
     const url=URL.createObjectURL(new Blob([JSON.stringify({source:'Defex scripted cycle illustration',measurements:false,units:records},null,2)],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;a.download='defex-illustrated-unit-traces.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-  });
-  steps.addEventListener('click',e=>{const button=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-cycle-step]');if(button&&!run.held){started=true;activate();stop();run={...run,progress:Math.min(CYCLE_STEPS[Number(button.dataset.cycleStep)][1],runEnd(run))};draw();showStage();}});
+  },on);
+  steps.addEventListener('click',e=>{const button=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-cycle-step]');if(button&&!run.held){started=true;activate();stop();run=scrubRun(run,CYCLE_STEPS[Number(button.dataset.cycleStep)][1]);syncCases();draw();showStage();}},on);
   for(const button of caseButtons)button.addEventListener('click',()=>{
-    // A switch changes this unit's case in place while the unit has not yet done anything that differs; otherwise
-    // the robot restarts this unit with the new case (the operator side keeps its place). Once the unit has its
-    // verdict the case is kept for the next unit. While playing it plays on.
+    // A switch changes this unit's case in place while the unit has not yet done anything that differs; otherwise,
+    // and once the unit has its verdict, it is queued for the next unit (pickCase). While playing it plays on.
     if(run.held)return;const kind=button.dataset.cycleCase as CycleCase,wasPlaying=playing;activate();stop();
-    run=finished(run)?{...run,next:kind}:kind===run.kind?run:sameSoFar(run,kind)?{...run,kind}:restartRun(run,kind);started=true;
+    run=pickCase(run,kind);started=true;
     syncCases();draw();showStage();if(wasPlaying)go();
-  });
+  },on);
   // The one play button always plays the full cycle, even after a contact experiment ran.
-  for(const id of ['tour','embed-run'])byId(id).addEventListener('click',e=>{e.stopImmediatePropagation();if(e.detail<2)toggle();},true);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)stop();});
+  for(const id of ['tour','embed-run'])byId(id).addEventListener('click',e=>{e.stopImmediatePropagation();if(e.detail<2)toggle();},{capture:true,signal:ctl.signal});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)stop();},on);
   // Scan the case pairs a click can ask about while the page is idle.
   const kinds=caseButtons.map(b=>b.dataset.cycleCase as CycleCase),pairs=kinds.flatMap((a,i)=>kinds.slice(i+1).map(b=>[a,b] as const));
   const idle=(cb:()=>void)=>'requestIdleCallback' in window?requestIdleCallback(cb,{timeout:4000}):setTimeout(cb,200);
-  const scan=()=>{const pair=pairs.shift();if(!pair)return;divergesAt(...pair);idle(scan);};idle(scan);
+  const scan=()=>{const pair=pairs.shift();if(!pair||disposed)return;divergesAt(...pair);idle(scan);};idle(scan);
   document.body.classList.add('process-mode');draw();
-  return {refresh:draw,toggle,restart,deactivate(){stop();active=false;document.body.classList.remove('process-mode');scene.setProcess(null);},isActive:()=>active,isHeld:()=>run.held};
+  function deactivate(){stop();active=false;document.body.classList.remove('process-mode');scene.setProcess(null);}
+  // For good, e.g. when the 3D view is lost: the player stops, lets go of the scene and removes every listener and
+  // timer it added, so nothing it owned runs again. Safe to call more than once.
+  function dispose(){if(disposed)return;deactivate();disposed=true;ctl.abort();clearTimeout(nudgeTimer);clearFault.classList.remove('nudge');tour.classList.remove('show-tip');}
+  return {refresh:()=>{if(!disposed)draw();},toggle:()=>{if(!disposed)toggle();},restart:()=>{if(!disposed)restart();},deactivate,dispose,isActive:()=>active&&!disposed,isHeld:()=>run.held};
 }

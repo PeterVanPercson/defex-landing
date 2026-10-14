@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import * as T from 'three';
 import { processFrame,HEADER,UPCAM } from '../src/process.ts';
 import type { CycleCase,ProcessFrame } from '../src/process.ts';
-import { applyLine,createCell,DOCK_STROKE,poseLatch,posePlunger,RELEASE_GAP } from '../src/cell-geometry.ts';
+import { applyLine,createCell,dressLiveHarness,postProgress,DOCK_STROKE,poseLatch,posePlunger,RELEASE_GAP } from '../src/cell-geometry.ts';
 import { dressHarness } from '../src/harness.ts';
 import { contactCenters } from '../src/mechanism.ts';
-import { CHAMFER,CLEAR_SPAN,GRIP_RAISE,INDEX_START,CYCLE_END,SHROUD_CLEARANCE } from '../src/line.ts';
+import { CHAMFER,CLEAR_SECONDS,CLEAR_SPAN,GRIP_RAISE,INDEX_START,CYCLE_END,SHROUD_CLEARANCE } from '../src/line.ts';
 import type { LineState } from '../src/line.ts';
 
 // Sampled interpenetration of the rendered meshes over the scripted cycle. Each mesh is tested in its own
@@ -23,7 +23,7 @@ const wire=(o:T.Mesh)=>cell.wires.some(w=>w.mesh===o);
 const bench=(o:T.Mesh)=>under(o,cell.bench);
 const units=Object.values(cell.units).map(u=>u.group);
 // The rest of the line, far from where the tool works: tested on its own below.
-const line=(o:T.Mesh)=>units.some(g=>under(o,g))||[cell.tote.group,cell.tote.out.group,cell.tote.spare.group,cell.rejectBin,cell.picker.root].some(g=>under(o,g))||cell.tote.shutters.includes(o);
+const line=(o:T.Mesh)=>o.name.startsWith('Carried wire')||units.some(g=>under(o,g))||[cell.tote.group,cell.tote.out.group,cell.tote.spare.group,cell.rejectBin,cell.picker.root].some(g=>under(o,g))||cell.tote.shutters.includes(o);
 // The upward camera's whole allowed footprint, 22 x 22 mm up to its window, as a solid block.
 const upcam=new T.Mesh(new T.BoxGeometry(22,22,UPCAM[2]));upcam.name='Upward camera footprint';upcam.position.set(UPCAM[0],UPCAM[1],UPCAM[2]/2);cell.root.add(upcam);
 const statics=meshes(cell.root).filter(o=>!under(o,cell.plug)&&!under(o,cell.tool.root)&&!under(o,cell.arm.root)&&!wire(o)&&!line(o)&&o.geometry.type!=='TubeGeometry');
@@ -108,11 +108,30 @@ test('the harness wires never pass through the cell, the gripper or their own ho
   assert.deepEqual([...wires].slice(0,12).map(([k,[d,p]])=>`${k}: ${d.toFixed(2)} mm at ${p}`),[]);
 });
 
+test('a cleared reject: the harness hangs from the plug in the fingers, goes down through the bin’s opening and is all inside before the board indexes on, never through anything',()=>{
+  const post=(cell as unknown as {post:{track:{hiddenAt:number}}}).post.track;
+  assert.ok(post.hiddenAt<=CLEAR_SECONDS-.1,`all inside at ${post.hiddenAt} s of ${CLEAR_SECONDS}`);
+  const targets=[...statics,...meshes(cell.rejectBin),...toolParts].filter(o=>!/comb tooth|liner|throat|label|brush/i.test(o.name));
+  const worst=new Map<string,number>(),where=new Map<string,string>();let checked=0;
+  for(let u=0;u<=CLEAR_SECONDS;u+=.05){
+    const f=processFrame(postProgress(u),'open',RUNNING);pose(f);dressLiveHarness(cell);cell.root.updateMatrixWorld(true);for(const m of targets){m.geometry.boundingBox??m.geometry.computeBoundingBox();invert(m);}
+    if(u>=post.hiddenAt){assert.ok(!shown(cell.plug),`plug drawn inside the bin at ${u}`);continue;}
+    const bounds=targets.map(m=>new T.Box3().setFromObject(m).expandByScalar(.48));
+    cell.wires.forEach((w,i)=>{const curve=new T.CatmullRomCurve3(w.curve.points.map(p=>p.clone().add(w.mesh.position)),false,'centripetal');
+      for(let j=6;j<=294;j++){const v=j/300,point=curve.getPoint(v);for(let k=0;k<targets.length;k++){if(!bounds[k].containsPoint(point))continue;const m=targets[k];
+        // the wires leave their housing between the fingers, and their far ends sit in the tester connector's grommets
+        if(v<.05&&/finger|Housing contact|back stop/i.test(m.name)||v>.93&&/tester connector|ferrule/i.test(m.name))continue;
+        checked++;const d=depth(m,point,.48),key=`wire ${i+1} / ${m.name}`;if(d>.9&&d>(worst.get(key)??0)){worst.set(key,d);where.set(key,`u ${v.toFixed(2)} at ${u.toFixed(2)} s`);}}}});
+  }
+  assert.ok(checked>500,`${checked} wire points near something`);
+  assert.deepEqual([...worst].slice(0,10).map(([k,d])=>`${k}: ${d.toFixed(2)} mm (${where.get(k)})`),[]);
+});
+
 // The index, p 100..108: every pallet and what it carries against the fixed stations (the camera footprint, the
 // tester and its retracted dock head, the cradle, the reject tray, the tote, the reject bin), against the tool and
 // the arm waiting at home, and against each other. A cleared reject indexes its bare board out.
 const indexing=function*(){for(let i=0;i<=160;i++)yield INDEX_START+i*(CYCLE_END-INDEX_START)/160;};
-const lineStatics=[...meshes(cell.tester),...meshes(cell.turnover),...meshes(cell.bin),...meshes(cell.upcam),upcam,...meshes(cell.tote.group),...meshes(cell.rejectBin),...meshes(cell.picker.root),...toolParts,...meshes(cell.arm.root).filter(o=>o.name!=='Arm cable')];
+const lineStatics=[...meshes(cell.tester),...meshes(cell.turnover),...meshes(cell.bin),...meshes(cell.upcam),upcam,...meshes(cell.tote.group),...meshes(cell.rejectBin).filter(o=>!/brush/i.test(o.name)),...meshes(cell.picker.root),...toolParts,...meshes(cell.arm.root).filter(o=>o.name!=='Arm cable')];
 // Docked, the dock head's locating pin sits in the adapter's bushing bore.
 const seated=(a:T.Mesh,b:T.Mesh)=>/Pallet tester connector|Dock pin bushing|Dock pin bore/.test(a.name)&&b.name==='Dock locating pin';
 const carriers=()=>[{name:'live pallet',root:cell.pallet,extra:shown(cell.plug)?plugParts:[]},...Object.entries(cell.units).map(([name,u])=>({name,root:u.group,extra:[] as T.Mesh[]}))];

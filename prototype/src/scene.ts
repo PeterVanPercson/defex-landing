@@ -5,9 +5,10 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { applyLine, createCell, disposeCell, dressLiveHarness, factoryEnvironment, mergeStatic, poseLatch, posePlunger, REST_LINE } from './cell-geometry.ts';
+import { applyLine, createCell, disposeCell, dressLiveHarness, factoryEnvironment, mergeStatic, poseLatch, posePlunger, REST_LINE, tracksReady } from './cell-geometry.ts';
 import { createHall, FLOOR } from './hall.ts';
-import { PoseStream, damping, settleSpring, isClick, isDrag, lensShift } from './motion.ts';
+import { PoseStream, damping, settleSpring, isClick, isDrag, lensShift, idleWait, spreadSee } from './motion.ts';
+import * as Process from './process.ts';
 import { processFrame, HEADER, UPCAM } from './process.ts';
 import type { ProcessFrame } from './process.ts';
 import type { Configuration } from './model.ts';
@@ -15,12 +16,17 @@ import type { Snapshot } from './engine.ts';
 import type { PartId } from './parts.ts';
 import { PARTS } from './parts.ts';
 import { batchStaticMeshes } from './batching.ts';
-import { GRIP_RAISE } from './line.ts';
-import type { LineFrame, Shot } from './line.ts';
+import { GRIP_RAISE, INDEX_START, PICK, opSeconds } from './line.ts';
+import type { LineFrame, Shot as LineShot } from './line.ts';
+// The overview shots: the cycle's, and 'pack', the work shot opened up while the picker packs a unit (scene only).
+type Shot=LineShot|'pack';
 
 export type View='overview'|'side'|'top'|'connector'|'part';
 export type Mode='machine'|'inside'|'parts';
-export interface Hud {labels:HTMLElement;tooltip:HTMLElement;onPick?:(id:PartId)=>void;onDirector?:(on:boolean)=>void;onFree?:(free:boolean)=>void}
+// onSettle: the shot the guided camera has arrived at ('close' for the close-ups, 'free' while the person has it).
+export interface Hud {labels:HTMLElement;tooltip:HTMLElement;onPick?:(id:PartId)=>void;onDirector?:(on:boolean)=>void;onFree?:(free:boolean)=>void;onSettle?:(shot:Shot|'close'|'free')=>void}
+// A camera the person turned and then left alone this long glides back to the guided shots.
+export const IDLE_MS=8000;
 // Rendering tiers, one chosen under the loader and kept for the session (never switched mid-play).
 export interface Tier {ratio:number;ao:boolean;bokeh:boolean}
 export const TIERS:{desktop:Tier[];phone:Tier[]}={
@@ -57,6 +63,12 @@ export class WorkcellScene {
   private tiers=this.light?TIERS.phone:TIERS.desktop;private tier:Tier=this.tiers[0];
   private labels=new Map<PartId,HTMLElement>();
   private basePose=[0,0,42,0];private band:Shot='wide';
+  // The shot the frame asks for: while the picker lifts a finished unit high over the tote and packs it (op-time
+  // from its lift to the jaws opening), the work shot opens up to hold the board at its highest and the tote.
+  private shotFor(f:ProcessFrame):Shot{
+    if(f.shot!=='work'||!(f as Partial<LineFrame>).pack||f.progress>=INDEX_START)return f.shot;
+    const t=opSeconds((f as Partial<LineFrame>).lineProgress??f.progress);return t>=PACK_FROM&&t<PICK.open?'pack':'work';
+  }
   // Set by a real drag, pinch or ctrl-wheel; the Guided view chip, a dock button or a quiet shot change clears it.
   free=false;
   private lastInput=-1e9;private lastProgress=0;private followed=new T.Vector3();private scrubbing=false;
@@ -80,7 +92,7 @@ export class WorkcellScene {
   private glow=createGlow();
   // What fades or turns see-through at runtime: the live plug and wires, the header's shroud, each unit's housings.
   private plugMaterials:T.Material[]=[];private wireMaterials:T.Material[]=[];private shroud:T.Material[]=[];
-  private unitCuts:{group:T.Object3D;materials:T.Material[]}[]=[];private plugSee=1;private wiresSee=1;
+  private unitCuts:{group:T.Object3D;materials:T.Material[]}[]=[];private plugSee=1;private wiresSee=1;private cut=1;
   private key:T.DirectionalLight;
   constructor(container:HTMLElement,config:Configuration,hud:Hud|null=null,embed=false){
     this.container=container;this.config=config;this.hud=hud;this.embed=embed;
@@ -136,24 +148,45 @@ export class WorkcellScene {
     if(import.meta.env.DEV)performance.mark('scene-built');
     this.ready=this.warmUp().catch(error=>console.warn('warm-up',error)).finally(()=>{this.warming=false;this.renderer.domElement.style.opacity='';});
   }
+  // Resolves once the cell's simulated harnesses (packing and posting) are built: they build in slices under the
+  // loader, and a frame that needs one sooner would finish them at once and stall. A build finished that way does
+  // not resolve tracksReady, so the post's track appearing counts too.
+  // Whether the rope tracks have finished building (they build in idle slices after the reveal).
+  tracksDone(){return !!(this.rig as {post?:{track?:unknown}}).post?.track;}
+  tracksBuilt(){
+    const rig=this.rig as {post?:{track?:unknown}};
+    return new Promise<void>(resolve=>{let done=false;const end=()=>{if(!done){done=true;resolve();}};tracksReady(this.rig).then(end);
+      const poll=()=>{if(done||this.disposed)return;if(rig.post?.track)end();else setTimeout(poll,100);};poll();});
+  }
   // dev only: frame a shot by hand from the console
   frameShot(target:number[],dir:number[],dist:number,lens:number){this.lens=lens;this.target.set(target[0],target[1],target[2]);this.position.copy(this.target).addScaledVector(new T.Vector3(dir[0],dir[1],dir[2]).normalize(),dist);this.shift.set(0,0);this.snap();this.wake();}
-  wheel=(e:WheelEvent)=>{if(!e.ctrlKey&&!e.metaKey){e.stopPropagation();return;}if(this.controls.enableZoom){this.lastInput=performance.now();this.takeOver();}};
+  wheel=(e:WheelEvent)=>{if(!e.ctrlKey&&!e.metaKey){e.stopPropagation();return;}if(this.controls.enableZoom){this.takeOver();this.noteInput();}};
+  // Every touch of the camera restarts the idle wait; once it runs out with no pointer down, the guided view comes back.
+  private idleTimer=0;
+  private noteInput(){this.lastInput=performance.now();if(this.free)this.armIdle(IDLE_MS);}
+  private armIdle(wait:number){clearTimeout(this.idleTimer);this.idleTimer=window.setTimeout(this.idleCheck,wait);}
+  private idleCheck=()=>{
+    this.idleTimer=0;if(!this.free||this.disposed)return;
+    const wait=idleWait(performance.now()-this.lastInput,!!this.gesture||this.touches.size>0,IDLE_MS);
+    if(wait>0){this.armIdle(wait);return;}
+    this.guided();
+  };
   contextLost=(e:Event)=>{e.preventDefault();this.container.dispatchEvent(new CustomEvent('renderer-lost'));};
   pointerDown=(e:PointerEvent)=>{
-    this.lastInput=performance.now();this.showTooltip(null);
+    this.noteInput();this.showTooltip(null);
     if(e.pointerType==='touch'){this.touches.add(e.pointerId);if(this.touches.size>1){if(this.gesture)this.gesture.dragged=true;this.takeOver();return;}}
     if(this.gesture)return;
     this.gesture={id:e.pointerId,x:e.clientX,y:e.clientY,t:performance.now(),button:e.button,touch:e.pointerType==='touch',dragged:false,pos:this.camera.position.clone(),tgt:this.controls.target.clone()};
   };
   pointerMove=(e:PointerEvent)=>{
     const g=this.gesture;
-    if(g){if(e.pointerId!==g.id)return;this.lastInput=performance.now();
+    if(g){if(e.pointerId!==g.id)return;this.noteInput();
       if(!g.dragged&&e.buttons&&isDrag(e.clientX-g.x,e.clientY-g.y,g.touch)){g.dragged=true;this.takeOver();this.renderer.domElement.style.cursor='grabbing';}return;}
+    if(this.free)this.noteInput();
     if(e.pointerType==='mouse'&&this.fine&&!e.buttons)this.hover(e.clientX,e.clientY);
   };
   pointerUp=(e:PointerEvent)=>{
-    this.touches.delete(e.pointerId);
+    this.touches.delete(e.pointerId);if(this.free)this.noteInput();
     const g=this.gesture;if(!g||e.pointerId!==g.id)return;this.gesture=null;if(g.dragged)this.renderer.domElement.style.cursor='grab';
     // The page scroll took the swipe: put back what the first few pixels of it turned.
     if(e.type==='pointercancel'){if(!g.dragged){this.camera.position.copy(g.pos);this.controls.target.copy(g.tgt);this.stopOrbit();this.wake();}return;}
@@ -190,14 +223,14 @@ export class WorkcellScene {
   // The person takes the camera: the guided move stops where it is and their orbit starts from there.
   private takeOver(){
     if(this.free)return;this.free=true;this.director=false;this.cameraMoving=false;this.velP.set(0,0,0);this.velT.set(0,0,0);this.lensVel=0;this.shiftVel.set(0,0);
-    this.lens=this.shownLens;this.followed.copy(this.target);this.showTooltip(null);this.hud?.onFree?.(true);this.wake();
+    this.lens=this.shownLens;this.followed.copy(this.target);this.showTooltip(null);this.hud?.onFree?.(true);this.settle('free');this.noteInput();this.wake();
   }
   // Back to the guided camera, from wherever the person left it.
   guided(){if(this.release())this.goal();}
-  private release(){if(!this.free)return false;this.free=false;this.camPos.copy(this.camera.position);this.camTgt.copy(this.controls.target);this.hud?.onFree?.(false);return true;}
+  private release(){if(!this.free)return false;this.free=false;this.carry.set(0,0,0);clearTimeout(this.idleTimer);this.idleTimer=0;this.camPos.copy(this.camera.position);this.camTgt.copy(this.controls.target);this.hud?.onFree?.(false);return true;}
   private stopOrbit(){const c=this.controls as unknown as {_sphericalDelta:T.Spherical;_scale:number;_panOffset:T.Vector3};c._sphericalDelta.set(0,0,0);c._scale=1;c._panOffset.set(0,0,0);}
   // While the slider is held, the camera keeps the shot it had; on release it goes to the one the frame asks for.
-  setScrubbing(on:boolean){if(this.scrubbing===on)return;this.scrubbing=on;this.lastInput=performance.now();if(!on&&this.process&&this.process.shot!==this.band){this.band=this.process.shot;if(!this.free)this.goal();}}
+  setScrubbing(on:boolean){if(this.scrubbing===on)return;this.scrubbing=on;this.lastInput=performance.now();if(!on&&this.process&&this.shotFor(this.process)!==this.band){this.band=this.shotFor(this.process);if(!this.free)this.goal();}}
   private ensureVariant(pins:number){
     if(this.rig.pins===pins)return;
     disposeCell(this.rig.root);this.scene.remove(this.rig.root);this.rig=createCell(pins);this.scene.add(this.rig.root);
@@ -218,6 +251,10 @@ export class WorkcellScene {
       g.traverse(o=>{if(o instanceof T.Mesh&&/PBT header|Header seating floor|Latch catch|connector housing/.test(o.name)){const m=o.material as T.Material;if(!copies.has(m))copies.set(m,own(m));o.material=copies.get(m)!;}});
       this.unitCuts.push({group:g,materials:[...copies.values()]});
     }
+    // The totes' slotted insert is a grey conductive foam, a few shades lighter than the black shell, so the wires
+    // piled in each slot read against it instead of vanishing into the dark tote.
+    const foam=new T.MeshStandardMaterial({color:TOTE_FOAM,roughness:.92,name:'Conductive foam insert'});
+    for(const g of [r.tote.shell,r.tote.out.shell,r.tote.spare.shell])g.traverse(o=>{if(o instanceof T.Mesh&&o.name==='Slotted insert')o.material=foam;});
     for(const g of [r.tote.shell,r.tote.out.shell,r.tote.spare.shell,r.rejectBin,...Object.values(r.units).flatMap(u=>[u.hardware,u.board,u.harness])])mergeStatic(g);
     // The picker's post and beam merge; its carriages, head and jaws keep their own groups (only siblings merge).
     batchStaticMeshes(r.picker.root,new Set());
@@ -228,26 +265,34 @@ export class WorkcellScene {
     r.plug.traverse(o=>{if(o instanceof T.Mesh){if(!o.userData.unique){o.material=own(o.material as T.Material);o.userData.unique=true;}const m=o.material as T.Material;m.userData.cut=o.name.includes('housing');this.plugMaterials.push(m);}});
     r.housing.traverse(o=>{if(o instanceof T.Mesh){if(!o.userData.unique){o.material=own(o.material as T.Material);o.userData.unique=true;}this.shroud.push(o.material as T.Material);}});
     this.wireMaterials=r.wires.map(w=>{const m=w.mesh.material as T.Material;m.userData.canFade=true;return m;});
-    this.harnessOut=-1;
+    // A fading part's shadow thins with it: its shadow-map draw drops texels by its opacity (soft after the filter),
+    // so no shadow switches off in one frame. Both depth materials are drawn in the warm-up.
+    r.plug.traverse(o=>{if(o instanceof T.Mesh){o.castShadow=true;o.customDepthMaterial=this.plugDepth;}});
+    for(const w of r.wires){w.mesh.castShadow=true;w.mesh.customDepthMaterial=this.wiresDepth;}
+    this.harnessOut=-1;this.shadowSee='';
   }
-  private harnessOut=0;
-  // The operator takes the rejected harness, plug and wires together.
+  private plugDepth=new T.MeshDepthMaterial({alphaHash:true});private wiresDepth=new T.MeshDepthMaterial({alphaHash:true});private shadowSee='';
+  private harnessOut=0;private harnessSee=1;
+  // A frame that still asks for the harness to go (an older cycle) fades it; the robot's post into the bin needs none.
   private fadeHarness(out:number){
     if(Math.abs(out-this.harnessOut)<1e-4)return;this.harnessOut=out;
-    this.plugSee=this.wiresSee=1-T.MathUtils.smoothstep(out,0,1);
+    this.harnessSee=1-T.MathUtils.smoothstep(out,0,1);
   }
-  // Every material that fades or is cut, set from the live fades and the Inside view; shadows only from solid parts.
+  // Every material that fades or is cut, set from the live fades and the Inside view. A fading solid keeps writing
+  // depth, so its own far side and what is inside it stay hidden behind its near side as it thins: no frame shows
+  // its inside at full strength. Inside's cut (a steady see-through view) draws without depth, as it always has.
   private seeThrough(){
-    const cut=this.mode==='inside'?.32:1;let flipped=false;
-    const set=(m:T.Material,see:number)=>{const fading=see<.998;if(m.transparent!==fading){m.transparent=fading;m.needsUpdate=true;}m.opacity=see;m.depthWrite=!fading;};
-    const cast=(o:T.Object3D,on:boolean)=>o.traverse(c=>{if(c instanceof T.Mesh&&c.castShadow!==on){c.castShadow=on;flipped=true;}});
-    for(const m of this.plugMaterials)set(m,this.plugSee*(m.userData.cut?cut:1));
-    for(const m of this.wireMaterials)set(m,this.wiresSee);
-    for(const m of this.shroud)set(m,cut);
-    for(const {group,materials} of this.unitCuts){const f=group.userData.fade??1;for(const m of materials)set(m,f*cut);}
-    this.rig.plug.userData.fade=this.plugSee;cast(this.rig.plug,this.plugSee>=.98);
-    for(const w of this.rig.wires){w.mesh.userData.fade=this.wiresSee;if(w.mesh.castShadow!==this.wiresSee>=.98){w.mesh.castShadow=this.wiresSee>=.98;flipped=true;}}
-    if(flipped)this.renderer.shadowMap.needsUpdate=true;
+    const cut=this.cut;
+    const set=(m:T.Material,see:number,solid:boolean)=>{const fading=see<.998;if(m.transparent!==fading){m.transparent=fading;m.needsUpdate=true;}m.opacity=see;m.depthWrite=solid||!fading;};
+    const inside=cut<.998;
+    for(const m of this.plugMaterials)set(m,this.plugSee*(m.userData.cut?cut:1),!(inside&&m.userData.cut));
+    for(const m of this.wireMaterials)set(m,this.wiresSee,true);
+    for(const m of this.shroud)set(m,cut,!inside);
+    for(const {group,materials} of this.unitCuts){const f=group.userData.fade??1;for(const m of materials)set(m,f*cut,!inside);}
+    this.rig.plug.userData.fade=this.plugSee;
+    for(const w of this.rig.wires)w.mesh.userData.fade=this.wiresSee;
+    this.plugDepth.opacity=this.plugSee;this.wiresDepth.opacity=this.wiresSee;
+    const key=this.plugSee.toFixed(3)+this.wiresSee.toFixed(3);if(key!==this.shadowSee){this.shadowSee=key;this.renderer.shadowMap.needsUpdate=true;}
   }
   private hideFaded(){const hidden:T.Object3D[]=[];this.rig.root.traverse(o=>{const f=o.userData.fade;if(o.visible&&f!==undefined&&f<.98){o.visible=false;hidden.push(o);}});return hidden;}
   // A new setup moves the header only once the plug is off it: while a passed plug sits seated the engine first lifts
@@ -274,7 +319,7 @@ export class WorkcellScene {
     else{applyLine(this.rig,REST_LINE);this.fadeHarness(0);poseLatch(this.rig.latch,0);posePlunger(this.rig.tool.plunger,0);this.lineKey='';this.configure(this.config);}
     if(f){
       this.applyProcess(f);
-      const changed=!this.scrubbing&&f.shot!==this.band,nextUnit=this.lastProgress-f.progress>50;if(changed)this.band=f.shot;this.lastProgress=f.progress;
+      const want=this.shotFor(f),changed=!this.scrubbing&&want!==this.band,nextUnit=this.lastProgress-f.progress>50;if(changed)this.band=want;this.lastProgress=f.progress;
       // A camera the person left alone for 8 s goes back to the guided shots at the next shot change or unit.
       if((changed||nextUnit)&&this.free&&!this.gesture&&performance.now()-this.lastInput>8000)this.guided();
       else if(this.viewMode==='connector'||this.mode==='parts'||changed&&this.viewMode==='overview')this.goal();
@@ -285,7 +330,7 @@ export class WorkcellScene {
     this.rig.tool.root.position.set(...f.tool);this.rig.plug.position.set(...f.plug);this.rig.plug.rotation.y=f.rotation;this.rig.rotator.rotation.y=f.cradle;
     this.rig.tool.fingers.forEach((g,i)=>g.position.x=(i?1:-1)*f.jaw*7);
     this.rig.cradleJaws.forEach((g,i)=>g.position.y=(i?1:-1)*f.cradleGrip*5);poseLatch(this.rig.latch,f.latch);posePlunger(this.rig.tool.plunger,f.latch);
-    this.lineKey=applyLine(this.rig,{...REST_LINE,...(f as Partial<LineFrame>)} as LineFrame&{progress:number});this.fadeHarness(f.harnessOut??0);
+    this.lineKey=applyLine(this.rig,{...REST_LINE,...(f as Partial<LineFrame>)} as LineFrame&{progress:number});this.fadeHarness((f as {harnessOut?:number}).harnessOut??0);
     this.rig.indicator.color.setHex(f.accepted===true?0x379761:f.accepted===false?0xb2402c:0x273c31);
     this.rig.indicator.emissive.setHex(f.accepted===true?0x248440:f.accepted===false?0xa0301c:0x000000);this.rig.indicator.emissiveIntensity=f.accepted===null?0:.9;
     this.lights(f.headerCheck,f.graspCheck,f.camera,f.plug[2]-(Math.abs(f.rotation)<.5?4.05:8.25));
@@ -308,7 +353,7 @@ export class WorkcellScene {
     const cableEnd=this.rig.tool.gland.clone().applyAxisAngle(new T.Vector3(0,0,1),tool.rotation.z).add(tool.position).add(new T.Vector3(3,0,0)).divideScalar(5);
     this.rig.arm.set(flange,tool.rotation.z,cableEnd);
     // The wires are dressed in the pallet's frame, so the index carries them along without dressing them again.
-    const shown=this.spread<.01&&this.rig.plug.visible&&this.wiresSee>.01;
+    const shown=this.rig.plug.visible&&this.wiresSee>.01;
     if(shown)this.dressed=dressLiveHarness(this.rig,this.dressed);
     for(const w of this.rig.wires)w.mesh.visible=shown;
     this.renderer.shadowMap.needsUpdate=true;
@@ -324,14 +369,15 @@ export class WorkcellScene {
   // again every frame; a person's free camera only takes the close-up's follow from it.
   private goal(){
     const f=this.process,close=this.viewMode==='connector',parts=this.mode==='parts';
-    const shot:Shot=parts||this.viewMode!=='overview'?'work':this.band;
+    const shot:Shot=parts||this.viewMode!=='overview'?'work':this.band;this.goalShot=this.viewMode==='overview'&&!parts?shot:'close';
     const portrait=this.width<this.height,fit=Math.max(1,1.12/(this.width/this.height));
     const look=new T.Vector3();let def:ShotDef|null=null;
     this.shift.set(0,0);
     if(close){
       this.lens=100;const lensScale=this.lensScale(100);
       // The close-up follows the cycle's focus: the plug, and during the index the next unit's housing coming in.
-      const at=f?.focus??f?.plug??[0,0,15];
+      // While the robot posts a reject it follows the plug itself, up over the bin and down into it.
+      const at=this.closeAt(f),post=this.posting(f);
       let z=Math.max(29,at[2]+15);
       // Over the grip camera the shot drops to frame the plug and the camera under it together.
       if(f){const w=T.MathUtils.smoothstep(30-Math.hypot(at[0]-UPCAM[0],at[1]-UPCAM[1]),4,26);z+=(Math.max(UPCAM[2]+8,(at[2]+UPCAM[2])/2+2)-z)*w;}
@@ -346,6 +392,10 @@ export class WorkcellScene {
       this.position.copy(this.target).addScaledVector(dir,CLOSE.dist*fit*lensScale*(1+CLOSE.board*board));
       // On a phone the slider and dock take the bottom of the frame: the subject sits higher.
       if(portrait)this.shift.y=.09;
+      // Carried along: the camera moves with the plug as it is carried, rigidly, so a fast lift never runs it out of
+      // the frame; the spring only settles the framing.
+      if(post&&this.carried&&!this.free)this.carry.add(this.target).sub(this.carried);
+      if(post)(this.carried??=new T.Vector3()).copy(this.target);else this.carried=null;
     }else if(this.viewMode==='part'){
       const v=PART_VIEW[this.focus]??PART_VIEW.socket;this.lens=v.lens;
       const bounds=new T.Box3().setFromObject(this.partGroups()[this.focus]),sphere=bounds.getBoundingSphere(new T.Sphere());this.target.copy(sphere.center);
@@ -353,28 +403,35 @@ export class WorkcellScene {
       const d=Math.max(160,sphere.radius*v.fill/Math.sin(half));
       this.position.copy(this.target).addScaledVector(new T.Vector3(...v.dir).normalize(),d);
     }else{
-      def=parts?SHOTS.parts:shot==='wide'?SHOTS.wide:shot==='line'?SHOTS.line:shot==='reject'?SHOTS.reject:SHOTS.work;
+      def=parts?SHOTS.parts:shot==='wide'?SHOTS.wide:shot==='line'?SHOTS.line:shot==='reject'?SHOTS.reject:shot==='pack'?SHOTS.pack:SHOTS.work;
       const t=portrait&&def.pt?def.pt:def.t,dir=this.viewMode==='top'?[0,-.02,1]:this.viewMode==='side'?[.7,-1,.13]:portrait&&def.pdir?def.pdir:def.dir;
       this.lens=portrait&&def.plens?def.plens:def.lens;
       this.target.set(t[0],t[1],t[2]);
       // Parts follows the plug across the bench, so a held reject's harness is in the middle of it too.
       if(parts&&f){this.target.x+=(f.plug[0]-HEADER[0])*.6;this.target.y+=(f.plug[1]-HEADER[1])*.5;}
-      const d=def.dist*(portrait?def.pdist??1:1)*fit**.5;
+      const d=def.dist*(portrait?def.pdist??1:!portrait&&this.height<=500?def.ldist??1:1)*fit**.5*Math.max(1,this.width/this.height/1.6)**(portrait?0:def.wide??0);
       const lk=portrait&&def.plook?def.plook:def.look;
       if(lk){look.set(lk[0],lk[1],lk[2]);this.position.copy(look).addScaledVector(new T.Vector3(...dir).normalize(),d);}
       else this.position.copy(this.target).addScaledVector(new T.Vector3(...dir).normalize(),d);
     }
     // The opening photo looks at a point above the bench but turns about the bench: a lens shift keeps the photo.
     if(def&&(portrait&&def.plook||!portrait&&def.look))this.shift.copy(lensShift(this.position,this.target,look,this.camera.getFilmWidth(),this.camera.getFilmHeight(),this.lens));
+    if(def?.lsx&&!portrait&&this.height<=500)this.shift.x+=def.lsx;
     if(this.free){
       if(close){const d=this.target.clone().sub(this.followed);this.camera.position.add(d);this.controls.target.add(d);}
       this.followed.copy(this.target);this.wake();return;
     }
     this.followed.copy(this.target);this.cameraMoving=true;this.wake();
   }
+  private carry=new T.Vector3();private carried:T.Vector3|null=null;
+  private posting(f:ProcessFrame|null){return ((f as {post?:number}|null)?.post??-1)>=0;}
+  private closeAt(f:ProcessFrame|null):[number,number,number]{return f?this.posting(f)?[f.plug[0],f.plug[1],f.plug[2]]:f.focus??f.plug:[0,0,15];}
   private lensScale(lens:number){return Math.tan(25*Math.PI/360)/(this.camera.getFilmHeight()/2/lens);}
   // Put the camera on its goal at once (the first frame, a hand-framed shot, reduced motion).
+  private goalShot:Shot|'close'='wide';private settledShot='';
+  private settle(shot:Shot|'close'|'free'){if(shot!==this.settledShot){this.settledShot=shot;this.hud?.onSettle?.(shot);}}
   private snap(){
+    if(!this.free)this.settle(this.goalShot);
     this.shownLens=this.lens;this.camera.setFocalLength(this.lens);this.shown.copy(this.shift);this.applyOffset();
     this.camPos.copy(this.position);this.camTgt.copy(this.target);this.camera.position.copy(this.position);this.controls.target.copy(this.target);this.camera.lookAt(this.target);
     this.velP.set(0,0,0);this.velT.set(0,0,0);this.lensVel=0;this.shiftVel.set(0,0);this.cameraMoving=false;
@@ -407,6 +464,7 @@ export class WorkcellScene {
     // A few meshes at a time, with a frame between, so no single step holds the loader's animation for long; each
     // batch is also drawn unculled into a one-pixel target so its buffers and textures go up now, not mid-play.
     const tiny=new T.WebGLRenderTarget(1,1),meshes:T.Mesh[]=[];this.scene.traverse(o=>{if(o instanceof T.Mesh)meshes.push(o);});
+    const whole=async(draw:()=>void)=>{const culled=meshes.filter(m=>m.frustumCulled);for(const m of culled)m.frustumCulled=false;try{draw();}finally{for(const m of culled)m.frustumCulled=true;}};
     const compile=async(list:T.Mesh[])=>{
       for(let i=0;i<list.length;i+=8){
         const batch=new Set(list.slice(i,i+8)),culled:T.Object3D[]=[];
@@ -414,16 +472,19 @@ export class WorkcellScene {
         // compiled for a render target, as the composer draws (no tone mapping, linear output); the first draw
         // also creates the shadow map, so no shader samples a missing one
         r.setRenderTarget(tiny);await r.compileAsync(this.scene,this.camera);
-        r.setRenderTarget(tiny);if(!i)r.shadowMap.needsUpdate=true;r.render(this.scene,this.camera);r.setRenderTarget(null);
+        // every batch also goes through the shadow pass, so each caster's shadow draw is set up now as well
+        r.setRenderTarget(tiny);r.shadowMap.needsUpdate=true;r.render(this.scene,this.camera);r.setRenderTarget(null);
         for(const m of culled)m.frustumCulled=true;await next();
       }
       for(const m of meshes)m.visible=true;
     };
     try{
       // The first frames also link the post passes and the shadow pass and allocate their targets: one per frame.
-      await compile(meshes);render(false,false);await next();render(true,false);await next();render(true,!this.light);await next();
+      // The full frames draw every mesh, unculled, through every pass (shadow, AO, defocus depth): a part first seen
+      // later (a tote coming in from the store, the transfer, the full slots) then has nothing left to set up.
+      await compile(meshes);await whole(()=>{render(false,false);});await next();await whole(()=>render(true,false));await next();await whole(()=>render(true,!this.light));await next();
       for(const m of fading.keys()){m.transparent=!fading.get(m);m.needsUpdate=true;}
-      await compile(meshes.filter(m=>[m.material].flat().some(x=>fading.has(x))));render(true,!this.light);await next();render(false,false);await next();
+      await compile(meshes.filter(m=>[m.material].flat().some(x=>fading.has(x))));await whole(()=>render(true,!this.light));await next();render(false,false);await next();
     }finally{
       for(const [m,was] of fading){m.transparent=was;m.needsUpdate=true;}
       for(const o of hidden)o.visible=false;this.ao.enabled=ao;this.bokeh.enabled=bokeh;
@@ -463,6 +524,11 @@ export class WorkcellScene {
       const open=T.MathUtils.smootherstep(this.letGo,0,.35);this.rig.tool.fingers.forEach((g,i)=>g.position.x=(i?1:-1)*7*open);
       this.rig.indicator.emissive.setHex(0);this.rig.indicator.color.setHex(this.state?.accepted===true?0x379761:0x273c31);this.lights(0,0,false);}
     const targetSpread=this.mode==='parts'?1:0,oldSpread=this.spread;this.spread+=(targetSpread-this.spread)*damping(dt,190);if(Math.abs(targetSpread-this.spread)<.001)this.spread=targetSpread;
+    // Inside thins the housings over a third of a second instead of in one frame.
+    const cutGoal=this.mode==='inside'?.32:1,oldCut=this.cut;this.cut+=(cutGoal-this.cut)*damping(dt,110);if(Math.abs(cutGoal-this.cut)<.002)this.cut=cutGoal;
+    // Pulled apart, the live wires fade out over the first part of the spread (they follow the plug up meanwhile)
+    // and back in over the last part of the return.
+    this.plugSee=this.harnessSee;this.wiresSee=this.harnessSee*spreadSee(this.spread);
     this.rig.header.position.z=this.spread*SPREAD.header;this.rig.fixture.position.z=this.spread*SPREAD.fixture;this.rig.tester.position.x=this.spread*SPREAD.tester;
     if(this.process)this.applyProcess(this.process);else{this.rig.plug.position.set(this.basePose[0],this.basePose[1],this.basePose[2]);this.rig.tool.root.position.copy(this.rig.plug.position);this.rig.tool.root.position.z+=GRIP_RAISE+LET_GO_LIFT*T.MathUtils.smootherstep(this.letGo,.4,1);}
     // Exploded, the tool lifts clear and an unheld plug rises halfway; a plug in the closed fingers stays in them.
@@ -477,7 +543,7 @@ export class WorkcellScene {
     const orbit=this.free?this.controls.update():false,uniforms=this.bokeh.uniforms as Record<string,{value:number}>;
     const f=this.process,close=this.viewMode==='connector';
     this.focalPoint.copy(this.viewMode==='part'?this.controls.target:this.rig.plug.position);
-    if(close&&f?.focus)this.focalPoint.set(...f.focus);
+    if(close&&f?.focus)this.focalPoint.set(...this.closeAt(f));
     if(this.viewMode!=='part'){
       const plug=this.focalPoint.clone(),header=this.rig.header.getWorldPosition(this.headerAt);
       const overHeader=Math.hypot(plug.x-header.x,plug.y-header.y)<5&&Math.abs(this.rig.plug.rotation.y)<.01;
@@ -495,7 +561,7 @@ export class WorkcellScene {
     this.bokeh.enabled=this.blur>0;this.ao.enabled=this.tier.ao&&this.mode!=='inside';
     this.placeLabels();
     this.composer.render();this.rendered++;this.afterRender?.();
-    if(this.playing&&!this.process||this.cameraMoving||orbit||oldSpread!==this.spread||this.blur>0&&this.blur<1||this.poses.pending(now)&&!this.process||!this.process&&this.letGo!==(this.state?.released&&!this.regripping?1:0)||this.afterRender)this.wake();
+    if(this.playing&&!this.process||this.cameraMoving||orbit||oldSpread!==this.spread||oldCut!==this.cut||this.blur>0&&this.blur<1||this.poses.pending(now)&&!this.process||!this.process&&this.letGo!==(this.state?.released&&!this.regripping?1:0)||this.afterRender)this.wake();
   };
   // A critically damped spring on the camera, its target, lens and shift: every move eases in and out, keeps its
   // speed when the goal changes under it, and ends below 0.02 mm, so the last frame is no visible step.
@@ -504,10 +570,14 @@ export class WorkcellScene {
     const far=T.MathUtils.smoothstep(this.camPos.distanceTo(this.position),60,500);
     const k=this.reduceMotion?400:this.viewMode==='connector'?7-3.6*far:this.viewMode==='part'?4.2:3;
     const step=(v:T.Vector3,vel:T.Vector3,goal:T.Vector3)=>{for(const a of ['x','y','z'] as const){const s=settleSpring(v[a],vel[a],goal[a],seconds,k);v[a]=s.position;vel[a]=s.velocity;}};
+    this.camPos.add(this.carry);this.camTgt.add(this.carry);this.carry.set(0,0,0);
     step(this.camPos,this.velP,this.position);step(this.camTgt,this.velT,this.target);
     const l=settleSpring(this.shownLens,this.lensVel,this.lens,seconds,k);this.shownLens=l.position;this.lensVel=l.velocity;this.camera.setFocalLength(this.shownLens);
     for(const a of ['x','y'] as const){const s=settleSpring(this.shown[a],this.shiftVel[a],this.shift[a],seconds,k);this.shown[a]=s.position;this.shiftVel[a]=s.velocity;}
     this.applyOffset();
+    // Arrived to the eye (within a few millimetres and all but still; the spring's last fraction takes seconds): the
+    // shot counts as reached, and only then does the headline come back.
+    if(this.camPos.distanceTo(this.position)<6&&this.camTgt.distanceTo(this.target)<3&&this.velP.length()<15&&Math.abs(this.shownLens-this.lens)<.2)this.settle(this.goalShot);
     const done=this.camPos.distanceTo(this.position)<.02&&this.velP.length()<.05&&this.camTgt.distanceTo(this.target)<.02&&this.velT.length()<.05
       &&Math.abs(this.shownLens-this.lens)<.002&&Math.abs(this.lensVel)<.01&&this.shown.distanceTo(this.shift)<1e-5;
     if(done)this.snap();
@@ -528,25 +598,44 @@ export class WorkcellScene {
       s.label.style.transform=`translate(${s.x}px,${y}px)`;s.label.style.setProperty('--lead',`${lead}px`);s.label.classList.toggle('led',lead>2);
     }
   }
-  dispose(){const c=this.renderer.domElement;this.disposed=true;cancelAnimationFrame(this.frame);clearTimeout(this.hoverTimer);this.ro.disconnect();this.io.disconnect();this.controls.dispose();disposeCell(this.rig.root);this.scene.environment?.dispose();this.composer.dispose();this.ao.dispose();this.bokeh.dispose();this.renderer.dispose();document.removeEventListener('visibilitychange',this.wake);this.container.removeEventListener('wheel',this.wheel,{capture:true});c.removeEventListener('pointerdown',this.pointerDown,{capture:true});c.remove();this.labels.forEach(l=>l.remove());}
+  dispose(){const c=this.renderer.domElement;this.disposed=true;cancelAnimationFrame(this.frame);clearTimeout(this.hoverTimer);clearTimeout(this.idleTimer);this.plugDepth.dispose();this.wiresDepth.dispose();this.ro.disconnect();this.io.disconnect();this.controls.dispose();disposeCell(this.rig.root);this.scene.environment?.dispose();this.composer.dispose();this.ao.dispose();this.bokeh.dispose();this.renderer.dispose();document.removeEventListener('visibilitychange',this.wake);this.container.removeEventListener('wheel',this.wheel,{capture:true});c.removeEventListener('pointerdown',this.pointerDown,{capture:true});c.remove();this.labels.forEach(l=>l.remove());}
 }
 
 // The overview shots (dev: tune them live through window.SHOTS). t: the point the camera turns about; look: where
 // it points, when that differs (a lens shift keeps the composition); p*: the portrait versions.
-interface ShotDef {t:number[];dir:number[];dist:number;lens:number;look?:number[];pt?:number[];pdir?:number[];pdist?:number;plens?:number;plook?:number[]}
-const SHOTS:Record<'wide'|'work'|'line'|'reject'|'parts',ShotDef>={
+// lsx, ldist: on a phone held sideways, a lens shift (a fraction of the width) that keeps the subject clear of the
+// readouts down the left side, and a longer stand-off for the short frame. wide: how much further a frame wider than
+// 16:10 stands off (an exponent of the excess), for a shot whose subject is tall.
+interface ShotDef {t:number[];dir:number[];dist:number;lens:number;look?:number[];pt?:number[];pdir?:number[];pdist?:number;plens?:number;plook?:number[];lsx?:number;ldist?:number;wide?:number}
+const REJECT_FIT=5.2,TOTE_FOAM=0x55595a,PACK_FROM=1;
+const SHOTS:Record<'wide'|'work'|'line'|'reject'|'parts'|'pack',ShotDef>={
   // The home page's photo: low and side on, the arm's base on the right, the hall behind; it turns about the bench.
   wide:{t:[-30,40,60],look:[-30,40,190],dir:[1,-.22,.035],dist:1280,lens:35,pt:[-30,20,80],plook:[-30,20,260],pdist:.68},
   // The work: the picker's post and beam, the totes and unload station on the left, the work pallet and the queue on
   // the right, from the front.
   work:{t:[-95,-5,95],dir:[.32,-1,.86],dist:1620,lens:50,pt:[20,-10,30],pdir:[.4,-1,1.1],pdist:.55,plens:35},
-  // A full tote swapped at the bench end: beds F and E, the lane out to the store, the picker head over them.
-  line:{t:[-420,-170,70],dir:[.15,-1,1],dist:1100,lens:50,pt:[-400,-170,60],pdir:[.2,-1,1.2],pdist:.75,plens:35},
-  // The tray with the held reject, the locked bin just in frame.
-  reject:{t:[-118,-108,12],dir:[.55,-1,1.05],dist:600,lens:50,pt:[-145,-125,15],pdir:[.5,-1,1.3],pdist:.62,plens:35},
+  // A full tote swapped at the bench end: beds F and E, the lane out to the store, and the picker head over the new
+  // tote up to its placing the next board in a slot, the board's lift to the picker's travel height included (the shot
+  // holds until the jaws open).
+  line:{t:[-380,-150,300],dir:[.15,-1,.7],dist:1950,lens:50,pt:[-390,-160,240],pdir:[.2,-1,.8],pdist:.6,plens:35,wide:1,ldist:1.12},
+  // The held reject and its post: the tray, the locked bin and the arm's carry up and over to it, whole.
+  reject:rejectShot(),
+  // The work while a unit is packed: the same side, a little further back and higher, so the board lifted to the
+  // picker's travel height (about z 650) and the tote stay in frame; the robot's work stays where it was.
+  pack:{t:[-165,-30,300],dir:[.32,-1,.64],dist:2080,lens:50,pt:[-170,-60,260],pdir:[.4,-1,.7],pdist:.58,plens:35,ldist:1.08,lsx:-.06,wide:1},
   // Parts: the cell pulled apart round the plug.
   parts:{t:[0,40,210],dir:[.8,-1,.45],dist:900,lens:35,pdist:.8},
 };
+// The reject shot is fitted to the post's own extents (the tray, the bin and the height the tool carries the harness
+// at), so it follows the process's numbers: a box round them, seen from the front and a little above, low enough to
+// read the height of the carry; on a phone held sideways the box sits right of the readouts.
+function rejectShot():ShotDef{
+  const P=Process as unknown as {REJECT:readonly number[];REJECT_BIN?:{x:number;y:number};POST_Z?:number};
+  const tray=P.REJECT,bin=P.REJECT_BIN??{x:-235,y:-230},top=(P.POST_Z??200)+130;
+  const lo=[Math.min(tray[0],bin.x)-45,Math.min(tray[1],bin.y)-40,0],hi=[Math.max(tray[0],bin.x)+45,Math.max(tray[1],bin.y)+40,top];
+  const c=lo.map((v,i)=>(v+hi[i])/2),r=Math.hypot(hi[0]-lo[0],hi[1]-lo[1],hi[2]-lo[2])/2;
+  return {t:c,dir:[.5,-1,.6],dist:r*REJECT_FIT,lens:50,pt:c,pdir:[.5,-1,.7],pdist:.55,plens:35,lsx:-.12,ldist:1.12,wide:1};
+}
 // The close-up: its usual side, the higher side it rises to over the turnover (the cradle's actuator would hide the
 // housing), and how far it stands off.
 const CLOSE={dir:[100,-175,60],turn:[120,-130,170],from:22,to:33,ramp:3,dist:Math.hypot(100,-175,60),board:.6};
@@ -557,11 +646,14 @@ const PART_VIEW:Partial<Record<PartId,{dir:number[];lens:number;fill:number}>>&{
 // How far Parts pulls the cell apart, in mm: the header up, the fixture, the tester sideways, the tool and the plug up.
 const SPREAD={header:36,fixture:10,tester:140,tool:190,plug:100};
 if(import.meta.env.DEV)Object.assign(globalThis,{SHOTS,CLOSE,PART_VIEW,SPREAD});
-// The key light's shadow covers the bench, the line, the tote and bin and their shadows on the floor, no more.
+// The key light's shadow covers the bench, the line, the tote and bin and their shadows on the floor, no more: up to
+// the top of the picker's post (1015 mm; its head and the lifted board stay below it), and along the tote lane as far
+// as the line shot sees (a full tote keeps its shadow until it leaves the frame), so no shadow is clipped.
+const SHADOW_TOP=1040,SHADOW_LEFT=-780;
 function fitShadow(key:T.DirectionalLight){
   const c=key.shadow.camera;c.position.copy(key.position);c.lookAt(key.target.position);c.updateMatrixWorld();
   const inv=c.matrixWorldInverse,b=new T.Box3();
-  for(const x of [-480,560])for(const y of [-340,400])for(const z of [FLOOR,520])b.expandByPoint(new T.Vector3(x,y,z).applyMatrix4(inv));
+  for(const x of [SHADOW_LEFT,560])for(const y of [-340,400])for(const z of [FLOOR,SHADOW_TOP])b.expandByPoint(new T.Vector3(x,y,z).applyMatrix4(inv));
   Object.assign(c,{left:b.min.x-20,right:b.max.x+20,bottom:b.min.y-20,top:b.max.y+20,near:Math.max(1,-b.max.z-50),far:-b.min.z+50});c.updateProjectionMatrix();
 }
 // Opening the fingers on a seated plug and lifting 60 mm clear takes 0.9 s, and closing on it again the same.

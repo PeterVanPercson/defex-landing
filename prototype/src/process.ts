@@ -1,5 +1,5 @@
 import { probePoints } from './model.ts';
-import { CAPTURE, CLEAR_SPAN, CYCLE_END, FIRST_UNIT, GRIP_RAISE, INDEX_START, LIFT_DOWN, LOAD, PALLET_PITCH, PICK, SWAP, TOTE_SLOTS, UNLOAD, opSeconds } from './line.ts';
+import { CAPTURE, CLEAR_SECONDS, CLEAR_SPAN, CYCLE_END, FIRST_UNIT, GRIP_RAISE, INDEX_START, LIFT_DOWN, LOAD, PALLET_PITCH, PICK, SWAP, TOTE_SLOTS, UNLOAD, opSeconds } from './line.ts';
 import type { LineFrame, LineState } from './line.ts';
 export { CAPTURE, CYCLE_END, GRIP_RAISE, INDEX_START };
 
@@ -25,6 +25,31 @@ export const TURNOVER = [-45, -95, 38] as const;
 // Waiting pose: behind the fixture, clear of where the operator's hands go.
 export const HOME = [0, 75, 160] as const;
 export const REJECT = [-125, -90, 9.5] as const;
+// The locked reject bin beside the tray, sunk in the bench: its centre, the top of its red lid (6 mm proud of the jig
+// plate), its floor (its body goes down through the bench into the cabinet, so a harness hangs into it at length)
+// and the opening in its lid (x, y).
+export const REJECT_BIN = { x: -200, y: -85, lid: 6, floor: -520, opening: [30, 34] } as const;
+// A cleared reject: the robot posts the harness into the bin, in seconds from the start of the post, at the arm's
+// usual speeds: it comes over the tray and grips the plug, and the ferrule clamp lets the far end go (clamp); it
+// lifts the plug and carries it over the bin, the harness hanging and its end drawn along after it; it lowers the plug
+// into the opening's brush seal and lets go (release); from `sink` the plug goes down through the brush at the steady
+// pace the bristles let it, and draws the harness in after it, through the brush, until the end is in (..home: the arm
+// rises clear and waits). The arm goes home as the bare board indexes on.
+export const POST = { hover: 1.2, grip: 1.85, closed: 2.05, lifted: 3.3, over: 4.5, posting: 4.75, posted: 6.15, release: 6.25, clear: 6.45, sink: 6.35, clamp: 4.75, home: 7.5 };
+// The plug's way down through the brush to the bin's floor (the housing's origin rests 4.15 mm over it): it eases up to
+// `fast` (mm/s), slows to `slow` from `depth` mm down, the pace at which the harness's end comes in off the bench
+// (drawn in faster, the end of a pulled harness whips round as it straightens), and eases to rest over `out` s.
+export const POST_SINK = { fast: 260, ramp: .4, depth: 280, slow: 170, turn: .3, out: .8, z: REJECT_BIN.floor + 4.15 };
+// The harness's two lowest swing periods hanging from the plug (s): the carry is shaped so it leaves neither going.
+export const POST_SWING = [1.02, .44] as const;
+function shaped(u:number,a:number,b:number){
+  const [p1,p2]=POST_SWING,lag=(p1+p2)/2,move=b-a-lag;let x=0;
+  for(const d of [0,p1/2,p2/2,lag])x+=.25*smooth((u-a-d)/move);
+  return x;
+}
+// The tool over the bin: the plug 8 mm toward -y of the opening's middle, so the harness beside it hangs into it too;
+// as high as the arm reaches there. Posted, the plug's wire face is 2 mm inside the lid.
+export const POST_Z = 238;
 // The upward-looking camera that checks the plug in the fingers: centre x, y and the top of its ring light (scene mm).
 export const UPCAM = [-62, -48, 10] as const;
 // Where this board's header really is.
@@ -92,6 +117,8 @@ export interface ProcessFrame extends Checks, LineFrame {
   tool:Point; plug:Point; jaw:number; accepted:boolean|null; force:number; pullForce:number; extractionForce:number;
   // latch: 0 engaged and free, 1 held released for extraction
   latch:number;
+  // seconds into a cleared reject's post into the bin, or -1
+  post:number;
   depth:number; tries:number; retry:number; message:string; rejected:boolean; camera:boolean; priorFailure:string|null;
   // 0..1: the wrist camera's ring light while it measures this board's header, and the upward camera's while it measures the grip
   headerCheck:number; graspCheck:number;
@@ -139,7 +166,7 @@ export function processFrame(value:number,kind:CycleCase='pass',line:LineState=F
     // 1 opens the cradle jaws 5 mm each side; 2.5 mm clears the housing and keeps them out of the harness.
     cradleGrip:.5*(q<32?1:q<32.3?1-smooth((q-32)/.3):q<38?0:smooth((q-38)/.2)),
     tool:[...HOME],plug:[...NEST],jaw:1,accepted:null,force:0,pullForce:0,extractionForce:0,latch:0,
-    depth:0,tries:1,retry:0,message:CYCLE_STEPS[step][2],rejected:false,camera:step===1,priorFailure:null,headerCheck:0,graspCheck:0,detail:'',
+    depth:0,tries:1,retry:0,post:-1,message:CYCLE_STEPS[step][2],rejected:false,camera:step===1,priorFailure:null,headerCheck:0,graspCheck:0,detail:'',
     shift:0,dock:1,liveHarness:true,unloadZ:0,unloadUnit:'none',loadZ:LIFT_DOWN,tote:0,pack:false,swap:false,
     shot:'work',focus:[...NEST],unitLabel:unitLabel(line.unit),lineNote:'',
   };
@@ -215,10 +242,12 @@ function held(f:ProcessFrame,s=1){f.plug=[f.tool[0]+GRASP[0]*s,f.tool[1]+GRASP[1
 const ease=(t:number,a:number,b:number)=>smooth((t-a)/(b-a));
 function lineFrame(f:ProcessFrame,p:number,kind:CycleCase,line:LineState,op:number){
   const s=clamp((p-INDEX_START)/(CYCLE_END-INDEX_START)),indexing=p>INDEX_START,reject=recoveryStart(kind)!==null,t=opSeconds(op);
-  f.shift=indexing?PALLET_PITCH*smooth((s-.12)/.76):0;
-  f.dock=indexing?1-smooth(s/.1)+smooth((s-.9)/.1):1;
-  // A cleared reject: the operator takes the harness out of the tray to the locked bin, then the bare board indexes on.
-  f.harnessOut=reject&&indexing?smooth(s/(CLEAR_SPAN*.8)):0;f.liveHarness=!(reject&&indexing&&s>=CLEAR_SPAN);
+  // A cleared reject first posts the harness (s 0..CLEAR_SPAN); then the bare board indexes over the rest.
+  const posting=reject&&indexing&&s<CLEAR_SPAN,x=reject?clamp((s-CLEAR_SPAN)/(1-CLEAR_SPAN)):s;
+  f.shift=indexing?PALLET_PITCH*smooth((x-.12)/.76):0;
+  f.dock=indexing?1-smooth(x/.1)+smooth((x-.9)/.1):1;
+  // Nothing fades: the harness goes into the bin, and only once it is all inside is it no longer drawn (applyLine).
+  f.harnessOut=0;f.liveHarness=!(reject&&indexing&&!posting);
   f.lineProgress=op;
   f.unloadUnit=line.prev==='pass'?'finished':line.prev==='reject'?'board':'none';
   f.unloadZ=LIFT_DOWN*ease(t,UNLOAD.down,UNLOAD.low);f.loadZ=LIFT_DOWN*(1-ease(t,LOAD.up,LOAD.top));
@@ -229,21 +258,74 @@ function lineFrame(f:ProcessFrame,p:number,kind:CycleCase,line:LineState,op:numb
   const swapping=f.swap&&t>=SWAP.out&&t<SWAP.done;
   if(swapping)f.lineNote='Full tote out, empty tote in';
   // The camera stays on the work through a pass and its index; it shows the line only while a full tote is swapped
-  // and the first unit goes into the empty one, and the tray while a reject is held and cleared.
-  f.shot=line.unit===1&&p<2?'wide':reject&&(f.rejected&&!indexing||indexing&&s<CLEAR_SPAN)?'reject':f.swap&&t>=SWAP.out-.1&&t<PICK.open&&!indexing?'line':'work';
+  // and the first unit goes into the empty one, and the tray and bin while a reject is held and posted.
+  f.shot=line.unit===1&&p<2?'wide':reject&&(f.rejected&&!indexing||posting)?'reject':f.swap&&t>=SWAP.out-.1&&t<PICK.open&&!indexing?'line':'work';
   // The close-up looks at the plug, at the wrist camera and the header together while the board is
   // measured, and at the next unit as it indexes in.
   const board:Point=[HEADER[0]-9,HEADER[1]-1.6,64],plug:Point=[...f.plug];
   f.focus=lerp(plug,board,smooth((p-2)/3)*(1-smooth((p-12)/1.5)));
   if(!indexing)return;
-  // A passed plug rides out with its pallet; a rejected one stays in the tray until the operator has taken it.
-  if(!reject)f.plug=[plug[0]-f.shift,plug[1],plug[2]];
-  f.focus=lerp(f.liveHarness?f.plug:plug,[NEST[0]+PALLET_PITCH-f.shift,NEST[1],NEST[2]],smooth(s/.35));
   f.step=CYCLE_STEPS.length-1;f.title=CYCLE_STEPS[f.step][0];f.scope=CYCLE_STEPS[f.step][3];f.detail='';f.depth=0;f.force=0;f.camera=false;
   const next=unitLabel(line.unit+1).toLowerCase();
-  f.message=reject&&s<CLEAR_SPAN?'The operator takes the rejected harness to the locked bin.':reject?`Reject cleared. The board goes back for a new harness; ${next} moves in.`:`Passed. ${f.unitLabel} moves out to be packed; ${next} moves in.`;
+  if(posting){
+    // the close-up stays at bench height under the plug: the harness coming up out of the tray, then going down into the bin
+    post(f,s/CLEAR_SPAN*CLEAR_SECONDS);f.focus=[f.plug[0],f.plug[1],Math.max(REJECT_BIN.lid,Math.min(f.plug[2],30))];f.title='Post the reject';f.scope='Planned handling';
+    f.message='The robot posts the rejected harness into the locked bin.';
+    return;
+  }
+  // A passed plug rides out with its pallet; a rejected one is in the bin, and the arm goes home from it.
+  if(!reject)f.plug=[plug[0]-f.shift,plug[1],plug[2]];
+  else{f.plug=postedPlug(CLEAR_SECONDS);f.jaw=1;f.tool=mix(POST_CLEAR,HOME,x);}
+  f.focus=lerp(reject?postedPlug():f.plug,[NEST[0]+PALLET_PITCH-f.shift,NEST[1],NEST[2]],smooth(x/.35));
+  f.message=reject?`Reject cleared. The board goes back for a new harness; ${next} moves in.`:`Passed. ${f.unitLabel} moves out to be packed; ${next} moves in.`;
   // Once the tester has let go of the pallet, the cell is ready for a fresh unit.
-  if(s>=.1){Object.assign(f,emptyChecks());f.accepted=null;f.rejected=false;f.retry=0;f.tries=1;f.priorFailure=null;}
+  if(x>=.1){Object.assign(f,emptyChecks());f.accepted=null;f.rejected=false;f.retry=0;f.tries=1;f.priorFailure=null;}
+}
+// The post: the arm's path, the fingers and the plug while it holds it (after it lets go, the plug sinks into the bin
+// through the brush, drawing its harness in, as the scene's simulated harness shows). u: seconds into the post.
+const POST_TRAY:Point=[REJECT[0]-GRASP[0],REJECT[1]-GRASP[1],REJECT[2]+GRIP_RAISE];
+export const POST_TOOL:Point=[REJECT_BIN.x-GRASP[0],REJECT_BIN.y-GRASP[1],POST_Z];
+const POSTED_Z=REJECT_BIN.lid-2-8.25+GRIP_RAISE;
+// how far the plug has gone down from where it was let go, u s into the post (eased speed: the integral of smoothstep)
+// The way down as phases of eased speed: [duration, speed from, speed to]; within one, the distance gone is the integral
+// of a smoothstep blend between the two speeds.
+const SINK=(()=>{
+  const {fast,ramp,depth,slow,turn,out}=POST_SINK,D=POSTED_Z-GRIP_RAISE-POST_SINK.z;
+  const a=fast*ramp/2,c=(fast+slow)*turn/2,e=slow*out/2;
+  return [[ramp,0,fast],[(depth-a)/fast,fast,fast],[turn,fast,slow],[(D-depth-c-e)/slow,slow,slow],[out,slow,0]] as const;
+})();
+const SINK_T=SINK.reduce((t,[d])=>t+d,0);
+const sunk=(u:number)=>{
+  let t=Math.max(0,u-POST.sink),x=0;
+  for(const [d,v0,v1] of SINK){const k=Math.min(t,d),r=k/d;x+=v0*k+(v1-v0)*d*(r*r*r-r*r*r*r/2);t-=k;if(t<=0)break;}
+  return x;
+};
+// when the plug comes to rest on the bin's floor
+export const POST_SUNK=POST.sink+SINK_T;
+const postedPlug=(u=0):Point=>[POST_TOOL[0]+GRASP[0],POST_TOOL[1]+GRASP[1],POSTED_Z-GRIP_RAISE-sunk(u)];
+// Clear of the lid after letting go, the arm's way home.
+const POST_CLEAR:Point=[POST_TOOL[0],POST_TOOL[1],POSTED_Z+40];
+function post(f:ProcessFrame,u:number){
+  f.post=u;f.rejected=false;f.accepted=false;
+  const hover:Point=[POST_TRAY[0],POST_TRAY[1],120],up:Point=[POST_TRAY[0],POST_TRAY[1],210],posted:Point=[POST_TOOL[0],POST_TOOL[1],POSTED_Z];
+  f.jaw=1;f.plug=[...REJECT];
+  if(u<POST.hover)f.tool=mix(HOME,hover,u/POST.hover);
+  else if(u<POST.grip)f.tool=mix(hover,POST_TRAY,(u-POST.hover)/(POST.grip-POST.hover));
+  else if(u<POST.closed){f.tool=[...POST_TRAY];f.jaw=1-smooth((u-POST.grip)/(POST.closed-POST.grip));}
+  else if(u<POST.release){
+    f.jaw=0;
+    // the fingers shut, then a beat, then the lift
+    if(u<POST.lifted)f.tool=mix(POST_TRAY,up,(u-POST.closed-.1)/(POST.lifted-POST.closed-.1));
+    else if(u<POST.over)f.tool=lerp(up,POST_TOOL,shaped(u,POST.lifted,POST.over));
+    else if(u<POST.posting)f.tool=[...POST_TOOL];
+    else f.tool=mix(POST_TOOL,posted,(u-POST.posting)/(POST.posted-POST.posting));
+    held(f);
+  }
+  else{
+    // open, then straight up clear of the lid; it goes home as the board indexes on (afterPost)
+    f.jaw=smooth((u-POST.release)/(POST.clear-POST.release));f.plug=postedPlug(u);
+    f.tool=u<POST.clear?[...posted]:mix(posted,POST_CLEAR,(u-POST.clear)/(POST.home-POST.clear));
+  }
 }
 
 // One compliant press from a hover point. A quick approach slows to a steady feed 0.3 mm before the face

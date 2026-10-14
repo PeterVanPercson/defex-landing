@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import { processFrame,processRecord,turnoverClock,recoveryStart,seatPoints,aim,offHeader,faultTag,CYCLE_STEPS,NEST,TURNOVER,REJECT,HEADER,HOME,UPCAM,GRASP,SEAT_TOOL,SEARCH_POINTS,SEARCH_TRIES,CAPTURE,SEATED,PLUG_SEATED,HALF_SEATED,CLEAR,FIRST_CONTACT,SLIDE,CARRY,LATCH_PEAK,EXAMPLE_LIMITS } from '../src/process.ts';
+import { processFrame,processRecord,turnoverClock,recoveryStart,seatPoints,aim,offHeader,faultTag,CYCLE_STEPS,NEST,TURNOVER,REJECT,HEADER,HOME,UPCAM,GRASP,SEAT_TOOL,SEARCH_POINTS,SEARCH_TRIES,CAPTURE,SEATED,PLUG_SEATED,HALF_SEATED,CLEAR,FIRST_CONTACT,SLIDE,CARRY,LATCH_PEAK,EXAMPLE_LIMITS,POST } from '../src/process.ts';
 import { CLEAR_SPAN,CYCLE_END,GRIP_RAISE,INDEX_START,SHROUD_CLEARANCE } from '../src/line.ts';
 import type { CycleCase } from '../src/process.ts';
 import { cycleSeconds,pace } from '../src/cycle-player.ts';
@@ -59,11 +59,13 @@ test('all process paths are finite, continuous and within rigid-arm reach',()=>{
     for(let i=1;i<=END*100;i++){
       const f=processFrame(i/100,kind);
       assert.ok([...f.tool,...f.plug,f.rotation,f.cradle,f.jaw,f.latch,f.force,f.headerCheck,f.graspCheck,f.shift,f.dock,...f.focus].every(Number.isFinite));
-      assert.ok(distance(f.tool,previous.tool)<3,`${kind} tool jump at ${i/100}`);
-      // a person carries a cleared reject's harness to the bin faster than the arm moves; held to walking-hand speed
-      const carried=p100(i/100,kind);assert.ok(distance(f.plug,previous.plug)<(carried?.01*pace(i/100,kind)*.35:3),`${kind} plug jump at ${i/100}`);
+      // in a cleared reject's post a percent lasts longer, so its limits are speeds at the player's pace: the tool and the
+      // plug in it under 350 mm/s, the base turning under 1.5 rad/s
+      const posting=p100(i/100,kind),ms=.01*pace(i/100,kind);
+      assert.ok(distance(f.tool,previous.tool)<(posting?ms*.35:3),`${kind} tool jump at ${i/100}`);
+      assert.ok(distance(f.plug,previous.plug)<(posting?ms*.35:3),`${kind} plug jump at ${i/100}`);
       const yaw=pose.yaw;solveArm(new T.Vector3(...f.tool).add(new T.Vector3(0,0,80)).divideScalar(5),pose);
-      assert.ok(Math.abs(pose.yaw-yaw)<.01,`${kind} base turns ${pose.yaw-yaw} at ${i/100}`);
+      assert.ok(Math.abs(pose.yaw-yaw)<(posting?ms/1000*1.5:.01),`${kind} base turns ${pose.yaw-yaw} at ${i/100}`);
       assert.ok(pose.reach<.9,`${kind} unreachable at ${i/100}`);
       assert.ok(Math.abs(pose.shoulder.distanceTo(pose.elbow)-UPPER)<1e-6);
       assert.ok(Math.abs(pose.elbow.distanceTo(pose.wrist)-FORE)<1e-6);
@@ -81,12 +83,13 @@ test('progress is monotonic and the poses never jump between neighbouring sample
       // a few mm at most per 0.05 % through the cycle, and the retry's longer percent never moves the tool faster
       // than about 350 mm/s at playback pace
       const jump=distance(f.tool,previous.tool),limit=p<start?5:8;
-      assert.ok(jump<limit,`${kind} tool jumps ${jump.toFixed(2)} mm at ${p}`);
+      assert.ok(jump<(p100(p,kind)?.05*pace(p-.025,kind)*.35:limit),`${kind} tool jumps ${jump.toFixed(2)} mm at ${p}`);
       assert.ok(distance(f.plug,previous.plug)<(p100(p,kind)?.05*pace(p-.025,kind)*.35:limit),`${kind} plug jumps at ${p}`);
       assert.ok(jump/(.05*pace(p-.025,kind))<.35,`${kind} tool at ${(jump/(.05*pace(p-.025,kind))*1000).toFixed(0)} mm/s at ${p}`);
       assert.ok(Math.abs(f.cradle-previous.cradle)<.3,`${kind} cradle jumps at ${p}`);
       for(const key of ['force','pullForce','extractionForce'] as const)assert.ok(Math.abs(f[key]-previous[key])<15,`${kind} ${key} jumps ${previous[key].toFixed(1)} -> ${f[key].toFixed(1)} N at ${p}`);
-      assert.ok(Math.abs(f.jaw-previous.jaw)<.25,`${kind} jaw jumps at ${p}`);
+      // the fingers close or open in no less than about 0.15 s
+      assert.ok(Math.abs(f.jaw-previous.jaw)<(p100(p,kind)?.05*pace(p-.025,kind)/1000*12:.25),`${kind} jaw jumps at ${p}`);
       previous=f;
     }
   }
@@ -98,9 +101,11 @@ test('the plug moves only in a closed hand, sits off centre in the fingers from 
     const local=(f:ReturnType<typeof processFrame>)=>[f.plug[0]+(f.liveHarness&&!f.harnessOut?f.shift:0),f.plug[1],f.plug[2]];
     for(let i=1;i<=END*100;i++){
       const p=i/100,f=processFrame(p,kind);
-      // a cleared reject's harness is carried to the bin by a person, not by the hand
-      const carried=(f.harnessOut??0)>0||(previous.harnessOut??0)>0;
-      if(!carried&&distance(local(f),local(previous))>1e-9)assert.ok(f.jaw<1e-6&&previous.jaw<1e-6,`${kind} plug moves with open fingers at ${p}`);
+      // nothing is ever faded away: the hand carries a cleared reject's plug to the bin like any other
+      assert.ok(!f.harnessOut,`${kind} fades at ${p}`);
+      // let go into the bin's brush seal, a cleared reject's plug sinks on through it
+      const sinking=f.post>=POST.release||previous.post>=POST.release;
+      if(distance(local(f),local(previous))>1e-9&&!sinking)assert.ok(f.jaw<1e-6&&previous.jaw<1e-6,`${kind} plug moves with open fingers at ${p}`);
       if(f.jaw<1e-6&&f.rotation===Math.PI)assert.ok(distance(f.plug,[f.tool[0],f.tool[1],f.tool[2]+CARRY])<1e-6,`${kind} closed hand without the plug at ${p}`);
       if(f.jaw<1e-6&&f.rotation===0){assert.ok(Math.abs(f.plug[2]-f.tool[2]+GRIP_RAISE)<1e-9&&flat(f.plug,f.tool)<=Math.hypot(...GRASP)+1e-9,`${kind} closed hand without the plug at ${p}`);}
       if(p>=34&&p<50)assert.ok(distance([f.plug[0]-f.tool[0],f.plug[1]-f.tool[1]],GRASP)<1e-9,`${kind} grip offset at ${p}`);
@@ -136,7 +141,8 @@ test('the upward camera measures the grip with the plug hovering at least 20 mm 
 test('the camera lights read as a measurement and a pass with its index takes about 25 s, with the arm moving within half a second',()=>{
   assert.ok(cycleSeconds('pass')>=24&&cycleSeconds('pass')<=26,`${cycleSeconds('pass')} s`);
   assert.ok(Math.abs(cycleSeconds('pass',100,END)-3.2)<.01);
-  for(const kind of cases)assert.ok(cycleSeconds(kind)<=36,`${kind} ${cycleSeconds(kind)} s`);
+  // a reject: the retry, then the post into the bin at the arm's usual speeds
+  for(const kind of cases)assert.ok(cycleSeconds(kind)<=(recoveryStart(kind)===null?36:43),`${kind} ${cycleSeconds(kind)} s`);
   const moving=Array.from({length:1000},(_,i)=>i/100).find(p=>distance(processFrame(p).tool,HOME)>.5)!;
   assert.ok(cycleSeconds('pass',0,moving)<.5);
   for(const check of ['headerCheck','graspCheck'] as const){

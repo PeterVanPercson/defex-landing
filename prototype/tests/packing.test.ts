@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import * as T from 'three';
 import { processFrame,HEADER } from '../src/process.ts';
 import type { CycleCase } from '../src/process.ts';
-import { applyLine,createCell,packing,totes,PIVOT,TILT,TOTE } from '../src/cell-geometry.ts';
+import { applyLine,createCell,packing,slotPivot,totes,BRUSH,HARNESS_POCKET,INSERT_TOP,PIVOT,TILT,TOTE } from '../src/cell-geometry.ts';
+import { sampleRope } from '../src/rope.ts';
 import { CYCLE_END,INDEX_START,PICK,SWAP,TOTE_SLOTS,opSeconds } from '../src/line.ts';
 import type { LineState } from '../src/line.ts';
 import { WIRE_RADIUS } from '../src/harness.ts';
@@ -59,7 +60,7 @@ function placeGhosts(n:number,tote:T.Object3D){
 }
 const benchParts=meshes(cell.bench),pickerParts=meshes(cell.picker.root),armParts=meshes(cell.arm.root).filter(o=>o.name!=='Arm cable');
 const carriedParts=meshes(cell.units.carried.board);
-const lines:[string,LineState][]=[['slot 0 after a swap',{unit:TOTE_SLOTS+2,passed:TOTE_SLOTS+1,rejected:0,prev:'pass'}],['slot 3',{unit:5,passed:4,rejected:0,prev:'pass'}],['the last slot',{unit:TOTE_SLOTS+1,passed:TOTE_SLOTS,rejected:0,prev:'pass'}]];
+const lines:[string,LineState][]=[['slot 0 after a swap',{unit:TOTE_SLOTS+2,passed:TOTE_SLOTS+1,rejected:0,prev:'pass'}],['slot 1',{unit:3,passed:2,rejected:0,prev:'pass'}],['the last slot',{unit:TOTE_SLOTS+1,passed:TOTE_SLOTS,rejected:0,prev:'pass'}]];
 const times=function*(){for(let t=0;t<=PICK.home+.3;t+=.02)yield t;};
 
 test('the picker comes down, takes the finished unit, packs it on edge in its slot and goes home, clear of everything',()=>{
@@ -109,20 +110,103 @@ test('placed, the unit stands exactly where its packed copy appears, and nothing
   }
 });
 
-test('the harness is drawn up off the pallet into its coil beside the board, its ends never parting from the plug',()=>{
-  const line=lines[1][1];
-  for(const t of times()){
-    pose(op(t),'pass',line);if(!shown(cell.units.carried.group))continue;
-    const plug=cell.units.carried.board.getObjectByName('Nylon connector housing')!;plug.updateMatrixWorld(true);
-    for(const w of cell.carried.wires){
-      const first=w.curve.points[0].clone().applyMatrix4(w.mesh.matrixWorld),local=first.clone().applyMatrix4(new T.Matrix4().copy(cell.units.carried.group.matrixWorld).invert());
-      assert.ok(local.distanceTo(cell.carried.coil[cell.carried.wires.indexOf(w)][0])<1e-6,`wire leaves the housing at ${t}`);
-      for(const p of w.curve.getPoints(160)){p.applyMatrix4(w.mesh.matrixWorld);assert.ok(p.z>-12+WIRE_RADIUS-.05,`wire under the worktop at ${t}`);}
-    }
+// The six carried wires as drawn, in cell coordinates, and points along their tubes' curves.
+const carriedCurves=()=>cell.carried.wires.map(w=>new T.CatmullRomCurve3(w.curve.points.map(p=>p.clone()),false,'centripetal'));
+const curveLength=(c:T.CatmullRomCurve3)=>{let L=0;const a=c.getPoint(0),b=new T.Vector3();for(let j=1;j<=400;j++){c.getPoint(j/400,b);L+=a.distanceTo(b);a.copy(b);}return L;};
+const slotOf=(line:LineState)=>processFrame(op(1),'pass',line).tote;
+const polyline=(c:Float64Array,n:number)=>{let L=0;for(let i=1;i<n;i++)L+=Math.hypot(c[i*3]-c[i*3-3],c[i*3+1]-c[i*3-2],c[i*3+2]-c[i*3-1]);return L;};
+
+test('the harness hangs from its plug as the board is lifted, carried and lowered, and never passes through anything',()=>{
+  // what the wires can meet (each drawn wire within 0.9 mm, less than its own thickness, where the bundle meets a surface
+  // steeply): the bench and the tote line, the reject tray and bin, the unload pallet, the tote and the
+  // units already packed, the picker, and the carried board itself (its housing apart, where the wires leave it)
+  const worst=new Map<string,number>(),where=new Map<string,string>();let checked=0;const R=WIRE_RADIUS,LIMIT_WIRE=.9;
+  for(const [name,line] of lines)for(let t=PICK.closed;t<PICK.open;t+=.05){
+    const p=op(t);pose(p,'pass',line);const slot=slotOf(line);placeGhosts(slot,cell.tote.group);
+    assert.ok(cell.carried.wires.every(w=>w.mesh.visible),`${name}: wires shown while carried at ${t}`);
+    // the wires leave the housing where they were dressed into it
+    const local=new T.Matrix4().copy(cell.units.carried.group.matrixWorld).invert();
+    cell.carried.wires.forEach((w,i)=>assert.ok(w.curve.points[0].clone().applyMatrix4(local).distanceTo(cell.carried.dressed[i][0])<1e-6,`${name}: wire ${i+1} leaves its housing at ${t}`));
+    const targets=[...benchParts,...meshes(cell.units.unload.group),...meshes(cell.tote.group),...meshes(cell.rejectBin),...meshes(cell.bin),...pickerParts,...carriedParts,...ghosts.flatMap(g=>meshes(g))].filter(o=>shown(o)&&o.name!=='Packed units'&&!/comb tooth/i.test(o.name)&&o.geometry.type!=='TubeGeometry');
+    const boxes=targets.map(o=>new T.Box3().setFromObject(o).expandByScalar(R));
+    carriedCurves().forEach((curve,i)=>{for(let j=6;j<=294;j++){const u=j/300,point=curve.getPoint(u);for(let k=0;k<targets.length;k++){if(!boxes[k].containsPoint(point))continue;const m=targets[k];
+      // the wires leave their housing, and their far ends sit in the tester connector's grommets until drawn out
+      if(/connector housing|Wire entry seal/.test(m.name)&&u<.04||u>.93&&/tester connector|ferrule|Ferrule/i.test(m.name))continue;
+      checked++;const d=depth(m,point,R);if(d>LIMIT_WIRE){const key=`${name}: wire ${i+1} / ${m.name}`;if(d>(worst.get(key)??0)){worst.set(key,d);where.set(key,`u ${u.toFixed(3)} t ${t.toFixed(2)}`);}}}}});
   }
-  // coiled, every wire lies inside its slot in the tote
-  pose(op(PICK.placed+.05),'pass',line);const tote=cell.tote.group,[w0]=TOTE.size;
-  for(const w of cell.carried.wires)for(const p of w.curve.getPoints(200)){p.applyMatrix4(w.mesh.matrixWorld).sub(tote.position);assert.ok(Math.abs(p.x)<w0/2-2.5&&Math.abs(p.y)<TOTE.size[1]/2-2.5&&p.z>23,`coil at ${p.toArray()}`);}
+  ghosts.forEach(g=>g.visible=false);
+  assert.ok(checked>1000,`${checked} wire points near something`);
+  assert.deepEqual([...worst].slice(0,14).map(([k,d])=>`${k}: ${d.toFixed(2)} mm (${where.get(k)})`),[]);
+});
+
+test('the harness keeps its length, comes to rest in its own slot before the jaws open, and the packed copy is exactly it',()=>{
+  for(const [name,line] of lines){
+    const slot=slotOf(line),track=cell.carried.tracks[slot],dressed=cell.carried.dressed.map(w=>curveLength(new T.CatmullRomCurve3(w,false,'centripetal')));
+    // The bundle itself never stretches (its centreline within 2.5 % of its length), and each drawn wire keeps to within
+    // 10 %: drawn round the bundle's centre, the wire on the inside of a coil in the pile runs that much shorter.
+    const n0=track.rope.n,c0=new Float64Array(n0*3);sampleRope(track.rope,PICK.closed,c0);const length0=polyline(c0,n0);
+    for(let t=PICK.closed;t<PICK.open;t+=.1){
+      pose(op(t),'pass',line);carriedCurves().forEach((c,i)=>{const L=curveLength(c);assert.ok(Math.abs(L/dressed[i]-1)<.1,`${name}: wire ${i+1} ${L.toFixed(1)} mm of ${dressed[i].toFixed(1)} at ${t.toFixed(2)}`);});
+      const c1=new Float64Array(n0*3);sampleRope(track.rope,t,c1);const L=polyline(c1,n0);assert.ok(Math.abs(L/length0-1)<.025,`${name}: bundle ${L.toFixed(1)} mm of ${length0.toFixed(1)} at ${t.toFixed(2)}`);
+    }
+    // at rest: no part of the harness moves more than 2.5 mm over the last quarter second
+    const n=track.rope.n,a=new Float64Array(n*3),b=new Float64Array(n*3);sampleRope(track.rope,PICK.open-.25,a);sampleRope(track.rope,PICK.open,b);
+    let moved=0;for(let i=0;i<n;i++)moved=Math.max(moved,Math.hypot(a[i*3]-b[i*3],a[i*3+1]-b[i*3+1],a[i*3+2]-b[i*3+2]));
+    assert.ok(moved<2.5,`${name}: still moving ${moved.toFixed(2)} mm`);
+    // in its slot: between the dividers (or the tote's wall), inside the tote, on the insert
+    const [sx]=slotPivot(slot),hi=sx+.8+HARNESS_POCKET,lo=sx-.8-(TOTE.pitch-.8-HARNESS_POCKET-1.6),[,d]=TOTE.size;
+    pose(op(PICK.open-1e-6),'pass',line);const tote=cell.tote.group.position;
+    for(const c of carriedCurves())for(const q of c.getPoints(300)){const x=q.x-tote.x,y=q.y-tote.y,z=q.z-tote.z;
+      assert.ok(x<hi-WIRE_RADIUS+.9&&x>lo+WIRE_RADIUS-.9&&Math.abs(y)<d/2-2.5-WIRE_RADIUS+.9&&z>INSERT_TOP+WIRE_RADIUS-.9,`${name}: wire at ${[x,y,z].map(v=>v.toFixed(1))} outside slot ${slot} (${lo.toFixed(1)}..${hi.toFixed(1)})`);}
+    // handed over: the packed copy's wire vertices are the carried wires' own, to a hundredth of a mm
+    const carried=cell.carried.wires.map(w=>Array.from(w.geometry.attributes.position.array as Float32Array));
+    pose(op(PICK.open),'pass',line);
+    const entry=cell.tote.slots.fill.find(x=>(x.mesh.material as T.MeshStandardMaterial).vertexColors)!;
+    const pos=entry.mesh.geometry.attributes.position,start=entry.counts[slot];let k=start,worst=0;
+    for(const wire of carried){const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(new Float32Array(wire),3));g.setIndex(cell.carried.wires[0].geometry.index);const flat=g.toNonIndexed().attributes.position;
+      for(let v=0;v<flat.count;v++,k++)worst=Math.max(worst,Math.abs(flat.getX(v)-tote.x-pos.getX(k)),Math.abs(flat.getY(v)-tote.y-pos.getY(k)),Math.abs(flat.getZ(v)-tote.z-pos.getZ(k)));}
+    assert.equal(k,entry.counts[slot+1],`${name}: slot ${slot} copy has the carried wires' vertices`);
+    assert.ok(worst<.01,`${name}: packed copy differs by ${worst.toFixed(4)} mm`);
+  }
+  // packed units stand inside the tote's rim
+  for(const x of cell.tote.slots.fill){x.mesh.geometry.computeBoundingBox();assert.ok(x.mesh.geometry.boundingBox!.max.z<TOTE.size[2]+1,`${(x.mesh.material as T.Material).name} stands ${x.mesh.geometry.boundingBox!.max.z.toFixed(1)} above the tote floor`);}
+});
+
+// Every frame at the player's 60 fps, the simulated harness of the pick (each slot) and of a cleared reject's post: the
+// bundle keeps its length (within 3 %), no segment of it stretches more than 15 %, and no part of it moves faster than
+// 600 mm/s, so nothing whips or snaps. In the post, what is under the bin's brush seal is out of sight: its speed is
+// not looked at there (it is still held to its length).
+function motion(rope:{n:number;t0:number;t1:number},sample:(t:number,out:Float64Array)=>void,seen:(z:number)=>boolean){
+  const n=rope.n,a=new Float64Array(n*3),b=new Float64Array(n*3),rest=new Float64Array(n-1);sample(rope.t0,a);
+  let L0=0;for(let i=1;i<n;i++){rest[i-1]=Math.hypot(a[i*3]-a[i*3-3],a[i*3+1]-a[i*3-2],a[i*3+2]-a[i*3-1]);L0+=rest[i-1];}
+  const worst={length:0,segment:0,speed:0,at:''};
+  for(let k=1;rope.t0+k/60<rope.t1;k++){
+    const t=rope.t0+k/60;sample(t,b);let L=0;
+    for(let i=1;i<n;i++){const d=Math.hypot(b[i*3]-b[i*3-3],b[i*3+1]-b[i*3-2],b[i*3+2]-b[i*3-1]);L+=d;if(d/rest[i-1]-1>worst.segment){worst.segment=d/rest[i-1]-1;worst.at=`segment ${i} at ${t.toFixed(3)}`;}}
+    worst.length=Math.max(worst.length,Math.abs(L/L0-1));
+    for(let i=0;i<n;i++){if(!seen(b[i*3+2]))continue;const v=Math.hypot(b[i*3]-a[i*3],b[i*3+1]-a[i*3+1],b[i*3+2]-a[i*3+2])*60;if(v>worst.speed)worst.speed=v;}
+    a.set(b);
+  }
+  return worst;
+}
+test('every frame of the pick and of the post, the harness keeps its length and never whips',()=>{
+  type Track={rope:{n:number;t0:number;t1:number;fps:number;frames:Float32Array;count:number}};
+  const tracks=(cell as unknown as {carried:{tracks:Track[]};post:{track:Track}});
+  const check=(name:string,track:Track,seen:(z:number)=>boolean)=>{
+    const w=motion(track.rope,(t,out)=>sampleRope(track.rope as never,t,out),seen);
+    assert.ok(w.length<=.03,`${name}: length off by ${(w.length*100).toFixed(1)} %`);
+    assert.ok(w.segment<=.15,`${name}: ${w.at} stretched ${(w.segment*100).toFixed(0)} %`);
+    assert.ok(w.speed<=600,`${name}: ${w.speed.toFixed(0)} mm/s`);
+  };
+  tracks.carried.tracks.forEach((t,slot)=>check(`slot ${slot}`,t,()=>true));
+  check('post',tracks.post.track,z=>z>BRUSH.z[1]-1);
+});
+
+test('the simulated harness is the same every time it is built',async()=>{
+  const again=await import('../src/cell-geometry.ts?second-build'),other=again.createCell(6);
+  cell.carried.tracks.forEach((track,i)=>{const b=other.carried.tracks[i].rope.frames;assert.equal(b.length,track.rope.frames.length);assert.ok(track.rope.frames.every((v,k)=>v===b[k]),`slot ${i} frames differ`);});
+  const a=(cell as unknown as {post:{track:{rope:{frames:Float32Array}}}}).post.track.rope.frames,b=(other as unknown as {post:{track:{rope:{frames:Float32Array}}}}).post.track.rope.frames;
+  assert.ok(a.length===b.length&&a.every((v,k)=>v===b[k]),'post frames differ');
 });
 
 test('a full tote rolls off into the store and an empty one rolls in, the totes and shutters never meeting',()=>{
