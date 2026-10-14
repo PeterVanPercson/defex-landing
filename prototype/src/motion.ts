@@ -1,3 +1,4 @@
+import { Matrix4, Vector2, Vector3 } from 'three';
 export type Pose = [number, number, number, number];
 
 interface Frame { at: number; pose: Pose }
@@ -41,4 +42,19 @@ export const damping = (elapsed: number, timeConstant: number) => 1 - Math.exp(-
 export function settleSpring(position: number, velocity: number, target: number, seconds: number, frequency = 20) {
   const offset = position - target, c = velocity + frequency * offset, decay = Math.exp(-frequency * seconds);
   return { position: target + (offset + c * seconds) * decay, velocity: (velocity - frequency * c * seconds) * decay };
+}
+
+// A drag only takes the camera once it is a real drag: past 6 px, and on a touch screen only sideways (a vertical
+// swipe is the page scrolling).
+export function isDrag(dx:number,dy:number,touch:boolean){return Math.hypot(dx,dy)>6&&(!touch||Math.abs(dx)>Math.abs(dy));}
+// A click picks a part only if it was a short, still press of the main button.
+export function isClick(button:number,ms:number,dx:number,dy:number){return button===0&&ms<300&&Math.hypot(dx,dy)<5;}
+
+// The frame shift (fractions of the frame width and height) that brings `look` to the centre of a camera at
+// `position` pointed at `target`.
+export function lensShift(position:Vector3,target:Vector3,look:Vector3,filmWidth:number,filmHeight:number,lens:number){
+  const m=new Matrix4().lookAt(position,target,new Vector3(0,0,1)),p=look.clone().sub(position).applyMatrix4(m.transpose());
+  // camera space: x right, y up, -z forward
+  const depth=-p.z;if(depth<=0)return new Vector2();
+  return new Vector2(p.x/depth*lens/filmWidth,-p.y/depth*lens/filmHeight);
 }

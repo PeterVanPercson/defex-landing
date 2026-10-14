@@ -1,5 +1,5 @@
 import { probePoints } from './model.ts';
-import { CAPTURE, CLEAR_SPAN, CYCLE_END, FIRST_UNIT, GRIP_RAISE, INDEX_START, LIFT_DOWN, PALLET_PITCH, TOTE_SLOTS } from './line.ts';
+import { CAPTURE, CLEAR_SPAN, CYCLE_END, FIRST_UNIT, GRIP_RAISE, INDEX_START, LIFT_DOWN, LOAD, PALLET_PITCH, PICK, SWAP, TOTE_SLOTS, UNLOAD, opSeconds } from './line.ts';
 import type { LineFrame, LineState } from './line.ts';
 export { CAPTURE, CYCLE_END, GRIP_RAISE, INDEX_START };
 
@@ -140,7 +140,7 @@ export function processFrame(value:number,kind:CycleCase='pass',line:LineState=F
     cradleGrip:.5*(q<32?1:q<32.3?1-smooth((q-32)/.3):q<38?0:smooth((q-38)/.2)),
     tool:[...HOME],plug:[...NEST],jaw:1,accepted:null,force:0,pullForce:0,extractionForce:0,latch:0,
     depth:0,tries:1,retry:0,message:CYCLE_STEPS[step][2],rejected:false,camera:step===1,priorFailure:null,headerCheck:0,graspCheck:0,detail:'',
-    shift:0,dock:1,liveHarness:true,unloadZ:0,unloadUnit:'none',unloadFade:1,loadZ:LIFT_DOWN,loadBoard:0,loadHarness:0,tote:0,toteIn:0,
+    shift:0,dock:1,liveHarness:true,unloadZ:0,unloadUnit:'none',loadZ:LIFT_DOWN,tote:0,pack:false,swap:false,
     shot:'work',focus:[...NEST],unitLabel:unitLabel(line.unit),lineNote:'',
   };
   if(step===0)f.message=`${f.unitLabel} is on its pallet, located on pins. The tester is docked.`;
@@ -208,44 +208,40 @@ function bend(a:Point,c:Point,b:Point,t:number):Point{
 // The plug in the closed fingers: off the tool centre by the grip offset (s blends it in at the regrip).
 function held(f:ProcessFrame,s=1){f.plug=[f.tool[0]+GRASP[0]*s,f.tool[1]+GRASP[1]*s,f.tool[2]-GRIP_RAISE];}
 
-// The line around the robot. Over 0..100 the operator works in parallel: unloads the last unit at the left
-// end while the board is checked, sends its pallet down the return lift before the pick, and loads the next pallet coming up at the right. Over
-// 100..108 every pallet indexes one station toward -x, so 108 of unit N is exactly 0 of unit N+1.
-// Above the posting slot in the reject bin’s lid, the high point of the carry there from the tray, and the plug
-// height where it sits in the slot as it goes in.
-const REJECT_SLOT:Point=[-235,-226,96],REJECT_LIFT:Point=[-150,-200,132],BIN_LID=82;
+// The line around the robot. Over 0..100 the operator side works in parallel: the picker packs the last passed unit
+// off the unload pallet into the tote while the board is checked, the empty pallet goes down the return lift, and the
+// next pallet, loaded upstream, comes up the load lift at the right. Over 100..108 every pallet indexes one station
+// toward -x, so 108 of unit N is exactly 0 of unit N+1.
+const ease=(t:number,a:number,b:number)=>smooth((t-a)/(b-a));
 function lineFrame(f:ProcessFrame,p:number,kind:CycleCase,line:LineState,op:number){
-  const s=clamp((p-INDEX_START)/(CYCLE_END-INDEX_START)),indexing=p>INDEX_START,reject=recoveryStart(kind)!==null;
-  const plug:Point=[...f.plug];
+  const s=clamp((p-INDEX_START)/(CYCLE_END-INDEX_START)),indexing=p>INDEX_START,reject=recoveryStart(kind)!==null,t=opSeconds(op);
   f.shift=indexing?PALLET_PITCH*smooth((s-.12)/.76):0;
   f.dock=indexing?1-smooth(s/.1)+smooth((s-.9)/.1):1;
-  // A cleared reject: the person lifts the harness out of the tray and takes it to the locked bin, then the bare
-  // board indexes out.
-  f.harnessOut=reject&&indexing?smooth(s/CLEAR_SPAN):0;f.liveHarness=!(reject&&indexing&&s>=CLEAR_SPAN);
+  // A cleared reject: the operator takes the harness out of the tray to the locked bin, then the bare board indexes on.
+  f.harnessOut=reject&&indexing?smooth(s/(CLEAR_SPAN*.8)):0;f.liveHarness=!(reject&&indexing&&s>=CLEAR_SPAN);
   f.lineProgress=op;
   f.unloadUnit=line.prev==='pass'?'finished':line.prev==='reject'?'board':'none';
-  f.unloadFade=1-smooth((op-1)/3);f.unloadZ=LIFT_DOWN*smooth((op-4)/4);
-  f.loadZ=LIFT_DOWN*(1-smooth((op-20)/8));f.loadBoard=smooth((op-30)/4);f.loadHarness=smooth((op-36)/6);
-  // The tote holds the passed units already packed; a full one is swapped for an empty one at the next pack.
-  const packed=line.passed-(line.prev==='pass'?1:0);
-  if(line.prev==='pass'&&op>=1){
-    f.tote=packed%TOTE_SLOTS+(op>=4?1:0);f.toteIn=op<4?smooth((op-1)/3):0;
-    if(packed>0&&packed%TOTE_SLOTS===0&&op<10)f.lineNote='Full tote out, empty tote in';
-  }else f.tote=packed===0?0:(packed-1)%TOTE_SLOTS+1;
-  // A held reject is framed on the tray, and stays there while the person clears it.
-  f.shot=line.unit===1&&p<2?'wide':reject&&(f.rejected&&!indexing||indexing&&s<CLEAR_SPAN)?'reject':indexing||p>=97&&f.accepted!==false?'line':'work';
+  f.unloadZ=LIFT_DOWN*ease(t,UNLOAD.down,UNLOAD.low);f.loadZ=LIFT_DOWN*(1-ease(t,LOAD.up,LOAD.top));
+  // The tote holds the passed units already packed; a full one is swapped for an empty one before the next pack.
+  const packed=line.passed-(line.prev==='pass'?1:0),full=packed>0&&packed%TOTE_SLOTS===0;
+  f.pack=line.prev==='pass';f.swap=f.pack&&full;
+  f.tote=(f.swap?0:packed===0?0:(packed-1)%TOTE_SLOTS+1)+(f.pack&&t>=PICK.open?1:0);
+  const swapping=f.swap&&t>=SWAP.out&&t<SWAP.done;
+  if(swapping)f.lineNote='Full tote out, empty tote in';
+  // The camera stays on the work through a pass and its index; it shows the line only while a full tote is swapped
+  // and the first unit goes into the empty one, and the tray while a reject is held and cleared.
+  f.shot=line.unit===1&&p<2?'wide':reject&&(f.rejected&&!indexing||indexing&&s<CLEAR_SPAN)?'reject':f.swap&&t>=SWAP.out-.1&&t<PICK.open&&!indexing?'line':'work';
   // The close-up looks at the plug, at the wrist camera and the header together while the board is
   // measured, and at the next unit as it indexes in.
-  const board:Point=[HEADER[0]-9,HEADER[1]-1.6,64];
+  const board:Point=[HEADER[0]-9,HEADER[1]-1.6,64],plug:Point=[...f.plug];
   f.focus=lerp(plug,board,smooth((p-2)/3)*(1-smooth((p-12)/1.5)));
   if(!indexing)return;
+  // A passed plug rides out with its pallet; a rejected one stays in the tray until the operator has taken it.
   if(!reject)f.plug=[plug[0]-f.shift,plug[1],plug[2]];
-  // Taken out of the tray, carried over to the locked bin and posted through its slot.
-  else{const o=f.harnessOut,carry=Math.min(1,o/.85);f.plug=bend(plug,REJECT_LIFT,REJECT_SLOT,carry);f.plug[2]-=(REJECT_SLOT[2]-BIN_LID)*Math.max(0,(o-.85)/.15);}
   f.focus=lerp(f.liveHarness?f.plug:plug,[NEST[0]+PALLET_PITCH-f.shift,NEST[1],NEST[2]],smooth(s/.35));
   f.step=CYCLE_STEPS.length-1;f.title=CYCLE_STEPS[f.step][0];f.scope=CYCLE_STEPS[f.step][3];f.detail='';f.depth=0;f.force=0;f.camera=false;
   const next=unitLabel(line.unit+1).toLowerCase();
-  f.message=reject&&s<CLEAR_SPAN?'A person takes the rejected harness to the locked bin.':reject?`Reject cleared. The board goes back for a new harness; ${next} moves in.`:`Passed. ${f.unitLabel} moves out to the operator; ${next} moves in.`;
+  f.message=reject&&s<CLEAR_SPAN?'The operator takes the rejected harness to the locked bin.':reject?`Reject cleared. The board goes back for a new harness; ${next} moves in.`:`Passed. ${f.unitLabel} moves out to be packed; ${next} moves in.`;
   // Once the tester has let go of the pallet, the cell is ready for a fresh unit.
   if(s>=.1){Object.assign(f,emptyChecks());f.accepted=null;f.rejected=false;f.retry=0;f.tries=1;f.priorFailure=null;}
 }

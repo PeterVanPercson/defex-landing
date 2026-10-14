@@ -122,12 +122,23 @@ export class ArmCable {
     this.mesh.name = 'Arm cable'; this.mesh.castShadow = true; this.mesh.frustumCulled = false;
   }
 
+  // Each ring's centre is sampled once; its tangent comes from the neighbouring samples (no extra curve
+  // evaluations), and an unmoved cable is not rebuilt at all.
+  private samples: THREE.Vector3[] = [];
+  private last: number[] = [];
   update(points: THREE.Vector3[]) {
+    const last = this.last;
+    if (last.length === points.length * 3 && points.every((v, i) => Math.abs(v.x - last[i * 3]) < 1e-6 && Math.abs(v.y - last[i * 3 + 1]) < 1e-6 && Math.abs(v.z - last[i * 3 + 2]) < 1e-6)) return;
+    this.last = points.flatMap(v => [v.x, v.y, v.z]);
     points.forEach((v, i) => this.curve.points[i].copy(v));
+    const n = this.segments, samples = this.samples;
+    while (samples.length <= n) samples.push(new THREE.Vector3());
+    for (let i = 0; i <= n; i++) this.curve.getPoint(i / n, samples[i]);
     const positions = this.geometry.attributes.position, normals = this.geometry.attributes.normal;
-    for (let i = 0; i <= this.segments; i++) {
-      const u = i / this.segments;
-      this.curve.getPoint(u, this.p); this.curve.getTangent(u, this.t);
+    for (let i = 0; i <= n; i++) {
+      this.p.copy(samples[i]);
+      this.t.subVectors(samples[Math.min(n, i + 1)], samples[Math.max(0, i - 1)]);
+      if (this.t.lengthSq() < 1e-12) this.t.set(0, 0, 1); else this.t.normalize();
       this.ref.copy(Math.abs(this.t.z) > 0.9 ? Y : Z);
       this.n.crossVectors(this.ref, this.t).normalize(); this.b.crossVectors(this.t, this.n).normalize();
       for (let j = 0; j <= this.sides; j++) {

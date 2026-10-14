@@ -39,7 +39,11 @@ const isEmbed=new URLSearchParams(location.search).has('embed');
 let config:Configuration={...DEFAULT_CONFIG};
 let currentView:View|'part'='overview';
 let currentMode:Mode='machine';
-const syncModes=()=>modeButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===currentMode&&(currentMode!=='machine'||currentView==='overview'))));
+// While the person has the camera, the dock shows no camera view pressed; Inside and Parts stay on.
+let free=false;
+const syncModes=()=>modeButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===currentMode&&(currentMode!=='machine'||currentView==='overview'&&!free))));
+// Inside frames the connector itself, so only Inside shows pressed, not Close-up too.
+const syncCamera=()=>{cameraButtons.forEach(b=>b.setAttribute('aria-pressed',String(!free&&currentMode!=='inside'&&b.dataset.view===currentView)));syncModes();};
 let controller:Controller='fixed';
 let ready=false,playing=false;
 let state:Snapshot|null=null;
@@ -58,7 +62,10 @@ if(isEmbed)document.body.classList.add('embed');
 await new Promise(resolve=>setTimeout(resolve));
 
 if(new URLSearchParams(location.search).get('view')!=='schematic'){
-  try{scene=new WorkcellScene(el('scene'),config,{labels:el('labels'),tooltip:el('tooltip'),onDirector:on=>document.body.classList.toggle('focused',on||currentView!=='overview'),onPick:()=>{currentView='part';document.body.classList.add('focused');cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));syncModes();}},isEmbed);}
+  try{scene=new WorkcellScene(el('scene'),config,{labels:el('labels'),tooltip:el('tooltip'),onDirector:on=>document.body.classList.toggle('focused',on||currentView!=='overview'),
+    // The connector and gripper move all cycle: a pick of either follows them in the close-up.
+    onPick:id=>id==='connector'||id==='gripper'?selectView('connector',false):showPart(id),
+    onFree:on=>{free=on;el('guided-view').hidden=!on;document.body.classList.toggle('free-view',on);syncCamera();}},isEmbed);}
   catch(error){console.warn('3D renderer unavailable',error);}
 }else text('fallback-title','Live side view of the simulation.');
 function useSchematic(){
@@ -122,7 +129,7 @@ function showStage(){
   if(Math.abs(stage.getBoundingClientRect().top)>8)stage.scrollIntoView({block:'start',behavior:still()?'auto':'smooth'});
 }
 function selectView(view:View,scroll=true){
-  dismissEnd();if(scroll)showStage();currentView=view;scene?.view(view);document.body.classList.toggle('focused',view!=='overview');cameraButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));syncModes();
+  dismissEnd();if(scroll)showStage();currentView=view;scene?.view(view);document.body.classList.toggle('focused',view!=='overview');syncCamera();
 }
 function selectMode(mode:Mode,scroll=true){
   dismissEnd();currentMode=mode;scene?.setMode(mode);document.body.classList.toggle('exploded',mode==='parts');
@@ -131,7 +138,7 @@ function selectMode(mode:Mode,scroll=true){
 }
 function showPart(id:PartId){
   if(!scene)return;
-  currentView='part';scene.focusPart(id);document.body.classList.add('focused');cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));syncModes();
+  currentView='part';scene.focusPart(id);document.body.classList.add('focused');syncCamera();
   const stage=document.querySelector('.stage')!;
   if(stage.getBoundingClientRect().bottom<innerHeight*0.6)stage.scrollIntoView({behavior:still()?'auto':'smooth'});
 }
@@ -156,7 +163,7 @@ function stopTour(){
 function film(){
   if(!scene)return;
   if(currentMode==='parts')selectMode('machine',false);
-  currentView='overview';cameraButtons.forEach(b=>b.setAttribute('aria-pressed','false'));syncModes();scene.direct(true);
+  currentView='overview';scene.direct(true);syncCamera();
 }
 // Every run plays framed on the stage, with the camera on the socket; the result, tests and force plot wait below.
 function run(withConfig=false){
@@ -200,7 +207,18 @@ for(const b of controllerButtons)b.addEventListener('click',()=>{stopTour();choo
 el('run').addEventListener('click',e=>{if(e.detail<2)togglePlayback();});
 el('reset').addEventListener('click',reset);
 el('speed').addEventListener('change',()=>send({type:'speed',speed:Number(el<HTMLSelectElement>('speed').value)}));
-for(const b of cameraButtons)b.addEventListener('click',()=>selectView(currentView===b.dataset.view?'overview':b.dataset.view as View));
+// A pressed view toggles back to the machine; pressed again after orbiting, it re-centres instead.
+for(const b of cameraButtons)b.addEventListener('click',()=>{if(currentMode==='inside'){selectMode('machine',false);selectView(b.dataset.view as View);return;}selectView(currentView===b.dataset.view&&!free?'overview':b.dataset.view as View);});
+el('guided-view').addEventListener('click',()=>scene?.guided());
+// While the slider is held the camera keeps its shot; it goes to the shot the frame asks for on release.
+const scrubber=el<HTMLInputElement>('cycle-scrub'),letGoOfScrub=()=>scene?.setScrubbing(false);
+scrubber.addEventListener('pointerdown',()=>scene?.setScrubbing(true));scrubber.addEventListener('change',letGoOfScrub);
+addEventListener('pointerup',letGoOfScrub);addEventListener('pointercancel',letGoOfScrub);
+// The first time a pointer or finger comes onto the stage, say how the camera is moved; it fades after 3 s.
+{const hint=el('stage-hint'),stageEl=el('scene');let shown=false;
+  if(matchMedia('(pointer: coarse)').matches)hint.textContent='Drag to turn · pinch to zoom';
+  const show=()=>{if(shown||isEmbed||!scene)return;shown=true;hint.classList.add('visible');setTimeout(()=>hint.classList.remove('visible'),3000);};
+  stageEl.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')show();});stageEl.addEventListener('touchstart',show,{passive:true});}
 for(const b of modeButtons)b.addEventListener('click',()=>selectMode(b.dataset.mode as Mode));
 for(const b of partButtons)b.addEventListener('click',()=>showPart(b.dataset.part as PartId));
 el('retry').addEventListener('click',()=>location.reload());
@@ -378,7 +396,8 @@ function error(message:string){
 worker.onerror=e=>error(e.message||'Reload the simulation to try again.');
 worker.onmessage=({data})=>{
   if(data.type==='ready'){
-    ready=true;el('loading').hidden=true;
+    // The stage stays under the loader until the scene has compiled, chosen its quality and drawn its first frames.
+    ready=true;(scene?.ready??Promise.resolve()).then(()=>{if(ready)el('loading').hidden=true;});
     el<HTMLButtonElement>('save-video').disabled=!scene||typeof MediaRecorder==='undefined';refreshControls();
   }
   if(data.type==='state'){

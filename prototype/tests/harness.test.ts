@@ -70,7 +70,9 @@ test('both connector variants terminate within their tester connector and comb c
 });
 
 test('the S takes up the slack with room to spare both ways, picked from the nest and seated',()=>{
-  for(const p of [0,100]){dress(p,'pass',0);const {amplitude}=bundleFit();assert.ok(amplitude>=2&&amplitude<=20,`p ${p}: S amplitude ${amplitude.toFixed(2)}`);}
+  for(const p of [0,100]){dress(p,'pass',0);const {amplitude}=bundleFit();assert.ok(amplitude>=2&&amplitude<=SLACK_LIMIT-3,`p ${p}: S amplitude ${amplitude.toFixed(2)}`);}
+  // and the harness is never pulled taut: the S keeps slack through the whole cycle, the turnover included
+  for(const kind of cases)for(let p=0;p<=100;p+=.5){dress(p,kind,0);const {amplitude,sag}=bundleFit();assert.ok(amplitude>=6&&sag===1,`${kind} ${p}: S ${amplitude.toFixed(2)}, sag ${sag}`);}
 });
 
 test('during the index the wires ride rigidly with the pallet, without being dressed again, clear of the dock head',()=>{

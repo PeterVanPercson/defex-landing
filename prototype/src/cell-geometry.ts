@@ -5,8 +5,9 @@ import { createCobot, ArmCable } from './cobot.ts';
 import { plugHousing, contactCenters } from './mechanism.ts';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { HEADER, NEST, REJECT, TURNOVER, UPCAM, processFrame } from './process.ts';
-import { HARNESS_POINTS, WIRE_RADIUS, dressHarness, setHarnessObstacles } from './harness.ts';
-import { CHAMFER, CYCLE_END, GRIP_RAISE, INDEX_START, LIFT_DOWN, LINE_X, PALLET_PITCH, PALLET_SIZE, PALLET_Y, SHROUD_CLEARANCE, TOTE_SLOTS } from './line.ts';
+import { HARNESS_LENGTH, HARNESS_POINTS, WIRE_RADIUS, bundleSlot, dressHarness, setHarnessObstacles } from './harness.ts';
+import { FLOOR } from './hall.ts';
+import { CHAMFER, GRIP_RAISE, INDEX_START, LIFT_DOWN, LINE_X, LOAD, PALLET_PITCH, PALLET_SIZE, PALLET_Y, PICK, SHROUD_CLEARANCE, SWAP, TOTE_SLOTS, UNLOAD, opSeconds } from './line.ts';
 import type { LineFrame } from './line.ts';
 
 const geometry=new Map<string,T.BufferGeometry>();
@@ -21,6 +22,8 @@ export function cyl(parent:T.Object3D,name:string,r:number,h:number,pos:number[]
 }
 function bolt(parent:T.Object3D,x:number,y:number,z:number,r=2.4){cyl(parent,'Machined washer',r+.65,.5,[x,y,z],M.silver);cyl(parent,'Socket screw',r,1.5,[x,y,z+.7],M.silver,24);cyl(parent,'Hex socket recess',r*.46,.08,[x,y,z+1.49],M.bore,6);}
 function tube(parent:T.Object3D,points:number[][],r:number,mat:T.Material){const curve=new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p as [number,number,number])));const o=new T.Mesh(new T.TubeGeometry(curve,40,r,8,false),mat);o.castShadow=true;parent.add(o);return o;}
+// The tester's dock: its stroke, how far the tester stands back for it, and its locating pin (cell x, z).
+export const DOCK_STROKE=8,DOCK_BACK=8,DOCK_PIN=[-96,7] as const;
 const pcbMaterial=new T.MeshPhysicalMaterial({color:0x164c38,metalness:.12,roughness:.48,clearcoat:.25,clearcoatRoughness:.4});
 const grey=new T.MeshStandardMaterial({color:0x969b99,metalness:.15,roughness:.5});
 const solder=new T.MeshStandardMaterial({color:0xadada5,metalness:1,roughness:.28});
@@ -84,14 +87,21 @@ function createUpCamera(){
   flatRing(g,'Lens front chamfer',3.6,3.75,[0,0,top-.785],M.edge);
   cyl(g,'Camera lens glass',2.7,.12,[0,0,top-.8],lensGlass,40);
   const glass=cyl(g,'Protective window',7.9,.3,[0,0,top-.35],windowGlass,64);glass.castShadow=false;
-  tube(g,[[-16,0,zc],[-18.6,-.3,zc-.6],[-20.5,-2.2,1.5],[-21,-8,1.3],[-21,-40,1.3],[-21,-80,1.3],[-21,-108.6,1.3],[-21,-112.6,-.2],[-21,-114.3,-4],[-21,-114.6,-9],[-21,-117,-10.7],[-21,-132,-10.7],[-21,-141,-11],[-21,-144,-13.5]],1.25,M.rubber);
+  // Clipped along the plate to its front edge, where it goes down through a cable gland into the bench's cable
+  // port: a small junction box on the worktop against the plate's edge, wired on through the worktop.
+  tube(g,[[-16,0,zc],[-18.6,-.3,zc-.6],[-20.5,-2.2,1.5],[-21,-8,1.3],[-21,-40,1.3],[-21,-80,1.3],[-21,-100,1.3],[-21,-108,2.2],[-21,-113,5.5],[-21,-117.2,10.6],[-21,-120.6,12.4],[-21,-122,11.3],[-21,-122,9.6]],1.25,M.rubber);
   for(const y of [-30,-84]){
     box(g,'Cable clip base',[10,4,.6],[-21,y,.3],M.dark,.2);
     box(g,'Cable clip saddle',[3.6,4,3.3],[-21,y,1.65],M.dark,.5);
     for(const x of [-25,-17])cyl(g,'Clip screw',.8,.6,[x,y,.9],M.silver,16);
   }
-  ring(g,'Worktop cable grommet',[[5.4,-12],[5.4,-11.3],[5,-10.9],[3.4,-10.9],[3,-11.2],[3,-12]],[-21,-144,0],M.rubber,40);
-  cyl(g,'Grommet bore',2.95,.1,[-21,-144,-11.9],M.bore,32);
+  // The port's box stands on the worktop (z -12) just clear of the jig plate's front face (y -112 here).
+  box(g,'Cable port box',[24,22,16],[-21,-123.2,-4],M.body,1.2);
+  box(g,'Cable port lid',[25,23,1.2],[-21,-123.2,4.6],M.dark,.4);
+  for(const x of [-30.5,-11.5])for(const y of [-114.8,-131.6])cyl(g,'Port lid screw',.9,.5,[x,y,5.45],M.silver,16);
+  cyl(g,'Cable gland locknut',4.4,1.4,[-21,-122,5.9],M.edge,6);
+  cyl(g,'Cable gland body',3.6,2.4,[-21,-122,7.8],M.dark,24);
+  ring(g,'Cable gland dome',[[3.4,9],[3.2,9.7],[2.4,10.1],[1.35,10.2],[1.35,9]],[-21,-122,0],M.rubber,32);
   return {group:g,light};
 }
 
@@ -102,7 +112,11 @@ const esdLabel=new T.MeshStandardMaterial({color:0xd6ae1c,roughness:.6,name:'ESD
 const rejectRed=new T.MeshStandardMaterial({color:0xa3241c,roughness:.46,metalness:.08,name:'Red powder coat'});
 const rejectLid=new T.MeshStandardMaterial({color:0x7e1a14,roughness:.5,metalness:.08,name:'Red powder coat lid'});
 const tagLabel=new T.MeshStandardMaterial({color:0xe6e8e3,roughness:.7,name:'Tag label'});
-const sharedMaterials=[pcbMaterial,grey,solder,ink,jig,top,cabinet,lensGlass,windowGlass,palletMetal,linerMat,toteMat,esdLabel,rejectRed,rejectLid,tagLabel];
+const storeMat=new T.MeshStandardMaterial({color:0x3b4043,roughness:.55,metalness:.2,name:'Tote store panels'});
+const rollerMat=new T.MeshStandardMaterial({color:0x6c7175,metalness:.7,roughness:.48,name:'Zinc plated roller'});
+const frameMat=new T.MeshStandardMaterial({color:0x50565a,metalness:.4,roughness:.5,name:'Conveyor frame'});
+const shutterMat=new T.MeshStandardMaterial({color:0x5b6164,roughness:.45,metalness:.5,name:'Roller shutter'});
+const sharedMaterials=[pcbMaterial,grey,solder,ink,jig,top,cabinet,lensGlass,windowGlass,palletMetal,linerMat,toteMat,esdLabel,rejectRed,rejectLid,tagLabel,storeMat,shutterMat,rollerMat,frameMat];
 
 // The header shroud's walls: 1.2 thick, 7.7 tall from z 10.3, with a CHAMFER x 45 degree lead-in on the inner top edge.
 // Built facing +x with the inner face at x 0 and run along y; the caller turns it about z.
@@ -161,10 +175,13 @@ function buildPalletHardware(parent:T.Object3D,pins:number){
   box(fixture,'Board nest insert',[66,54,3],[0,0,6.5],M.polymer,.35);
   for(const x of [-41,41])for(const y of [-32,32])bolt(fixture,x,y,5.1);
   for(const [x,y] of [[-25,-18],[25,18]])cyl(fixture,'Locating dowel pin',1,6,[x,y,9],M.silver,24);
-  for(const [x,y] of [[-34,8],[34,-8]]){
-    box(fixture,'Fixture clamp',[14,9,3],[x,y,10.7],M.dark,.4);bolt(fixture,x,y,12.2,2.1);
-    box(fixture,'Soft clamp shoe',[4,9,1],[x-Math.sign(x)*5,y,9.8],M.rubber,.15);
-  }
+  // Two swing clamps hold the board down at its corners. At the unload station they lift and swing clear.
+  const clamps=[[-34,8],[34,-8]].map(([x,y])=>{
+    const c=new T.Group();c.name='Swing clamp';c.position.set(x,y,0);fixture.add(c);
+    box(c,'Fixture clamp',[14,9,3],[0,0,10.7],M.dark,.4);bolt(c,0,0,12.2,2.1);
+    box(c,'Soft clamp shoe',[4,9,1],[-Math.sign(x)*5,0,9.8],M.rubber,.15);
+    return c;
+  });
   const nest=new T.Group();nest.name='Housing nest';nest.position.set(NEST[0],NEST[1],0);parent.add(nest);
   box(nest,'Quick-change nest plate',[44,44,5],[0,0,2.5],M.body,.6);
   for(const x of [-17,17])for(const y of [-17,17])bolt(nest,x,y,5.2,1.8);
@@ -184,82 +201,198 @@ function buildPalletHardware(parent:T.Object3D,pins:number){
   box(adapter,'Pallet tester connector',[30,10,14],[-104,69,7],M.dark,.5);
   for(let i=0;i<pins;i++){const f=cyl(adapter,'Adapter wire ferrule',.7,1,[-104+(i-(pins-1)/2)*3,63.5,9],M.rubber,12);f.rotation.x=0;}
   for(const s of [-1,1])cyl(adapter,'Adapter screw',1.1,.6,[-104+s*12,69,14.3],M.silver,16);
-  return {plate,fixture,nest,comb,adapter};
+  // The bushing the dock head's locating pin goes into.
+  const bush=cyl(adapter,'Dock pin bushing',2.7,.4,[DOCK_PIN[0],73.79,DOCK_PIN[1]],M.silver,24);bush.rotation.x=0;
+  const bore=cyl(adapter,'Dock pin bore',1.75,.1,[DOCK_PIN[0],73.96,DOCK_PIN[1]],M.bore,20);bore.rotation.x=0;
+  return {plate,fixture,nest,comb,adapter,clamps};
 }
 
 // A pallet's product as it rides the line: the board with its header, and the harness with its housing either
 // fresh in the nest or seated on the header. Static: the wires are dressed once, merged into one mesh.
 const WIRE_COLOURS=[0x9c6534,0x2c3234,0xc4b99e,0x697960,0x596c82,0x864d49,0x9c9b82,0x415451];
-function staticHarness(parent:T.Object3D,pins:number,plug:T.Vector3,turn:number){
-  const points=Array.from({length:HARNESS_POINTS},()=>new T.Vector3()),contacts=contactCenters(pins),parts:T.BufferGeometry[]=[];
-  for(let i=0;i<pins;i++){
-    dressHarness(points,plug,turn,0,contacts[i],i,pins);
-    const cable=new ArmCable(M.rubber,HARNESS_POINTS,WIRE_RADIUS,320);cable.update(points);
-    const g=cable.geometry,n=g.attributes.position.count,c=new T.Color(WIRE_COLOURS[i]),a=new Float32Array(n*3);
-    for(let k=0;k<n;k++)c.toArray(a,k*3);g.setAttribute('color',new T.BufferAttribute(a,3));parts.push(g);
-  }
-  const merged=mergeGeometries(parts,false)!;parts.forEach(g=>g.dispose());
-  const o=new T.Mesh(merged,new T.MeshStandardMaterial({vertexColors:true,roughness:.65}));o.name='Harness wires';o.castShadow=true;o.receiveShadow=true;parent.add(o);
-  return o;
+// Rings per wire tube, about 2.2 mm of wire each: smooth in the close-up, and the same for the live wires and every
+// unit copy, so a unit that changes hands at 108 -> 0 draws exactly alike.
+export const WIRE_SEGMENTS=200,LIVE_SEGMENTS=WIRE_SEGMENTS;
+// One vertex-coloured material for every unit copy's wires, and one nylon for their housings, so a carried unit and
+// the packed copy it becomes draw exactly alike.
+const wireMaterial=new T.MeshStandardMaterial({vertexColors:true,roughness:.65,name:'Harness wire insulation'});
+const unitNylon=M.ivory.clone();unitNylon.name='Molded nylon';
+function colourWire(g:T.BufferGeometry,i:number){const n=g.attributes.position.count,c=new T.Color(WIRE_COLOURS[i]),a=new Float32Array(n*3);for(let k=0;k<n;k++)c.toArray(a,k*3);g.setAttribute('color',new T.BufferAttribute(a,3));}
+function dressedWires(pins:number,plug:T.Vector3,turn:number){
+  const contacts=contactCenters(pins);
+  return Array.from({length:pins},(_,i)=>{const points=Array.from({length:HARNESS_POINTS},()=>new T.Vector3());dressHarness(points,plug,turn,0,contacts[i],i,pins);return points;});
 }
+// Static wires through these points, merged into one vertex-coloured mesh.
+function wireMesh(wires:T.Vector3[][],name='Harness wires'){
+  const parts=wires.map((points,i)=>{const cable=new ArmCable(wireMaterial,HARNESS_POINTS,WIRE_RADIUS,WIRE_SEGMENTS);cable.update(points);colourWire(cable.geometry,i);return cable.geometry;});
+  const o=new T.Mesh(mergeGeometries(parts,false)!,wireMaterial);parts.forEach(g=>g.dispose());o.name=name;o.castShadow=o.receiveShadow=true;return o;
+}
+function staticHarness(parent:T.Object3D,pins:number,plug:T.Vector3,turn:number){const o=wireMesh(dressedWires(pins,plug,turn));parent.add(o);return o;}
 
-export interface PalletUnit {group:T.Group;hardware:T.Group;board:T.Group;harness:T.Group;fades:{board:T.Material[];harness:T.Material[]};shown:[number,number]}
-// One of the static units on the line (UNLOAD, QUEUE, LOAD): the pallet's hardware plus its own copy of the product,
-// with its own materials so the product can fade in and out.
+// Where a finished unit's plug sits: seated on the header, as the robot leaves it.
+const seatedPlug=()=>{const end=processFrame(INDEX_START,'pass');return {at:new T.Vector3(...end.plug),turn:end.rotation};};
+export interface PalletUnit {group:T.Group;hardware:T.Group;board:T.Group;harness:T.Group;clamps:T.Group[]}
+// One of the static units on the line (UNLOAD, QUEUE, LOAD): the pallet's hardware plus its own copy of the product.
+// The fixture's swing clamps are kept out of the hardware so the unload station can open them.
 function createUnit(pins:number,extra:number,seated:boolean):PalletUnit{
   const group=new T.Group();group.name=seated?'Finished unit':'Next unit';
-  const hardware=new T.Group();hardware.name='Unit pallet';group.add(hardware);buildPalletHardware(hardware,pins);
+  const hardware=new T.Group();hardware.name='Unit pallet';group.add(hardware);const {clamps}=buildPalletHardware(hardware,pins);
+  for(const c of clamps)group.add(c);
   const board=new T.Group();board.name='Unit board';group.add(board);
   const {header}=buildBoard(board,board,pins,extra);header.position.set(HEADER[0],HEADER[1],0);
   const harness=new T.Group();harness.name='Unit harness';group.add(harness);
-  const end=processFrame(INDEX_START,'pass'),at=seated?new T.Vector3(...end.plug):new T.Vector3(...NEST),turn=seated?end.rotation:Math.PI;
-  const plug=createPlug(pins);plug.position.copy(at);plug.rotation.y=turn;harness.add(plug);
+  const seat=seatedPlug(),at=seated?seat.at:new T.Vector3(...NEST),turn=seated?seat.turn:Math.PI;
+  const plug=createPlug(pins,unitNylon);plug.position.copy(at);plug.rotation.y=turn;harness.add(plug);
   staticHarness(harness,pins,at,turn);
-  const own=(g:T.Object3D)=>{const copies=new Map<T.Material,T.Material>();g.traverse(o=>{if(o instanceof T.Mesh){const m=o.material as T.Material;if(!copies.has(m))copies.set(m,m.clone());o.material=copies.get(m)!;}});return [...copies.values()];};
-  return {group,hardware,board,harness,fades:{board:own(board),harness:own(harness)},shown:[1,1]};
+  return {group,hardware,board,harness,clamps};
 }
-function fadeTo(materials:T.Material[],group:T.Object3D,v:number){
-  group.visible=v>.002;
-  for(const m of materials){const see=v<.998;if(m.transparent!==see){m.transparent=see;m.needsUpdate=true;}m.opacity=v;m.depthWrite=!see;}
-  group.traverse(o=>{if(o instanceof T.Mesh)o.castShadow=v>.5;});
+
+// The finished unit as the picker carries it: the same board, header and seated plug in one rigid group, and the
+// wires as live tubes that are drawn up off the pallet into a coil beside the board as it is lifted. Unit-local
+// coordinates, as on the pallet at WORK.
+export const COIL={x:-10,y:40,top:21,pitch:2,radius:12};
+function createCarried(pins:number,extra:number){
+  const group=new T.Group();group.name='Carried unit';group.visible=false;
+  const hardware=new T.Group(),harness=new T.Group();group.add(hardware,harness);
+  const board=new T.Group();board.name='Unit board';group.add(board);
+  const {header}=buildBoard(board,board,pins,extra);header.position.set(HEADER[0],HEADER[1],0);
+  const seat=seatedPlug(),plug=createPlug(pins,unitNylon);plug.position.copy(seat.at);plug.rotation.y=seat.turn;board.add(plug);
+  const dressed=dressedWires(pins,seat.at,seat.turn),coil=dressed.map((d,i)=>coilPoints(d,i,pins));
+  const wires=dressed.map((points,i)=>{const w=new ArmCable(wireMaterial,HARNESS_POINTS,WIRE_RADIUS,WIRE_SEGMENTS);w.update(points);colourWire(w.geometry,i);w.mesh.name=`Carried wire ${i+1}`;w.mesh.receiveShadow=true;group.add(w.mesh);return w;});
+  return {unit:{group,hardware,board,harness,clamps:[]} as PalletUnit,wires,dressed,coil,points:dressed.map(d=>d.map(v=>v.clone())),morph:-1};
+}
+// A wire's coiled shape: out of the housing's wire face, over the board's +y edge and down into a flat helix
+// beside it, the bundle keeping its two rows. Same length as the dressed wire, so its far end is its own end.
+function coilPoints(dressed:T.Vector3[],i:number,pins:number){
+  const [col,row]=bundleSlot(i,pins),start=dressed[0],r=COIL.radius+col;
+  const poly=[start.clone(),new T.Vector3(start.x,start.y+1.5,start.z+1.2),new T.Vector3(start.x*.6+COIL.x*.1+col*.3,start.y+8,start.z+1.6+row),
+    new T.Vector3(start.x*.4+COIL.x*.6,19,start.z+1+row),new T.Vector3(COIL.x+r*Math.cos(-1.7),COIL.y+r*Math.sin(-1.7)+1.5,COIL.top+row+1.5)];
+  let length=0;for(let k=1;k<poly.length;k++)length+=poly[k].distanceTo(poly[k-1]);
+  const per=Math.hypot(r,COIL.pitch/(Math.PI*2)),from=-Math.PI/2,to=from+(HARNESS_LENGTH-length)/per;
+  for(let a=from;a<to;a+=.08)poly.push(new T.Vector3(COIL.x+r*Math.cos(a),COIL.y+r*Math.sin(a),COIL.top+row-COIL.pitch*(a-from)/(Math.PI*2)));
+  const points=Array.from({length:HARNESS_POINTS},()=>new T.Vector3()),total=poly.reduce((s,v,k)=>k?s+v.distanceTo(poly[k-1]):0,0);
+  let k=1,done=0;points[0].copy(poly[0]);
+  for(let j=1;j<HARNESS_POINTS;j++){const want=total*j/(HARNESS_POINTS-1);while(k<poly.length-1&&done+poly[k].distanceTo(poly[k-1])<want){done+=poly[k].distanceTo(poly[k-1]);k++;}const seg=poly[k].distanceTo(poly[k-1])||1;points[j].lerpVectors(poly[k-1],poly[k],Math.min(1,(want-done)/seg));}
+  return points;
 }
 
 // The lift at each end of the line: a deck carrying its own belt sections on a column out of the cabinet. It lowers
 // pallets to the return tunnel under the bench and brings them back up; up, its deck closes the well.
-function createLift(parent:T.Object3D,x:number){
+function createLift(parent:T.Object3D,x:number,belt:T.Material){
   const g=new T.Group();g.name='Pallet lift';parent.add(g);
-  for(const y of [-27,68])box(g,'Lift belt',[226,12,4],[x,y,-10],M.rubber,.8);
+  for(const y of [-27,68])box(g,'Lift belt',[226,12,4],[x,y,-10],belt,0);
   box(g,'Lift deck',[224,110,4],[x,PALLET_Y,-14],M.body,.8);
   cyl(g,'Lift column',11,70,[x,PALLET_Y,-51],M.edge,40);
   return g;
 }
+// The conveyor belts: dark rubber with a moulded cleat every BELT_PITCH mm, so a moving belt reads as moving.
+// One material per belt group, each with its own texture offset; the pitch divides every run, so the seams match.
+export const BELT_PITCH=8;
+const beltImage=(()=>{const n=32,data=new Uint8Array(n*4*4);for(let j=0;j<4;j++)for(let i=0;i<n;i++){const u=(i+.5)/n,v=Math.round(255*(u<.18?.62:u<.26?.4:.3));const k=(j*n+i)*4;data[k]=data[k+1]=data[k+2]=v;data[k+3]=255;}return data;})();
+function beltMaterial(length:number){
+  const map=new T.DataTexture(beltImage,32,4);map.wrapS=T.RepeatWrapping;map.magFilter=T.LinearFilter;map.minFilter=T.LinearMipmapLinearFilter;map.generateMipmaps=true;map.anisotropy=8;map.colorSpace=T.SRGBColorSpace;map.repeat.set(length/BELT_PITCH,1);map.needsUpdate=true;
+  return new T.MeshStandardMaterial({color:0x4a4f50,roughness:.86,map,name:'Cleated conveyor belt'});
+}
 
-// The outgoing tote at the left end: conductive charcoal, a slotted insert, each slot holding a passed board on
-// edge with its plug seated and its harness coiled beside it.
-function createTote(){
-  const g=new T.Group();g.name='Outgoing tote';g.position.set(-385,-150,-12);
+// The packing end of the bench. The picker packs each passed unit on edge into the conductive tote on the roller
+// bed F; an empty tote waits on the bed E in front of it. A full tote rolls off the bench end along lane A into the
+// tote store, the empty one rolls back into F, and the store sends a new empty along lane B to E.
+export const TOTE={F:[-383,-110],E:[-383,-245],z:-6,size:[149,120,70],pitch:18,face:-1080,store:-1190};
+// The picker's head point is the pivot its edge clamp tilts the board about: on the board's mid-plane near its +x
+// edge, clear of the harness, which leaves the board toward -x. TILT stands the board on edge, components to -x.
+export const PIVOT=[25,0,8.8] as const,TILT=-Math.PI/2;
+const PICK_AT=[LINE_X.unload-LINE_X.work+PIVOT[0],PIVOT[1],PIVOT[2]] as const,TRAVEL_Z=145;
+// Slot i's pivot point in the tote's frame: the board stands on the insert, its back 0.4 mm inside the slot's +x
+// side and its parts toward -x, so the tote fills from its +x end and the picker always reaches into empty slots.
+const slotPivot=(i:number)=>[TOTE.size[0]/2-2.5-TOTE.pitch*(i+1)+16.8,-16.5,77.2] as const;
+function createTote(name:string){
+  const g=new T.Group();g.name=name;
   const shell=new T.Group();g.add(shell);
-  box(shell,'Tote floor',[150,120,3],[0,0,1.5],toteMat,1);
-  for(const s of [-1,1]){box(shell,'Tote wall',[3,120,70],[s*73.5,0,35],toteMat,1);box(shell,'Tote wall',[144,3,70],[0,s*58.5,35],toteMat,1);}
-  for(const s of [-1,1])box(shell,'Tote rim',[150,5,2],[0,s*58.5,70],toteMat,.8);
-  box(shell,'ESD label',[26,.3,18],[38,-60.15,48],esdLabel,0);
-  box(shell,'Slotted insert',[142,112,20],[0,0,13],toteMat,1);
-  for(let k=0;k<=TOTE_SLOTS;k++)box(shell,'Insert divider',[1.2,104,8],[-64+16*k,0,27],toteMat,.3);
-  const slots:{mesh:T.Mesh;material:T.MeshStandardMaterial}[]=[];
-  const tint=(geometry:T.BufferGeometry,color:number,x:number,y:number,z:number)=>{geometry.translate(x,y,z);const n=geometry.attributes.position.count,c=new T.Color(color),a=new Float32Array(n*3);for(let k=0;k<n;k++)c.toArray(a,k*3);geometry.setAttribute('color',new T.BufferAttribute(a,3));return geometry;};
-  for(let i=0;i<TOTE_SLOTS;i++){
-    const x=-56+16*i,base=23,parts=[
-      tint(new T.BoxGeometry(1.6,58,44),0x1d5a42,x-5,-20,base+22),
-      tint(new T.BoxGeometry(7.7,17.7,9.9),0x1b1d1f,x+.35,-18.8,base+22.6),
-      tint(new T.BoxGeometry(12.3,15,7.2),0xdedcd3,x+3.4,-18.8,base+22.6),
-      tint(new T.TorusGeometry(14,2.2,10,48).rotateY(Math.PI/2),0x3d4648,x+4,30,base+21),
-      tint(new T.TubeGeometry(new T.CatmullRomCurve3([new T.Vector3(x+8.4,-18.8,base+22.6),new T.Vector3(x+7.6,-6,base+26),new T.Vector3(x+5,6,base+27),new T.Vector3(x+4,16,base+23)]),24,1.3,8),0x3d4648,0,0,0),
-    ];
-    const material=new T.MeshStandardMaterial({vertexColors:true,roughness:.55});
-    const mesh=new T.Mesh(mergeGeometries(parts,false)!,material);parts.forEach(p=>p.dispose());
-    mesh.name='Packed unit';mesh.castShadow=mesh.receiveShadow=true;mesh.visible=false;g.add(mesh);slots.push({mesh,material});
+  const [w,d,h]=TOTE.size;
+  box(shell,'Tote floor',[w,d,3],[0,0,1.5],toteMat,1);
+  for(const s of [-1,1]){box(shell,'Tote wall',[2.5,d,h],[s*(w/2-1.25),0,h/2],toteMat,1);box(shell,'Tote wall',[w-5,2.5,h],[0,s*(d/2-1.25),h/2],toteMat,1);}
+  for(const s of [-1,1])box(shell,'Tote rim',[w,4,2],[0,s*(d/2-2),h],toteMat,.8);
+  box(shell,'ESD label',[26,.3,18],[38,-d/2-.15,48],esdLabel,0);
+  box(shell,'Slotted insert',[w-5,d-5,20],[0,0,13],toteMat,1);
+  // Low ribs between the slots keep each board upright; the units' parts stand clear above them.
+  for(let k=1;k<TOTE_SLOTS;k++)box(shell,'Insert rib',[.6,96,6],[-w/2+2.5+TOTE.pitch*k+.5,-8,26],toteMat,.2);
+  return {group:g,shell};
+}
+// Each slot's packed copy of the carried unit, built once from it: per material, every slot's copy in slot order, so
+// the first n slots are one draw range. The out tote keeps its own full set.
+function slotSet(carried:{unit:PalletUnit},coil:T.Vector3[][]){
+  const tilt=new T.Matrix4().makeRotationY(TILT),pivot=new T.Matrix4().makeTranslation(-PIVOT[0],-PIVOT[1],-PIVOT[2]);
+  const root=carried.unit.group;root.updateMatrixWorld(true);const toRoot=new T.Matrix4().copy(root.matrixWorld).invert();
+  const parts=new Map<T.Material,{geometry:T.BufferGeometry;cast:boolean}[]>();
+  root.traverse(o=>{if(o instanceof T.Mesh&&!Array.isArray(o.material)&&!(o.name.startsWith('Carried wire'))){const g=(o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone()).applyMatrix4(new T.Matrix4().multiplyMatrices(toRoot,o.matrixWorld));for(const a of Object.keys(g.attributes))if(!['position','normal'].includes(a))g.deleteAttribute(a);(parts.get(o.material)??parts.set(o.material,[]).get(o.material)!).push({geometry:g,cast:o.castShadow});}});
+  const coiled=wireMesh(coil);parts.set(wireMaterial,[{geometry:coiled.geometry.toNonIndexed(),cast:true}]);coiled.geometry.dispose();
+  return [...parts].map(([material,list])=>{
+    const slots=Array.from({length:TOTE_SLOTS},(_,i)=>{const [x,y,z]=slotPivot(i),m=new T.Matrix4().makeTranslation(x,y,z).multiply(tilt).multiply(pivot);return mergeGeometries(list.map(p=>p.geometry.clone().applyMatrix4(m)),false)!;});
+    const counts=[0];for(const g of slots)counts.push(counts.at(-1)!+g.attributes.position.count);
+    const geometry=mergeGeometries(slots,false)!;slots.forEach(g=>g.dispose());
+    const mesh=new T.Mesh(geometry,material);mesh.name='Packed units';mesh.castShadow=mesh.receiveShadow=true;
+    return {mesh,counts};
+  });
+}
+function createToteLine(bench:T.Object3D,root:T.Object3D){
+  const g=new T.Group();g.name='Tote conveyor';bench.add(g);
+  const [F,E]=[TOTE.F,TOTE.E],x0=-308,x1=TOTE.face-2,rollerZ=TOTE.z-3,leg=(x:number,y:number)=>box(g,'Conveyor leg',[24,24,-18-FLOOR],[x,y,(FLOOR-18)/2],frameMat,1);
+  for(const [,y] of [F,E]){
+    for(const s of [-1,1])box(g,'Roller side frame',[x0-x1,4,5.5],[(x0+x1)/2,y+s*62,-9.25],frameMat,.6);
+    for(let x=x0-9;x>x1;x-=18.75){const r=cyl(g,'Conveyor roller',3,118,[x,y,rollerZ],rollerMat,16);r.rotation.x=0;}
+    // Off the bench end the lanes stand on legs.
+    for(const x of [-560,-1000])for(const s of [-1,1])leg(x,y+s*52);
   }
-  return {group:g,shell,slots};
+  // The tote store: a closed cabinet the lanes run into, a shutter over each mouth.
+  const st=new T.Group();st.name='Tote store';g.add(st);
+  const fx=TOTE.face,back=-1290,y0=-322,y1=-34,top=190,mouth=[TOTE.z,TOTE.z+92],cx=(fx+back)/2,lw=fx-back;
+  box(st,'Tote store wall',[8,y1-y0,top-FLOOR],[back+4,(y0+y1)/2,(top+FLOOR)/2],storeMat,2);
+  for(const y of [y0+4,y1-4])box(st,'Tote store wall',[lw,8,top-FLOOR],[cx,y,(top+FLOOR)/2],storeMat,2);
+  box(st,'Tote store top',[lw,y1-y0,8],[cx,(y0+y1)/2,top-4],storeMat,2);
+  box(st,'Tote store base',[lw,y1-y0,mouth[0]-FLOOR],[cx,(y0+y1)/2,(mouth[0]+FLOOR)/2],storeMat,1);
+  box(st,'Tote store face',[5,y1-y0,top-mouth[1]],[fx-2.5,(y0+y1)/2,(top+mouth[1])/2],storeMat,1);
+  box(st,'Tote store divider',[lw,(F[1]-63)-(E[1]+63),mouth[1]-mouth[0]],[cx,((F[1]-63)+(E[1]+63))/2,(mouth[0]+mouth[1])/2],storeMat,.5);
+  box(st,'Tote store liner',[lw-10,y1-y0-10,.6],[cx,(y0+y1)/2,mouth[0]+.3],linerMat,0);
+  const shutters=[F,E].map(([,y])=>{return box(root,'Tote store shutter',[3,126,mouth[1]-mouth[0]-.2],[fx-9,y,(mouth[0]+mouth[1])/2],shutterMat,.5);});
+  const totes={fill:createTote('Outgoing tote'),out:createTote('Full tote'),spare:createTote('Empty tote')};
+  for(const t of Object.values(totes))root.add(t.group);
+  return {totes,shutters,mouth};
+}
+
+// The unload picker: a gantry beam from a post at the bench end, an X carriage, a Y rail out over the tote, a Y carriage with a vertical air cylinder and, on its rod, an edge clamp whose two jaws grip the board's long
+// edges and whose pads tilt the board on edge about PIVOT.
+function createPicker(){
+  const root=new T.Group();root.name='Unload picker';
+  // The post stands on the floor beyond the bench end, out of the line of sight of the close-ups at the stations.
+  const post=[-498,150],beam=[-513,-182],beamY=150,beamZ=395;
+  box(root,'Picker post',[30,30,beamZ+12-FLOOR],[post[0],post[1],(beamZ+12+FLOOR)/2],M.silver,1.5);
+  box(root,'Picker post foot',[60,60,8],[post[0],post[1],FLOOR+4],M.dark,1);
+  box(root,'Post to bench bracket',[36,26,8],[-466,post[1],-46.5],M.dark,.8);
+  box(root,'Picker X beam',[beam[1]-beam[0],24,24],[(beam[0]+beam[1])/2,beamY,beamZ],M.silver,1.5);
+  box(root,'Beam end cap',[3,26,26],[beam[0]-1.5,beamY,beamZ],M.dark,.6);
+  const x=new T.Group();x.name='Picker X carriage';root.add(x);
+  box(x,'X carriage',[30,32,18],[0,beamY,beamZ-21],M.dark,1);
+  box(x,'Picker Y rail',[18,beamY+165,18],[0,(beamY-165)/2,beamZ-39],M.silver,1.2);
+  box(x,'Y rail end cap',[20,3,20],[0,-166.5,beamZ-39],M.dark,.6);
+  const y=new T.Group();y.name='Picker Y carriage';x.add(y);
+  const cylTop=beamZ-48,cylBottom=190;
+  box(y,'Y carriage',[30,34,14],[0,0,cylTop+7-14],M.dark,1);
+  const body=cyl(y,'Picker air cylinder',11,cylTop-14-cylBottom,[0,0,(cylTop-14+cylBottom)/2],M.edge,32);body.rotation.x=Math.PI/2;
+  cyl(y,'Cylinder end cap',12,6,[0,0,cylBottom],M.dark,24);
+  const head=new T.Group();head.name='Picker head';y.add(head);
+  cyl(head,'Piston rod',4.5,150,[0,0,40+75],M.silver,24);
+  box(head,'Clamp body',[16,72,10],[0,0,35],M.dark,1);
+  box(head,'Clamp slide',[10,74,3],[0,0,28.5],M.silver,.4);
+  const jaws=[-1,1].map(s=>{
+    const jaw=new T.Group();jaw.name='Clamp jaw';head.add(jaw);
+    box(jaw,'Clamp jaw arm',[8,3,34],[0,s*9,13.5],M.silver,.5);
+    const pad=new T.Group();pad.name='Tilting pad';jaw.add(pad);
+    box(pad,'Edge clamp shoe',[8,5.5,3.4],[0,s*2.75,1],M.rubber,.3);
+    const disc=cyl(pad,'Pad pivot',3.5,2,[0,s*6.5,0],M.edge,24);disc.rotation.x=0;
+    if(s>0){const drive=cyl(jaw,'Tilt actuator',6,6,[0,s*13.5,17],M.dark,28);drive.rotation.x=0;}
+    return {jaw,pad,side:s};
+  });
+  return {root,x,y,head,jaws};
 }
 
 // Rejects go into a locked red bin; only a person with the key empties it.
@@ -288,9 +421,10 @@ export function createCell(pins=6){
   // and the tunnel go WELL_FLOOR deep, so a lowered pallet and everything it carries pass under the worktop.
   for(const [x0,x1,y0,y1,z0,r] of [[-460,540,-320,-36.5,-42,2],[-460,540,77.5,380,-42,2],[-460,-406,-36.5,77.5,-42,.5],[-178,290,-36.5,77.5,TUNNEL_TOP,.5],[518,540,-36.5,77.5,-42,.5]])box(bench,'Phenolic worktop',[x1-x0,y1-y0,-12-z0],[(x0+x1)/2,(y0+y1)/2,(z0-12)/2],top,r);
   box(bench,'Return tunnel liner',[468,114,.6],[56,PALLET_Y,WELL_FLOOR+.3],linerMat,0);
+  const belts={line:beltMaterial(468),unload:beltMaterial(226),load:beltMaterial(226),tunnel:beltMaterial(468)};
   // The return conveyor along the tunnel floor: its belts meet the lift belts when a lift is down.
   const rail=LIFT_DOWN-12-(WELL_FLOOR+.6);
-  for(const y of [-27,68]){box(bench,'Return conveyor rail',[468,8,rail],[56,y,WELL_FLOOR+.6+rail/2],M.edge,.3);box(bench,'Return conveyor belt',[468,12,4],[56,y,LIFT_DOWN-10],M.rubber,.8);}
+  for(const y of [-27,68]){box(bench,'Return conveyor rail',[468,8,rail],[56,y,WELL_FLOOR+.6+rail/2],M.edge,.3);box(bench,'Return conveyor belt',[468,12,4],[56,y,LIFT_DOWN-10],belts.tunnel,0);}
   for(const [x0,x1,tunnel] of [[-406,-178,1],[290,518,-1]]){
     const cx=(x0+x1)/2,w=x1-x0;
     box(bench,'Lift well liner',[w,114,.6],[cx,PALLET_Y,WELL_FLOOR+.3],linerMat,0);
@@ -302,9 +436,9 @@ export function createCell(pins=6){
     }
   }
   // The conveyor: two belts between the lifts, side guides where the jig plate does not already guide the pallets.
-  for(const y of [-27,68])box(bench,'Conveyor belt',[468,12,4],[56,y,-10],M.rubber,.8);
+  for(const y of [-27,68])box(bench,'Conveyor belt',[468,12,4],[56,y,-10],belts.line,0);
   for(const y of [-38.5,79.5])for(const [x0,x1] of [[-430,-302],[268,530]])box(bench,'Conveyor side guide',[x1-x0,4,12],[(x0+x1)/2,y,-6],M.silver,.6);
-  const lifts={unload:createLift(bench,LINE_X.unload),load:createLift(bench,LINE_X.load)};
+  const lifts={unload:createLift(bench,LINE_X.unload,belts.unload),load:createLift(bench,LINE_X.load,belts.load)};
   // The cabinet's top steps down under the line band for the wells and the tunnel; an apron closes it round them.
   box(bench,'Cabinet body',[970,660,672+WELL_FLOOR],[40,40,(WELL_FLOOR-672)/2],cabinet,3);
   for(const [x0,x1,y0,y1] of [[-445,525,-290,-36.5],[-445,525,77.5,370],[-445,-406,-36.5,77.5],[518,525,-36.5,77.5]])box(bench,'Cabinet apron',[x1-x0,y1-y0,-42-WELL_FLOOR],[(x0+x1)/2,(y0+y1)/2,(WELL_FLOOR-42)/2],cabinet,0);
@@ -319,15 +453,22 @@ export function createCell(pins=6){
   const {plate,fixture,nest,comb,adapter}=buildPalletHardware(pallet,pins);
   const {pcb,header,housing}=buildBoard(fixture,pallet,pins,extra);
 
-  const tester=new T.Group();root.add(tester);
+  // The tester stands back from the line by the dock's stroke; its own frame is the cell's shifted DOCK_BACK in y.
+  const tester=new T.Group();tester.position.y=DOCK_BACK;root.add(tester);
   box(tester,'Grey continuity tester',[78,57,35],[-104,110,18],grey,3);
   box(tester,'Tester gasket seam',[78.2,57.2,.65],[-104,110,15],M.rubber,.2);
   for(const x of [-136,-72])for(const y of [90,130])bolt(tester,x,y,35.7,1.4);
   const indicator=new T.MeshStandardMaterial({color:0x273c31,roughness:.28,metalness:.05,emissive:0x125832,emissiveIntensity:0});
   cyl(tester,'Indicator bezel',4.3,1.3,[-104,99,36],M.dark,32);cyl(tester,'Single pass indicator',3.2,1.1,[-104,99,36.9],indicator,32);
-  // The dock: a slide on the tester's front pushes a spring-pin head onto the pallet adapter's rear face.
-  box(tester,'Dock slide body',[34,4,12],[-104,79.5,10],M.silver,.5);
-  const dockHead=box(tester,'Dock contact head',[28,3,9],[-104,75.5,9],M.dark,.4);
+  // The dock: a spring-pin head on two guide rods out of the tester's front. Docked, its face sits on the pallet
+  // adapter's rear face (cell y 74) with its locating pin in the adapter's bushing; retracted it is DOCK_STROKE back.
+  const dockHead=new T.Group();dockHead.name='Dock head';tester.add(dockHead);
+  const face=74-DOCK_BACK;
+  box(dockHead,'Dock contact head',[28,5,10],[-104,face+2.5,DOCK_PIN[1]],M.dark,.5);
+  const pin=cyl(dockHead,'Dock locating pin',1.5,4.4,[DOCK_PIN[0],face-2.2,DOCK_PIN[1]],M.silver,20);pin.rotation.x=0;
+  const tip=new T.Mesh(cached('dock pin tip',()=>new T.CylinderGeometry(1.5,.6,1,20)),M.silver);tip.name='Dock locating pin';tip.position.set(DOCK_PIN[0],face-4.9,DOCK_PIN[1]);tip.castShadow=true;dockHead.add(tip);
+  for(const x of [-116,-92]){const rod=cyl(dockHead,'Dock guide rod',1.4,22,[x,face+16,DOCK_PIN[1]],M.edge,20);rod.rotation.x=0;}
+  for(const x of [-116,-92]){const b=cyl(tester,'Guide rod bushing',2.6,1,[x,81.5-.5,DOCK_PIN[1]],M.silver,24);b.rotation.x=0;}
   const bin=new T.Group();bin.position.set(REJECT[0],REJECT[1],0);root.add(bin);
   box(bin,'Reject tray base',[69,53,3],[0,0,1.5],M.body,1);
   // Walls 12 mm high: the harness of a rejected unit leaves over the far wall without touching it.
@@ -360,7 +501,7 @@ export function createCell(pins=6){
   const arm=createCobot(M);arm.root.scale.setScalar(5);root.add(arm.root);
   const tool=createPrecisionTool(extra);root.add(tool.root);
   const plug=createPlug(pins);root.add(plug);
-  const wires=Array.from({length:pins},(_,i)=>{const mat=new T.MeshStandardMaterial({color:WIRE_COLOURS[i],roughness:.65});const w=new ArmCable(mat,HARNESS_POINTS,WIRE_RADIUS,320);w.mesh.name=`Harness wire ${i+1}`;root.add(w.mesh);return w;});
+  const wires=Array.from({length:pins},(_,i)=>{const mat=new T.MeshStandardMaterial({color:WIRE_COLOURS[i],roughness:.65});const w=new ArmCable(mat,HARNESS_POINTS,WIRE_RADIUS,LIVE_SEGMENTS);w.mesh.name=`Harness wire ${i+1}`;w.mesh.receiveShadow=true;root.add(w.mesh);return w;});
   const latch=plug.userData.latch as T.Group;
   // What the hanging harness can come to rest on: the fixed hardware and the live pallet at WORK.
   root.updateMatrixWorld(true);
@@ -368,11 +509,13 @@ export function createCell(pins=6){
   for(const g of [fixture,header,nest,comb,adapter,tester,bin,turnover,upcam])g.traverse(o=>{if(o instanceof T.Mesh&&!(o.geometry instanceof T.TubeGeometry)){for(let p:T.Object3D|null=o;p;p=p.parent)if(p===rotator)return;rests.push(new T.Box3().setFromObject(o));}});
   setHarnessObstacles(rests);
   // The rest of the line, built after the live harness field so their wires dress the same way.
-  const units={unload:createUnit(pins,extra,true),queue:createUnit(pins,extra,false),load:createUnit(pins,extra,false)};
+  const carried=createCarried(pins,extra);
+  const units={unload:createUnit(pins,extra,true),queue:createUnit(pins,extra,false),load:createUnit(pins,extra,false),carried:carried.unit};
   for(const u of Object.values(units))root.add(u.group);
-  const tote=createTote();root.add(tote.group);
+  const toteLine=createToteLine(bench,root),picker=createPicker();root.add(picker.root);
+  const tote={...toteLine.totes.fill,out:toteLine.totes.out,spare:toteLine.totes.spare,shutters:toteLine.shutters,mouth:toteLine.mouth} as LineRig['tote'];
   const rejectBin=createRejectBin();root.add(rejectBin);
-  const rig={root,bench,pallet,plate,fixture,header,housing,pcb,nest,comb,adapter,tester,dockHead,bin,arm,tool,plug,latch,wires,indicator,turnover,rotator,cradleJaws,pins,upcam,upcamLight,wristLight:tool.light,wristStatus:tool.status,units,lifts,tote,rejectBin};
+  const rig={root,bench,pallet,plate,fixture,header,housing,pcb,nest,comb,adapter,tester,dockHead,bin,arm,tool,plug,latch,wires,indicator,turnover,rotator,cradleJaws,pins,upcam,upcamLight,wristLight:tool.light,wristStatus:tool.status,units,lifts,tote,rejectBin,belts,picker,carried};
   applyLine(rig,REST_LINE);
   return rig;
 }
@@ -380,44 +523,121 @@ export type Cell=ReturnType<typeof createCell>;
 
 // The line at rest, as at the start of the first unit: an empty pallet waiting at UNLOAD, the next unit queued,
 // the load lift down.
-export const REST_LINE:LineFrame={shift:0,dock:1,liveHarness:true,unloadZ:0,unloadUnit:'none',unloadFade:1,loadZ:LIFT_DOWN,loadBoard:0,loadHarness:0,tote:0,toteIn:0,shot:'wide',focus:[...NEST],unitLabel:'',lineNote:''};
-const lineSmooth=(x:number)=>{const t=Math.max(0,Math.min(1,x));return t*t*(3-2*t);};
+export const REST_LINE:LineFrame={shift:0,dock:1,liveHarness:true,unloadZ:0,unloadUnit:'none',loadZ:LIFT_DOWN,tote:0,pack:false,swap:false,shot:'wide',focus:[...NEST],unitLabel:'',lineNote:''};
+const lineSmooth=(x:number)=>{const t=Math.max(0,Math.min(1,x));return t*t*t*(10+t*(-15+6*t));};
+const ease=(t:number,a:number,b:number)=>lineSmooth((t-a)/(b-a));
 // How far an empty pallet travels along the return tunnel to be out of sight under the bench.
 export const RETURN_RUN=240;
-// Lowered to LIFT_DOWN, a pallet's tallest hardware (the nest guides, 16 mm up) is 3 mm under the tunnel's roof.
-export const TUNNEL_TOP=LIFT_DOWN+19,WELL_FLOOR=LIFT_DOWN-20;
-// Pose the line for one frame: the live pallet and its harness, the three static units, the lifts, the tester's dock
-// head and the tote. Returns a key that changes whenever anything visible moved, for the shadow map.
-export interface LineRig {pallet:T.Object3D;plug:T.Object3D;wires:{mesh:T.Mesh}[];units:Record<'unload'|'queue'|'load',PalletUnit>;lifts:{unload:T.Object3D;load:T.Object3D};dockHead:T.Object3D;tote:{slots:{mesh:T.Mesh;material:T.MeshStandardMaterial}[]}}
+// Lowered to LIFT_DOWN, a pallet and the unit it carries pass under the tunnel's roof with room to spare.
+export const TUNNEL_TOP=LIFT_DOWN+44,WELL_FLOOR=LIFT_DOWN-20;
+// A move at conveyor speed from 0 to 1 over t0..t1 that ramps up and down over `ramp` seconds.
+function conveyed(t:number,t0:number,t1:number,ramp=.3){
+  if(t<=t0)return 0;if(t>=t1)return 1;
+  const T1=t1-t0,v=1/(T1-ramp),u=t-t0;
+  if(u<ramp)return v*u*u/(2*ramp);if(u>T1-ramp){const w=T1-u;return 1-v*w*w/(2*ramp);}
+  return v*(u-ramp/2);
+}
+// When the swapped totes run: the full one out to the store, then a fresh empty one from the store to E.
+const OUT_END=4.2,SPARE=[1.8,5.4] as const;
+const outX=(t:number)=>TOTE.F[0]+(TOTE.store-TOTE.F[0])*conveyed(t,SWAP.out,OUT_END);
+const spareX=(t:number)=>TOTE.store+(TOTE.E[0]-TOTE.store)*conveyed(t,SPARE[0],SPARE[1]);
+// The times the totes pass each shutter, found once: the full one's +x end past the face, the empty one's -x end out.
+const passing=(x:(t:number)=>number,test:(x:number)=>boolean)=>{for(let t=0;t<8;t+=.002)if(test(x(t)))return t;return 8;};
+const OUT_IN=passing(outX,x=>x+TOTE.size[0]/2<TOTE.face-12),OUT_NEAR=passing(outX,x=>x-TOTE.size[0]/2<TOTE.face+60);
+const SPARE_OUT=passing(spareX,x=>x-TOTE.size[0]/2>TOTE.face+12);
+// The packing moves at op-side time t (s) in a unit whose last unit passed: the picker's head point, the tilt of the
+// board in its pads, how far its jaws are closed, and whether it holds the unit, which it packs into slot `slot`.
+export function packing(t:number,slot:number){
+  const pick=new T.Vector3(...PICK_AT),park=new T.Vector3(PICK_AT[0],PICK_AT[1],TRAVEL_Z),[sx,sy,sz]=slotPivot(slot);
+  const place=new T.Vector3(TOTE.F[0]+sx,TOTE.F[1]+sy,TOTE.z+sz),over=new T.Vector3(place.x,place.y,TRAVEL_Z);
+  const P=park.clone();let tilt=0,jaw=0;
+  if(t<PICK.down){}
+  else if(t<PICK.clamp)P.lerpVectors(park,pick,ease(t,PICK.down,PICK.clamp));
+  else if(t<PICK.free){P.copy(pick);jaw=ease(t,PICK.clamp,PICK.closed);P.z+=6*ease(t,PICK.closed,PICK.free);}
+  else if(t<PICK.lifted){jaw=1;P.copy(pick);P.z=pick.z+6+(TRAVEL_Z-pick.z-6)*ease(t,PICK.free,PICK.lifted);}
+  else if(t<PICK.over){jaw=1;P.lerpVectors(park,over,ease(t,PICK.lifted,PICK.over));tilt=TILT*ease(t,PICK.lifted+.15,PICK.over-.1);}
+  else if(t<PICK.open){jaw=1;tilt=TILT;P.lerpVectors(over,place,ease(t,PICK.over,PICK.placed));}
+  else if(t<PICK.clear){tilt=TILT;jaw=1-ease(t,PICK.open,PICK.open+.15);P.lerpVectors(place,over,ease(t,PICK.open+.15,PICK.clear));}
+  else if(t<PICK.home){P.lerpVectors(over,park,ease(t,PICK.clear,PICK.home));tilt=TILT*(1-ease(t,PICK.clear+.1,PICK.home-.1));}
+  // The harness is drawn up into its coil from the plug outward as the board comes up: 0 lying as dressed .. 1 coiled.
+  return {P,tilt,jaw,held:t>=PICK.closed&&t<PICK.open,morph:ease(t,PICK.closed,PICK.lifted+.15)};
+}
+// The three totes at op-side time t: the one being filled (rolling in from E while a full one is swapped), the full
+// one rolling out to the store, and the empty one waiting at E (in the store until it is sent out). x, y; null: hidden.
+export function totes(t:number,swap:boolean){
+  const [F,E]=[TOTE.F,TOTE.E];
+  if(!swap)return {fill:[F[0],F[1]],out:null,spare:[E[0],E[1]],shutters:[0,0]};
+  const out=outX(t),spare=spareX(t),open=(a:number,b:number,c:number,d:number)=>ease(t,a,b)*(1-ease(t,c,d));
+  return {
+    fill:[F[0],E[1]+(F[1]-E[1])*ease(t,SWAP.in,SWAP.done)],
+    out:t<OUT_IN+.4?[out,F[1]]:null,spare:t>SPARE[0]-.4?[spare,E[1]]:null,
+    shutters:[open(OUT_NEAR-.35,OUT_NEAR,OUT_IN,OUT_IN+.35),open(SPARE[0]-.35,SPARE[0],SPARE_OUT,SPARE_OUT+.35)],
+  } as {fill:number[];out:number[]|null;spare:number[]|null;shutters:number[]};
+}
+
+// Pose the line for one frame: the live pallet and its harness, the static units, the lifts, the belts, the tester's
+// dock head, the picker, the unit it carries and the totes. Returns a key that changes whenever anything visible
+// moved, for the shadow map.
+type Tote={group:T.Group;shell:T.Group};
+type Slots={mesh:T.Mesh;counts:number[]}[];
+export interface LineRig {
+  pallet:T.Object3D;plug:T.Object3D;wires:{mesh:T.Mesh}[];units:Record<'unload'|'queue'|'load'|'carried',PalletUnit>;lifts:{unload:T.Object3D;load:T.Object3D};dockHead:T.Object3D;
+  belts:{line:T.MeshStandardMaterial;unload:T.MeshStandardMaterial;load:T.MeshStandardMaterial;tunnel:T.MeshStandardMaterial};
+  picker:ReturnType<typeof createPicker>;carried:ReturnType<typeof createCarried>;
+  tote:Tote&{out:Tote;spare:Tote;shutters:T.Mesh[];mouth:number[];slots?:{fill:Slots;out:Slots}};
+}
+const at=new T.Matrix4(),tilted=new T.Matrix4(),toLocal=new T.Matrix4(),world=new T.Vector3(),rigid=new T.Vector3();
 export function applyLine(rig:LineRig,f:LineFrame&{progress?:number}){
-  // The index runs on the robot's clock; the operator side (lifts, return run) on its own, which a restart of
-  // the robot's cycle does not rewind.
-  const s=f.shift,p=f.progress??0,op=f.lineProgress??p,index=Math.max(0,Math.min(1,(p-INDEX_START)/(CYCLE_END-INDEX_START)));
+  // The index runs on the robot's clock; the operator side (picker, lifts, return run, totes) on its own, which a
+  // restart of the robot's cycle does not rewind.
+  const s=f.shift,p=f.progress??0,op=f.lineProgress??p,t=opSeconds(op),indexing=p>=INDEX_START;
   rig.pallet.position.x=-s;
   rig.plug.visible=f.liveHarness;
   for(const w of rig.wires)w.mesh.position.x=-s;
-  const {unload,queue,load}=rig.units;
-  // Down at the bottom of its lift, an empty pallet runs off into the return tunnel under the bench; the next one
-  // runs in from it at the load end before its lift brings it up.
-  const down=(z:number)=>z<=LIFT_DOWN+.01,indexing=p>=INDEX_START;
-  const away=down(f.unloadZ)?indexing?1:lineSmooth((op-8)/5):0,coming=down(f.loadZ)&&!indexing?1-lineSmooth((op-11)/8):0;
+  const {unload,queue,load,carried}=rig.units;
+  // Down at the bottom of its lift, an empty pallet runs off into the return tunnel under the bench; the next one,
+  // loaded upstream, runs in from it at the load end before its lift brings it up.
+  const down=(z:number)=>z<=LIFT_DOWN+.01;
+  const away=down(f.unloadZ)?indexing?1:ease(t,UNLOAD.away,UNLOAD.gone):0,coming=down(f.loadZ)&&!indexing?1-ease(t,LOAD.in,LOAD.under):0;
   unload.group.position.set(LINE_X.unload-LINE_X.work+RETURN_RUN*away,0,f.unloadZ);
   queue.group.position.set(PALLET_PITCH-s,0,0);
   load.group.position.set(2*PALLET_PITCH-s-RETURN_RUN*coming,0,f.loadZ);
   unload.group.visible=away<.999;load.group.visible=coming<.999;
-  const show=(u:PalletUnit,board:number,harness:number)=>{if(u.shown[0]!==board)fadeTo(u.fades.board,u.board,board);if(u.shown[1]!==harness)fadeTo(u.fades.harness,u.harness,harness);u.shown=[board,harness];};
-  show(unload,f.unloadUnit==='none'?0:f.unloadFade,f.unloadUnit==='finished'?f.unloadFade:0);
-  show(queue,1,1);show(load,f.loadBoard,f.loadHarness);
   // Each lift waits up, its deck closing the well. The unload lift comes back up once its empty pallet has run off;
   // the load lift goes down for the next pallet just before it runs in.
-  rig.lifts.unload.position.z=index>0?0:op>=8?LIFT_DOWN*(1-lineSmooth((op-13)/5)):f.unloadZ;
-  rig.lifts.load.position.z=index>0?0:op<20?LIFT_DOWN*lineSmooth((op-4)/6):f.loadZ;
-  rig.dockHead.position.y=77-1.5*f.dock;
-  rig.tote.slots.forEach((slot,i)=>{
-    const v=i<f.tote?1:i===f.tote?f.toteIn:0;slot.mesh.visible=v>.002;slot.mesh.castShadow=v>.5;
-    const see=v<.998;if(slot.material.transparent!==see){slot.material.transparent=see;slot.material.needsUpdate=true;}slot.material.opacity=v;slot.material.depthWrite=!see;
-  });
-  return [s,f.dock,f.liveHarness,f.unloadZ,f.unloadUnit,f.unloadFade,f.loadZ,f.loadBoard,f.loadHarness,f.tote,f.toteIn,rig.lifts.unload.position.z,rig.lifts.load.position.z].map(v=>typeof v==='number'?v.toFixed(3):String(v)).join();
+  rig.lifts.unload.position.z=indexing?0:t>=UNLOAD.away?LIFT_DOWN*(1-ease(t,UNLOAD.up,UNLOAD.back)):f.unloadZ;
+  rig.lifts.load.position.z=indexing?0:t<LOAD.in?LIFT_DOWN*ease(t,LOAD.down,LOAD.low):f.loadZ;
+  // The belts run with the pallets on them; every run is a whole number of cleats, so 108 matches 0.
+  const belt=(m:T.MeshStandardMaterial,d:number)=>{m.map!.offset.x=-(d/BELT_PITCH%1);};
+  belt(rig.belts.line,s);belt(rig.belts.unload,s-RETURN_RUN*away);belt(rig.belts.load,s-RETURN_RUN*(1-coming));belt(rig.belts.tunnel,-RETURN_RUN*(away+1-coming));
+  rig.dockHead.position.y=DOCK_STROKE*(1-f.dock);
+  // The picker packs the finished unit; a bare board after a reject goes back down with its pallet.
+  const pack=f.pack&&f.unloadUnit==='finished',slot=Math.max(0,Math.min(TOTE_SLOTS-1,f.tote-(pack&&t>=PICK.open?1:0)));
+  const m=pack?packing(t,slot):packing(0,0);
+  unload.board.visible=f.unloadUnit!=='none'&&!(pack&&t>=PICK.closed);unload.harness.visible=f.unloadUnit==='finished'&&!(pack&&t>=PICK.closed);
+  unload.clamps.forEach((c,i)=>{c.position.z=pack?2*ease(t,.05,.2):0;c.rotation.z=(i?1:-1)*(pack?Math.PI/2*ease(t,.2,.45):0);});
+  const pk=rig.picker;pk.x.position.x=m.P.x;pk.y.position.y=m.P.y;pk.head.position.z=m.P.z;
+  for(const j of pk.jaws){j.jaw.position.y=j.side*(22+3*(1-m.jaw));j.pad.rotation.y=m.tilt;}
+  // The carried unit: rigid in the pads, about the pivot.
+  const c=rig.carried,cu=carried.group;cu.visible=pack&&m.held;
+  at.makeTranslation(m.P.x,m.P.y,m.P.z).multiply(tilted.makeRotationY(m.tilt)).multiply(toLocal.makeTranslation(-PIVOT[0],-PIVOT[1],-PIVOT[2]));
+  at.decompose(cu.position,cu.quaternion,cu.scale);
+  if(cu.visible&&c.morph!==m.morph){
+    // Near the plug the wires move with the board at once; further out they stay where they lie until drawn up.
+    c.morph=m.morph;cu.updateMatrix();toLocal.copy(cu.matrix).invert();
+    const lying=new T.Vector3(LINE_X.unload-LINE_X.work,0,0);
+    c.wires.forEach((w,i)=>{const d=c.dressed[i],k=c.coil[i],out=c.points[i];
+      for(let j=0;j<d.length;j++){const u=j/(d.length-1),stay=lineSmooth((j-1)/7),draw=lineSmooth(m.morph*1.6-.6*u);
+        world.copy(d[j]).add(lying).applyMatrix4(toLocal);rigid.copy(d[j]).lerp(world,stay);out[j].copy(rigid).lerp(k[j],draw);}
+      w.update(out);});
+  }
+  // The totes.
+  const tp=totes(t,pack&&f.swap),place=(o:T.Object3D,xy:number[]|null,y:number)=>{o.visible=!!xy;o.position.set(xy?xy[0]:TOTE.store,xy?xy[1]:y,TOTE.z);};
+  place(rig.tote.group,tp.fill,TOTE.F[1]);place(rig.tote.out.group,tp.out,TOTE.F[1]);place(rig.tote.spare.group,tp.spare,TOTE.E[1]);
+  rig.tote.shutters.forEach((o,i)=>o.position.z=(rig.tote.mouth[0]+rig.tote.mouth[1])/2+95*tp.shutters[i]);
+  if((f.tote>0||tp.out)&&!rig.tote.slots){rig.tote.slots={fill:slotSet(c,c.coil),out:slotSet(c,c.coil)};for(const x of rig.tote.slots.fill)rig.tote.group.add(x.mesh);for(const x of rig.tote.slots.out)rig.tote.out.group.add(x.mesh);}
+  if(rig.tote.slots){for(const x of rig.tote.slots.fill){x.mesh.geometry.setDrawRange(0,x.counts[f.tote]);x.mesh.visible=f.tote>0;}for(const x of rig.tote.slots.out)x.mesh.visible=!!tp.out;}
+  return [s,f.dock,f.liveHarness,f.unloadZ,f.unloadUnit,f.loadZ,f.tote,pack,f.swap,rig.lifts.unload.position.z,rig.lifts.load.position.z,away,coming,...m.P.toArray(),m.tilt,m.jaw,m.morph,...[tp.fill,tp.out,tp.spare].flat(),...tp.shutters,pack&&t<.5?t:0].map(v=>typeof v==='number'?v.toFixed(3):String(v)).join();
 }
 
 // Dress the live wires round the plug in pallet-local coordinates. The wire meshes ride with the pallet (applyLine),
@@ -438,10 +658,9 @@ export function dressLiveHarness(rig:{plug:T.Object3D;pallet:T.Object3D;wires:Ar
 export const RELEASE_GAP=.3,RELEASE_TRAVEL=.7,LATCH_ARM=9.3;
 export function poseLatch(latch:T.Object3D,released:number){latch.rotation.x=-Math.max(0,released*(RELEASE_GAP+RELEASE_TRAVEL)-RELEASE_GAP)/LATCH_ARM;}
 export function posePlunger(plunger:T.Object3D,released:number){plunger.position.y=released*(RELEASE_GAP+RELEASE_TRAVEL);}
-export function createPlug(pins=6){
+export function createPlug(pins=6,material=M.ivory.clone()){
   const halfX=pins===8?9.5:7.5;
   const group=new T.Group();group.name='Six-wire connector';
-  const material=M.ivory.clone();
   const body=new T.Mesh(plugHousing(halfX,3.6,pins),material);body.geometry.scale(1,1,12/7.8);body.position.z=-3.9;body.castShadow=body.receiveShadow=true;body.name='Nylon connector housing';group.add(body);
   for(const [x,y] of contactCenters(pins)){
     const ring=new T.Mesh(cached('contact ring',()=>new T.RingGeometry(.36,.57,16)),M.gold);ring.position.set(x,y,-4.01);ring.rotation.x=Math.PI;group.add(ring);

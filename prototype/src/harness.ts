@@ -5,11 +5,13 @@ import * as T from 'three';
 // then lie on the plate: round the comb's far side in a tight S that takes up the slack, and back into
 // a short breakout that fans the wires into the comb and on into the pallet's test adapter. Each wire keeps its length; only the S's
 // amplitude (capped) and, past the cap, the hanging span's sag change as the housing moves.
-export const HARNESS_LENGTH = 429;
+export const HARNESS_LENGTH = 440;
 // Control points per wire; dressHarness grows the caller's array to this length.
 export const HARNESS_POINTS = 72;
 export const WIRE_RADIUS = .48;
-export const SLACK_LIMIT = 22;
+export const SLACK_LIMIT = 26;
+// How far the hanging span's first handle falls toward the plate (0 stiff, 1 straight down).
+const DROOP = .85;
 const PITCH = .98, ROW = .86;
 // The bundle's centre height where it rests on the plate: its lower row touches the plate.
 const REST = WIRE_RADIUS + ROW / 2 + .1;
@@ -26,7 +28,7 @@ const ROUTE_OUT = [[-124, 12.5], [-114, 12], [-106, 15], [-104, 18.5]];
 // span lies over the nest or the tray rim instead of passing through them. createCell registers the cell.
 const FIELD = { x0: -230, y0: -160, nx: 320, ny: 270, h: new Float32Array(0) };
 export function setHarnessObstacles(boxes: T.Box3[]) {
-  const { x0, y0, nx, ny } = FIELD, h = new Float32Array(nx * ny), pad = 2.2;
+  const { x0, y0, nx, ny } = FIELD, h = new Float32Array(nx * ny), pad = 2.6;
   for (const b of boxes) {
     const i0 = Math.max(0, Math.floor(b.min.x - pad - x0)), i1 = Math.min(nx - 1, Math.ceil(b.max.x + pad - x0));
     const j0 = Math.max(0, Math.floor(b.min.y - pad - y0)), j1 = Math.min(ny - 1, Math.ceil(b.max.y + pad - y0));
@@ -105,6 +107,7 @@ function polyLength(list: T.Vector3[], count: number) {
 // Evenly respace the polyline into the caller's control points.
 function resample(points: T.Vector3[], poly: T.Vector3[], count: number) {
   const total = polyLength(poly, count);
+  let length = 0;
   let k = 1, done = 0;
   points[0].copy(poly[0]);
   for (let j = 1; j < HARNESS_POINTS - 1; j++) {
@@ -114,6 +117,8 @@ function resample(points: T.Vector3[], poly: T.Vector3[], count: number) {
     points[j].lerpVectors(poly[k - 1], poly[k], (target - done) / seg);
   }
   points[HARNESS_POINTS - 1].copy(poly[count - 1]);
+  for (let j = 1; j < HARNESS_POINTS; j++) length += points[j].distanceTo(points[j - 1]);
+  return length;
 }
 
 // The S is shared by the whole bundle: fit it once per pose on the bundle's centre line, then fit each wire's
@@ -149,9 +154,12 @@ function dressWire(points: T.Vector3[], plug: T.Vector3, turn: number, yaw: numb
   const across = Math.min(1, Math.max(0, (plug.x + 100) / 80)), TOUCHDOWN = new T.Vector3().lerpVectors(TOUCH_WEST, TOUCH_EAST, across * across * (3 - 2 * across));
   const end = centre[1], distance = end.distanceTo(TOUCHDOWN);
   const p1 = new T.Vector3(), p2 = new T.Vector3(), towards = new T.Vector3(ROUTE_IN[0][0], ROUTE_IN[0][1], REST).sub(TOUCHDOWN).normalize();
-  const span = 24, first = 2;
+  const out = local(0, 1, 0, new T.Vector3()).sub(plug), span = 24, first = 2;
+  // A loose bundle does not stand out stiffly: past the pigtail it bends down under its own weight, so the first
+  // handle falls DROOP of the way to the plate.
+  const fall = DROOP * Math.max(0, end.z - REST);
   const build = (amplitude: number, sag: number) => {
-    p1.copy(end).addScaledVector(local(0, 1, 0, new T.Vector3()).sub(plug), Math.min(45, Math.max(5, .35 * distance)) * sag);
+    p1.copy(end).addScaledVector(out, Math.min(32, Math.max(5, .25 * distance)) * sag);p1.z -= fall;
     p2.copy(TOUCHDOWN).addScaledVector(towards, -Math.min(14 - 6 * across, Math.max(4, .2 * distance)) * sag);
     for (let j = 1; j <= span; j++) { const c = bezier(vec(first + j - 1, centre), end, p1, p2, TOUCHDOWN, j / span); c.z = Math.max(c.z, restingHeight(c.x, c.y) + REST + .4); }
     const last = route(centre, first + span, amplitude);
@@ -164,32 +172,49 @@ function dressWire(points: T.Vector3[], plug: T.Vector3, turn: number, yaw: numb
     poly.length = k;
     // Nothing sinks into the plate where the bundle rests on it.
     for (let j = 0; j < k; j++) poly[j].z = Math.max(poly[j].z, WIRE_RADIUS + .12);
-    resample(points, poly, k);
-    scratch.curve.points = points;
-    return curveLength(scratch.curve, 400);
+    // The wire is fitted on its dense polyline, a little shorter than the curve through the resampled points;
+    // `bias` (measured once per fit below) makes up the difference.
+    return resample(points, poly, k) + bias;
   };
+  let bias = 0;
   // The S takes up the slack between its limits; beyond them the hanging span sags or straightens.
   const solve = (f: (x: number) => number, low: number, high: number) => {
     for (let j = 0; j < 16; j++) { const mid = (low + high) / 2; if (f(mid) < length) low = mid; else high = mid; }
     return (low + high) / 2;
   };
-  if (fixed !== null) {
-    // Outer wires of the bundle's bends need a little more length: let each wire's S swing up to 3 mm wider
-    // or narrower than the bundle's, then make up any rest in the hanging span.
-    const low = Math.max(0, fixed.amplitude - 3), high = fixed.amplitude + 3;
-    let amplitude = solve(a => build(a, fixed.sag), low, high), sag = fixed.sag;
-    const got = build(amplitude, sag);
-    if (Math.abs(got - length) > .05) { amplitude = got < length ? high : low; sag = solve(s => build(amplitude, s), .5, 2); }
+  const fit = () => {
+    if (fixed !== null) {
+      // Outer wires of the bundle's bends need a little more length: let each wire's S swing up to 2 mm wider
+      // or narrower than the bundle's, so the S stays one tight bundle, then make up any rest in the hanging span.
+      const low = Math.max(0, fixed.amplitude - 2), high = fixed.amplitude + 2;
+      let amplitude = solve(a => build(a, fixed.sag), low, high), sag = fixed.sag;
+      const got = build(amplitude, sag);
+      if (Math.abs(got - length) > .05) { amplitude = got < length ? high : low; sag = solve(s => build(amplitude, s), .5, 2); }
+      build(amplitude, sag);
+      return { amplitude, sag, shortest: 0, longest: 0 };
+    }
+    const longest = build(SLACK_LIMIT, 1), shortest = build(0, 1);
+    let amplitude = SLACK_LIMIT, sag = 1;
+    if (longest < length) sag = solve(s => build(SLACK_LIMIT, s), 1, 2);
+    else if (shortest > length) { amplitude = 0; sag = solve(s => build(0, s), .5, 1); }
+    else amplitude = solve(a => build(a, 1), 0, SLACK_LIMIT);
     build(amplitude, sag);
-    return { amplitude, sag, shortest: 0, longest: 0 };
+    return { amplitude, sag, shortest, longest };
+  };
+  // Fit on the polyline, measure the true curve once, correct for the difference and fit again (one pass is
+  // within a few hundredths of a millimetre); far cheaper than measuring the curve at every step.
+  // Start from the curve's excess over the polyline near the answer (the bundle's own fit for a wire), so every
+  // wire of the bundle is fitted alike.
+  const poly0 = fixed ? build(fixed.amplitude, fixed.sag) : build(SLACK_LIMIT / 2, 1);
+  scratch.curve.points = points; bias = curveLength(scratch.curve, 400) - poly0;
+  let result = fit();
+  for (let pass = 0; pass < 2; pass++) {
+    scratch.curve.points = points;
+    const error = curveLength(scratch.curve, 400) - length;
+    if (Math.abs(error) < .04) break;
+    bias += error; result = fit();
   }
-  const longest = build(SLACK_LIMIT, 1), shortest = build(0, 1);
-  let amplitude = SLACK_LIMIT, sag = 1;
-  if (longest < length) sag = solve(s => build(SLACK_LIMIT, s), 1, 2);
-  else if (shortest > length) { amplitude = 0; sag = solve(s => build(0, s), .5, 1); }
-  else amplitude = solve(a => build(a, 1), 0, SLACK_LIMIT);
-  build(amplitude, sag);
-  return { amplitude, sag, shortest, longest };
+  return result;
 }
 
 export function curveLength(curve: T.CatmullRomCurve3, samples = 128) {
