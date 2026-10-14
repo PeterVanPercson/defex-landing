@@ -72,7 +72,7 @@ export function createHall() {
   const make = (side: T.Side, dim = 1) => ({
     deck: new T.MeshStandardMaterial({ color: new T.Color(0x5d6163).multiplyScalar(dim), roughness: .85, envMapIntensity: .5, side }),
     paint: new T.MeshStandardMaterial({ color: new T.Color(0xffffff).multiplyScalar(dim), roughness: .6, envMapIntensity: 1.4, emissive: new T.Color(0x2c2d2d).multiplyScalar(dim), side }),
-    wall: new T.MeshStandardMaterial({ color: new T.Color(0xc2c3c3).multiplyScalar(dim), roughness: .9, envMapIntensity: .5, side }),
+    wall: new T.MeshStandardMaterial({ color: new T.Color(0xb5b7b7).multiplyScalar(dim), roughness: .9, envMapIntensity: .5, side }),
     steel: new T.MeshStandardMaterial({ color: new T.Color(0x8f9395).multiplyScalar(dim), roughness: .55, metalness: .2, envMapIntensity: .5, side }),
     panel: new T.MeshBasicMaterial({ color: new T.Color(0xffffff).multiplyScalar(dim), toneMapped: false, side: T.DoubleSide, alphaMap: panelAlpha(), transparent: true, depthWrite: false }),
     glass: new T.MeshBasicMaterial({ color: new T.Color(0xf2f6f8).multiplyScalar(dim), toneMapped: false, side }),
@@ -81,18 +81,18 @@ export function createHall() {
     wrap: new T.MeshStandardMaterial({ color: new T.Color(0xd9d6cf).multiplyScalar(dim), roughness: .5, envMapIntensity: .5, side }),
   });
   const up = structure(make(T.FrontSide));
-  // the polished floor's reflection: the hall mirrored under a translucent floor
-  const down = structure(make(T.BackSide, .78)); down.name = 'Hall reflection';
+  // the polished floor's reflection: the hall mirrored, dimmed, under a translucent floor (a honed slab, not a mirror)
+  const down = structure(make(T.BackSide, .58)); down.name = 'Hall reflection';
   down.scale.z = -1; down.position.z = 2 * FLOOR;
   const floorMaterial = new T.MeshPhysicalMaterial({
-    color: 0x8e9193, roughness: .2, clearcoat: .8, clearcoatRoughness: .12, transparent: true, opacity: .6, envMapIntensity: .6,
+    color: 0x76797b, roughness: .36, clearcoat: .5, clearcoatRoughness: .24, transparent: true, opacity: .6, envMapIntensity: .5,
   });
   // Polished concrete mirrors strongly only at grazing angles: looking down at the bench the floor is nearly
   // opaque, and the low hero shot keeps its reflection of the hall.
   floorMaterial.onBeforeCompile = shader => {
     shader.fragmentShader = shader.fragmentShader.replace('#include <dithering_fragment>', `#include <dithering_fragment>
       float grazing = pow(1.0 - abs(dot(normalize(vNormal), normalize(vViewPosition))), 4.0);
-      gl_FragColor.a = mix(.93, .5, grazing);`);
+      gl_FragColor.a = mix(.95, .66, grazing);`);
   };
   floorMaterial.customProgramCacheKey = () => 'fresnel-floor';
   const floor = new T.Mesh(new T.PlaneGeometry(SPAN, SPAN), floorMaterial);

@@ -6,9 +6,9 @@ import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { applyLine, createCell, disposeCell, dressLiveHarness, factoryEnvironment, mergeStatic, poseLatch, posePlunger, REST_LINE } from './cell-geometry.ts';
-import { createHall } from './hall.ts';
-import { PoseStream, damping } from './motion.ts';
-import { processFrame, HEADER, REJECT, UPCAM } from './process.ts';
+import { createHall, FLOOR } from './hall.ts';
+import { PoseStream, damping, settleSpring, isClick, isDrag, lensShift } from './motion.ts';
+import { processFrame, HEADER, UPCAM } from './process.ts';
 import type { ProcessFrame } from './process.ts';
 import type { Configuration } from './model.ts';
 import type { Snapshot } from './engine.ts';
@@ -20,7 +20,16 @@ import type { LineFrame, Shot } from './line.ts';
 
 export type View='overview'|'side'|'top'|'connector'|'part';
 export type Mode='machine'|'inside'|'parts';
-export interface Hud {labels:HTMLElement;tooltip:HTMLElement;onPick?:(id:PartId)=>void;onDirector?:(on:boolean)=>void}
+export interface Hud {labels:HTMLElement;tooltip:HTMLElement;onPick?:(id:PartId)=>void;onDirector?:(on:boolean)=>void;onFree?:(free:boolean)=>void}
+// Rendering tiers, one chosen under the loader and kept for the session (never switched mid-play).
+export interface Tier {ratio:number;ao:boolean;bokeh:boolean}
+export const TIERS:{desktop:Tier[];phone:Tier[]}={
+  desktop:[{ratio:2,ao:true,bokeh:true},{ratio:1.5,ao:true,bokeh:true},{ratio:1.25,ao:true,bokeh:false},{ratio:1,ao:false,bokeh:false}],
+  phone:[{ratio:1.5,ao:true,bokeh:false},{ratio:1.25,ao:true,bokeh:false},{ratio:1,ao:false,bokeh:false}],
+};
+// A tier holds 60 fps if its worst frame (close-up, AO, defocus, a shadow redraw), drawn and waited for, takes
+// 18 ms or less: a playing frame overlaps its CPU and GPU work, so it then costs well under 16.7 ms.
+const BUDGET=18;
 export class WorkcellScene {
   renderer:T.WebGLRenderer;
   scene=new T.Scene(); camera=new T.PerspectiveCamera(25,1,30,150000);
@@ -29,21 +38,32 @@ export class WorkcellScene {
   poses=new PoseStream(); state:Snapshot|null=null; playing=false; afterRender:(()=>void)|null=null;
   mode:Mode='machine'; viewMode:View='overview'; focus:PartId='socket';
   process:ProcessFrame|null=processFrame(0); director=false; disposed=false;
+  // Resolves once every shader is compiled, the tier is chosen and the first frames are on screen.
+  ready:Promise<void>;
+  // The tier index (0 best) and the program count right after the warm-up, for QA.
+  quality=0; warmPrograms=0;
   private container:HTMLElement; private hud:Hud|null; private embed:boolean;
-  private frame=0; private last=0; private width=1; private height=1;
-  private cameraMoving=true; private spread=0; private cut=0; private renderedPose=''; private dressed=''; private lineKey='';
-  private target=new T.Vector3();private position=new T.Vector3();private ro:ResizeObserver;private io:IntersectionObserver;private visible=true;
+  private frame=0; private last=0; private width=1; private height=1; private warming=true; private rendered=0;
+  private cameraMoving=true; private spread=0; private renderedPose=''; private dressed=''; private lineKey='';
+  // The guided camera's goal: target, position, lens and a lens shift (a fraction of the frame) that lets a shot keep
+  // its composition while it turns about a point on the bench.
+  private target=new T.Vector3();private position=new T.Vector3();private shift=new T.Vector2();
+  // Where the guided camera is (the spring's state): the person's clicks and the first pixels of a drag never move it.
+  private camPos=new T.Vector3();private camTgt=new T.Vector3();
+  private velP=new T.Vector3();private velT=new T.Vector3();private lensVel=0;private shown=new T.Vector2();private shiftVel=new T.Vector2();
+  private ro:ResizeObserver;private io:IntersectionObserver;private visible=true;
   // Phones and narrow screens get a lighter pipeline: fewer pixels, a smaller shadow map, no defocus.
   private light=matchMedia('(pointer: coarse), (max-width: 700px)').matches;
+  private tiers=this.light?TIERS.phone:TIERS.desktop;private tier:Tier=this.tiers[0];
   private labels=new Map<PartId,HTMLElement>();
   private basePose=[0,0,42,0];private band:Shot='wide';
-  // Set once the viewer drags the camera; a played cycle then leaves it where they put it.
-  private free=false;
+  // Set by a real drag, pinch or ctrl-wheel; the Guided view chip, a dock button or a quiet shot change clears it.
+  free=false;
+  private lastInput=-1e9;private lastProgress=0;private followed=new T.Vector3();private scrubbing=false;
+  private gesture:{id:number;x:number;y:number;t:number;button:number;touch:boolean;dragged:boolean;pos:T.Vector3;tgt:T.Vector3}|null=null;
+  private touches=new Set<number>();private hoverAt=0;private hoverTimer=0;private hovered:PartId|null=null;
+  private fine=matchMedia('(hover: hover) and (pointer: fine)').matches;
   private lens=35;private shownLens=35;
-  // A slow GPU (an old laptop, a projector at 4K) steps down: defocus off, then ambient occlusion and pixels.
-  private quality=0;private slowFrames=0;private seenFrames=0;private seenTime=0;private born=performance.now();
-  // Whether the frame now asked for follows straight on from the last one (see animate), and when that one began.
-  private chained=false;private inFrame=false;private frameEnded=0;
   // Defocus eases in and out with the camera instead of switching in one frame.
   private blur=0;
   // Try it yourself: after a pass the hand lets go of the seated plug and lifts clear (letGo 0 holding .. 1 clear).
@@ -54,93 +74,182 @@ export class WorkcellScene {
   // 1 while the close-up's focus is up at the wrist camera over the header (the board check), 0 at the plug.
   private boardWeight(){const f=this.process;if(!f?.focus)return 0;return 1-T.MathUtils.smoothstep(Math.hypot(f.focus[0]-HEADER[0]+9,f.focus[1]-HEADER[1]+1.6,f.focus[2]-64),4,60);}
   private focalPoint=new T.Vector3();private headerAt=new T.Vector3();
-  private ray=new T.Raycaster();private down=[0,0];
+  private ray=new T.Raycaster();
   private reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Additive cards that suggest each ring light's spill: no lights, no shadows, hidden from AO and defocus.
   private glow=createGlow();
+  // What fades or turns see-through at runtime: the live plug and wires, the header's shroud, each unit's housings.
+  private plugMaterials:T.Material[]=[];private wireMaterials:T.Material[]=[];private shroud:T.Material[]=[];
+  private unitCuts:{group:T.Object3D;materials:T.Material[]}[]=[];private plugSee=1;private wiresSee=1;
+  private key:T.DirectionalLight;
   constructor(container:HTMLElement,config:Configuration,hud:Hud|null=null,embed=false){
     this.container=container;this.config=config;this.hud=hud;this.embed=embed;
     this.renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio,this.light?1.5:1.75));this.renderer.outputColorSpace=T.SRGBColorSpace;
+    // Synchronous link checks stall every compile; production trusts the shaders the warm-up already built.
+    this.renderer.debug.checkShaderErrors=import.meta.env.DEV;
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio,this.tier.ratio));this.renderer.outputColorSpace=T.SRGBColorSpace;
     this.renderer.toneMapping=T.NeutralToneMapping;this.renderer.toneMappingExposure=1;
     this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFShadowMap;this.renderer.shadowMap.autoUpdate=false;
     container.append(this.renderer.domElement);this.renderer.domElement.setAttribute('role','img');
+    this.renderer.domElement.style.opacity='0';
     this.renderer.domElement.setAttribute('aria-label','Interactive rendered connector workcell in an empty factory hall. White six-joint arm, two-finger gripper, six-wire harness, green circuit board, fixture, tester and reject tray.');
-    this.camera.up.set(0,0,1);this.scene.background=new T.Color(0xc4c5c5);this.scene.fog=new T.FogExp2(0xc4c5c5,.0000105);
+    this.camera.up.set(0,0,1);this.scene.background=new T.Color(0xb8bbbb);this.scene.fog=new T.FogExp2(0xb8bbbb,.0000105);
     this.controls=new OrbitControls(this.camera,this.renderer.domElement);
-    Object.assign(this.controls,{enableDamping:true,dampingFactor:.08,enablePan:false,minDistance:150,maxDistance:8000,minPolarAngle:.06,maxPolarAngle:Math.PI*.49,rotateSpeed:.45,zoomSpeed:.6});
+    // A pinch (ctrlKey wheel, deltaY = 100 ln scale) at zoomSpeed 1.95 scales the distance by the pinch itself.
+    Object.assign(this.controls,{enableDamping:true,dampingFactor:.08,enablePan:false,minDistance:150,maxDistance:3500,minPolarAngle:.015,maxPolarAngle:Math.PI*.49,rotateSpeed:.45,zoomSpeed:1.95,zoomToCursor:true});
     this.controls.touches={ONE:T.TOUCH.ROTATE,TWO:T.TOUCH.DOLLY_ROTATE};if(embed)this.controls.enableZoom=false;
-    this.renderer.domElement.style.touchAction='pan-y';
-    this.controls.addEventListener('start',()=>{this.cameraMoving=false;this.director=false;this.free=true;});this.controls.addEventListener('change',this.wake);
+    this.renderer.domElement.style.touchAction='pan-y';this.renderer.domElement.style.cursor='grab';
+    this.controls.addEventListener('change',this.wake);
     container.addEventListener('wheel',this.wheel,{capture:true,passive:true});
-    this.renderer.domElement.addEventListener('pointerdown',this.pointerDown);this.renderer.domElement.addEventListener('pointerup',this.pointerUp);
-    this.renderer.domElement.addEventListener('webglcontextlost',this.contextLost);
+    const canvas=this.renderer.domElement;
+    canvas.addEventListener('pointerdown',this.pointerDown,{capture:true});canvas.addEventListener('pointermove',this.pointerMove);
+    canvas.addEventListener('pointerup',this.pointerUp);canvas.addEventListener('pointercancel',this.pointerUp);canvas.addEventListener('pointerleave',this.pointerLeave);
+    canvas.addEventListener('webglcontextlost',this.contextLost);
     const env=factoryEnvironment(),pmrem=new T.PMREMGenerator(this.renderer);
     this.scene.environment=pmrem.fromScene(env,.02).texture;this.scene.environmentIntensity=.9;env.traverse(o=>{if(o instanceof T.Mesh){o.geometry.dispose();[o.material].flat().forEach(m=>m.dispose());}});this.scene.environmentRotation.x=Math.PI/2;pmrem.dispose();
-    // Hall lighting falls almost straight down; a cooler light comes in from the windows behind.
-    const key=new T.DirectionalLight(0xffffff,2.2);key.position.set(-260,-420,1500);key.target.position.set(-40,0,60);key.castShadow=true;
-    key.shadow.mapSize.setScalar(2048);Object.assign(key.shadow.camera,{left:-900,right:900,top:900,bottom:-900,near:300,far:2900});key.shadow.normalBias=.12;key.shadow.bias=-.0001;key.shadow.radius=8;
-    this.scene.add(key,key.target);const fill=new T.HemisphereLight(0xf3f6f7,0x5d625f,.35);fill.position.set(0,0,1000);this.scene.add(fill);
-    const windowLight=new T.DirectionalLight(0xeaf1f6,.7);windowLight.position.set(300,1400,700);this.scene.add(windowLight);
+    // Hall lighting falls almost straight down; a cooler light comes in from the windows behind. The key is a little
+    // stronger and the sky fill weaker than the hall alone would give, so the bench reads in light and shade.
+    const key=this.key=new T.DirectionalLight(0xffffff,2.5);key.position.set(-260,-420,1500);key.target.position.set(-40,0,60);key.castShadow=true;
+    key.shadow.mapSize.setScalar(this.light?2048:4096);key.shadow.normalBias=.12;key.shadow.bias=-.0001;key.shadow.radius=3;fitShadow(key);
+    this.scene.add(key,key.target);const fill=new T.HemisphereLight(0xf3f6f7,0x5d625f,.27);fill.position.set(0,0,1000);this.scene.add(fill);
+    const windowLight=new T.DirectionalLight(0xeaf1f6,.62);windowLight.position.set(300,1400,700);this.scene.add(windowLight);
     this.scene.add(this.hall,this.rig.root,this.glow.root);
-    this.batchRig();
-    const groups:Record<PartId,T.Object3D>={arm:this.rig.arm.root,gripper:this.rig.tool.root,connector:this.rig.plug,socket:this.rig.header,tester:this.rig.tester};
-    for(const [id,g] of Object.entries(groups)){g.traverse(o=>o.userData.part=id);const label=document.createElement('div');label.className='cell-label';label.textContent=PARTS.find(p=>p.id===id)?.name??id;hud?.labels.append(label);this.labels.set(id as PartId,label);}
+    this.batchRig();this.tagParts();
     this.composer=new EffectComposer(this.renderer,new T.WebGLRenderTarget(1,1,{samples:this.light?2:4,type:T.HalfFloatType}));
     this.composer.addPass(new RenderPass(this.scene,this.camera));
     this.ao=new GTAOPass(this.scene,this.camera,1,1);this.ao.blendIntensity=.55;
     this.ao.updateGtaoMaterial({radius:10,distanceExponent:1.6,thickness:1.5,distanceFallOff:1,scale:1,samples:8,screenSpaceRadius:false});this.ao.updatePdMaterial({radius:3,rings:2,samples:8});this.composer.addPass(this.ao);
-    this.bokeh=new BokehPass(this.scene,this.camera,{focus:1200,aperture:.000007,maxblur:.006});
-    // Thin-lens defocus in scene millimetres, using the guideline's 100 mm f/2.8 lens.
+    this.bokeh=new BokehPass(this.scene,this.camera,{focus:1200,aperture:.000007,maxblur:.003});
+    // Thin-lens defocus in scene millimetres.
     this.bokeh.materialBokeh.fragmentShader=this.bokeh.materialBokeh.fragmentShader.replace('float factor = ( focus + viewZ );','float factor = ( focus + viewZ ) / max( -viewZ, 1.0 );');
     this.composer.addPass(this.bokeh);this.composer.addPass(new OutputPass());
-    for(const pass of [this.ao,this.bokeh]){const render=pass.render.bind(pass);pass.render=(...args)=>{const shown=this.glow.root.visible;this.glow.root.visible=false;render(...args);this.glow.root.visible=shown;};}
+    // AO is the costly pass: on a dense screen it works at CSS-pixel resolution (denoised, then blended in at full).
+    const aoSize=this.ao.setSize.bind(this.ao);this.ao.setSize=(w:number,h:number)=>{const k=1/Math.max(1,this.renderer.getPixelRatio());aoSize(Math.round(w*k),Math.round(h*k));};
+    // AO and the defocus depth see neither the glow cards nor anything part-faded, so a fading part leaves no dark
+    // outline behind it.
+    for(const pass of [this.ao,this.bokeh]){const render=pass.render.bind(pass);pass.render=(...args)=>{const shown=this.glow.root.visible,hidden=this.hideFaded();this.glow.root.visible=false;render(...args);this.glow.root.visible=shown;for(const o of hidden)o.visible=true;};}
     this.configure(config);this.applyProcess(this.process!);
     this.ro=new ResizeObserver(this.layout);this.ro.observe(container);
     this.io=new IntersectionObserver(([e])=>{this.visible=e.isIntersecting;this.wake();});this.io.observe(container);document.addEventListener('visibilitychange',this.wake);
     if(import.meta.env.DEV)(window as unknown as {scene:WorkcellScene}).scene=this;
-    this.layout();this.camera.position.copy(this.position);this.controls.target.copy(this.target);this.controls.update();this.wake();
+    this.layout();this.snap();
+    if(import.meta.env.DEV)performance.mark('scene-built');
+    this.ready=this.warmUp().catch(error=>console.warn('warm-up',error)).finally(()=>{this.warming=false;this.renderer.domElement.style.opacity='';});
   }
   // dev only: frame a shot by hand from the console
-  frameShot(target:number[],dir:number[],dist:number,lens:number){this.lens=this.shownLens=lens;this.camera.setFocalLength(lens);this.target.set(target[0],target[1],target[2]);this.position.copy(this.target).addScaledVector(new T.Vector3(dir[0],dir[1],dir[2]).normalize(),dist);this.camera.position.copy(this.position);this.controls.target.copy(this.target);this.controls.update();this.cameraMoving=false;this.wake();}
-  wheel=(e:WheelEvent)=>{if(!e.ctrlKey&&!e.metaKey)e.stopPropagation();};
+  frameShot(target:number[],dir:number[],dist:number,lens:number){this.lens=lens;this.target.set(target[0],target[1],target[2]);this.position.copy(this.target).addScaledVector(new T.Vector3(dir[0],dir[1],dir[2]).normalize(),dist);this.shift.set(0,0);this.snap();this.wake();}
+  wheel=(e:WheelEvent)=>{if(!e.ctrlKey&&!e.metaKey){e.stopPropagation();return;}if(this.controls.enableZoom){this.lastInput=performance.now();this.takeOver();}};
   contextLost=(e:Event)=>{e.preventDefault();this.container.dispatchEvent(new CustomEvent('renderer-lost'));};
-  pointerDown=(e:PointerEvent)=>{this.down=[e.clientX,e.clientY];};
-  pointerUp=(e:PointerEvent)=>{
-    if(Math.hypot(e.clientX-this.down[0],e.clientY-this.down[1])>5)return;
-    const r=this.renderer.domElement.getBoundingClientRect();this.ray.setFromCamera(new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),this.camera);
-    const hit=this.ray.intersectObject(this.rig.root,true).find(h=>h.object.userData.part);if(hit){this.focusPart(hit.object.userData.part);this.hud?.onPick?.(hit.object.userData.part);}
+  pointerDown=(e:PointerEvent)=>{
+    this.lastInput=performance.now();this.showTooltip(null);
+    if(e.pointerType==='touch'){this.touches.add(e.pointerId);if(this.touches.size>1){if(this.gesture)this.gesture.dragged=true;this.takeOver();return;}}
+    if(this.gesture)return;
+    this.gesture={id:e.pointerId,x:e.clientX,y:e.clientY,t:performance.now(),button:e.button,touch:e.pointerType==='touch',dragged:false,pos:this.camera.position.clone(),tgt:this.controls.target.clone()};
   };
+  pointerMove=(e:PointerEvent)=>{
+    const g=this.gesture;
+    if(g){if(e.pointerId!==g.id)return;this.lastInput=performance.now();
+      if(!g.dragged&&e.buttons&&isDrag(e.clientX-g.x,e.clientY-g.y,g.touch)){g.dragged=true;this.takeOver();this.renderer.domElement.style.cursor='grabbing';}return;}
+    if(e.pointerType==='mouse'&&this.fine&&!e.buttons)this.hover(e.clientX,e.clientY);
+  };
+  pointerUp=(e:PointerEvent)=>{
+    this.touches.delete(e.pointerId);
+    const g=this.gesture;if(!g||e.pointerId!==g.id)return;this.gesture=null;if(g.dragged)this.renderer.domElement.style.cursor='grab';
+    // The page scroll took the swipe: put back what the first few pixels of it turned.
+    if(e.type==='pointercancel'){if(!g.dragged){this.camera.position.copy(g.pos);this.controls.target.copy(g.tgt);this.stopOrbit();this.wake();}return;}
+    if(g.dragged||!isClick(g.button,performance.now()-g.t,e.clientX-g.x,e.clientY-g.y))return;
+    const id=this.pickAt(e.clientX,e.clientY);if(!id)return;
+    if(this.hud?.onPick)this.hud.onPick(id);else this.pick(id);
+  };
+  pointerLeave=()=>{if(!this.gesture)this.showTooltip(null);};
+  // The connector and the gripper move all cycle, so a pick of either follows them in the close-up.
+  pick(id:PartId){if(id==='connector'||id==='gripper')this.view('connector');else this.focusPart(id);}
+  // The first opaque surface under the pointer decides; a part behind the bench is not picked through it.
+  pickAt(x:number,y:number):PartId|null{
+    const r=this.renderer.domElement.getBoundingClientRect();this.ray.setFromCamera(new T.Vector2((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1),this.camera);
+    for(const h of this.ray.intersectObject(this.rig.root,true)){
+      let o:T.Object3D|null=h.object,shown=true;while(o){if(!o.visible){shown=false;break;}o=o.parent;}if(!shown)continue;
+      const m=(h.object as T.Mesh).material as T.Material;if(m.transparent&&m.opacity<.5)continue;
+      return (h.object.userData.part as PartId)??null;
+    }
+    return null;
+  }
+  private hover(x:number,y:number){
+    const now=performance.now();clearTimeout(this.hoverTimer);
+    if(now-this.hoverAt<90){this.hoverTimer=window.setTimeout(()=>this.hover(x,y),90-(now-this.hoverAt));return;}
+    this.hoverAt=now;const id=this.pickAt(x,y);this.renderer.domElement.style.cursor=id?'pointer':'grab';
+    this.showTooltip(id,x,y);
+  }
+  private showTooltip(id:PartId|null,x=0,y=0){
+    const tip=this.hud?.tooltip;this.hovered=id;if(!tip)return;
+    if(!id){tip.classList.remove('visible');if(!this.gesture)this.renderer.domElement.style.cursor='grab';return;}
+    const r=this.container.getBoundingClientRect(),name=PARTS.find(p=>p.id===id)?.name??id,strong=tip.querySelector('strong'),p=tip.querySelector('p');
+    if(strong&&strong.textContent!==name)strong.textContent=name;if(p)p.hidden=true;
+    tip.style.transform=`translate(${Math.round(x-r.left+14)}px,${Math.round(y-r.top+16)}px)`;tip.classList.add('visible');
+  }
+  // The person takes the camera: the guided move stops where it is and their orbit starts from there.
+  private takeOver(){
+    if(this.free)return;this.free=true;this.director=false;this.cameraMoving=false;this.velP.set(0,0,0);this.velT.set(0,0,0);this.lensVel=0;this.shiftVel.set(0,0);
+    this.lens=this.shownLens;this.followed.copy(this.target);this.showTooltip(null);this.hud?.onFree?.(true);this.wake();
+  }
+  // Back to the guided camera, from wherever the person left it.
+  guided(){if(this.release())this.goal();}
+  private release(){if(!this.free)return false;this.free=false;this.camPos.copy(this.camera.position);this.camTgt.copy(this.controls.target);this.hud?.onFree?.(false);return true;}
+  private stopOrbit(){const c=this.controls as unknown as {_sphericalDelta:T.Spherical;_scale:number;_panOffset:T.Vector3};c._sphericalDelta.set(0,0,0);c._scale=1;c._panOffset.set(0,0,0);}
+  // While the slider is held, the camera keeps the shot it had; on release it goes to the one the frame asks for.
+  setScrubbing(on:boolean){if(this.scrubbing===on)return;this.scrubbing=on;this.lastInput=performance.now();if(!on&&this.process&&this.process.shot!==this.band){this.band=this.process.shot;if(!this.free)this.goal();}}
   private ensureVariant(pins:number){
     if(this.rig.pins===pins)return;
     disposeCell(this.rig.root);this.scene.remove(this.rig.root);this.rig=createCell(pins);this.scene.add(this.rig.root);
-    this.batchRig();
-    const groups={arm:this.rig.arm.root,gripper:this.rig.tool.root,connector:this.rig.plug,socket:this.rig.header,tester:this.rig.tester};
-    for(const [id,g] of Object.entries(groups))g.traverse(o=>o.userData.part=id);
-    this.renderedPose=this.dressed=this.lineKey='';this.cut=-1;
+    this.batchRig();this.tagParts();
+    this.renderedPose=this.dressed=this.lineKey='';
   }
+  private partGroups():Record<PartId,T.Object3D>{return {arm:this.rig.arm.root,gripper:this.rig.tool.root,connector:this.rig.plug,socket:this.rig.header,tester:this.rig.tester};}
+  private tagParts(){for(const [id,g] of Object.entries(this.partGroups())){g.traverse(o=>o.userData.part=id);if(!this.labels.has(id as PartId)){const label=document.createElement('div');label.className='cell-label';label.textContent=PARTS.find(p=>p.id===id)?.name??id;label.hidden=true;this.hud?.labels.append(label);this.labels.set(id as PartId,label);}}}
   // Static hardware merges by material; only the moving parts keep their own meshes.
   private batchRig(){
-    const r=this.rig;
+    const r=this.rig,own=(m:T.Material)=>{const c=m.clone();c.userData.canFade=true;return c;};
     for(const g of [r.bench,r.plate,r.fixture,r.nest,r.comb,r.adapter,r.bin,r.upcam,r.tool.root,r.plug])batchStaticMeshes(g,new Set());
-    for(const g of [r.tote.shell,r.rejectBin,...Object.values(r.units).flatMap(u=>[u.hardware,u.board,u.harness])])mergeStatic(g);
+    // Each unit's housings get their own see-through material before the unit merges, so the Inside view cuts the
+    // queue and finished units' housings as it does the live one and nothing changes when a unit indexes in.
+    this.unitCuts=[];
+    for(const u of Object.values(r.units))for(const g of [u.board,u.harness]){
+      const copies=new Map<T.Material,T.Material>();
+      g.traverse(o=>{if(o instanceof T.Mesh&&/PBT header|Header seating floor|Latch catch|connector housing/.test(o.name)){const m=o.material as T.Material;if(!copies.has(m))copies.set(m,own(m));o.material=copies.get(m)!;}});
+      this.unitCuts.push({group:g,materials:[...copies.values()]});
+    }
+    for(const g of [r.tote.shell,r.tote.out.shell,r.tote.spare.shell,r.rejectBin,...Object.values(r.units).flatMap(u=>[u.hardware,u.board,u.harness])])mergeStatic(g);
+    // The picker's post and beam merge; its carriages, head and jaws keep their own groups (only siblings merge).
+    batchStaticMeshes(r.picker.root,new Set());
     batchStaticMeshes(r.tester,new Set([r.dockHead]));
-    // The live plug gets its own materials, so a cleared reject's harness can fade as it is taken to the bin.
-    r.plug.traverse(o=>{if(o instanceof T.Mesh&&!o.userData.unique){o.material=(o.material as T.Material).clone();o.userData.unique=true;}});
-    this.harnessOut=0;
+    // The live plug, its wires and the header's shroud get their own materials: the plug and wires fade as a cleared
+    // reject's harness is taken away, and Inside sees through the housings.
+    this.plugMaterials=[];this.shroud=[];
+    r.plug.traverse(o=>{if(o instanceof T.Mesh){if(!o.userData.unique){o.material=own(o.material as T.Material);o.userData.unique=true;}const m=o.material as T.Material;m.userData.cut=o.name.includes('housing');this.plugMaterials.push(m);}});
+    r.housing.traverse(o=>{if(o instanceof T.Mesh){if(!o.userData.unique){o.material=own(o.material as T.Material);o.userData.unique=true;}this.shroud.push(o.material as T.Material);}});
+    this.wireMaterials=r.wires.map(w=>{const m=w.mesh.material as T.Material;m.userData.canFade=true;return m;});
+    this.harnessOut=-1;
   }
-  private harnessOut=0;private wiresSee=1;
+  private harnessOut=0;
+  // The operator takes the rejected harness, plug and wires together.
   private fadeHarness(out:number){
     if(Math.abs(out-this.harnessOut)<1e-4)return;this.harnessOut=out;
-    // The wires are unplugged from the adapter and gathered first; the plug itself fades only as it drops into the bin.
-    const set=(m:T.Material,see:number)=>{const fading=see<.998;if(m.transparent!==fading){m.transparent=fading;m.needsUpdate=true;}m.opacity=see;m.depthWrite=!fading;};
-    const wires=1-T.MathUtils.smoothstep(out,0,.22),plug=1-T.MathUtils.smoothstep(out,.86,1),fading=out>.002;this.wiresSee=wires;
-    for(const w of this.rig.wires){set(w.mesh.material as T.Material,wires);w.mesh.castShadow=wires>.5;}
-    this.rig.plug.traverse(o=>{if(o instanceof T.Mesh){set(o.material as T.Material,plug);o.castShadow=plug>.5;}});
-    // Put back the see-through housing if the inside view is on.
-    if(!fading)this.cut=-1;
-    this.renderer.shadowMap.needsUpdate=true;
+    this.plugSee=this.wiresSee=1-T.MathUtils.smoothstep(out,0,1);
   }
+  // Every material that fades or is cut, set from the live fades and the Inside view; shadows only from solid parts.
+  private seeThrough(){
+    const cut=this.mode==='inside'?.32:1;let flipped=false;
+    const set=(m:T.Material,see:number)=>{const fading=see<.998;if(m.transparent!==fading){m.transparent=fading;m.needsUpdate=true;}m.opacity=see;m.depthWrite=!fading;};
+    const cast=(o:T.Object3D,on:boolean)=>o.traverse(c=>{if(c instanceof T.Mesh&&c.castShadow!==on){c.castShadow=on;flipped=true;}});
+    for(const m of this.plugMaterials)set(m,this.plugSee*(m.userData.cut?cut:1));
+    for(const m of this.wireMaterials)set(m,this.wiresSee);
+    for(const m of this.shroud)set(m,cut);
+    for(const {group,materials} of this.unitCuts){const f=group.userData.fade??1;for(const m of materials)set(m,f*cut);}
+    this.rig.plug.userData.fade=this.plugSee;cast(this.rig.plug,this.plugSee>=.98);
+    for(const w of this.rig.wires){w.mesh.userData.fade=this.wiresSee;if(w.mesh.castShadow!==this.wiresSee>=.98){w.mesh.castShadow=this.wiresSee>=.98;flipped=true;}}
+    if(flipped)this.renderer.shadowMap.needsUpdate=true;
+  }
+  private hideFaded(){const hidden:T.Object3D[]=[];this.rig.root.traverse(o=>{const f=o.userData.fade;if(o.visible&&f!==undefined&&f<.98){o.visible=false;hidden.push(o);}});return hidden;}
   // A new setup moves the header only once the plug is off it: while a passed plug sits seated the engine first lifts
   // it out and home, and the header follows when the engine is ready again.
   configure(config:Configuration){
@@ -157,7 +266,21 @@ export class WorkcellScene {
   }
   // Close the hand on a released plug before the engine moves it; returns the milliseconds that takes.
   regrip(){this.regripping=true;this.wake();return this.process?0:Math.ceil(this.letGo*REGRIP_MS);}
-  setProcess(f:ProcessFrame|null){this.process=f;if(f){this.ensureVariant(6);this.rig.header.position.set(HEADER[0],HEADER[1],0);this.rig.header.rotation.z=0;this.rig.tool.root.rotation.z=this.rig.plug.rotation.z=0;}else{applyLine(this.rig,REST_LINE);this.fadeHarness(0);poseLatch(this.rig.latch,0);posePlunger(this.rig.tool.plunger,0);this.lineKey='';this.configure(this.config);}if(f){this.applyProcess(f);const band=this.shot();if(!this.free&&(this.viewMode==='connector'||(this.viewMode==='overview'&&band!==this.band)))this.goal();this.band=band;}else if(this.state)this.poses.push(this.state.pose,performance.now(),Date.now());this.wake();}
+  setProcess(f:ProcessFrame|null){
+    this.process=f;
+    // Under the loader every part is shown for the shader warm-up; the frame is applied once it is done.
+    if(this.warming)return;
+    if(f){this.ensureVariant(6);this.rig.header.position.set(HEADER[0],HEADER[1],0);this.rig.header.rotation.z=0;this.rig.tool.root.rotation.z=this.rig.plug.rotation.z=0;}
+    else{applyLine(this.rig,REST_LINE);this.fadeHarness(0);poseLatch(this.rig.latch,0);posePlunger(this.rig.tool.plunger,0);this.lineKey='';this.configure(this.config);}
+    if(f){
+      this.applyProcess(f);
+      const changed=!this.scrubbing&&f.shot!==this.band,nextUnit=this.lastProgress-f.progress>50;if(changed)this.band=f.shot;this.lastProgress=f.progress;
+      // A camera the person left alone for 8 s goes back to the guided shots at the next shot change or unit.
+      if((changed||nextUnit)&&this.free&&!this.gesture&&performance.now()-this.lastInput>8000)this.guided();
+      else if(this.viewMode==='connector'||this.mode==='parts'||changed&&this.viewMode==='overview')this.goal();
+    }else if(this.state)this.poses.push(this.state.pose,performance.now(),Date.now());
+    this.wake();
+  }
   private applyProcess(f:ProcessFrame){
     this.rig.tool.root.position.set(...f.tool);this.rig.plug.position.set(...f.plug);this.rig.plug.rotation.y=f.rotation;this.rig.rotator.rotation.y=f.cradle;
     this.rig.tool.fingers.forEach((g,i)=>g.position.x=(i?1:-1)*f.jaw*7);
@@ -180,105 +303,178 @@ export class WorkcellScene {
   }
   private poseRig(){
     const tool=this.rig.tool.root,plug=this.rig.plug,flange=tool.position.clone().add(new T.Vector3(0,0,80)).divideScalar(5);
-    const cableEnd=this.rig.tool.gland.clone().applyAxisAngle(new T.Vector3(0,0,1),tool.rotation.z).add(tool.position).add(new T.Vector3(3,0,0)).divideScalar(5);
-    this.rig.arm.set(flange,tool.rotation.z,cableEnd);
     const key=[...tool.position.toArray(),...plug.position.toArray(),plug.rotation.y,plug.rotation.z,tool.rotation.z,this.spread,this.rig.latch.rotation.x,...this.rig.tool.fingers.map(g=>g.position.x),...this.rig.cradleJaws.map(g=>g.position.y),this.rig.rotator.rotation.y].map(v=>v.toFixed(4)).join()+this.lineKey;
     if(key===this.renderedPose)return;this.renderedPose=key;
+    const cableEnd=this.rig.tool.gland.clone().applyAxisAngle(new T.Vector3(0,0,1),tool.rotation.z).add(tool.position).add(new T.Vector3(3,0,0)).divideScalar(5);
+    this.rig.arm.set(flange,tool.rotation.z,cableEnd);
     // The wires are dressed in the pallet's frame, so the index carries them along without dressing them again.
     const shown=this.spread<.01&&this.rig.plug.visible&&this.wiresSee>.01;
     if(shown)this.dressed=dressLiveHarness(this.rig,this.dressed);
     for(const w of this.rig.wires)w.mesh.visible=shown;
     this.renderer.shadowMap.needsUpdate=true;
   }
-  setMode(mode:Mode){this.mode=mode;this.wake();}
+  setMode(mode:Mode){this.mode=mode;this.goal();}
   setInspect(on:boolean){this.setMode(on?'inside':'machine');}
-  view(mode:View|'cell'|'close'){this.viewMode=mode==='cell'?'overview':mode==='close'?'connector':mode;this.director=false;this.free=false;this.goal();}
-  focusPart(id:PartId){this.focus=id;this.viewMode='part';this.free=false;this.goal();}
-  direct(on:boolean){this.director=on;this.hud?.onDirector?.(on);if(on){this.viewMode='connector';this.free=false;this.goal();}}
+  view(mode:View|'cell'|'close'){this.viewMode=mode==='cell'?'overview':mode==='close'?'connector':mode;this.director=false;this.release();this.goal();}
+  focusPart(id:PartId){this.focus=id;this.viewMode='part';this.release();this.goal();}
+  direct(on:boolean){this.director=on;this.hud?.onDirector?.(on);if(on){this.viewMode='connector';this.release();this.goal();}}
   hold(_on:boolean){}
   offline(){this.playing=false;this.wake();}
+  // The guided camera's goal for the current view, mode and shot. Followed views (the close-up, Parts) are asked
+  // again every frame; a person's free camera only takes the close-up's follow from it.
   private goal(){
-    const close=this.viewMode==='connector'||this.viewMode==='part';
-    const shot=this.mode==='parts'||this.viewMode!=='overview'?'work':this.shot();
-    this.lens=close?100:shot==='wide'||shot==='line'||this.mode==='parts'?35:50;
-    this.camera.setFocalLength(this.lens);
-    const fit=Math.max(1,1.12/(this.width/this.height));
-    const lensScale=Math.tan(25*Math.PI/360)/Math.tan(this.camera.fov*Math.PI/360);this.camera.setFocalLength(this.shownLens);
-    if(this.viewMode==='connector'){
+    const f=this.process,close=this.viewMode==='connector',parts=this.mode==='parts';
+    const shot:Shot=parts||this.viewMode!=='overview'?'work':this.band;
+    const portrait=this.width<this.height,fit=Math.max(1,1.12/(this.width/this.height));
+    const look=new T.Vector3();let def:ShotDef|null=null;
+    this.shift.set(0,0);
+    if(close){
+      this.lens=100;const lensScale=this.lensScale(100);
       // The close-up follows the cycle's focus: the plug, and during the index the next unit's housing coming in.
-      const f=this.process,at=f?.focus??f?.plug??[0,0,15];
+      const at=f?.focus??f?.plug??[0,0,15];
       let z=Math.max(29,at[2]+15);
       // Over the grip camera the shot drops to frame the plug and the camera under it together.
       if(f){const w=T.MathUtils.smoothstep(30-Math.hypot(at[0]-UPCAM[0],at[1]-UPCAM[1]),4,26);z+=(Math.max(UPCAM[2]+8,(at[2]+UPCAM[2])/2+2)-z)*w;}
-      // While the wrist camera reads the board the focus moves up to the camera; the shot widens to show its lit
-      // ring and the header under it together.
+      // While the wrist camera reads the board the focus moves up to the camera; the shot widens a little to show
+      // its lit ring and the header under it together.
       const board=this.boardWeight();
-      this.target.set(at[0],at[1],z+(at[2]-z)*board+(this.mode==='parts'?55:0));
-      this.position.copy(this.target).add(new T.Vector3(100,-175,60).multiplyScalar(fit*lensScale*(1+1.2*board)));
+      this.target.set(at[0],at[1],z+(at[2]-z)*board+(parts?55:0));
+      // Over the turnover the cradle's actuator stands between the usual view and the housing, so the shot rises
+      // to look down past it, and comes back down for the grip check.
+      const p=f?.progress??0,turn=T.MathUtils.smoothstep(p,CLOSE.from-CLOSE.ramp,CLOSE.from)*(1-T.MathUtils.smoothstep(p,CLOSE.to,CLOSE.to+CLOSE.ramp));
+      const dir=new T.Vector3(...CLOSE.dir).normalize().lerp(new T.Vector3(...CLOSE.turn).normalize(),turn).normalize();
+      this.position.copy(this.target).addScaledVector(dir,CLOSE.dist*fit*lensScale*(1+CLOSE.board*board));
+      // On a phone the slider and dock take the bottom of the frame: the subject sits higher.
+      if(portrait)this.shift.y=.09;
     }else if(this.viewMode==='part'){
-      const groups={arm:this.rig.arm.root,gripper:this.rig.tool.root,connector:this.rig.plug,socket:this.rig.header,tester:this.rig.tester};
-      const bounds=new T.Box3().setFromObject(groups[this.focus]);bounds.getCenter(this.target);
-      const d=Math.max(100,bounds.getSize(new T.Vector3()).length()*2.4)*fit*lensScale;this.position.copy(this.target).addScaledVector(new T.Vector3(.4,-.85,.35).normalize(),d);
+      const v=PART_VIEW[this.focus]??PART_VIEW.socket;this.lens=v.lens;
+      const bounds=new T.Box3().setFromObject(this.partGroups()[this.focus]),sphere=bounds.getBoundingSphere(new T.Sphere());this.target.copy(sphere.center);
+      const tanV=this.camera.getFilmHeight()/2/this.lens,tanH=this.camera.getFilmWidth()/2/this.lens,half=Math.atan(Math.min(tanV,tanH));
+      const d=Math.max(160,sphere.radius*v.fill/Math.sin(half));
+      this.position.copy(this.target).addScaledVector(new T.Vector3(...v.dir).normalize(),d);
     }else{
-      // The home page's photo: low and side on, the arm's base on the right, the hall behind.
-      // Once the arm moves the camera rises to a three-quarter view of the whole bench.
-      // Between units the camera turns front on to the whole line, the tote and the reject bin; a held reject is
-      // framed from the front, clear of the cradle, with the locked bin it will be cleared into.
-      const portrait=this.width<this.height,wide=shot==='wide';
-      const parts=this.mode==='parts';
-      if(shot==='line'){
-        // High enough that the cabinet front foreshortens and the bench, the four stations and the tote fill the frame.
-        this.target.set(portrait?28:LINE_SHOT.x,portrait?-30:LINE_SHOT.y,portrait?20:LINE_SHOT.z);
-        this.position.copy(this.target).addScaledVector(LINE_SHOT.dir,LINE_SHOT.dist*(portrait?LINE_SHOT.portrait:1));
-      }else if(shot==='reject'){
-        // The tray with the rejected unit and the locked bin it is cleared into, from the front right.
-        this.target.set(REJECT[0]-(portrait?30:60),REJECT[1]-(portrait?55:75),portrait?40:30);
-        this.position.copy(this.target).addScaledVector(new T.Vector3(.9,-1,1).normalize(),780*(portrait?1.55:1));
-      }else{
-        if(wide)this.target.set(-30,portrait?20:40,portrait?260:190);else if(parts)this.target.set(-30,30,portrait?220:170);else this.target.set(-45,portrait?-10:-20,portrait?115:75);
-        const d=(wide?1280:parts?1150:1000)*(portrait?(wide?.68:.85):1)*fit**.5;
-        const dir=this.viewMode==='top'?new T.Vector3(0,-.02,1):this.viewMode==='side'?new T.Vector3(.7,-1,.13):wide?new T.Vector3(1,-.22,.035):new T.Vector3(1,-.45,.35);
-        this.position.copy(this.target).addScaledVector(dir.normalize(),d);
-      }
+      def=parts?SHOTS.parts:shot==='wide'?SHOTS.wide:shot==='line'?SHOTS.line:shot==='reject'?SHOTS.reject:SHOTS.work;
+      const t=portrait&&def.pt?def.pt:def.t,dir=this.viewMode==='top'?[0,-.02,1]:this.viewMode==='side'?[.7,-1,.13]:portrait&&def.pdir?def.pdir:def.dir;
+      this.lens=portrait&&def.plens?def.plens:def.lens;
+      this.target.set(t[0],t[1],t[2]);
+      // Parts follows the plug across the bench, so a held reject's harness is in the middle of it too.
+      if(parts&&f){this.target.x+=(f.plug[0]-HEADER[0])*.6;this.target.y+=(f.plug[1]-HEADER[1])*.5;}
+      const d=def.dist*(portrait?def.pdist??1:1)*fit**.5;
+      const lk=portrait&&def.plook?def.plook:def.look;
+      if(lk){look.set(lk[0],lk[1],lk[2]);this.position.copy(look).addScaledVector(new T.Vector3(...dir).normalize(),d);}
+      else this.position.copy(this.target).addScaledVector(new T.Vector3(...dir).normalize(),d);
     }
-    this.cameraMoving=true;this.wake();
+    // The opening photo looks at a point above the bench but turns about the bench: a lens shift keeps the photo.
+    if(def&&(portrait&&def.plook||!portrait&&def.look))this.shift.copy(lensShift(this.position,this.target,look,this.camera.getFilmWidth(),this.camera.getFilmHeight(),this.lens));
+    if(this.free){
+      if(close){const d=this.target.clone().sub(this.followed);this.camera.position.add(d);this.controls.target.add(d);}
+      this.followed.copy(this.target);this.wake();return;
+    }
+    this.followed.copy(this.target);this.cameraMoving=true;this.wake();
+  }
+  private lensScale(lens:number){return Math.tan(25*Math.PI/360)/(this.camera.getFilmHeight()/2/lens);}
+  // Put the camera on its goal at once (the first frame, a hand-framed shot, reduced motion).
+  private snap(){
+    this.shownLens=this.lens;this.camera.setFocalLength(this.lens);this.shown.copy(this.shift);this.applyOffset();
+    this.camPos.copy(this.position);this.camTgt.copy(this.target);this.camera.position.copy(this.position);this.controls.target.copy(this.target);this.camera.lookAt(this.target);
+    this.velP.set(0,0,0);this.velT.set(0,0,0);this.lensVel=0;this.shiftVel.set(0,0);this.cameraMoving=false;
+  }
+  // Wide screens shift the frame left of the readout; it eases in over 900..1150 px instead of jumping at 1000.
+  private applyOffset(){
+    const w=this.width,h=this.height,side=this.embed?0:-.075*T.MathUtils.smoothstep(w,900,1150);
+    this.camera.setViewOffset(w,h,w*(side+this.shown.x),h*(.01+this.shown.y),w,h);
   }
   layout=()=>{
     const r=this.container.getBoundingClientRect();if(!r.width||!r.height)return;
     this.width=r.width;this.height=r.height;this.camera.aspect=r.width/r.height;this.camera.filmGauge=36;
-    this.renderer.setSize(r.width,r.height);this.composer.setSize(r.width,r.height);
-    this.camera.setViewOffset(r.width,r.height,r.width>1000&&!this.embed?-r.width*.075:0,r.height*.01,r.width,r.height);this.goal();
+    this.renderer.setSize(r.width,r.height);this.composer.setSize(r.width,r.height);this.applyOffset();
+    // A person's own camera stays where they put it; only the frame's shape changes.
+    if(this.free){this.camera.updateProjectionMatrix();this.wake();}else this.goal();
   };
-  private watchSpeed(gap:number){
-    this.seenFrames++;this.seenTime+=gap;if(gap>25)this.slowFrames++;
-    if(this.seenFrames<40&&(this.seenTime<1500||this.seenFrames<4))return;
-    if(this.slowFrames>this.seenFrames*.6&&this.quality<3){this.quality++;if(this.quality>=2){this.renderer.setPixelRatio(Math.min(devicePixelRatio,this.quality>=3?1:1.25));this.renderer.setSize(this.width,this.height);this.composer.setSize(this.width,this.height);}}
-    this.seenFrames=this.slowFrames=this.seenTime=0;
+  private applyTier(i:number){
+    this.quality=i;this.tier=this.tiers[i];const ratio=Math.min(devicePixelRatio,this.tier.ratio);
+    this.renderer.setPixelRatio(ratio);this.composer.setPixelRatio(ratio);this.renderer.setSize(this.width,this.height);this.composer.setSize(this.width,this.height);
   }
-  wake=()=>{if(!this.frame&&!this.disposed&&!document.hidden&&this.visible){this.chained=this.inFrame||performance.now()-this.frameEnded<6;this.frame=requestAnimationFrame(this.animate);}};
+  // Under the loader: compile every shader variant the session can need, then benchmark the worst frame once and
+  // keep that tier. The orb keeps animating between steps (compileAsync and one frame per step).
+  private async warmUp(){
+    const r=this.renderer,next=()=>new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));
+    await next();
+    const hidden:T.Object3D[]=[],fading=new Map<T.Material,boolean>();
+    this.scene.traverse(o=>{if(!o.visible){hidden.push(o);o.visible=true;}const m=(o as T.Mesh).material;if(m)for(const x of [m].flat())if(x.userData.canFade)fading.set(x,x.transparent);});
+    const ao=this.ao.enabled,bokeh=this.bokeh.enabled;
+    const render=(withAO:boolean,withBokeh:boolean)=>{this.ao.enabled=withAO;this.bokeh.enabled=withBokeh;r.shadowMap.needsUpdate=true;this.composer.render();};
+    // A few meshes at a time, with a frame between, so no single step holds the loader's animation for long; each
+    // batch is also drawn unculled into a one-pixel target so its buffers and textures go up now, not mid-play.
+    const tiny=new T.WebGLRenderTarget(1,1),meshes:T.Mesh[]=[];this.scene.traverse(o=>{if(o instanceof T.Mesh)meshes.push(o);});
+    const compile=async(list:T.Mesh[])=>{
+      for(let i=0;i<list.length;i+=8){
+        const batch=new Set(list.slice(i,i+8)),culled:T.Object3D[]=[];
+        for(const m of meshes){m.visible=batch.has(m);if(m.visible&&m.frustumCulled){m.frustumCulled=false;culled.push(m);}}
+        // compiled for a render target, as the composer draws (no tone mapping, linear output); the first draw
+        // also creates the shadow map, so no shader samples a missing one
+        r.setRenderTarget(tiny);await r.compileAsync(this.scene,this.camera);
+        r.setRenderTarget(tiny);if(!i)r.shadowMap.needsUpdate=true;r.render(this.scene,this.camera);r.setRenderTarget(null);
+        for(const m of culled)m.frustumCulled=true;await next();
+      }
+      for(const m of meshes)m.visible=true;
+    };
+    try{
+      // The first frames also link the post passes and the shadow pass and allocate their targets: one per frame.
+      await compile(meshes);render(false,false);await next();render(true,false);await next();render(true,!this.light);await next();
+      for(const m of fading.keys()){m.transparent=!fading.get(m);m.needsUpdate=true;}
+      await compile(meshes.filter(m=>[m.material].flat().some(x=>fading.has(x))));render(true,!this.light);await next();render(false,false);await next();
+    }finally{
+      for(const [m,was] of fading){m.transparent=was;m.needsUpdate=true;}
+      for(const o of hidden)o.visible=false;this.ao.enabled=ao;this.bokeh.enabled=bokeh;
+    }
+    tiny.dispose();render(true,!this.light);render(false,false);await next();
+    this.warmPrograms=r.info.programs?.length??0;
+    const forced=Number(new URLSearchParams(location.search).get('tier'));
+    if(Number.isInteger(forced)&&forced>=0&&forced<this.tiers.length&&new URLSearchParams(location.search).has('tier'))this.applyTier(forced);
+    else await this.benchmark();
+    this.warmPrograms=r.info.programs?.length??0;
+    this.warming=false;this.renderedPose='';const f=this.process;if(f)this.setProcess(f);this.snap();
+    const start=this.rendered;while(this.rendered<start+3&&!this.disposed){this.wake();await next();if(document.hidden)break;}
+  }
+  private async benchmark(){
+    const r=this.renderer,gl=r.getContext(),pixel=new Uint8Array(4),next=()=>new Promise<number>(resolve=>requestAnimationFrame(resolve));
+    const view=this.viewMode;this.viewMode='connector';this.goal();this.snap();this.camera.updateMatrixWorld();
+    // Each worst frame is drawn and waited for (a one-pixel read), one per animation frame so the loader keeps moving:
+    // its CPU and GPU time together, with no overlap, so the budget allows for the overlap a playing frame gets.
+    const measure=async(frames:number)=>{
+      const ms:number[]=[];
+      for(let i=0;i<frames;i++){await next();const t=performance.now();this.ao.enabled=this.tier.ao;this.bokeh.enabled=this.tier.bokeh;r.shadowMap.needsUpdate=true;this.composer.render();gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);if(i>=4)ms.push(performance.now()-t);}
+      ms.sort((a,b)=>a-b);return ms[Math.floor(ms.length/2)];
+    };
+    const times:number[]=[];
+    for(let i=0;i<this.tiers.length;i++){this.applyTier(i);const t=await measure(i?24:40);times.push(+t.toFixed(1));if(t<=BUDGET||i===this.tiers.length-1)break;}
+    this.benchmarkMs=times;this.viewMode=view;this.goal();
+  }
+  benchmarkMs:number[]=[];
+  wake=()=>{if(!this.frame&&!this.disposed&&!document.hidden&&this.visible&&!this.warming)this.frame=requestAnimationFrame(this.animate);};
   private animate=(now:number)=>{
-    this.frame=0;if(this.disposed||document.hidden||!this.visible)return;
-    // Only time frames that run back to back: asked for from inside the last frame, or by the player in the same tick.
-    // An idle gap between wakes (a slow scrub, a pause) is not a slow frame, and nothing counts while shaders compile.
-    this.inFrame=true;
-    if(this.last&&this.chained&&now-this.last<3000&&now-this.born>1500)this.watchSpeed(now-this.last);const dt=Math.min(50,now-(this.last||now-16));this.last=now;
+    this.frame=0;if(this.disposed||document.hidden||!this.visible||this.warming)return;
+    // After an idle stretch (the loop sleeps when nothing moves) the first frame counts as one frame, not the gap.
+    const gap=now-(this.last||now-16),dt=gap>100?1000/60:Math.min(50,gap);this.last=now;
     if(!this.process){const pose=this.poses.sample(now);if(pose)this.basePose=[pose[0]*1000,pose[1]*1000,pose[2]*1000,pose[3]];
       this.rig.tool.root.rotation.z=this.rig.plug.rotation.z=this.basePose[3];this.rig.plug.rotation.y=0;
       const away=this.state?.released&&!this.regripping?1:0;this.letGo=away>this.letGo?Math.min(1,this.letGo+dt/REGRIP_MS):Math.max(0,this.letGo-dt/REGRIP_MS);
       const open=T.MathUtils.smootherstep(this.letGo,0,.35);this.rig.tool.fingers.forEach((g,i)=>g.position.x=(i?1:-1)*7*open);
       this.rig.indicator.emissive.setHex(0);this.rig.indicator.color.setHex(this.state?.accepted===true?0x379761:0x273c31);this.lights(0,0,false);}
     const targetSpread=this.mode==='parts'?1:0,oldSpread=this.spread;this.spread+=(targetSpread-this.spread)*damping(dt,190);if(Math.abs(targetSpread-this.spread)<.001)this.spread=targetSpread;
-    this.rig.header.position.z=this.spread*18;this.rig.fixture.position.z=this.spread*5;this.rig.tester.position.x=this.spread*70;
+    this.rig.header.position.z=this.spread*SPREAD.header;this.rig.fixture.position.z=this.spread*SPREAD.fixture;this.rig.tester.position.x=this.spread*SPREAD.tester;
     if(this.process)this.applyProcess(this.process);else{this.rig.plug.position.set(this.basePose[0],this.basePose[1],this.basePose[2]);this.rig.tool.root.position.copy(this.rig.plug.position);this.rig.tool.root.position.z+=GRIP_RAISE+LET_GO_LIFT*T.MathUtils.smootherstep(this.letGo,.4,1);}
-    // Exploded, the tool lifts 120 mm and an unheld plug 55 mm; a plug in the closed fingers stays in them.
+    // Exploded, the tool lifts clear and an unheld plug rises halfway; a plug in the closed fingers stays in them.
     const held=this.process?1-this.process.jaw:this.letGo>0?0:1;
-    this.rig.tool.root.position.z+=this.spread*120;this.rig.plug.position.z+=this.spread*(55+65*held);
-    const cut=this.mode==='inside';if(Number(cut)!==this.cut){this.cut=Number(cut);for(const group of [this.rig.housing,this.rig.plug])group.traverse(o=>{if(o instanceof T.Mesh&&(o.name.includes('housing')||o.name.includes('PBT'))){const m=o.material as T.MeshStandardMaterial;if(!o.userData.unique){o.material=m.clone();o.userData.unique=true;}const material=o.material as T.MeshStandardMaterial;material.transparent=cut;material.opacity=cut?.32:1;material.depthWrite=!cut;material.needsUpdate=true;}});}
-    this.poseRig();
-    if(this.cameraMoving){const a=this.reduceMotion?1:damping(dt,this.viewMode==='overview'?650:260);this.camera.position.lerp(this.position,a);this.controls.target.lerp(this.target,a);
-      this.shownLens+=(this.lens-this.shownLens)*a;this.camera.setFocalLength(this.shownLens);
-      if(this.camera.position.distanceTo(this.position)<Math.max(.4,this.position.distanceTo(this.target)*.0008)&&this.controls.target.distanceTo(this.target)<Math.max(.2,this.position.distanceTo(this.target)*.0004)&&Math.abs(this.lens-this.shownLens)<.02){this.camera.position.copy(this.position);this.controls.target.copy(this.target);this.shownLens=this.lens;this.camera.setFocalLength(this.lens);this.cameraMoving=false;}}
-    const orbit=this.controls.update(),uniforms=this.bokeh.uniforms as Record<string,{value:number}>;
+    this.rig.tool.root.position.z+=this.spread*SPREAD.tool;this.rig.plug.position.z+=this.spread*(SPREAD.plug+(SPREAD.tool-SPREAD.plug)*held);
+    this.seeThrough();this.poseRig();
+    if(!this.free){
+      if(this.cameraMoving)this.glide(dt/1000);
+      // The guided camera owns the view: drop whatever a click or the first pixels of a drag fed the controls.
+      this.stopOrbit();this.camera.position.copy(this.camPos);this.controls.target.copy(this.camTgt);this.camera.lookAt(this.camTgt);
+    }
+    const orbit=this.free?this.controls.update():false,uniforms=this.bokeh.uniforms as Record<string,{value:number}>;
     const f=this.process,close=this.viewMode==='connector';
     this.focalPoint.copy(this.viewMode==='part'?this.controls.target:this.rig.plug.position);
     if(close&&f?.focus)this.focalPoint.set(...f.focus);
@@ -292,22 +488,82 @@ export class WorkcellScene {
     }
     this.focalPoint.applyMatrix4(this.camera.matrixWorldInverse);
     const focus=Math.max(101,-this.focalPoint.z);uniforms.focus.value=focus;
-    // Deep focus on the wide shots, like the photo; a shallow lens only for the close-ups, eased in and out.
-    const blur=!this.light&&this.quality<1&&this.mode==='machine'&&(this.viewMode==='connector'||this.viewMode==='part')?1:0;
+    // Deep focus on the wide shots, like the photo; f/8 on the close-ups, deep enough that the whole subject is sharp.
+    const blur=this.tier.bokeh&&this.mode==='machine'&&(this.viewMode==='connector'||this.viewMode==='part')?1:0;
     this.blur+=(blur-this.blur)*damping(dt,260);if(Math.abs(blur-this.blur)<.01)this.blur=blur;
-    const lens=this.camera.getFocalLength(),stop=this.viewMode==='connector'?2.8:5.6;uniforms.aperture.value=this.blur*lens*lens/(stop*Math.max(1,focus-lens)*this.camera.getFilmWidth()*.8);
-    this.bokeh.enabled=this.blur>0;this.ao.enabled=this.quality<2&&this.mode!=='inside';
-    const groups={arm:this.rig.arm.root,gripper:this.rig.tool.root,connector:this.rig.plug,socket:this.rig.header,tester:this.rig.tester};
-    for(const [id,label] of this.labels){label.hidden=this.mode!=='parts';if(!label.hidden){const point=new T.Box3().setFromObject(groups[id]).getCenter(new T.Vector3()).project(this.camera);// the tester's label sits above it, clear of the socket's
-        label.style.transform=`translate(${(point.x*.5+.5)*this.width}px,${(-point.y*.5+.5)*this.height-(id==='tester'?34:0)}px)`;}}
-    this.composer.render();this.afterRender?.();if(this.playing&&!this.process||this.cameraMoving||orbit||oldSpread!==this.spread||this.blur>0&&this.blur<1||this.poses.pending(now)&&!this.process||!this.process&&this.letGo!==(this.state?.released&&!this.regripping?1:0)||this.afterRender)this.wake();this.inFrame=false;this.frameEnded=performance.now();
+    const lens=this.camera.getFocalLength();uniforms.aperture.value=this.blur*lens*lens/(8*Math.max(1,focus-lens)*this.camera.getFilmWidth()*.8);
+    this.bokeh.enabled=this.blur>0;this.ao.enabled=this.tier.ao&&this.mode!=='inside';
+    this.placeLabels();
+    this.composer.render();this.rendered++;this.afterRender?.();
+    if(this.playing&&!this.process||this.cameraMoving||orbit||oldSpread!==this.spread||this.blur>0&&this.blur<1||this.poses.pending(now)&&!this.process||!this.process&&this.letGo!==(this.state?.released&&!this.regripping?1:0)||this.afterRender)this.wake();
   };
-  dispose(){this.disposed=true;cancelAnimationFrame(this.frame);this.ro.disconnect();this.io.disconnect();this.controls.dispose();disposeCell(this.rig.root);this.scene.environment?.dispose();this.composer.dispose();this.ao.dispose();this.bokeh.dispose();this.renderer.dispose();document.removeEventListener('visibilitychange',this.wake);this.container.removeEventListener('wheel',this.wheel,{capture:true});this.renderer.domElement.remove();this.labels.forEach(l=>l.remove());}
+  // A critically damped spring on the camera, its target, lens and shift: every move eases in and out, keeps its
+  // speed when the goal changes under it, and ends below 0.02 mm, so the last frame is no visible step.
+  private glide(seconds:number){
+    // The close-up follows a moving plug closely; a long move into it (from the whole bench) starts slower.
+    const far=T.MathUtils.smoothstep(this.camPos.distanceTo(this.position),60,500);
+    const k=this.reduceMotion?400:this.viewMode==='connector'?7-3.6*far:this.viewMode==='part'?4.2:3;
+    const step=(v:T.Vector3,vel:T.Vector3,goal:T.Vector3)=>{for(const a of ['x','y','z'] as const){const s=settleSpring(v[a],vel[a],goal[a],seconds,k);v[a]=s.position;vel[a]=s.velocity;}};
+    step(this.camPos,this.velP,this.position);step(this.camTgt,this.velT,this.target);
+    const l=settleSpring(this.shownLens,this.lensVel,this.lens,seconds,k);this.shownLens=l.position;this.lensVel=l.velocity;this.camera.setFocalLength(this.shownLens);
+    for(const a of ['x','y'] as const){const s=settleSpring(this.shown[a],this.shiftVel[a],this.shift[a],seconds,k);this.shown[a]=s.position;this.shiftVel[a]=s.velocity;}
+    this.applyOffset();
+    const done=this.camPos.distanceTo(this.position)<.02&&this.velP.length()<.05&&this.camTgt.distanceTo(this.target)<.02&&this.velT.length()<.05
+      &&Math.abs(this.shownLens-this.lens)<.002&&Math.abs(this.lensVel)<.01&&this.shown.distanceTo(this.shift)<1e-5;
+    if(done)this.snap();
+  }
+  // Part labels at each part's centre; on a crowded screen (a phone) they step down a column with a leader line.
+  private placeLabels(){
+    const groups=this.partGroups(),shown=this.mode==='parts',spots:{label:HTMLElement;x:number;y:number;id:PartId}[]=[];
+    for(const [id,label] of this.labels){label.hidden=!shown;if(!shown)continue;
+      const p=new T.Box3().setFromObject(groups[id]).getCenter(new T.Vector3()).project(this.camera);
+      // the tester's label sits above it, clear of the socket's
+      spots.push({label,id,x:(p.x*.5+.5)*this.width,y:(-p.y*.5+.5)*this.height-(id==='tester'?34:0)});}
+    if(!shown)return;
+    spots.sort((a,b)=>a.y-b.y);const placed:{x:number;y:number;w:number}[]=[];
+    for(const s of spots){
+      const w=s.label.offsetWidth||80,h=(s.label.offsetHeight||28)+6;let y=s.y;
+      for(const q of placed)if(Math.abs(q.x-s.x)<Math.max(q.w,w)&&y<q.y+h)y=q.y+h;
+      placed.push({x:s.x,y,w});const lead=Math.round(y-s.y);
+      s.label.style.transform=`translate(${s.x}px,${y}px)`;s.label.style.setProperty('--lead',`${lead}px`);s.label.classList.toggle('led',lead>2);
+    }
+  }
+  dispose(){const c=this.renderer.domElement;this.disposed=true;cancelAnimationFrame(this.frame);clearTimeout(this.hoverTimer);this.ro.disconnect();this.io.disconnect();this.controls.dispose();disposeCell(this.rig.root);this.scene.environment?.dispose();this.composer.dispose();this.ao.dispose();this.bokeh.dispose();this.renderer.dispose();document.removeEventListener('visibilitychange',this.wake);this.container.removeEventListener('wheel',this.wheel,{capture:true});c.removeEventListener('pointerdown',this.pointerDown,{capture:true});c.remove();this.labels.forEach(l=>l.remove());}
 }
 
-// The between-units shot of the whole line (dev: tune it live through window.LINE_SHOT).
-const LINE_SHOT={x:20,y:-10,z:10,dir:new T.Vector3(.12,-1,1.05).normalize(),dist:1300,portrait:1.7};
-if(import.meta.env.DEV)(globalThis as unknown as {LINE_SHOT:typeof LINE_SHOT}).LINE_SHOT=LINE_SHOT;
+// The overview shots (dev: tune them live through window.SHOTS). t: the point the camera turns about; look: where
+// it points, when that differs (a lens shift keeps the composition); p*: the portrait versions.
+interface ShotDef {t:number[];dir:number[];dist:number;lens:number;look?:number[];pt?:number[];pdir?:number[];pdist?:number;plens?:number;plook?:number[]}
+const SHOTS:Record<'wide'|'work'|'line'|'reject'|'parts',ShotDef>={
+  // The home page's photo: low and side on, the arm's base on the right, the hall behind; it turns about the bench.
+  wide:{t:[-30,40,60],look:[-30,40,190],dir:[1,-.22,.035],dist:1280,lens:35,pt:[-30,20,80],plook:[-30,20,260],pdist:.68},
+  // The work: the picker's post and beam, the totes and unload station on the left, the work pallet and the queue on
+  // the right, from the front.
+  work:{t:[-95,-5,95],dir:[.32,-1,.86],dist:1620,lens:50,pt:[20,-10,30],pdir:[.4,-1,1.1],pdist:.55,plens:35},
+  // A full tote swapped at the bench end: beds F and E, the lane out to the store, the picker head over them.
+  line:{t:[-420,-170,70],dir:[.15,-1,1],dist:1100,lens:50,pt:[-400,-170,60],pdir:[.2,-1,1.2],pdist:.75,plens:35},
+  // The tray with the held reject, the locked bin just in frame.
+  reject:{t:[-118,-108,12],dir:[.55,-1,1.05],dist:600,lens:50,pt:[-145,-125,15],pdir:[.5,-1,1.3],pdist:.62,plens:35},
+  // Parts: the cell pulled apart round the plug.
+  parts:{t:[0,40,210],dir:[.8,-1,.45],dist:900,lens:35,pdist:.8},
+};
+// The close-up: its usual side, the higher side it rises to over the turnover (the cradle's actuator would hide the
+// housing), and how far it stands off.
+const CLOSE={dir:[100,-175,60],turn:[120,-130,170],from:22,to:33,ramp:3,dist:Math.hypot(100,-175,60),board:.6};
+// Picked parts: from where, with which lens, and how much of the frame they fill (the arm on a normal lens).
+const PART_VIEW:Partial<Record<PartId,{dir:number[];lens:number;fill:number}>>&{socket:{dir:number[];lens:number;fill:number}}={
+  arm:{dir:[.55,-1,.3],lens:50,fill:1.05},socket:{dir:[.4,-.85,.55],lens:100,fill:2.3},tester:{dir:[.9,-.3,.55],lens:100,fill:1.2},
+};
+// How far Parts pulls the cell apart, in mm: the header up, the fixture, the tester sideways, the tool and the plug up.
+const SPREAD={header:36,fixture:10,tester:140,tool:190,plug:100};
+if(import.meta.env.DEV)Object.assign(globalThis,{SHOTS,CLOSE,PART_VIEW,SPREAD});
+// The key light's shadow covers the bench, the line, the tote and bin and their shadows on the floor, no more.
+function fitShadow(key:T.DirectionalLight){
+  const c=key.shadow.camera;c.position.copy(key.position);c.lookAt(key.target.position);c.updateMatrixWorld();
+  const inv=c.matrixWorldInverse,b=new T.Box3();
+  for(const x of [-480,560])for(const y of [-340,400])for(const z of [FLOOR,520])b.expandByPoint(new T.Vector3(x,y,z).applyMatrix4(inv));
+  Object.assign(c,{left:b.min.x-20,right:b.max.x+20,bottom:b.min.y-20,top:b.max.y+20,near:Math.max(1,-b.max.z-50),far:-b.min.z+50});c.updateProjectionMatrix();
+}
 // Opening the fingers on a seated plug and lifting 60 mm clear takes 0.9 s, and closing on it again the same.
 const REGRIP_MS=900,LET_GO_LIFT=60;
 function fade(size:number,value:(u:number,v:number)=>number){

@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { processFrame,NEST,HEADER,HOME,PLUG_SEATED } from '../src/process.ts';
 import type { CycleCase,ProcessFrame } from '../src/process.ts';
-import { advanceRun,cycleSeconds,isReject,nextLine,restartRun,runEnd,runFrame,sameSoFar,startRun,tally } from '../src/cycle-player.ts';
+import { advanceRun,cycleSeconds,finished,isReject,nextLine,pace,PACE,restartRun,runEnd,runFrame,sameSoFar,startRun,tally,verdict } from '../src/cycle-player.ts';
 import type { LineRun } from '../src/cycle-player.ts';
-import { CYCLE_END,FIRST_UNIT,INDEX_START,LIFT_DOWN,LINE_X,PALLET_PITCH,TOTE_SLOTS } from '../src/line.ts';
+import { CLEAR_SPAN,CYCLE_END,FIRST_UNIT,INDEX_START,LIFT_DOWN,LINE_X,LOAD,OP_PACE,PALLET_PITCH,PICK,SWAP,TOTE_SLOTS,UNLOAD,opSeconds } from '../src/line.ts';
 import type { LineState } from '../src/line.ts';
 
 const close=(a:number,b:number,what:string)=>assert.ok(Math.abs(a-b)<1e-9,`${what}: ${a} vs ${b}`);
@@ -14,8 +14,8 @@ function pallets(f:ProcessFrame){
   return {
     live:{x:-f.shift,z:0},
     queue:{x:PALLET_PITCH-f.shift,z:0},
-    load:{x:2*PALLET_PITCH-f.shift,z:f.loadZ,board:f.loadBoard,harness:f.loadHarness},
-    unload:{x:-PALLET_PITCH,z:f.unloadZ,unit:f.unloadUnit,fade:f.unloadFade},
+    load:{x:2*PALLET_PITCH-f.shift,z:f.loadZ},
+    unload:{x:-PALLET_PITCH,z:f.unloadZ,unit:f.unloadUnit},
   };
 }
 const units:[CycleCase,LineState][]=[['pass',FIRST_UNIT],['pass',{unit:8,passed:7,rejected:0,prev:'pass'}],['open',{unit:5,passed:3,rejected:1,prev:'pass'}],['half-seat',{unit:2,passed:0,rejected:1,prev:'reject'}],['search',{unit:9,passed:8,rejected:0,prev:'pass'}]];
@@ -35,45 +35,61 @@ test('the loop is seamless: 108 of one unit is 0 of the next, after a pass and a
     const end=processFrame(CYCLE_END,kind,line),next=nextLine(line,kind),start=processFrame(0,'pass',next);
     const a=pallets(end),b=pallets(start);
     // the live pallet has become the unload pallet: same place, the right contents, fully shown
-    close(a.live.x,b.unload.x,`${kind} unload x`);close(b.unload.z,0,'unload up');close(b.unload.fade,1,'unload shown');
+    close(a.live.x,b.unload.x,`${kind} unload x`);close(b.unload.z,0,'unload up');
     assert.equal(b.unload.unit,isReject(kind)?'board':'finished');assert.equal(end.liveHarness,!isReject(kind));
     if(!isReject(kind))near(end.plug,[HEADER[0]-PALLET_PITCH,HEADER[1],PLUG_SEATED],`${kind} finished plug`);
     // the old unload pallet is down its lift, out of sight, and comes back as the empty load pallet
-    close(end.unloadZ,LIFT_DOWN,'old unload down');close(start.loadZ,LIFT_DOWN,'load down');close(start.loadBoard,0,'load empty');close(start.loadHarness,0,'load empty');
+    close(end.unloadZ,LIFT_DOWN,'old unload down');close(start.loadZ,LIFT_DOWN,'load down');
     // queue has become work and load has become queue, each carrying a fresh unit
     close(a.queue.x,0,'queue at work');near(start.plug,NEST,'fresh plug in the nest');close(start.rotation,Math.PI,'face up');
-    close(a.load.x,b.queue.x,'load at queue');close(a.load.z,0,'load up');close(end.loadBoard,1,'board loaded');close(end.loadHarness,1,'harness loaded');
+    close(a.load.x,b.queue.x,'load at queue');close(a.load.z,0,'load up');
     // the robot and the cell are where the next unit starts
     near(end.tool,HOME,'tool home');near(start.tool,HOME,'tool home');
-    for(const key of ['jaw','cradle','cradleGrip','latch','dock','tote','toteIn','force','pullForce','extractionForce','depth','headerCheck','graspCheck'] as const)close(end[key],start[key],`${kind} ${key}`);
+    for(const key of ['jaw','cradle','cradleGrip','latch','dock','force','pullForce','extractionForce','depth','headerCheck','graspCheck'] as const)close(end[key],start[key],`${kind} ${key}`);
     for(const key of ['accepted','rejected','seated','pull','camera','retry'] as const)assert.equal(end[key],start[key],`${kind} ${key}`);
+    // the tote on the bed: at the start of a swap unit the full one is still there, as at the end of the last unit
+    close(end.tote,start.swap?TOTE_SLOTS:start.tote,`${kind} units in the tote on the bed`);
     assert.deepEqual(end.contacts,start.contacts);
     near(end.focus,start.focus,`${kind} focus`);near(start.focus,NEST,'focus on the next unit');
   }
 });
 
-test('the operator side runs while the robot works: unload, return lift, load',()=>{
+test('the operator side runs on its own clock while the robot works: pick, unload lift, load lift',()=>{
   const line={unit:4,passed:3,rejected:0,prev:'pass'} as const;
-  const at=(p:number)=>processFrame(p,'pass',line);
-  close(at(1).unloadFade,1,'shown');close(at(4).unloadFade,0,'packed');close(at(4).unloadZ,0,'still up');close(at(8).unloadZ,LIFT_DOWN,'down before the pick');
-  close(at(19).loadZ,LIFT_DOWN,'load down');close(at(28).loadZ,0,'load up');close(at(29).loadBoard,0,'no board yet');close(at(34).loadBoard,1,'board');close(at(35).loadHarness,0,'no harness yet');close(at(42).loadHarness,1,'harness');
-  assert.equal(processFrame(1).unloadUnit,'none');
+  // seconds from the start of the unit, as played: the op-side moves keep their speed across the robot's steps
+  const op=(t:number)=>{let lo=0,hi=INDEX_START;for(let i=0;i<60;i++){const mid=(lo+hi)/2;if(opSeconds(mid)<t)lo=mid;else hi=mid;}return hi;};
+  for(const p of [0,1,2,7,12,23,30,40,50])assert.ok(Math.abs(opSeconds(p)-cycleSeconds('pass',0,p))<.01,`op seconds at ${p}`);
+  const at=(t:number)=>processFrame(op(t),'pass',line);
+  // the empty pallet goes down only once the picker has lifted the unit off it, and the loaded one comes up
+  close(at(PICK.lifted).unloadZ,0,'still up while the unit is lifted');close(at(UNLOAD.low).unloadZ,LIFT_DOWN,'down');
+  close(at(LOAD.up).loadZ,LIFT_DOWN,'load down');close(at(LOAD.top).loadZ,0,'load up');
+  assert.ok(PICK.lifted<UNLOAD.down&&UNLOAD.low<UNLOAD.away&&LOAD.under<LOAD.up);
+  assert.equal(processFrame(1).unloadUnit,'none');assert.equal(at(1).pack,true);assert.equal(processFrame(1,'pass',{unit:4,passed:2,rejected:1,prev:'reject'}).pack,false);
+  assert.deepEqual(OP_PACE.map(([p,ms])=>[p,ms]),OP_PACE.map(([p])=>[p,pace(p+.001,'pass')]),'the op clock keeps the player\'s pace');
+  assert.equal(PACE[0],OP_PACE[0][1]);
 });
 
-test('the tote fills one passed unit per pack and swaps full for empty',()=>{
-  const packed=(passed:number,prev:'pass'|'reject'|'none',p:number)=>processFrame(p,'pass',{unit:passed+2,passed,rejected:0,prev});
-  assert.equal(packed(3,'pass',.5).tote,2);close(packed(3,'pass',2.5).toteIn,.5,'fading in');assert.equal(packed(3,'pass',2.5).tote,2);assert.equal(packed(3,'pass',5).tote,3);
-  assert.equal(packed(3,'reject',10).tote,3,'a bare board never goes in the tote');
-  assert.equal(packed(TOTE_SLOTS,'none',50).tote,TOTE_SLOTS,'full');
-  const swap=packed(TOTE_SLOTS+1,'pass',2.5);assert.equal(swap.tote,0);assert.ok(swap.toteIn>0);assert.equal(swap.lineNote,'Full tote out, empty tote in');
-  assert.equal(packed(TOTE_SLOTS+1,'pass',.5).tote,TOTE_SLOTS,'still the full tote before the pack');
-  assert.equal(packed(TOTE_SLOTS+1,'pass',20).lineNote,'');
+test('the tote fills one passed unit per pack, and a full one is swapped before the next pack',()=>{
+  const op=(t:number)=>{let lo=0,hi=INDEX_START;for(let i=0;i<60;i++){const mid=(lo+hi)/2;if(opSeconds(mid)<t)lo=mid;else hi=mid;}return hi;};
+  const packed=(passed:number,prev:'pass'|'reject'|'none',t:number)=>processFrame(op(t),'pass',{unit:passed+2,passed,rejected:0,prev});
+  assert.equal(packed(3,'pass',PICK.open-.01).tote,2,'two in, the third still in the picker');assert.equal(packed(3,'pass',PICK.open).tote,3,'released into its slot');
+  assert.equal(packed(3,'reject',10).tote,3,'a bare board never goes in the tote');assert.equal(packed(3,'reject',10).pack,false);
+  assert.equal(packed(TOTE_SLOTS,'none',5).tote,TOTE_SLOTS,'full');assert.equal(packed(TOTE_SLOTS,'none',5).swap,false,'nothing to pack, nothing to swap');
+  const swap=(t:number)=>packed(TOTE_SLOTS+1,'pass',t);
+  assert.equal(swap(0).swap,true);assert.equal(swap(0).tote,0,'the empty one is the tote being filled');assert.equal(swap(PICK.open).tote,1);
+  assert.equal(swap(SWAP.out-.01).lineNote,'');assert.equal(swap((SWAP.out+SWAP.done)/2).lineNote,'Full tote out, empty tote in');assert.equal(swap(SWAP.done).lineNote,'');
+  assert.ok(SWAP.done<PICK.over,'the empty tote is in place before the picker comes over it');
+  assert.equal(packed(TOTE_SLOTS+2,'pass',2).swap,false);assert.equal(packed(TOTE_SLOTS+2,'pass',2).tote,1);
 });
 
-test('the shot: the hero only at the very start, the work shot while working, the line from the end of a pass, and the tray for a held reject',()=>{
+test('the shot: the hero only at the very start, the work through a pass and its index, the line only for a tote swap, the tray for a reject',()=>{
+  const op=(t:number)=>{let lo=0,hi=INDEX_START;for(let i=0;i<60;i++){const mid=(lo+hi)/2;if(opSeconds(mid)<t)lo=mid;else hi=mid;}return hi;};
   assert.equal(processFrame(1).shot,'wide');assert.equal(processFrame(1,'pass',{unit:2,passed:1,rejected:0,prev:'pass'}).shot,'work');
-  assert.equal(processFrame(50).shot,'work');assert.equal(processFrame(98).shot,'line');assert.equal(processFrame(104).shot,'line');
-  assert.equal(processFrame(100,'open').shot,'reject');assert.equal(processFrame(90,'open').shot,'work');assert.equal(processFrame(104,'open').shot,'line');
+  for(const p of [3,50,90,98,100,104,107.9])assert.equal(processFrame(p,'pass',{unit:3,passed:2,rejected:0,prev:'pass'}).shot,'work',`pass ${p}`);
+  const swap={unit:TOTE_SLOTS+2,passed:TOTE_SLOTS+1,rejected:0,prev:'pass'} as const;
+  assert.equal(processFrame(op(SWAP.out),'pass',swap).shot,'line');assert.equal(processFrame(op(PICK.open-.05),'pass',swap).shot,'line','until the first unit is in the empty tote');
+  assert.equal(processFrame(op(PICK.open+.05),'pass',swap).shot,'work');assert.equal(processFrame(50,'pass',swap).shot,'work');
+  assert.equal(processFrame(100,'open').shot,'reject');assert.equal(processFrame(90,'open').shot,'work');assert.equal(processFrame(100.5,'open').shot,'reject','cleared on the tray');assert.equal(processFrame(104,'open').shot,'work');
   // the close-up looks at the wrist camera and the header together while the board is measured
   const board=processFrame(8);assert.ok(board.focus[2]>40&&Math.hypot(board.focus[0]-HEADER[0],board.focus[1]-HEADER[1])<12);
   near(processFrame(60).focus,processFrame(60).plug,'focus on the plug');
@@ -99,10 +115,10 @@ test('played, the line makes units forever: counters only go up, each unit is lo
   assert.equal(run.held,true);assert.equal(run.progress,INDEX_START);assert.equal(runEnd(run),INDEX_START);assert.deepEqual(holds,[unit]);assert.equal(log.at(-1),unit);
   const heldAt={...run};run=play(run,5000,log,holds);assert.deepEqual(run,heldAt,'nothing moves while held');
   run={...run,held:false,cleared:true};assert.equal(runEnd(run),CYCLE_END);
-  // the person takes the harness to the bin (about 2 s), then the bare board indexes out
-  run=play(run,1000,log,holds);const clearing=processFrame(run.progress,run.kind,run.line);
+  // the operator takes the harness (about 1 s), then the bare board indexes out
+  run=play(run,500,log,holds);const clearing=processFrame(run.progress,run.kind,run.line);
   assert.ok(clearing.liveHarness&&clearing.harnessOut!>0&&clearing.harnessOut!<1&&clearing.shift===0&&clearing.shot==='reject','clearing into the bin');
-  run=play(run,1300,log,holds);assert.equal(run.kind,'open');assert.ok(run.progress>INDEX_START);assert.ok(!processFrame(run.progress,run.kind,run.line).liveHarness,'the harness went to the bin');
+  run=play(run,800,log,holds);assert.equal(run.kind,'open');assert.ok(run.progress>INDEX_START);assert.ok(!processFrame(run.progress,run.kind,run.line).liveHarness,'the harness went to the bin');
   run=play(run,3000,log,holds);
   assert.equal(run.line.unit,unit+1);assert.equal(run.line.rejected,1);assert.equal(run.line.prev,'reject');assert.equal(run.kind,'pass','faults are one-shot');assert.equal(run.cleared,false);
   assert.equal(log.filter(u=>u===unit).length,1);
@@ -136,7 +152,7 @@ test('a restart on a unit already logged and leaving finishes it first, so nothi
 test('restarting the robot on the same unit leaves the operator side where it got to',()=>{
   const line={unit:4,passed:3,rejected:0,prev:'pass'} as const;
   const mid={...startRun('pass',line),progress:50},before=runFrame(mid),after=runFrame(restartRun(mid,'search'));
-  for(const key of ['unloadZ','unloadFade','loadZ','loadBoard','loadHarness','tote','toteIn'] as const)close(after[key],before[key],key);
+  for(const key of ['unloadZ','loadZ','tote'] as const)close(after[key],before[key],key);
   near(after.tool,HOME,'the robot starts the unit again');
   // the clock stays monotonic: running on from the restart, the operator side never goes back
   let run=restartRun(mid,'search'),last=runFrame(run).loadZ;
@@ -151,19 +167,29 @@ test('a case picked before the unit has done anything different changes in place
   assert.equal(sameSoFar({...mid,progress:80},'open'),false,'past the wire test');
 });
 
-test('a cleared reject is carried to the bin over about 2 s before the pallets move, framed on the tray',()=>{
-  close(cycleSeconds('open',INDEX_START,INDEX_START+.8),2.08,'clearing seconds');
-  for(let p=100.05;p<100.8;p+=.05){const f=processFrame(p,'open');assert.equal(f.shift,0);assert.equal(f.shot,'reject');assert.ok(f.liveHarness);}
-  const f=processFrame(100.4,'open');assert.ok(f.harnessOut!>0&&f.harnessOut!<1);assert.ok(f.plug[2]>processFrame(100,'open').plug[2],'lifted out of the tray');
-  const posted=processFrame(100.79,'open').plug;assert.ok(Math.hypot(posted[0]+235,posted[1]+226)<1,'over the bin slot');
-  assert.equal(processFrame(101,'open').liveHarness,false);assert.equal(processFrame(101,'open').shot,'line');
+test('a cleared reject: the operator takes the harness out of the tray in under a second, then the board indexes on',()=>{
+  const span=CLEAR_SPAN*(CYCLE_END-INDEX_START),fade=span*.8;
+  close(cycleSeconds('open',INDEX_START,INDEX_START+fade),.8,'taking it out');close(cycleSeconds('open',INDEX_START,INDEX_START+span),1,'clearing seconds');
+  const held=processFrame(100,'open').plug;
+  for(let p=100.05;p<INDEX_START+span;p+=.05){const f=processFrame(p,'open');assert.equal(f.shift,0);assert.equal(f.shot,'reject');assert.ok(f.liveHarness);near(f.plug,held,`the plug stays in the tray at ${p}`);}
+  assert.ok(processFrame(INDEX_START+fade/2,'open').harnessOut!>0&&processFrame(INDEX_START+fade/2,'open').harnessOut!<1);close(processFrame(INDEX_START+fade,'open').harnessOut!,1,'taken');
+  assert.equal(processFrame(INDEX_START+fade/2,'open').message,'The operator takes the rejected harness to the locked bin.');
+  assert.equal(processFrame(101,'open').liveHarness,false);
+  // the bare board comes back round on its pallet: shown at unload, down the lift with it, never faded
+  const next=processFrame(5,'pass',{unit:6,passed:3,rejected:2,prev:'reject'});assert.equal(next.unloadUnit,'board');assert.equal(next.pack,false);
 });
 
-test('a unit that has shown its verdict stays counted through a scrub back, a restart or a case switch',()=>{
+test('the counters show what the frame shows: a scrub back before the verdict uncounts it, a restart after it finishes the unit',()=>{
   const line={unit:5,passed:3,rejected:1,prev:'pass'} as const;
-  const shown={...startRun('pass',line),progress:30,verdict:'pass'} as LineRun;
-  assert.deepEqual(tally(shown),{passed:4,rejected:1},'scrubbed back');
-  assert.deepEqual(tally(restartRun(shown)),{passed:4,rejected:1},'reset');
-  assert.deepEqual(tally(restartRun(shown,'open')),{passed:4,rejected:1},'case switch, until a newer verdict');
-  assert.deepEqual(tally(startRun('pass',line)),{passed:3,rejected:1},'no verdict yet');
+  assert.deepEqual(tally({...startRun('pass',line),progress:30}),{passed:3,rejected:1},'scrubbed back: not counted yet');
+  assert.equal(verdict({...startRun('pass',line),progress:30}),null);assert.equal(verdict({...startRun('pass',line),progress:87}),'pass');
+  // after the verdict, a restart or a reset finishes this unit first and starts the next one
+  const shown={...startRun('pass',line),progress:90};assert.equal(finished(shown),true);
+  const r=restartRun(shown);assert.equal(r.line.unit,6);assert.equal(r.line.passed,4);assert.equal(r.progress,0);
+  assert.deepEqual(tally(r),{passed:4,rejected:1},'counted once, on the next unit');
+  assert.equal(restartRun(shown,'open').kind,'open','the case applies to the next unit');
+  // before the verdict a restart stays on this unit
+  const early={...startRun('pass',line),progress:40};assert.equal(finished(early),false);assert.equal(restartRun(early,'open').line.unit,5);
+  // a unit logged and then scrubbed back is not restarted onto itself again (it would be logged twice)
+  assert.equal(restartRun({...startRun('pass',line),progress:20,logged:true}).line.unit,6);
 });

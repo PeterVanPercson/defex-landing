@@ -287,3 +287,26 @@ body.process-mode[data-shot="reject"] .headline{opacity:0;transform:translateY(-
 body.process-mode .cycle-timeline input[data-locked="true"]::-webkit-slider-runnable-track{background:linear-gradient(90deg,#1f2b24 var(--p,44%),#1f2b2433 var(--p,44%) var(--lock,100%),transparent var(--lock,100%)),repeating-linear-gradient(135deg,#b2402c99 0 2px,#b2402c33 2px 4px)}
 /* phones: the timeline card sits where the Play tip would; the Clear reject button's nudge says it instead */
 @media(max-width:600px){#tour .dock-tip{display:none}}
+/* quality pass: the canvas fades in once the warm-up has drawn its first frames */
+#scene canvas{transition:opacity .5s}
+/* back to the guided camera after the person has turned it: a pill like the readouts, above the dock */
+.guided-view{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);z-index:6;padding:7px 16px;border-radius:999px;background:#eef0eadd;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#1f2b24;font-size:14.5px;line-height:1.2;box-shadow:0 6px 18px #0002,inset 0 0 0 1px #1f2b2414;animation:chip-in .25s ease-out}
+.guided-view:hover{background:#f6f7f2}
+@keyframes chip-in{from{opacity:0;transform:translate(-50%,6px)}}
+/* the one-time hint on how the camera moves: near the top, clear of the slider and the dock */
+.stage-hint{position:absolute;left:50%;top:92px;transform:translate(-50%,-4px);z-index:6;margin:0;padding:7px 14px;border-radius:999px;background:#1d2a22c4;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#eef0ea;font-size:13.5px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .45s,transform .45s}
+.stage-hint.visible{opacity:1;transform:translate(-50%,0)}
+.tooltip{padding:6px 11px;border-radius:999px;max-width:none;white-space:nowrap}.tooltip strong{font-size:14px}
+/* crowded part labels step down with a leader line back to their part */
+.cell-label.led::before{content:'';position:absolute;left:-1px;bottom:100%;width:1px;height:var(--lead,0);background:#243d2c8c}
+/* the contact link keeps a soft pill, so it reads over dark parts in the close-ups too */
+.topbar .buy{padding:3px 14px;margin-right:-14px;min-height:38px;border-radius:999px;background:#eef0ea8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);text-shadow:none}
+@media(max-width:600px){
+  .guided-view{top:66px;bottom:auto}
+  /* high on the screen, under the chip's place: the shots keep their subject in the middle and lower half */
+  .stage-hint{top:104px}
+  /* the headline note would sit over the arm once the camera leaves the opening shot */
+  body.process-mode:not([data-shot="wide"]) .headline,body.free-view .headline{opacity:0;transform:translateY(-6px)}
+  /* the tap tip opens under the dock, clear of the slider row above it */
+  .dock-tip{bottom:auto;top:calc(100% + 8px);transform:translate(-50%,-4px)}
+}

@@ -24,7 +24,7 @@ test('eleven steps: locate the unit, measure the board, pick, turn over, measure
   assert.equal(processFrame(1).message,'Unit 001 is on its pallet, located on pins. The tester is docked.');
   assert.equal(processFrame(1,'pass',{unit:8,passed:7,rejected:0,prev:'pass'}).message,'Unit 008 is on its pallet, located on pins. The tester is docked.');
   assert.equal(processFrame(95).message,'Return home. The line moves this unit out.');
-  assert.equal(processFrame(104,'pass',{unit:7,passed:6,rejected:0,prev:'pass'}).message,'Passed. Unit 007 moves out to the operator; unit 008 moves in.');
+  assert.equal(processFrame(104,'pass',{unit:7,passed:6,rejected:0,prev:'pass'}).message,'Passed. Unit 007 moves out to be packed; unit 008 moves in.');
   assert.equal(processFrame(104,'open',{unit:7,passed:6,rejected:0,prev:'pass'}).message,'Reject cleared. The board goes back for a new harness; unit 008 moves in.');
   for(const [title,,message] of CYCLE_STEPS){assert.ok(title.split(' ').length<=4);assert.ok(message.split(/[.:] /).length<=2,message);}
 });

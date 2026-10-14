@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as T from 'three';
 import { processFrame,HEADER,UPCAM } from '../src/process.ts';
 import type { CycleCase,ProcessFrame } from '../src/process.ts';
-import { applyLine,createCell,poseLatch,posePlunger,RELEASE_GAP } from '../src/cell-geometry.ts';
+import { applyLine,createCell,DOCK_STROKE,poseLatch,posePlunger,RELEASE_GAP } from '../src/cell-geometry.ts';
 import { dressHarness } from '../src/harness.ts';
 import { contactCenters } from '../src/mechanism.ts';
 import { CHAMFER,CLEAR_SPAN,GRIP_RAISE,INDEX_START,CYCLE_END,SHROUD_CLEARANCE } from '../src/line.ts';
@@ -23,7 +23,7 @@ const wire=(o:T.Mesh)=>cell.wires.some(w=>w.mesh===o);
 const bench=(o:T.Mesh)=>under(o,cell.bench);
 const units=Object.values(cell.units).map(u=>u.group);
 // The rest of the line, far from where the tool works: tested on its own below.
-const line=(o:T.Mesh)=>units.some(g=>under(o,g))||under(o,cell.tote.group)||under(o,cell.rejectBin);
+const line=(o:T.Mesh)=>units.some(g=>under(o,g))||[cell.tote.group,cell.tote.out.group,cell.tote.spare.group,cell.rejectBin,cell.picker.root].some(g=>under(o,g))||cell.tote.shutters.includes(o);
 // The upward camera's whole allowed footprint, 22 x 22 mm up to its window, as a solid block.
 const upcam=new T.Mesh(new T.BoxGeometry(22,22,UPCAM[2]));upcam.name='Upward camera footprint';upcam.position.set(UPCAM[0],UPCAM[1],UPCAM[2]/2);cell.root.add(upcam);
 const statics=meshes(cell.root).filter(o=>!under(o,cell.plug)&&!under(o,cell.tool.root)&&!under(o,cell.arm.root)&&!wire(o)&&!line(o)&&o.geometry.type!=='TubeGeometry');
@@ -112,7 +112,9 @@ test('the harness wires never pass through the cell, the gripper or their own ho
 // tester and its retracted dock head, the cradle, the reject tray, the tote, the reject bin), against the tool and
 // the arm waiting at home, and against each other. A cleared reject indexes its bare board out.
 const indexing=function*(){for(let i=0;i<=160;i++)yield INDEX_START+i*(CYCLE_END-INDEX_START)/160;};
-const lineStatics=[...meshes(cell.tester),...meshes(cell.turnover),...meshes(cell.bin),...meshes(cell.upcam),upcam,...meshes(cell.tote.group),...meshes(cell.rejectBin),...toolParts,...meshes(cell.arm.root).filter(o=>o.name!=='Arm cable')];
+const lineStatics=[...meshes(cell.tester),...meshes(cell.turnover),...meshes(cell.bin),...meshes(cell.upcam),upcam,...meshes(cell.tote.group),...meshes(cell.rejectBin),...meshes(cell.picker.root),...toolParts,...meshes(cell.arm.root).filter(o=>o.name!=='Arm cable')];
+// Docked, the dock head's locating pin sits in the adapter's bushing bore.
+const seated=(a:T.Mesh,b:T.Mesh)=>/Pallet tester connector|Dock pin bushing|Dock pin bore/.test(a.name)&&b.name==='Dock locating pin';
 const carriers=()=>[{name:'live pallet',root:cell.pallet,extra:shown(cell.plug)?plugParts:[]},...Object.entries(cell.units).map(([name,u])=>({name,root:u.group,extra:[] as T.Mesh[]}))];
 test('pallets index through the cell clear of every station, the arm at home and each other',()=>{
   const worst=new Map<string,number>(),touching=new Set<string>();let carried=0,camera=Infinity;const foot=new T.Box3().setFromObject(upcam);
@@ -136,7 +138,7 @@ test('pallets index through the cell clear of every station, the arm at home and
         // The tightest pass: the nest and the fixture go by the camera's footprint with 1 mm to spare.
         if(box.max.x>foot.min.x&&box.min.x<foot.max.x&&box.min.z<foot.max.z)camera=Math.min(camera,box.min.y-foot.max.y);
         box.expandByScalar(.5);invert(a);
-        for(const s of hits){if(!box.intersectsBox(s.b))continue;const d=penetration(a,s.m);if(d>LIMIT)worst.set(`${kind} ${g.name} ${a.name} / ${s.m.name} at ${p.toFixed(2)}`,d);}
+        for(const s of hits){if(!box.intersectsBox(s.b)||seated(a,s.m))continue;const d=penetration(a,s.m);if(d>LIMIT)worst.set(`${kind} ${g.name} ${a.name} / ${s.m.name} at ${p.toFixed(2)}`,d);}
       }
     }
   }
@@ -145,14 +147,17 @@ test('pallets index through the cell clear of every station, the arm at home and
   assert.deepEqual([...worst].slice(0,8).map(([k,d])=>`${k}: ${d.toFixed(2)} mm`),[]);
 });
 
-test('docked, the tester head meets the adapter; retracted, it clears every passing adapter by 1.5 mm',()=>{
+test('docked, the tester head meets the adapter with its pin in the bushing; retracted 8 mm, it clears every passing adapter',()=>{
   const head=new T.Box3(),adapter=new T.Box3();
   const adapters=()=>carriers().filter(c=>shown(c.root)).flatMap(c=>meshes(c.root).filter(m=>m.name==='Pallet tester connector'));
   for(const p of [0,50,99.9]){
-    pose(processFrame(p,'pass',RUNNING));head.setFromObject(cell.dockHead);adapter.setFromObject(cell.pallet.getObjectByName('Pallet tester connector')!);
+    pose(processFrame(p,'pass',RUNNING));head.setFromObject(cell.dockHead.getObjectByName('Dock contact head')!);adapter.setFromObject(cell.pallet.getObjectByName('Pallet tester connector')!);
     assert.ok(Math.abs(head.min.y-adapter.max.y)<.02,`docked gap ${head.min.y-adapter.max.y} at ${p}`);
     assert.ok(head.min.x>adapter.min.x-.01&&head.max.x<adapter.max.x+.01);
+    const pin=new T.Box3().setFromObject(cell.dockHead.getObjectByName('Dock locating pin')!),bore=new T.Box3().setFromObject(cell.pallet.getObjectByName('Dock pin bore')!);
+    assert.ok(pin.min.y<adapter.max.y-4&&Math.abs((pin.min.x+pin.max.x)/2-(bore.min.x+bore.max.x)/2)<1e-6&&Math.abs((pin.min.z+pin.max.z)/2-(bore.min.z+bore.max.z)/2)<1e-6,'the pin is in the bushing');
   }
+  pose(processFrame(104,'pass',RUNNING));assert.equal(cell.dockHead.position.y,DOCK_STROKE);
   let checked=0;
   for(const p of indexing()){
     const f=processFrame(p,'pass',RUNNING);if(f.shift<=0||f.shift>=232)continue;
