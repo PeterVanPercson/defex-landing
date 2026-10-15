@@ -671,8 +671,10 @@ class SiteTests(SimpleTestCase):
         import re
         index = self.client.get("/blog/")
         self.assertEqual(index.status_code, 200)
-        self.assertContains(index, "The Cost of the Next Attempt")
-        self.assertContains(index, 'href="/blog/the-cost-of-the-next-attempt/"')
+        # unlisted with the self-teaching story (his call, 2026-10-13): off the
+        # index, but the old URL still answers so links to it do not 404
+        self.assertNotContains(index, "The Cost of the Next Attempt")
+        self.assertNotContains(index, 'href="/blog/the-cost-of-the-next-attempt/"')
         post = self.client.get("/blog/the-cost-of-the-next-attempt/")
         self.assertEqual(post.status_code, 200)
         body = post.content.decode()
@@ -689,12 +691,11 @@ class SiteTests(SimpleTestCase):
                       "By <a class=\"link\" href=\"https://husanmavlonov.com/\">Husan Mavlonov</a>",
                       '"@type": "Person", "@id": "https://husanmavlonov.com/#person"', 'class="author__bio"'):
             self.assertContains(post, chunk)
-        # the feed: same registry, so the post is in it
+        # the feed: same registry as the index, so the unlisted post is not in it
         feed = self.client.get("/blog/feed.xml")
         self.assertEqual(feed.status_code, 200)
         self.assertIn("xml", feed["Content-Type"])
-        self.assertIn("https://defexrobotics.com/blog/the-cost-of-the-next-attempt/", feed.content.decode())
-        self.assertIn("Husan Mavlonov", feed.content.decode())
+        self.assertNotIn("the-cost-of-the-next-attempt", feed.content.decode())
         self.assertContains(post, 'type="application/rss+xml"')
         # no chart before the first sentence, and no embossed headings in the article
         self.assertNotContains(post, 'id="loop"')
@@ -704,8 +705,7 @@ class SiteTests(SimpleTestCase):
         self.assertContains(post, "August 30, 2026")
         self.assertContains(post, '"datePublished": "2026-08-30"')
         self.assertContains(post, '"dateModified": "2026-09-20"')
-        self.assertIn("<loc>https://defexrobotics.com/blog/the-cost-of-the-next-attempt/</loc><lastmod>2026-09-20</lastmod>",
-                      self.client.get("/sitemap.xml").content.decode())
+        self.assertNotIn("the-cost-of-the-next-attempt", self.client.get("/sitemap.xml").content.decode())
         self.assertNotContains(index, 'rel="modulepreload"')
         self.assertNotContains(index, 'rel="preload" as="fetch" href="https://prod.spline.design/')
         # analytics only when switched on, so the tag never 404s on every page
@@ -750,7 +750,7 @@ class SiteTests(SimpleTestCase):
         self.assertNotIn("Get in touch", home_header)
         sitemap = self.client.get("/sitemap.xml").content.decode()
         self.assertIn("<loc>https://defexrobotics.com/blog/</loc>", sitemap)
-        self.assertIn("<loc>https://defexrobotics.com/blog/the-cost-of-the-next-attempt/</loc>", sitemap)
+        self.assertNotIn("the-cost-of-the-next-attempt", sitemap)
         self.assertEqual(self.client.get("/static/js/post.js").status_code, 200)
 
     def test_inference_article(self):
@@ -848,6 +848,221 @@ class SiteTests(SimpleTestCase):
         # the founder link must stay bidirectional with husanmavlonov.com
         self.assertIn("https://husanmavlonov.com/#person", home)
         self.assertIn("https://defexrobotics.com/#org", home)
+
+
+# Copy his calls retired (story change 2026-10-13 and the overnight review,
+# 2026-10-15). One list, checked on every public page below. A pattern that
+# starts with ">" is markup (a label's whole text) and is matched against the
+# page source; every other one against what a visitor or a crawler reads: the
+# visible text, the meta/alt/aria text and the structured data.
+BANNED_COPY = (
+    r"assembl", r"self-teach", r"skill carries over", r"\baside\b",
+    r">Connected<", r">Locked<", r"is it locked", r"try new things",
+    # the "we will tell you straight" tic; "Straight in." on the prototype is a move, not the tic
+    r"\bstraight\b(?! in\b)",
+    r"as_of", r"the calendar", r"unit 0\d\d", r"inspection prototype",
+    r"teach it what changed", r"one robot, taught",
+)
+# his call: the Robot Learning Engineer posting keeps its own words
+BANNED_COPY_ALLOWED_PAGES = ("/careers/robot-learning-engineer/",)
+
+
+def readable(body, content_type):
+    """What a reader or a crawler takes from a response: for HTML the text,
+    the meta/alt/aria/title/placeholder values and the JSON-LD; anything else whole."""
+    import html as htmllib
+    if "html" not in content_type:
+        return body, body
+    source = re.sub(r"<!--.*?-->", " ", body, flags=re.S)
+    source = re.sub(r"<style\b.*?</style>", " ", source, flags=re.S)
+    source = re.sub(r'<script\b(?![^>]*application/ld\+json)[^>]*>.*?</script>', " ", source, flags=re.S)
+    attrs = re.findall(r'\b(?:content|alt|title|aria-label|placeholder)="([^"]*)"', source)
+    text = re.sub(r"<[^>]+>", " ", source)
+    return htmllib.unescape(text + " " + " ".join(attrs)), source
+
+
+@override_settings(SECURE_SSL_REDIRECT=False)
+class StoryCopyTests(SimpleTestCase):
+    """The overnight review's content fixes (2026-10-15), one behaviour each."""
+
+    def public_paths(self):
+        from landing.jobs import JOBS, job_path
+        from landing.views import POSTS
+        paths = ["/", "/why-us/", "/prototype/", "/careers/", "/blog/", "/blog/feed.xml",
+                 "/company.json", "/llms.txt", "/sitemap.xml",
+                 "/privacy/", "/terms/", "/security/", "/cookies/"]
+        paths += [job_path(job) for job in JOBS]
+        paths += ["/blog/" + post["slug"] + "/" for post in POSTS]
+        return paths
+
+    def test_no_retired_copy_on_any_public_page(self):
+        for path in self.public_paths():
+            if path in BANNED_COPY_ALLOWED_PAGES:
+                continue
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 200, path)
+            text, source = readable(response.content.decode(), response.get("Content-Type", ""))
+            for pattern in BANNED_COPY:
+                haystack = source if pattern.startswith(">") else text
+                found = re.search(pattern, haystack, re.I)
+                self.assertIsNone(found, f"{pattern!r} on {path}: …{haystack[max(0, found.start() - 60):found.end() + 60] if found else ''}…")
+
+    def test_the_line_drawing_is_the_current_line(self):
+        """Pallet in, the robot plugs, the tester checks, a good unit into the
+        tote; a reject held, then posted into the locked bin. No oval loop, no
+        Aside tray, no upper-case station names."""
+        body = self.client.get("/why-us/").content.decode()
+        section = body.split('id="resets"', 1)[1].split("</section>", 1)[0]
+        self.assertIn('id="resets-title" data-reveal>Next unit <span class="wy-hl">in</span>.</h2>', section)
+        self.assertIn("Good ones to the tote. Rejects locked away.", section)
+        labels = re.findall(r"<li style=[^>]*>([^<]+)</li>", section)
+        self.assertEqual(labels, ["In", "Plug", "Test", "Tote", "Rejects"])
+        for piece in ('id="loop-lid"', 'class="loop__lock"', 'class="loop__seal"', 'id="loop-tote"', 'id="loop-slots"', 'id="loop-tester"'):
+            self.assertIn(piece, section)
+        self.assertNotIn("A80 80", section)
+        self.assertNotIn("loop__bin--aside", section)
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertIn(".loop__lid.is-fail { fill: var(--fail); }", css)
+        self.assertNotRegex(css, r"\.loop__lid \{[^}]*--fail")
+        self.assertNotIn("ASIDE", (Path(settings.BASE_DIR) / "static/js/why.js").read_text())
+
+    def test_a_new_part_keeps_the_pallet_and_the_three_checks(self):
+        """The reused-skill drawings are gone from /why-us/ and the home card:
+        a new fixture and part swap in on the same pallet and Seated, Held and
+        Wires run again."""
+        why = self.client.get("/why-us/").content.decode()
+        newpart = why.split('id="newpart"', 1)[1].split("</section>", 1)[0]
+        for gone in ("morph__skill", "morph__label", "morph__handles"):
+            self.assertNotIn(gone, newpart)
+        self.assertIn('class="morph__pallet"', newpart)
+        self.assertIn('class="morph__fixture"', newpart)
+        self.assertEqual(re.findall(r'<li class="morph__check" data-check="\d">([^<]+)</li>', newpart), ["Seated", "Held", "Wires"])
+        home = self.client.get("/").content.decode()
+        card = home.split('<li class="feature" style="--i: 3">', 1)[1].split("</li>", 1)[0]
+        for gone in ("art__hop", "art__fillbar"):
+            self.assertNotIn(gone, card)
+        self.assertIn("art__swap--a", card)
+        self.assertIn("art__swap--b", card)
+        self.assertEqual(card.count("art__tick"), 3)
+        for page in (why, home):
+            self.assertIn("A new part needs a new fixture and the same checks.", page)
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        for gone in ("art-hop", "art-fill", ".morph__skill"):
+            self.assertNotIn(gone, css)
+        # without motion the second part stays hidden instead of sitting on the first
+        self.assertRegex(css, r"\.art__swap--b \{ opacity: 0;")
+
+    def test_the_checks_are_seated_held_wires(self):
+        why = self.client.get("/why-us/").content.decode()
+        gauge = why.split('id="gauge"', 1)[1].split("</figure>", 1)[0]
+        self.assertEqual(re.findall(r'<li class="gauge__check" data-check="\d">([^<]+)</li>', gauge), ["Seated", "Held", "Wires"])
+        line = "Seated? Held? Every wire? It runs your test and logs the result."
+        self.assertIn(line, why.split('id="tests"', 1)[1].split("</section>", 1)[0])
+        self.assertIn(line, self.client.get("/").content.decode())
+        self.assertIn("on.push('is-c3')", (Path(settings.BASE_DIR) / "static/js/why.js").read_text())
+        self.assertIn('.gauge.is-c3 [data-check="3"]::before', (Path(settings.BASE_DIR) / "static/css/site.css").read_text())
+
+    def test_the_questions_are_plain_and_the_options_lose_the_straight_tic(self):
+        from landing.discovery import PRICING
+        why = self.client.get("/why-us/").content.decode()
+        self.assertIn('id="faq-title" data-reveal>Questions.</h2>', why)
+        self.assertNotIn("Will it try new things", why)
+        self.assertEqual(why.split('id="faq"', 1)[1].split("</section>", 1)[0].count('<details class="faq__i">'), 4)
+        lines = " ".join(step["line"] for step in PRICING["steps"]) + PRICING["robot"]["what"]
+        self.assertNotRegex(lines.lower(), r"straight|taught")
+        self.assertIn("You only pay for a yes.", lines)
+
+    def test_the_measure_card_names_both_cameras(self):
+        home = self.client.get("/").content.decode()
+        card = home.split('<li class="feature" style="--i: 2">', 1)[1].split("</li>", 1)[0]
+        self.assertIn("Two cameras check the board and the grip before every press.", card)
+
+    def test_the_footer_contact_link_says_get_in_touch(self):
+        for path in ("/", "/why-us/", "/careers/", "/blog/", "/privacy/"):
+            footer = self.client.get(path).content.decode().split("<footer", 1)[1]
+            self.assertRegex(footer, r'href="/?#contact">Get in touch</a>', path)
+            self.assertNotIn("Test our product", footer, path)
+
+    def test_proof_is_one_plain_line_and_labels_read_in_normal_case(self):
+        why = self.client.get("/why-us/").content.decode()
+        proof = why.split('id="proof"', 1)[1].split("</section>", 1)[0]
+        self.assertIn('<span class="proof__t">factories paid to be first in line.</span>', proof)
+        self.assertIn('<p class="proof__v" data-reveal>Building the robot, starting with connectors.</p>', proof)
+        for gone in ("proof__now", "proof__i", "proof__k", "Built", "Next"):
+            self.assertNotIn(gone, proof)
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertNotIn(".proof__k", css)
+        label_rule = re.search(r"\.wy :is\(\.tries__label, \.loop__labels li[^{]*\{([^}]*)\}", css)
+        self.assertIsNotNone(label_rule)
+        self.assertIn("text-transform: none", label_rule.group(1))
+        # with the case left alone, the drawing labels are written in normal case
+        for label in ("Nominal", "Board", "Grip", "Seated"):
+            self.assertIn(f">{label}</text>", why)
+
+    def test_crawl_files_tell_the_current_story(self):
+        company = self.client.get("/company.json").json()
+        self.assertEqual(company["product"]["approach"], "It measures every unit, feels its way in and checks every connection.")
+        self.assertEqual(company["product"]["stage"], "Building the robot, starting with connectors.")
+        self.assertEqual(company["paid_waitlist"]["definition"], "Factories that paid to be first in line.")
+        self.assertEqual(company["paid_waitlist"]["factories"], 21)
+        self.assertNotIn("technical_note", company["links"])
+
+        def keys(node):
+            if isinstance(node, dict):
+                for k, v in node.items():
+                    yield k
+                    yield from keys(v)
+            elif isinstance(node, list):
+                for v in node:
+                    yield from keys(v)
+        self.assertNotIn("as_of", set(keys(company)))
+        self.assertNotIn("connector cell", self.client.get("/company.json").content.decode().lower())
+        llms = self.client.get("/llms.txt").content.decode()
+        self.assertIn("- [Home](https://defexrobotics.com/): what the robot does\n", llms)
+        self.assertIn("- [Prototype](https://defexrobotics.com/prototype/): the robot on an endless line, in simulation\n", llms)
+
+    def test_the_self_teaching_post_is_unlisted_but_still_answers(self):
+        from landing.views import POSTS, UNLISTED_POSTS
+        slug = "the-cost-of-the-next-attempt"
+        self.assertNotIn(slug, [post["slug"] for post in POSTS])
+        self.assertIn(slug, [post["slug"] for post in UNLISTED_POSTS])
+        for path in ("/blog/", "/blog/feed.xml", "/sitemap.xml", "/llms.txt", "/company.json"):
+            self.assertNotIn(slug, self.client.get(path).content.decode(), path)
+        post = self.client.get(f"/blog/{slug}/")
+        self.assertEqual(post.status_code, 200)
+        self.assertContains(post, '<meta name="robots" content="noindex">')
+        self.assertContains(post, "Co-founder and CEO of Defex, building robots that plug in connectors and check every connection.")
+        self.assertNotContains(self.client.get("/blog/the-ai-inference-revolution-is-here/"), 'name="robots" content="noindex"')
+        for entry in POSTS + UNLISTED_POSTS:
+            self.assertNotRegex(entry["keywords"].lower(), r"assembl|self-teach")
+            self.assertNotIn("test their own work", entry["author"]["bio"])
+        self.assertNotIn("connector assembly", (Path(settings.BASE_DIR) / "templates/landing/blog/index.html").read_text())
+
+    def test_legal_pages_drop_the_calendar_and_keep_you_updated(self):
+        self.assertNotContains(self.client.get("/terms/"), "calendar")
+        security = self.client.get("/security/")
+        self.assertContains(security, "keep you updated while we fix it")
+        self.assertNotContains(security, "keep you told")
+
+    def test_the_dead_practice_field_is_gone(self):
+        import landing.discovery as discovery
+        self.assertFalse(hasattr(discovery, "PRACTICE"))
+        self.assertFalse(hasattr(discovery, "COMPANY_UPDATED"))
+        context = self.client.get("/why-us/").context
+        for gone in ("practice_marks", "trials", "updated"):
+            self.assertNotIn(gone, context)
+
+    def test_parts_world_keeps_out_of_the_copy(self):
+        """A part whose drift reaches the words fades out as the words come in
+        (why.js measures the words, the stylesheet fades on --gp-reveal). The
+        behaviour itself is in scripts/test_frontend.cjs."""
+        root = Path(settings.BASE_DIR)
+        js = (root / "static/js/why.js").read_text()
+        self.assertIn(".portal__content .beat > span", js)
+        self.assertIn("part--clear", js)
+        self.assertIn(".part--clear { opacity: calc(1 - var(--gp-reveal, 0)); }", (root / "static/css/site.css").read_text())
+
+
 
 
 class SecurityTests(SimpleTestCase):

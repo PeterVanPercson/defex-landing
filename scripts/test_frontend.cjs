@@ -559,6 +559,91 @@ test('Why us stops its animation clock when reduced motion is enabled', () => {
     assert.ok(p.frames.size > 0);
 });
 
+// An SVG node for the Why us drawings: children, removal, and the class
+// attribute as setAttribute writes it.
+class Node extends Element {
+    constructor() { super(); this.children = []; }
+    appendChild(el) { el.parentNode = this; this.children.push(el); return el; }
+    remove() { if (this.parentNode) this.parentNode.children = this.parentNode.children.filter(c => c !== this); }
+    setAttribute(k, v) { super.setAttribute(k, v); if (k === 'class') { this.className = String(v); } }
+}
+function whyLine() {
+    const p = page(), ids = ['loop', 'loop-track', 'loop-carriers', 'loop-flying', 'loop-tool', 'loop-tester', 'loop-lamp', 'loop-lid', 'loop-tote', 'loop-slots'];
+    for (const id of ids) p.ids[id] = new Node();
+    p.doc.createElementNS = () => new Node();
+    p.run('why.js');
+    p.observers[0].enter(p.ids.loop);
+    return p;
+}
+
+test('Why us line: the bin lid is orange only while a reject is held and posted', () => {
+    const p = whyLine();
+    let lidOn = 0, rejects = 0, frames = 0;
+    for (let i = 0; i < 3600; i++) {
+        p.frame();
+        frames++;
+        const lid = p.ids['loop-lid'].classList.contains('is-fail');
+        const halves = p.ids['loop-carriers'].children.flatMap(g => g.children.slice(1));
+        const fly = p.ids['loop-flying'].children[0];
+        const reject = halves.some(h => h.classList.contains('is-fail') && h.style.display !== 'none')
+            || (fly.className.includes('is-fail') && Number(fly.style.opacity) > 0);
+        if (lid) { lidOn++; assert.ok(reject, `lid orange with no reject on frame ${i}`); }
+        if (reject) rejects++;
+        assert.ok(p.ids['loop-carriers'].children.length <= 5, 'pallets pile up');
+    }
+    assert.ok(lidOn > 0, 'a reject never reached the bin');
+    assert.ok(lidOn < frames / 3, 'the lid stays orange');
+});
+
+test('Why us line: good units fill the four slots of the tote, and a full tote is swapped for an empty one', () => {
+    const p = whyLine();
+    const shown = () => p.ids['loop-slots'].children.filter(s => s.style.display !== 'none').length;
+    let most = 0, emptiedAfterFull = false, wasFull = false;
+    assert.equal(p.ids['loop-slots'].children.length, 4);
+    for (let i = 0; i < 3600; i++) {
+        p.frame();
+        const n = shown();
+        most = Math.max(most, n);
+        if (n === 4) wasFull = true;
+        if (wasFull && n === 0) emptiedAfterFull = true;
+    }
+    assert.equal(most, 4);
+    assert.ok(emptiedAfterFull, 'the full tote never rolled out');
+});
+
+test('Why us new part: Seated, Held and Wires tick for one part, clear for the swap, and tick again for the next', () => {
+    const p = page(), morph = new Node(), nodes = {};
+    const pins = Array.from({ length: 6 }, () => new Node()), checks = Array.from({ length: 3 }, () => new Node());
+    morph.querySelector = s => nodes[s] ||= new Node();
+    morph.querySelectorAll = s => (s === '.morph__pin' ? pins : s === '.morph__check' ? checks : []);
+    p.selectors['.morph'] = morph;
+    p.run('why.js');
+    p.observers[0].enter(morph);
+    const states = [];
+    for (let i = 0; i < 520; i++) { p.frame(); states.push(checks.map(c => c.classList.contains('is-on')).join('')); }
+    const runs = states.filter((s, i) => i === 0 || s !== states[i - 1]);
+    const full = runs.filter(s => s === 'truetruetrue').length, none = runs.filter(s => s === 'falsefalsefalse').length;
+    assert.ok(full >= 2, `the checks did not run for both parts: ${runs.join(' > ')}`);
+    assert.ok(none >= 1, 'the checks never cleared for the new part');
+    assert.ok(runs.includes('truefalsefalse') && runs.includes('truetruefalse'), 'the checks did not tick in order');
+});
+
+test('Why us parts world: a part under the words fades with the copy, one clear of them stays', () => {
+    const p = page(), portal = new Node(), field = new Node(), cover = new Node();
+    const under = new Node(), clear = new Node(), word = new Node();
+    under.style['--x'] = '18.750%'; under.style['--w'] = '2.500%';
+    clear.style['--x'] = '83.125%'; clear.style['--w'] = '13.500%';
+    cover.clientWidth = 1440;
+    cover.getBoundingClientRect = () => ({ left: 0, width: 1440 });
+    word.getBoundingClientRect = () => ({ left: 24, right: 640, width: 616 });
+    portal.querySelectorAll = s => (s === '.portal__content .beat > span' ? [word] : []);
+    Object.assign(p.selectors, { '[data-portal]': portal, '.portal__field': field, '.parts': cover, '.part': [under, clear] });
+    p.run('why.js');
+    for (const o of p.observers) if (o.targets.includes(cover)) o.enter(cover);
+    assert.equal(under.classList.contains('part--clear'), true);
+    assert.equal(clear.classList.contains('part--clear'), false);
+});
+
 test('Meet the robot leaves the page alone when the section is missing', () => {
     const p = page();
     p.run('meet.js');

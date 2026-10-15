@@ -93,7 +93,29 @@
             angle: 0,
         }));
         let unit = cover.clientWidth / 1600;
-        new ResizeObserver(() => { unit = cover.clientWidth / 1600; }).observe(cover);
+        // A keep-out band around the copy: the words scroll over the whole
+        // height of the field, so any part whose drift can reach across the
+        // column the words sit in fades out as the words come in.
+        const words = [...portal.querySelectorAll('.portal__content .beat > span')];
+        const keepOut = () => {
+            const box = cover.getBoundingClientRect();
+            let left = Infinity, right = -Infinity;
+            for (const w of words) {
+                const b = w.getBoundingClientRect();
+                if (b.width) { left = Math.min(left, b.left); right = Math.max(right, b.right); }
+            }
+            if (!(right > left) || !box.width) return;
+            // on a phone the words fill most of the width, so only a part
+            // that sits under them goes; one at the edge may graze them
+            const wide = right - left > innerWidth * 0.6;
+            for (const p of parts) {
+                const cx = box.left + (parseFloat(p.el.style.getPropertyValue('--x')) / 100) * box.width;
+                const reach = wide ? 0 : (parseFloat(p.el.style.getPropertyValue('--w')) / 100) * box.width * 0.6 + 16 * p.depth + 13 * unit + 12;
+                p.el.classList.toggle('part--clear', cx + reach > left && cx - reach < right);
+            }
+        };
+        new ResizeObserver(() => { unit = cover.clientWidth / 1600; keepOut(); }).observe(cover);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(keepOut);
         let aimX = 0, aimY = 0, lookX = 0, lookY = 0, lastY = scrollY, speed = 0, lag = 0;
         addEventListener('pointermove', (e) => {
             aimX = (e.clientX / innerWidth) * 2 - 1;
@@ -305,9 +327,9 @@
 
     // ------------------------------------------------------------------
     // The test gauge, as a test runs: the plug travels down, slows for the
-    // last stretch, clicks home (or stops short and shakes), Connected
-    // ticks, the ring sweeps, Locked ticks or fails, the result lands, and
-    // the part is taken away. One test in four fails.
+    // last stretch, clicks home (or stops short and shakes), Seated ticks,
+    // the ring sweeps, Held ticks or fails, Wires ticks on a good one, the
+    // result lands, and the part is taken away. One test in four fails.
     const gauge = document.getElementById('gauge');
     if (gauge) {
         const RESULTS = [true, true, false, true];
@@ -323,6 +345,7 @@
             if (t >= 1.25) on.push(ok ? 'is-click' : 'is-shake');
             if (t >= 1.45) on.push('is-c1', 'is-run');
             if (t >= 1.95) on.push('is-c2');
+            if (t >= 2.45 && ok) on.push('is-c3');
             if (t >= 3.05) on.push(ok ? 'is-pass' : 'is-fail');
             if (t >= 4.4) on.push('is-out');
             return on.join(' ');
@@ -392,12 +415,14 @@
     }
 
     // ------------------------------------------------------------------
-    // The loop, indexed the way real carrier lines run: every carrier moves
-    // one stop at once, stops, and the stations work while it stands. At In
-    // a pair drops onto an empty carrier; at Build the press comes down and
-    // joins it; at Test the lamp gives the verdict; at Out a good part is
-    // lifted off into the bin, and at Aside a bad one drops into its own.
-    // The belt only moves when the carriers do.
+    // The line, indexed the way the prototype runs it: every pallet moves one
+    // stop at once, stops, and the stations work while it stands. At In a
+    // loaded pallet comes up the lift; at Plug the robot comes down and
+    // seats the connector; at Test the tester docks and the lamp gives the
+    // verdict; at the end a good unit goes into the next slot of the tote
+    // and the empty pallet goes down the lift. A full tote rolls out and an
+    // empty one comes up. A reject holds the line, then it is posted into
+    // the locked bin, whose lid is orange only then.
     const loop = document.getElementById('loop');
     const track = document.getElementById('loop-track');
     if (loop && track) {
@@ -405,134 +430,198 @@
         const layer = document.getElementById('loop-carriers');
         const flying = document.getElementById('loop-flying');
         const press = document.getElementById('loop-tool');
+        const tester = document.getElementById('loop-tester');
         const lamp = document.getElementById('loop-lamp');
-        const L = track.getTotalLength();
-        const along = sample(track, L, 1024);
-        const N = 12, PITCH = L / N, S0 = 40;
-        const MOVE = 0.75, DWELL = 1.05, CYCLE = MOVE + DWELL;
-        const IN = 0, BUILD = 2, TEST = 4, OUT = 6, ASIDE = 8;
-        const BINS = { out: [400, 338], aside: [210, 338] };
-        const point = (stop) => along(((((S0 + stop * PITCH) % L) + L) % L) / L);
+        const lid = document.getElementById('loop-lid');
+        const tote = document.getElementById('loop-tote');
+        const STOPS = [70, 190, 310, 430], Y = 262, PITCH = 120;
+        const MOVE = 0.75, DWELL = 1.05, HOLD = 1.5, POST = 1.1, SWAP = 1.3;
+        const SLOTS = [464, 496, 528, 560], SLOT_Y = 326;
+        const BIN = [250, 312];
         const make = (tag, attrs, parent) => {
             const el = document.createElementNS(NS, tag);
             for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
             parent.appendChild(el);
             return el;
         };
-        const carriers = [0, 1, 2, 4, 5, 6, 8, 9, 10].map((pos) => {
+        const slots = SLOTS.map((x) => make('rect', { class: 'loop__unit is-pass', x, y: SLOT_Y, width: 28, height: 20, rx: 4 }, document.getElementById('loop-slots')));
+        const fly = make('rect', { class: 'loop__fly', x: -14, y: -11, width: 28, height: 22, rx: 4 }, flying);
+
+        let pallets = [], made = 0, moves = 0, filled = 0, swapAt = -1;
+        let segment = { kind: 'dwell', t0: 0, dur: DWELL };
+        const spawn = (t0) => {
             const g = make('g', { class: 'loop__carrier' }, layer);
             make('rect', { class: 'loop__plate', x: -27, y: -6, width: 54, height: 12, rx: 4 }, g);
-            const a = make('rect', { class: 'loop__half loop__half--a', x: -12, y: -28, width: 18, height: 22, rx: 4 }, g);
-            const b = make('rect', { class: 'loop__half loop__half--b', x: -6, y: -28, width: 18, height: 22, rx: 4 }, g);
-            const fly = make('rect', { class: 'loop__fly', x: -12, y: -11, width: 24, height: 22, rx: 4 }, flying);
-            return { g, a, b, fly, pos, state: 'empty', bad: false, evt: null };
-        });
-        let made = 0;
-        const advance = () => {
-            for (const k of carriers) {
-                k.pos = (k.pos + 1) % N;
+            const a = make('rect', { class: 'loop__half loop__half--a', x: -14, y: -28, width: 14, height: 22, rx: 4 }, g);
+            const b = make('rect', { class: 'loop__half loop__half--b', x: 0, y: -28, width: 14, height: 22, rx: 4 }, g);
+            pallets.push({ g, a, b, pos: 0, state: 'loaded', bad: made++ % 5 === 3, evt: 'rise', t0 });
+        };
+        spawn(0);
+        // what each station does once the pallets stand still
+        const arrive = () => {
+            for (const k of pallets) {
                 k.evt = null;
-                if (k.pos === IN && k.state === 'empty') { k.state = 'pair'; k.bad = made++ % 5 === 3; k.evt = 'load'; }
-                else if (k.pos === BUILD && k.state === 'pair') { k.state = 'joined'; k.evt = 'join'; }
-                else if (k.pos === TEST && k.state === 'joined') { k.state = k.bad ? 'fail' : 'pass'; k.evt = 'test'; }
-                else if (k.pos === OUT && k.state === 'pass') { k.state = 'empty'; k.evt = 'out'; }
-                else if (k.pos === ASIDE && k.state === 'fail') { k.state = 'empty'; k.evt = 'aside'; }
+                if (k.pos === 1 && k.state === 'loaded') { k.state = 'joined'; k.evt = 'join'; }
+                else if (k.pos === 2 && k.state === 'joined') { k.state = k.bad ? 'fail' : 'pass'; k.evt = 'test'; }
+                else if (k.pos === 3 && k.state === 'pass') { k.state = 'empty'; k.evt = 'out'; k.slot = swapAt >= 0 ? 0 : filled; }
             }
         };
-        // run the line for two laps before anyone sees it, so it arrives busy
-        for (let i = 0; i < 24; i++) advance();
-        let arrived = 0;
+        const next = () => {
+            const done = segment, at = done.t0 + done.dur;
+            if (done.kind === 'move') {
+                moves++;
+                for (const k of pallets) k.pos++;
+                pallets = pallets.filter((k) => { if (k.pos > 3) { k.g.remove(); return false; } return true; });
+                arrive();
+                spawn(at);
+                segment = { kind: 'dwell', t0: at, dur: DWELL };
+            } else if (done.kind === 'dwell') {
+                if (swapAt >= 0 && at - swapAt >= SWAP) { filled = 0; swapAt = -1; }
+                const out = pallets.find((k) => k.evt === 'out');
+                if (out) { filled++; if (filled === SLOTS.length) swapAt = at; }
+                const reject = pallets.find((k) => k.evt === 'test' && k.state === 'fail');
+                segment = reject ? { kind: 'hold', t0: at, dur: HOLD } : { kind: 'move', t0: at, dur: MOVE };
+            } else if (done.kind === 'hold') {
+                segment = { kind: 'post', t0: at, dur: POST };
+            } else {
+                for (const k of pallets) if (k.state === 'fail') { k.state = 'empty'; k.evt = null; }
+                segment = { kind: 'move', t0: at, dur: MOVE };
+            }
+        };
 
         const draw = (t) => {
-            // cycle c moves every carrier one stop in its first MOVE seconds,
-            // then stands for DWELL while the stations work
-            const c = Math.floor(t / CYCLE), u = t - c * CYCLE;
-            while (arrived < Math.floor((t - MOVE) / CYCLE) + 1) { advance(); arrived++; }
-            const moving = u < MOVE;
-            const m = moving ? E.smoother(u / MOVE) : 0;
-            const d = moving ? -1 : u - MOVE;
-            track.style.strokeDashoffset = String((-(arrived + m) * PITCH).toFixed(2));
-            let dip = 0, lit = '';
-            for (const k of carriers) {
-                const p = point(moving ? k.pos + m : k.pos);
-                k.g.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`);
-                const leaving = !moving && (k.evt === 'out' || k.evt === 'aside');
-                const has = k.state !== 'empty' || (leaving && d < 0.15);
-                k.a.style.display = k.b.style.display = has ? '' : 'none';
-                // the pair drops onto the carrier and settles
-                const drop = !moving && k.evt === 'load' ? -48 * (1 - E.outBack(seg(d, 0, 0.42), 1.2)) : 0;
-                // the halves close up as the press reaches the bottom
-                const gap = k.state === 'pair' ? 1 : !moving && k.evt === 'join' ? 1 - E.inOut3(seg(d, 0.28, 0.4)) : 0;
-                k.a.setAttribute('transform', `translate(${(-8 * gap).toFixed(2)} ${drop.toFixed(2)})`);
-                k.b.setAttribute('transform', `translate(${(8 * gap).toFixed(2)} ${drop.toFixed(2)})`);
-                const judged = (k.state === 'pass' || k.state === 'fail' || leaving) && !(!moving && k.evt === 'test' && d < 0.3);
-                const verdict = judged ? (k.bad ? 'is-fail' : 'is-pass') : '';
-                const joined = gap === 0 && k.state !== 'pair';
+            while (t >= segment.t0 + segment.dur) next();
+            const kind = segment.kind, d = t - segment.t0;
+            const m = kind === 'move' ? E.smoother(d / MOVE) : 0;
+            track.style.strokeDashoffset = String((-(moves + m) * PITCH).toFixed(2));
+            let dip = 0, dock = 0, lit = '', flight = null;
+            for (const k of pallets) {
+                let x = STOPS[k.pos], y = Y, fade = 1;
+                if (kind === 'move') {
+                    if (k.pos < 3) x += m * PITCH;
+                    else { y += 40 * m; fade = 1 - m; }
+                } else if (k.evt === 'rise') {
+                    const r = seg(t - k.t0, 0, 0.55);
+                    y += 40 * (1 - E.outBack(r, 1.2));
+                    fade = seg(t - k.t0, 0, 0.3);
+                }
+                k.g.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+                k.g.style.opacity = fade.toFixed(3);
+                const still = kind !== 'move';
+                const joining = still && kind === 'dwell' && k.evt === 'join';
+                const gap = k.state === 'loaded' ? 1 : joining ? 1 - E.inOut3(seg(d, 0.28, 0.4)) : 0;
+                const testing = still && kind === 'dwell' && k.evt === 'test' && d < 0.3;
+                const verdict = (k.state === 'pass' || k.state === 'fail') && !testing ? k.state : '';
+                const gone = k.state === 'empty' && !(kind === 'dwell' && k.evt === 'out' && d < 0.15);
+                const posting = kind === 'post' && k.state === 'fail';
+                k.a.setAttribute('transform', `translate(${(-5 * gap).toFixed(2)} 0)`);
+                k.b.setAttribute('transform', `translate(${(5 * gap).toFixed(2)} 0)`);
                 for (const half of [k.a, k.b]) {
-                    half.classList.toggle('is-joined', joined && !verdict);
-                    half.classList.toggle('is-pass', verdict === 'is-pass');
-                    half.classList.toggle('is-fail', verdict === 'is-fail');
+                    half.style.display = gone || (posting && d >= 0.12) ? 'none' : '';
+                    half.classList.toggle('is-joined', k.state === 'joined' && gap === 0);
+                    half.classList.toggle('is-pass', verdict === 'pass');
+                    half.classList.toggle('is-fail', verdict === 'fail');
                 }
-                // off the carrier: a good part is lifted and set in Out; a
-                // bad one drops straight into Aside
-                if (leaving && d >= 0.15 && d < 0.85) {
-                    const f = seg(d, 0.15, 0.8);
-                    const [bx, by] = k.evt === 'out' ? BINS.out : BINS.aside;
-                    const x0 = p.x, y0 = p.y - 17;
-                    const x = k.evt === 'out' ? lerp(x0, bx, E.inOut3(f)) : lerp(x0, bx, f);
-                    const y = k.evt === 'out' ? lerp(y0, by, E.inOut3(f)) - 70 * 4 * f * (1 - f) : lerp(y0, by, E.in2(f));
-                    const spin = k.evt === 'aside' ? 40 * f : 0;
-                    k.fly.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${spin.toFixed(1)})`);
-                    k.fly.setAttribute('class', `loop__fly ${k.evt === 'out' ? 'is-pass' : 'is-fail'}`);
-                    k.fly.style.opacity = String(1 - seg(d, 0.72, 0.85));
-                } else {
-                    k.fly.style.opacity = '0';
+                if (joining) dip = seg(d, 0.08, 0.3) < 1 ? E.in2(seg(d, 0.08, 0.3)) : 1 - E.out3(seg(d, 0.5, 0.75));
+                if (kind === 'dwell' && k.evt === 'test') {
+                    dock = d < 0.6 ? E.out3(seg(d, 0.02, 0.22)) : 1 - E.inOut3(seg(d, 0.65, 0.9));
+                    if (d >= 0.3) lit = k.bad ? 'is-fail' : 'is-pass';
                 }
-                if (!moving && k.pos === BUILD && k.evt === 'join') {
-                    dip = seg(d, 0.08, 0.3) < 1 ? E.in2(seg(d, 0.08, 0.3)) : 1 - E.out3(seg(d, 0.5, 0.75));
+                if (kind === 'hold' && k.state === 'fail') lit = Math.floor(d * 3) % 2 ? '' : 'is-fail';
+                // a good unit is lifted off into the next slot of the tote
+                if (kind === 'dwell' && k.evt === 'out' && d >= 0.15 && d < 0.8) {
+                    const f = E.inOut3(seg(d, 0.15, 0.78));
+                    const tx = SLOTS[k.slot] + 14, ty = SLOT_Y + 10;
+                    flight = { x: lerp(x, tx, f), y: lerp(Y - 17, ty, f) - 60 * 4 * f * (1 - f), cls: 'is-pass', o: 1 };
                 }
-                if (!moving && k.pos === TEST && k.evt === 'test' && d >= 0.3) lit = k.bad ? 'is-fail' : 'is-pass';
+                // the reject is lifted, carried over the bin and posted through the seal
+                if (posting && d >= 0.12) {
+                    const f = seg(d, 0.12, POST);
+                    const up = E.inOut3(seg(f, 0, 0.7));
+                    const fx = lerp(x, BIN[0], up);
+                    const fy = f < 0.7 ? lerp(Y - 17, BIN[1] - 40, up) - 50 * 4 * up * (1 - up) : lerp(BIN[1] - 40, BIN[1], E.in2(seg(f, 0.7, 1)));
+                    flight = { x: fx, y: fy, cls: 'is-fail', o: 1 - seg(f, 0.9, 1) };
+                }
             }
-            press.setAttribute('transform', `translate(0 ${(dip * 14).toFixed(2)})`);
+            if (flight) {
+                fly.setAttribute('transform', `translate(${flight.x.toFixed(1)} ${flight.y.toFixed(1)})`);
+                fly.setAttribute('class', `loop__fly ${flight.cls}`);
+                fly.style.opacity = flight.o.toFixed(3);
+            } else {
+                fly.style.opacity = '0';
+            }
+            press.setAttribute('transform', `translate(0 ${(dip * 26).toFixed(2)})`);
+            tester.setAttribute('transform', `translate(0 ${(dock * 22).toFixed(2)})`);
             lamp.classList.toggle('is-pass', lit === 'is-pass');
             lamp.classList.toggle('is-fail', lit === 'is-fail');
+            // orange from the verdict until the reject has gone through the seal
+            lid.classList.toggle('is-fail', kind === 'hold' || (kind === 'post' && d < POST * 0.92));
+            // a full tote rolls out to the right and an empty one comes up
+            let tx = 0, ty = 0, to = 1;
+            if (swapAt >= 0) {
+                const s = t - swapAt;
+                if (s < SWAP / 2) { const f = E.in2(seg(s, 0, SWAP / 2)); tx = 70 * f; to = 1 - f; }
+                else { const f = E.out3(seg(s, SWAP / 2, SWAP)); ty = 18 * (1 - f); to = f; }
+            }
+            const showing = swapAt >= 0 && t - swapAt >= SWAP / 2 ? 0 : Math.min(filled, SLOTS.length);
+            slots.forEach((el, i) => { el.style.display = i < showing ? '' : 'none'; });
+            tote.setAttribute('transform', `translate(${tx.toFixed(1)} ${ty.toFixed(1)})`);
+            tote.style.opacity = to.toFixed(3);
         };
-        if (!run(loop, draw)) draw(MOVE + DWELL * 0.6);
+        // the line runs for half a minute before anyone sees it, so it arrives busy
+        // without motion it stands still with the pallets at their stations
+        const still = () => {
+            let t = 30;
+            draw(t);
+            while (segment.kind !== 'dwell') { t = segment.t0 + segment.dur + 0.95; draw(t); }
+        };
+        if (!run(loop, draw, 30)) still();
     }
 
     // ------------------------------------------------------------------
-    // A new part is not a new project: one housing that widens into the
-    // next part, the pins sliding to their new places and two new ones
-    // arriving once there is room, a dimension line that follows the width,
-    // and the skill above it holding still, flashing once as it takes hold
-    // of the new part.
+    // A new part is not a new project: the fixture and the part on the same
+    // pallet widen into the next part, the pins sliding to their new places
+    // and two new ones arriving once there is room, the part lifting a little
+    // as it swaps, a dimension line that follows the width. Seated, Held and
+    // Wires tick for each part in turn: the same three checks every time.
     const morph = document.querySelector('.morph');
     if (morph) {
         const body = morph.querySelector('.morph__body');
+        const fixture = morph.querySelector('.morph__fixture');
+        const part = morph.querySelector('.morph__part');
         const pins = [...morph.querySelectorAll('.morph__pin')];
         const dim = morph.querySelector('.morph__dim');
-        const skill = morph.querySelector('.morph__skill');
+        const checks = [...morph.querySelectorAll('.morph__check')];
         const nameA = morph.querySelector('.morph__name--a'), nameB = morph.querySelector('.morph__name--b');
         const A = { x: 190, w: 220, pins: [222, 266, 308, 350] };
         const B = { x: 150, w: 300, pins: [176, 220, 264, 308] };
-        run(morph, (time) => {
+        // when each check ticks, in seconds after its part settles
+        const TICKS = [0.5, 1.0, 1.5];
+        const draw = (time) => {
             const t = time % 8;
             const m = t < 2.4 ? 0 : t < 3.4 ? E.inOut3(seg(t, 2.4, 3.4)) : t < 6.4 ? 1 : t < 7.4 ? 1 - E.inOut3(seg(t, 6.4, 7.4)) : 0;
             const x = lerp(A.x, B.x, m), w = lerp(A.w, B.w, m);
             body.setAttribute('x', x.toFixed(2));
             body.setAttribute('width', w.toFixed(2));
+            fixture.setAttribute('x', (x - 16).toFixed(2));
+            fixture.setAttribute('width', (w + 32).toFixed(2));
             for (let i = 0; i < 4; i++) pins[i].setAttribute('x', lerp(A.pins[i], B.pins[i], m).toFixed(2));
             const room = seg(m, 0.55, 1);
             for (const pin of pins.slice(4)) {
                 pin.style.opacity = String(clamp(room * 2));
                 pin.style.transform = `scale(${Math.max(0, E.outBack(room, 2)).toFixed(3)})`;
             }
-            dim.setAttribute('d', `M${x.toFixed(1)} 356 H${(x + w).toFixed(1)} M${x.toFixed(1)} 348 v16 M${(x + w).toFixed(1)} 348 v16`);
+            const swapping = (t >= 2.4 && t < 3.4) || (t >= 6.4 && t < 7.4);
+            const lift = swapping ? Math.sin(Math.PI * seg(t % 4, 2.4, 3.4)) : 0;
+            part.setAttribute('transform', `translate(0 ${(-18 * lift).toFixed(2)})`);
+            dim.setAttribute('d', `M${x.toFixed(1)} 344 H${(x + w).toFixed(1)} M${x.toFixed(1)} 336 v16 M${(x + w).toFixed(1)} 336 v16`);
             nameA.style.opacity = String(1 - clamp(m * 2));
             nameB.style.opacity = String(clamp(m * 2 - 1));
-            const flash = Math.max(0, 1 - Math.abs(t - 3.55) / 0.35) + Math.max(0, 1 - Math.abs(t - 7.55) / 0.35);
-            skill.style.strokeWidth = String(5 + 3 * flash);
-        }, 0.6);
+            // the checks run again on whichever part has just settled
+            const since = t < 2.4 ? t + 0.6 : t < 3.4 ? -1 : t < 6.4 ? t - 3.4 : t < 7.4 ? -1 : t - 7.4;
+            checks.forEach((c, i) => c.classList.toggle('is-on', since >= TICKS[i]));
+        };
+        if (!run(morph, draw, 0.6)) { draw(2); }
     }
 
     // ------------------------------------------------------------------

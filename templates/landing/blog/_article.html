@@ -20,7 +20,8 @@
 {% block twitter_description %}{{ post.dek }}{% endblock %}
 
 {% block extra_head %}
-<meta property="article:published_time" content="{{ post.date|date:'c' }}">
+{% if post.unlisted %}<meta name="robots" content="noindex">
+{% endif %}<meta property="article:published_time" content="{{ post.date|date:'c' }}">
 <meta property="article:author" content="{{ post.author.url }}">
 <!-- The post as a node of the same graph base.html declares: the author and
      publisher are the organisation, so the article links back to it. -->

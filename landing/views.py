@@ -169,6 +169,12 @@ POSTS = (
         "keywords": ("AI inference, AI hardware, GPU memory bandwidth, HBM4, SRAM, "
                      "Cerebras, Groq, d-Matrix, quantization, NVFP4, MXFP4"),
     },
+)
+
+# Off the index, the feed, the sitemap and the crawl files: its thesis (a robot
+# that learns from its own tests) is the story he dropped on 2026-10-13. The
+# URL still answers, marked noindex, so old links do not 404.
+UNLISTED_POSTS = (
     {
         "slug": "the-cost-of-the-next-attempt",
         "title": "The Cost of the Next Attempt",
@@ -179,16 +185,16 @@ POSTS = (
         "date": date(2026, 8, 30),
         "modified": date(2026, 9, 20),
         "minutes": 9,
+        "unlisted": True,
         "author": {"name": "Husan Mavlonov", "url": "https://husanmavlonov.com/", "site": "husanmavlonov.com",
-                   "bio": "Co-founder and CEO of Defex, building robots that test their own work, in San Francisco."},
-        "keywords": ("robot learning, connector assembly, robot reset, acceptance test, "
-                     "trials per hour, self-teaching robots, manufacturing robotics, defex"),
+                   "bio": "Co-founder and CEO of Defex, building robots that plug in connectors and check every connection."},
+        "keywords": "robot reset, acceptance test, connector testing, manufacturing robotics, defex",
     },
 )
 
 
 def _post(slug):
-    for post in POSTS:
+    for post in POSTS + UNLISTED_POSTS:
         if post["slug"] == slug:
             return dict(post, url="https://defexrobotics.com" + reverse("blog_post", kwargs={"slug": slug}))
     raise Http404
