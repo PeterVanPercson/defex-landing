@@ -51,7 +51,7 @@
         <span class="readout-note" hidden><span id="stage-speed"></span></span>
       </aside>
       <aside class="process-readout" aria-label="Illustrated process signals">
-        <div class="process-heading"><b id="cycle-index">01</b><i id="cycle-retry" hidden>retry</i></div>
+        <div class="process-heading"><i id="cycle-retry" hidden>retry</i></div>
         <h2 id="cycle-title">Locate the unit</h2><span id="cycle-detail" hidden></span><p id="cycle-copy"></p><span class="process-scope" id="cycle-scope"></span>
         <details class="process-signals"><summary>Illustrated signals <span>+</span></summary>
           <div class="signal-grid"><div>Press / example limit <b id="cycle-force">0.0 / 60 N</b></div><div>Depth <b id="cycle-depth">0.0 mm</b></div><div>Pull / example limit <b id="cycle-pull">0.0 / 15 N</b></div><div id="cycle-extraction-row" hidden>Extract / example limit <b id="cycle-extraction">0.0 / 30 N</b></div><div>Tries <b id="cycle-tries">1</b></div></div>
@@ -99,7 +99,7 @@
     <section class="process-guide" aria-labelledby="process-title">
       <div class="process-guide-head"><h2 id="process-title">One connector, start to finish.</h2></div>
       <div class="cycle-cases" aria-label="Illustrated cycle cases"><button data-cycle-case="pass" aria-pressed="true">Pass</button><button data-cycle-case="search" aria-pressed="false">Needs a search</button><button data-cycle-case="half-seat" aria-pressed="false">Half-seated</button><button data-cycle-case="open" aria-pressed="false">Open wire</button><button data-cycle-case="short" aria-pressed="false">Shorted wires</button></div>
-      <div id="process-steps" class="process-steps" aria-label="Cycle steps"></div>
+      <div class="how"><div class="how__pin"><p class="how__lead" aria-hidden="true">The robot</p><ol id="process-steps" class="how__list" aria-label="How it works, step by step"></ol></div></div>
       <details class="illustration-log" hidden><summary>Unit records</summary><p id="cycle-log-status">No completed illustration yet. Each unit retains every attempt, contact result and example force trace during this visit.</p><button id="cycle-export" disabled>Download illustrated traces ↓</button><ol id="cycle-log"></ol></details>
     </section>
 
