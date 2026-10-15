@@ -554,6 +554,10 @@ class SiteTests(SimpleTestCase):
             "cobot-photo-1672.webp": 500 * 1024,
             "cobot-photo-tall-772.avif": 300 * 1024,
             "cobot-photo-tall-772.webp": 400 * 1024,
+            "cobot-photo-2560.avif": 500 * 1024,
+            "cobot-photo-2560.webp": 700 * 1024,
+            "cobot-photo-tall-1544.avif": 400 * 1024,
+            "cobot-photo-tall-1544.webp": 500 * 1024,
         }
         still = Path(settings.BASE_DIR) / "static" / "defex" / "cobot" / "still"
         for name, cap in budget.items():
@@ -575,7 +579,7 @@ class SiteTests(SimpleTestCase):
         home = self.client.get("/").content.decode()
         for chunk in ('<picture class="hero__photo">',
                       'media="(max-aspect-ratio: 13/10) and (max-width: 600px)" srcset="/static/defex/cobot/still/cobot-photo-tall-772.avif',
-                      'cobot-photo-1280.avif?v=', 'width="1672" height="941" alt="A white Defex cobot',
+                      'cobot-photo-1280.avif?v=', 'width="1672" height="941" alt="The Defex connector workcell',
                       'rel="preload" as="image" fetchpriority="high" imagesrcset="/static/defex/cobot/still/cobot-photo-1280.avif',
                       "js/hero-film.js"):
             self.assertIn(chunk, home, chunk)
