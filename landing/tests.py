@@ -579,7 +579,7 @@ class SiteTests(SimpleTestCase):
         home = self.client.get("/").content.decode()
         for chunk in ('<picture class="hero__photo">',
                       'media="(max-aspect-ratio: 13/10) and (max-width: 600px)" srcset="/static/defex/cobot/still/cobot-photo-tall-772.avif',
-                      'cobot-photo-1280.avif?v=', 'width="1672" height="941" alt="The Defex connector workcell',
+                      'cobot-photo-1280.avif?v=', 'width="1672" height="941" alt="A dark grey and white six-axis collaborative robot arm',
                       'rel="preload" as="image" fetchpriority="high" imagesrcset="/static/defex/cobot/still/cobot-photo-1280.avif',
                       "js/hero-film.js"):
             self.assertIn(chunk, home, chunk)
