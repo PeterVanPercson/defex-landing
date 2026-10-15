@@ -136,17 +136,11 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   // A step is also a button: it scrubs the cycle there and brings the stage back.
   const SAY=['locates the unit','checks the board','picks the housing','turns it over and regrips','checks the grip','lines it up','presses it in','pulls to test the latch','tests every wire','lets go','moves the next unit in'];
   steps.innerHTML=CYCLE_STEPS.map((s,i)=>`<li><button data-cycle-step="${i}" aria-current="false" aria-label="${s[0]}">${SAY[i]??s[0].toLowerCase()}</button></li>`).join('');
-  const how=steps.closest<HTMLElement>('.how'),lines=[...steps.querySelectorAll<HTMLButtonElement>('button')];
-  let howRaf=0;
-  const rollHow=()=>{howRaf=0;if(!how)return;
-    const r=how.getBoundingClientRect(),span=Math.max(1,r.height-innerHeight),u=Math.min(1,Math.max(0,-r.top/span)),at=u*(lines.length-1);
-    const step=lines[0]?.offsetHeight??40;
-    steps.style.transform=`translateY(${(-at*step-step/2).toFixed(1)}px)`;
-    // on a phone "The robot" sits above the list, so the steps already passed fade out before they reach it
-    const narrow=innerWidth<=700;
-    lines.forEach((b,i)=>{b.style.opacity=(narrow&&i<at?Math.max(0,1-(at-i)*1.4):Math.max(.16,1-Math.abs(i-at)*.84)).toFixed(3);});};
-  const onHowScroll=()=>{if(!howRaf)howRaf=requestAnimationFrame(rollHow);};
-  addEventListener('scroll',onHowScroll,{passive:true,signal:ctl.signal});addEventListener('resize',onHowScroll,{passive:true,signal:ctl.signal});rollHow();
+  const lines=[...steps.querySelectorAll<HTMLButtonElement>('button')];let rolled=-1;
+  // the roll follows the cycle: the step being done sits beside "The robot", the rest fade above and below it
+  const roll=(at:number)=>{if(at===rolled)return;rolled=at;const h=lines[0]?.offsetHeight||40;
+    steps.style.transform=`translateY(${(-at*h-h/2).toFixed(1)}px)`;
+    lines.forEach((b,i)=>{const d=i-at;b.style.opacity=(d<0?Math.max(0,1-(-d)*.62):Math.max(0,1-d*.36)).toFixed(3);b.classList.toggle('is-now',d===0);});};
   const pad=(n:number)=>String(n).padStart(3,'0');
 
   const draw=()=>{
@@ -185,7 +179,7 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
     const indexing=f.step===CYCLE_STEPS.length-1;
     byId('cycle-verdict').textContent=indexing?(isReject(kind)?'Reject cleared · the line moves on':'The line moves the next unit in'):f.accepted===true?(kind==='search'?'All three checks passed · flagged: search used':'All three checks passed'):f.accepted===false?'Rejected · line stopped until a person clears it':f.step===CYCLE_STEPS.length-1?'The line moves the next unit in':f.retry?'Attempt 2 · fresh checks':failed?'Check failed · stop this attempt':f.step===1||f.step===4?'Measuring this unit':f.step<6?'Preparing the unit':'Checks in progress';
     byId('cycle-verdict').dataset.result=indexing?'pending':f.accepted===true?'pass':f.accepted===false||failed?'fail':'pending';
-    for(const button of steps.querySelectorAll('button'))button.setAttribute('aria-current',String(Number(button.dataset.cycleStep)===f.step));
+    for(const button of steps.querySelectorAll('button'))button.setAttribute('aria-current',String(Number(button.dataset.cycleStep)===f.step));roll(f.step);
     play.textContent=playing?'Pause':'Play';play.setAttribute('aria-pressed',String(playing));play.disabled=held;
     reset.disabled=held;clearFault.hidden=!held;
     for(const button of caseButtons)button.disabled=held;slider.disabled=held;for(const button of steps.querySelectorAll('button'))button.disabled=held;
