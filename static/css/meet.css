@@ -186,3 +186,5 @@
 .meet-cta__btn:focus-visible { outline: 2px solid #F4F4F0; outline-offset: 4px; }
 
 .rb__tote { transition: none; }
+/* hooks meet.js moves or groups; their look comes from the shapes inside them */
+.rb__cone--down, .rb__cone--up, .rb__jaw--l, .rb__jaw--r, .rb__liftplug, .rb__packed, .rb__packplug, .rb__unitboard, .rb__wires { transition: none; }

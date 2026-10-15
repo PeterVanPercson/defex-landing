@@ -93,7 +93,7 @@ class SiteTests(SimpleTestCase):
         self.assertNotContains(home, "Concept render")
         # the partners sit in ink on a square block of the page's paper
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
-        self.assertIn(".hero--card .flick { padding: 11px 16px 12px; border-radius: 0; color: var(--ink); background: var(--page); }", css)
+        self.assertIn(".hero--card .flick { padding: 11px 16px 12px; border-radius: 0; color: var(--ink); background: transparent; }", css)
         # every superseded hero asset, so a revert to one of them is caught
         for gone in ("defex-intro-scroll-v2.webm", "defex-intro-scroll.mp4",
                      "defex-intro-scroll-1080.mp4", "defex-first-frame.webp",
