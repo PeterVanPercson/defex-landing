@@ -1,7 +1,6 @@
 """Public company facts and canonical crawl surfaces. No private fundraising data."""
 import json
 import os
-from datetime import date
 from xml.etree.ElementTree import Element, SubElement, tostring
 
 from django.http import HttpResponse, JsonResponse
@@ -13,7 +12,6 @@ from django.views.decorators.http import require_safe
 from .forms import ContactForm
 
 CANONICAL_ORIGIN = "https://defexrobotics.com"
-COMPANY_UPDATED = date(2026, 10, 3)
 PUBLIC_COMPANY = {
     "name": "Defex",
     "legal_name": "Defex Robotics, Inc.",
@@ -30,17 +28,15 @@ PUBLIC_COMPANY = {
         {"city": "Hong Kong", "country": "Hong Kong SAR", "time_zone": "Asia/Hong_Kong"},
         {"city": "Shanghai", "country": "China", "time_zone": "Asia/Shanghai"},
     ],
-    "as_of": COMPANY_UPDATED.isoformat(),
     "product": {
         "focus": "Connectors",
-        "stage": "Connector cell in development",
-        "approach": "A robot attempts a connection, a physical test scores the result, and a reset prepares the next attempt.",
-        "prior_product": "Vision inspection prototype built on NVIDIA Jetson Orin",
+        "stage": "Building the robot, starting with connectors.",
+        "approach": "It measures every unit, feels its way in and checks every connection.",
+        "prior_product": "Vision inspection on NVIDIA Jetson Orin, run on a live camera",
     },
     "paid_waitlist": {
         "factories": 21,
-        "definition": "Factories that paid to hold a place before the first connector cell ships.",
-        "as_of": COMPANY_UPDATED.isoformat(),
+        "definition": "Factories that paid to be first in line.",
     },
     "founders": [
         {"name": "Husan Mavlonov", "role": "Co-founder and CEO", "id": "https://husanmavlonov.com/#person", "url": "https://husanmavlonov.com/", "same_as": ["https://www.linkedin.com/in/husan-mavlonov", "https://github.com/PeterVanPercson", "https://x.com/MavlonovHusan"], "bio": "Hardware researcher with more than three years in electronics manufacturing and batteries, with factory operations experience across Uzbekistan, Turkiye, China and the United States."},
@@ -51,7 +47,6 @@ PUBLIC_COMPANY = {
                  "careers": "careers@defexrobotics.com",
                  "security": "security@defexrobotics.com", "privacy": "privacy@defexrobotics.com"},
     "links": {
-        "technical_note": CANONICAL_ORIGIN + "/blog/the-cost-of-the-next-attempt/",
         "blog": CANONICAL_ORIGIN + "/blog/",
         "feed": CANONICAL_ORIGIN + "/blog/feed.xml",
     },
@@ -99,12 +94,12 @@ HERO_PARTNERS = [next(p for p in PARTNERS if p["name"] == name) for name in HERO
 
 # Kept out of PUBLIC_COMPANY on purpose: that dict is dumped whole into /company.json.
 PRICING = {
-    "robot": {"price": "$65,000", "what": "One robot, taught your part, running on your floor.",
+    "robot": {"price": "$65,000", "what": "One robot, running your part on your floor.",
               "terms": "30% with the order. The rest when it passes your test on your floor."},
     "steps": [
-        {"price": "Free", "pick": "part", "go": "Send it", "title": "Send us your part.", "line": "A short video or a drawing, how many you make and how you check it. We will tell you straight if it is a fit."},
+        {"price": "Free", "pick": "part", "go": "Send it", "title": "Send us your part.", "line": "A short video or a drawing, how many you make and how you check it. We tell you if it is a fit."},
         {"price": "$1,000", "pick": "place", "go": "Reserve", "title": "Hold your place.", "line": "Your place among the first robots. Not a fit? You get it back."},
-        {"price": "$5,000", "pick": "bench", "go": "Book it", "title": "Put your part on our bench.", "line": "A straight yes or no, the test it has to pass in writing and a fixed price for your robot. You only pay for a yes."},
+        {"price": "$5,000", "pick": "bench", "go": "Book it", "title": "Put your part on our bench.", "line": "A yes or no, the test it has to pass in writing and a fixed price for your robot. You only pay for a yes."},
         {"price": "$500", "per": "a month", "title": "Keep it running.", "line": "Support, maintenance and updates."},
         {"price": "$5,000", "title": "Teach it a new part.", "line": "Not a new project."},
     ],
@@ -158,16 +153,10 @@ def organization_jsonld():
     return json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=True, indent=2).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
 
 
-# The practice field on /why-us/: 36 attempts, the misses thinning out as a
-# candidate improves. Illustrative only; the page labels the figure a schematic.
-PRACTICE = "..x.x..x.xx." "x.xx.xxx.xxx" "xxxx.xxxxxxx"
-
-
 @require_safe
 def why_us(request):
     return render(request, "landing/why_us.html", {
-        "company": PUBLIC_COMPANY, "updated": COMPANY_UPDATED, "pricing": PRICING, "in_line": IN_LINE, "form": ContactForm(),
-        "practice_marks": [mark == "x" for mark in PRACTICE], "trials": range(8)})
+        "company": PUBLIC_COMPANY, "pricing": PRICING, "in_line": IN_LINE, "form": ContactForm()})
 
 
 @require_safe
@@ -194,7 +183,8 @@ def llms_txt(request):
         + husan["name"] + " is " + husan["role"] + "; " + hasan["name"] + " is " + hasan["role"] + ". "
         "Canonical domain: defexrobotics.com (defex.app redirects here).", "",
         "## Pages",
-        "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robots do and the inspection prototype",
+        "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robot does",
+        "- [Prototype](" + CANONICAL_ORIGIN + reverse("prototype") + "): the robot on an endless line, in simulation",
         "- [Why us](" + CANONICAL_ORIGIN + reverse("why_us") + "): why robots that plug in and check every connector: the check, feeling its way in, new parts, and where we are today",
         "- [Careers](" + CANONICAL_ORIGIN + reverse("careers") + "): open roles",
         "- [Security](" + CANONICAL_ORIGIN + reverse("security") + "): data handling and vulnerability reporting",

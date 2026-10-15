@@ -1195,6 +1195,8 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 .parts { position: absolute; left: 50%; top: 50%; width: max(100%, calc(var(--gp-height, 100svh) * 1.6)); aspect-ratio: 16 / 10; transform: translate(-50%, -50%); }
 .part { position: absolute; left: var(--x); top: var(--y); width: var(--w); transform: translate(-50%, -50%); will-change: transform; }
 .part svg { display: block; width: 100%; height: auto; overflow: visible; }
+/* a part that would drift under the copy fades out as the copy comes in (why.js marks it) */
+.part--clear { opacity: calc(1 - var(--gp-reveal, 0)); }
 /* on a portrait screen the biggest parts sit behind the copy: once inside
    the letter they go tonal */
 @media (max-width: 900px) { .parts { transition: opacity .6s ease; } .portal[data-entered="true"] .parts { opacity: .4; } }
@@ -1335,8 +1337,8 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 .gauge__checks { display: flex; gap: clamp(20px, 3vw, 40px); margin-top: 18px; list-style: none; }
 .gauge__check { display: flex; align-items: center; gap: 12px; font: 500 clamp(17px, 1.5vw, 22px)/1.2 var(--sans); color: var(--mute); transition: color .25s ease; }
 .gauge__check::before { content: ""; flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(244, 244, 240, .3); font: 700 15px/1 var(--sans); color: #0A0A0A; transition: background .25s ease, border-color .25s ease; }
-.gauge.is-c1 [data-check="1"], .gauge.is-c2 [data-check="2"] { color: var(--ink); }
-.gauge.is-c1 [data-check="1"]::before, .gauge.is-c2:not(.is-bad) [data-check="2"]::before { content: "\2713"; background: var(--blue); border-color: var(--blue); color: #FFFFFF; animation: check-pop .35s cubic-bezier(.34, 1.56, .64, 1); }
+.gauge.is-c1 [data-check="1"], .gauge.is-c2 [data-check="2"], .gauge.is-c3 [data-check="3"] { color: var(--ink); }
+.gauge.is-c1 [data-check="1"]::before, .gauge.is-c2:not(.is-bad) [data-check="2"]::before, .gauge.is-c3 [data-check="3"]::before { content: "\2713"; background: var(--blue); border-color: var(--blue); color: #FFFFFF; animation: check-pop .35s cubic-bezier(.34, 1.56, .64, 1); }
 .gauge.is-c2.is-bad [data-check="2"]::before { content: "\2715"; background: var(--fail); border-color: var(--fail); animation: check-pop .35s cubic-bezier(.34, 1.56, .64, 1); }
 @keyframes check-pop { from { transform: scale(.4); } to { transform: scale(1); } }
 /* the part is taken away, and its checks with it */
@@ -1365,67 +1367,69 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 .tries__ripple { fill: none; stroke: var(--fail); stroke-width: 2; opacity: 0; }
 .tries__ripple--hit { stroke: var(--hl); stroke-width: 3; }
 
-/* the loop, drawn by static/js/why.js */
+/* the line, drawn by static/js/why.js: pallets on one belt, the robot's
+   press, the tester and its lamp, the tote and the locked reject bin */
 .loop { position: relative; }
 .loop__svg { display: block; width: 100%; height: auto; overflow: visible; }
 .loop__track { fill: none; stroke: rgba(244, 244, 240, .3); stroke-width: 4; stroke-dasharray: 14 10; }
+.loop__lift { fill: none; stroke: rgba(244, 244, 240, .18); stroke-width: 3; stroke-dasharray: 4 6; stroke-linecap: round; }
 .loop__station { fill: var(--bg); stroke: rgba(244, 244, 240, .55); stroke-width: 2.5; }
 .loop__tool rect { fill: var(--ink); }
+.loop__tester rect { fill: #121212; stroke: var(--ink); stroke-width: 3; }
+.loop__tester path { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
 .loop__stem { fill: none; stroke: rgba(244, 244, 240, .4); stroke-width: 3; stroke-linecap: round; }
 .loop__lamp { fill: #222; stroke: rgba(244, 244, 240, .4); stroke-width: 2; transition: fill .15s ease, stroke .15s ease; }
 .loop__lamp.is-pass { fill: var(--blue); stroke: var(--blue); }
 .loop__lamp.is-fail { fill: var(--fail); stroke: var(--fail); }
-.loop__bin { fill: none; stroke: rgba(244, 244, 240, .5); stroke-width: 4; stroke-linejoin: round; }
-.loop__bin--aside { stroke-dasharray: 6 6; }
+.loop__bin, .loop__tote, .morph__part { transform-box: view-box; }
+.loop__binbody, .loop__totebody { fill: none; stroke: rgba(244, 244, 240, .5); stroke-width: 4; stroke-linejoin: round; }
+.loop__lid { fill: rgba(244, 244, 240, .5); transition: fill .2s ease; }
+.loop__lid.is-fail { fill: var(--fail); }
+.loop__seal { fill: none; stroke: rgba(244, 244, 240, .35); stroke-width: 1.5; }
+.loop__lock { fill: none; stroke: rgba(244, 244, 240, .5); stroke-width: 3; stroke-linejoin: round; }
 .loop__plate { fill: var(--bg); stroke: var(--ink); stroke-width: 2.5; }
 .loop__half--a { fill: var(--blue); }
 .loop__half--b { fill: var(--ink); }
 .loop__half.is-joined { fill: var(--ink); }
-.loop__half.is-pass { fill: var(--blue); }
+.loop__half.is-pass, .loop__unit.is-pass { fill: var(--blue); }
 .loop__half.is-fail { fill: var(--fail); }
 .loop__fly { fill: var(--ink); opacity: 0; }
 .loop__fly.is-pass { fill: var(--blue); }
 .loop__fly.is-fail { fill: var(--fail); }
 .loop__labels { position: absolute; inset: 0; list-style: none; pointer-events: none; }
-.loop__labels li { position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, -50%); font: 500 13px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); white-space: nowrap; }
+.loop__labels li { position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, -50%); font: 500 13px/1 var(--text); color: var(--mute); white-space: nowrap; }
 
-/* the new part: the skill stays, the part under it changes */
+/* the new part: the pallet and the checks stay, the fixture and the part on it change */
 .morph { position: relative; }
 .morph__svg { display: block; width: 100%; height: auto; overflow: visible; }
-.morph__skill { fill: none; stroke: var(--ink); stroke-width: 5; stroke-linecap: round; }
-.morph__handles { fill: none; stroke: var(--blue); stroke-width: 1.5; }
-.morph__a { fill: var(--bg); stroke: var(--blue); stroke-width: 2; }
-.morph__start { fill: var(--blue); }
-.morph__label { font: 500 13px var(--mono); letter-spacing: .12em; text-transform: uppercase; fill: rgba(244, 244, 240, .6); }
-.morph__part { transform-box: fill-box; transform-origin: center; }
+.morph__pallet { fill: var(--bg); stroke: var(--ink); stroke-width: 2.5; }
+.morph__fixture { fill: none; stroke: rgba(244, 244, 240, .3); stroke-width: 4; }
 .morph__pin--new { transform-box: fill-box; transform-origin: center; }
 .morph__dim { fill: none; stroke: var(--blue); stroke-width: 1.5; }
 .morph__body { fill: #121212; stroke: var(--ink); stroke-width: 4; }
 .morph__pin { fill: var(--ink); }
 .morph__pin--new { fill: var(--ink); }
-.morph__names { position: relative; height: 1.4em; margin-top: 12px; text-align: center; font: 500 13px/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
+.morph__names { position: relative; height: 1.4em; margin-top: 12px; text-align: center; font: 500 13px/1.4 var(--text); color: var(--mute); }
 .morph__name { position: absolute; left: 50%; transform: translateX(-50%); }
 .morph__name--a { opacity: 0; }
 .morph__name--b { opacity: 1; }
+.morph__checks { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px clamp(20px, 3vw, 40px); margin-top: 22px; list-style: none; }
+.morph__check { display: flex; align-items: center; gap: 12px; font: 400 clamp(17px, 1.5vw, 22px)/1.2 var(--text); color: var(--mute); transition: color .25s ease; }
+.morph__check::before { content: ""; flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(244, 244, 240, .3); font: 700 15px/1 var(--sans); color: #FFFFFF; transition: background .25s ease, border-color .25s ease; }
+.morph__check.is-on { color: var(--ink); }
+.morph__check.is-on::before { content: "\2713"; background: var(--blue); border-color: var(--blue); animation: check-pop .35s cubic-bezier(.34, 1.56, .64, 1); }
 .half { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; gap: 6px 20px; margin-top: clamp(30px, 5vh, 52px); }
 .half__n { grid-row: 1 / span 2; font: 750 clamp(84px, 10vw, 168px)/.8 var(--sans); letter-spacing: -.06em; color: var(--hl); }
 .half__t { max-width: 13ch; font: 600 clamp(20px, 1.9vw, 28px)/1.1 var(--sans); letter-spacing: -.02em; }
 .half__tag { justify-self: start; padding: 5px 9px; border: 1.5px solid var(--hl); border-radius: 6px; font: 600 11px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--hl); }
 
 /* proof */
-.proof { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 28px clamp(36px, 6vw, 110px); margin-top: clamp(40px, 7vh, 80px); }
+/* the count, then where the robot is today in one plain line under it */
+.proof { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(18px, 3vh, 28px); margin-top: clamp(40px, 7vh, 80px); }
 .proof__big { display: flex; flex-direction: column; }
 .proof__n { font: 750 clamp(170px, 25vw, 380px)/.78 var(--sans); letter-spacing: -.07em; color: var(--hl); font-variant-numeric: tabular-nums; }
 .proof__t { margin-top: 22px; max-width: 14ch; font: 600 clamp(26px, 2.8vw, 44px)/1.05 var(--sans); letter-spacing: -.03em; }
-.proof__now { list-style: none; border-top: 1px solid var(--line); }
-.proof__i { display: grid; grid-template-columns: 124px minmax(0, 1fr); align-items: baseline; gap: 16px; padding: 24px 0; border-bottom: 1px solid var(--line); }
-.proof__k { display: flex; align-items: center; gap: 10px; font: 500 12px/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
-.proof__k::before { content: ""; flex: none; width: 11px; height: 11px; border-radius: 50%; border: 2px solid rgba(244, 244, 240, .4); }
-.proof__i--done .proof__k::before { background: var(--ink); border-color: var(--ink); }
-.proof__i--now .proof__k { color: var(--hl); }
-.proof__i--now .proof__k::before { background: var(--hl); border-color: var(--hl); box-shadow: 0 0 0 5px rgba(90, 124, 255, .22); }
-.proof__v { font: 500 clamp(19px, 1.7vw, 26px)/1.3 var(--sans); letter-spacing: -.015em; }
-.proof__v .wy-link { font-size: .8em; }
+.proof__v { max-width: 26ch; font: 500 clamp(19px, 1.7vw, 26px)/1.3 var(--sans); letter-spacing: -.015em; }
 
 /* answers */
 /* what it costs: one big number, then what you pay before and after it, in the order you pay it */
@@ -1509,7 +1513,6 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
     .faces { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
     .face__bio { font-size: 15px; }
     .cities { flex-direction: column; gap: 22px; }
-    .proof__i { grid-template-columns: 96px minmax(0, 1fr); }
     .price__i { grid-template-columns: 104px minmax(0, 1fr); padding: 18px 0; }
     .roll__track { animation-duration: 28s; }
     .roll__i { --roll-h: 48px; }
@@ -1665,16 +1668,22 @@ body { font: 400 16px/1.6 var(--font); }
 .art__drop { animation: art-drop 5s ease infinite; }
 .art__orbit { transform-origin: 200px 150px; animation: art-spin 9s linear infinite; }
 .art__orbit--back { animation-duration: 26s; animation-direction: reverse; }
-.art__fillbar { transform-box: fill-box; transform-origin: left; animation: art-fill 5s cubic-bezier(.3, 0, .2, 1) infinite; }
-.art__hop { animation: art-hop 5s cubic-bezier(.3, 0, .2, 1) infinite; }
+/* card 4: one part slides off the same pallet and the next slides on; the
+   same three checks light for each. Without motion the first part stands
+   checked. */
+.art__swap { will-change: transform, opacity; }
+.art__swap--a { animation: art-swap-a 8s cubic-bezier(.6, 0, .3, 1) infinite; }
+.art__swap--b { opacity: 0; animation: art-swap-b 8s cubic-bezier(.6, 0, .3, 1) infinite; }
+.art__tick { transform-box: fill-box; transform-origin: center; animation: art-tick 8s ease infinite; animation-delay: calc(var(--i) * .35s); }
 @keyframes art-draw { 0% { stroke-dashoffset: 1; } 12%, 86% { stroke-dashoffset: 0; } 94%, 100% { stroke-dashoffset: 0; opacity: 0; } }
 @keyframes art-land { 0%, 62% { transform: scale(.6); opacity: .3; } 72% { transform: scale(1.25); opacity: 1; } 80%, 92% { transform: scale(1); opacity: 1; } 100% { transform: scale(.6); opacity: .3; } }
 @keyframes art-scan { 0%, 6% { transform: translateX(0); } 62%, 100% { transform: translateX(300px); } }
 @keyframes art-pass { 0%, 8% { opacity: .22; transform: scale(.86); } 22%, 90% { opacity: 1; transform: none; } 100% { opacity: .22; transform: scale(.86); } }
 @keyframes art-drop { 0%, 34% { transform: none; } 48%, 90% { transform: translateY(62px); } 100% { transform: none; } }
 @keyframes art-spin { to { transform: rotate(360deg); } }
-@keyframes art-fill { 0%, 30% { transform: scaleX(0); } 62%, 92% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
-@keyframes art-hop { 0%, 8% { transform: translateX(0); opacity: 0; } 14% { opacity: 1; } 34%, 100% { transform: translateX(118px); opacity: 0; } }
+@keyframes art-swap-a { 0%, 42% { transform: none; opacity: 1; } 52% { transform: translateX(-120px); opacity: 0; } 53%, 91% { transform: translateX(120px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes art-swap-b { 0%, 52% { transform: translateX(120px); opacity: 0; } 62%, 90% { transform: none; opacity: 1; } 99% { transform: translateX(-120px); opacity: 0; } 100% { transform: translateX(120px); opacity: 0; } }
+@keyframes art-tick { 0%, 6% { transform: scale(0); opacity: 0; } 10% { transform: scale(1.25); opacity: 1; } 12%, 38% { transform: scale(1); opacity: 1; } 42%, 64% { transform: scale(0); opacity: 0; } 68% { transform: scale(1.25); opacity: 1; } 70%, 88% { transform: scale(1); opacity: 1; } 92%, 100% { transform: scale(0); opacity: 0; } }
 
 /* Registered and Partners: one quiet band, readable labels, soft edges */
 .sheet.inline { padding-block: clamp(30px, 5vh, 54px); border-top: 0; }
@@ -1875,8 +1884,9 @@ body { font: 400 16px/1.6 var(--font); }
    ------------------------------------------------------------------------ */
 .wy :is(.portal__title, .beat, .wy-h, .story__t, .gauge__result, .half__n, .half__t, .proof__n, .proof__t, .price__n, .price__t, .price__p, .price__v strong, .faq__q, .face__name, .city__n) { font-family: var(--serif); font-weight: 400; letter-spacing: -.015em; color: var(--ink); }
 .wy :is(.wy-lead, .wy-kicker, .wy-link, .wy-btn, .story__d, .gauge__check, .proof__v, .price__s, .price__v, .faq__a, .face__bio, .price__go, .talk__pick) { font-family: var(--text); font-weight: 400; letter-spacing: 0; }
-.wy :is(.tries__label, .loop__labels li, .morph__label, .morph__names, .half__tag, .proof__k, .price__per, .face__role, .city__t, .window__bar, .inline__k) { font-family: var(--text); font-weight: 400; font-size: 13.5px; letter-spacing: .04em; }
-.wy :is(.wy-hl, .talk__pick strong, .proof__i--now .proof__k, .face__role, .city__t) { color: inherit; }
+/* its small labels read in normal case, like every other word on the site */
+.wy :is(.tries__label, .loop__labels li, .morph__names, .half__tag, .price__per, .face__role, .city__t, .window__bar, .inline__k) { font-family: var(--text); font-weight: 400; font-size: 13.5px; letter-spacing: .04em; text-transform: none; }
+.wy :is(.wy-hl, .talk__pick strong, .face__role, .city__t) { color: inherit; }
 .wy .beat__not { margin-left: 0; padding: 0; background: none; color: inherit; text-shadow: inherit; }
 .wy .half__tag { border-color: var(--line); color: var(--mute); }
 .wy .tries__label--hit { fill: rgba(244, 244, 240, .6); }
