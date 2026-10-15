@@ -27,8 +27,8 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png" />
   <link rel="preload" href="/static/fonts/eb-garamond-400-normal.woff2" as="font" type="font/woff2" crossorigin />
-  <script type="module" crossorigin src="/static/prototype/assets/index-BtddHFPt.js"></script>
-  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-yu9XC6tm.css">
+  <script type="module" crossorigin src="/static/prototype/assets/index-yfR76-oo.js"></script>
+  <link rel="stylesheet" crossorigin href="/static/prototype/assets/index-Blo3d2oh.css">
   <link rel="stylesheet" href="/static/css/orb-loader.css?v={{ asset_v }}" />
 </head>
 <body>
@@ -65,7 +65,9 @@
           <div id="contact-results" aria-label="Six simulated contact checks"></div><small id="cycle-contact-note">Per wire: continuity + isolation</small><p id="cycle-verdict" role="status"></p>
         </details>
       </aside>
-      <p class="line-status" id="line-status">Unit 001 · 0 passed · 0 rejected</p>
+      <p class="line-status" id="line-status">0 passed · 0 rejected</p>
+      <!-- what the robot is doing now: the steps roll past "The robot" as the cycle plays (Skiper44 in our type) -->
+      <div class="roll" aria-label="What the robot is doing"><p class="roll__lead" aria-hidden="true">The robot</p><div class="roll__win"><ol id="process-steps" class="roll__list"></ol></div></div>
       <div class="cycle-timeline">
         <div class="cycle-transport"><button id="cycle-play" aria-pressed="false" hidden>Play</button><button id="cycle-reset" aria-label="Restart" hidden>↺</button><button id="cycle-clear-fault" hidden>Clear reject</button><output id="cycle-percent" hidden></output></div>
         <input type="range" min="0" max="108" step="0.1" value="0" id="cycle-scrub" aria-label="Full cycle progress"/>
@@ -104,7 +106,7 @@
     <section class="process-guide" aria-labelledby="process-title">
       <div class="process-guide-head"><h2 id="process-title">One connector, start to finish.</h2></div>
       <div class="cycle-cases" aria-label="Illustrated cycle cases"><button data-cycle-case="pass" aria-pressed="true">Pass</button><button data-cycle-case="search" aria-pressed="false">Needs a search</button><button data-cycle-case="half-seat" aria-pressed="false">Half-seated</button><button data-cycle-case="open" aria-pressed="false">Open wire</button><button data-cycle-case="short" aria-pressed="false">Shorted wires</button></div>
-      <div class="how"><div class="how__pin"><p class="how__lead" aria-hidden="true">The robot</p><ol id="process-steps" class="how__list" aria-label="How it works, step by step"></ol></div></div>
+      
       <details class="illustration-log" hidden><summary>Unit records</summary><p id="cycle-log-status">No completed illustration yet. Each unit retains every attempt, contact result and example force trace during this visit.</p><button id="cycle-export" disabled>Download illustrated traces ↓</button><ol id="cycle-log"></ol></details>
     </section>
 
