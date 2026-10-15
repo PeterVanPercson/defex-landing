@@ -1909,7 +1909,7 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
 .hero--card .lede__actions { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; margin: 0; padding: clamp(12px, 1.8vw, 26px); align-items: flex-end; pointer-events: none; }
 .hero--card .lede__actions > * { pointer-events: auto; }
 .hero--card .glass-button { background: color-mix(in srgb, var(--page) 62%, transparent); }
-.hero--card .flick { padding: 11px 16px 12px; border-radius: 0; color: var(--ink); background: var(--page); }
+.hero--card .flick { padding: 11px 16px 12px; border-radius: 0; color: var(--ink); background: transparent; }
 .hero--card .flick__stage { filter: brightness(0); opacity: .86; }
 .hero--card .flick__k { color: rgba(26, 24, 21, .58); }
 .hero--card .flick:hover .flick__k { color: var(--ink); }
