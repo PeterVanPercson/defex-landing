@@ -75,7 +75,7 @@ function useSchematic(){
   cyclePlayer?.dispose();cyclePlayer=null;scene?.dispose();scene=null;
   el('loading').hidden=ready||failed;startWorker();
   document.body.classList.remove('process-mode');
-  document.querySelector<HTMLElement>('.cycle-cases')!.hidden=true;
+  document.querySelector<HTMLElement>('.roll')!.hidden=true;
   el('process-steps').innerHTML=CYCLE_STEPS.map((s,i)=>`<div><span>${i+1}</span><strong>${s[0]}</strong><small>${s[2]}</small></div>`).join('');
   el('scene').replaceChildren();el('labels').replaceChildren();
   // Without the 3D view only the demo button means anything.

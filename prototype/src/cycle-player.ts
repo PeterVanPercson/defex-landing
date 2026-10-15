@@ -132,15 +132,7 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   const ctl=new AbortController(),on={signal:ctl.signal};
   let run=startRun(),disposed=false,playing=false,active=true,request=0,last=0,lastContacts='',traceKind='',started=false,nudgeTimer=0;
   const steps=byId('process-steps');
-  // How it works, read by scrolling: "The robot" stays put and the steps roll past it, the one beside it dark.
-  // A step is also a button: it scrubs the cycle there and brings the stage back.
-  const SAY=['locates the unit','checks the board','picks the housing','turns it over and regrips','checks the grip','lines it up','presses it in','pulls to test the latch','tests every wire','lets go','moves the next unit in'];
-  steps.innerHTML=CYCLE_STEPS.map((s,i)=>`<li><button data-cycle-step="${i}" aria-current="false" aria-label="${s[0]}">${SAY[i]??s[0].toLowerCase()}</button></li>`).join('');
-  const lines=[...steps.querySelectorAll<HTMLButtonElement>('button')];let rolled=-1;
-  // the roll follows the cycle: the step being done sits beside "The robot", the rest fade above and below it
-  const roll=(at:number)=>{if(at===rolled)return;rolled=at;const h=lines[0]?.offsetHeight||40;
-    steps.style.transform=`translateY(${(-at*h-h/2).toFixed(1)}px)`;
-    lines.forEach((b,i)=>{const d=i-at;b.style.opacity=(d<0?Math.max(0,1-(-d)*.62):Math.max(0,1-d*.36)).toFixed(3);b.classList.toggle('is-now',d===0);});};
+  steps.innerHTML=CYCLE_STEPS.map((s,i)=>`<li><button data-cycle-step="${i}" aria-current="false">${s[0]}</button></li>`).join('');
   const pad=(n:number)=>String(n).padStart(3,'0');
 
   const draw=()=>{
@@ -179,7 +171,7 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
     const indexing=f.step===CYCLE_STEPS.length-1;
     byId('cycle-verdict').textContent=indexing?(isReject(kind)?'Reject cleared · the line moves on':'The line moves the next unit in'):f.accepted===true?(kind==='search'?'All three checks passed · flagged: search used':'All three checks passed'):f.accepted===false?'Rejected · line stopped until a person clears it':f.step===CYCLE_STEPS.length-1?'The line moves the next unit in':f.retry?'Attempt 2 · fresh checks':failed?'Check failed · stop this attempt':f.step===1||f.step===4?'Measuring this unit':f.step<6?'Preparing the unit':'Checks in progress';
     byId('cycle-verdict').dataset.result=indexing?'pending':f.accepted===true?'pass':f.accepted===false||failed?'fail':'pending';
-    for(const button of steps.querySelectorAll('button'))button.setAttribute('aria-current',String(Number(button.dataset.cycleStep)===f.step));roll(f.step);
+    for(const button of steps.querySelectorAll('button'))button.setAttribute('aria-current',String(Number(button.dataset.cycleStep)===f.step));
     play.textContent=playing?'Pause':'Play';play.setAttribute('aria-pressed',String(playing));play.disabled=held;
     reset.disabled=held;clearFault.hidden=!held;
     for(const button of caseButtons)button.disabled=held;slider.disabled=held;for(const button of steps.querySelectorAll('button'))button.disabled=held;
@@ -205,7 +197,12 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   function traceY(f:{force:number;pullForce:number;extractionForce:number}){return 29-(f.force-f.pullForce-f.extractionForce)*.42;}
   function stop(){playing=false;cancelAnimationFrame(request);request=0;draw();}
   function activate(){if(!active){active=true;document.body.classList.add('process-mode');onActivate();onEnter();}document.body.classList.remove('tour-active');}
-  function syncCases(kind=pressedCase(run)){for(const b of caseButtons)b.setAttribute('aria-pressed',String(b.dataset.cycleCase===kind));}
+  // The cases roll past "This unit": the picked one sits beside it, the others fade above and below.
+  const caseList=document.querySelector<HTMLElement>('.roll__list'),caseRoll=document.querySelector<HTMLElement>('.roll');
+  function rollCases(at:number){if(!caseList)return;const h=caseButtons[0]?.offsetHeight||40;
+    caseList.style.transform=`translateY(${(-at*h-h/2).toFixed(1)}px)`;
+    caseButtons.forEach((b,i)=>{b.style.opacity=Math.max(.14,1-Math.abs(i-at)*.42).toFixed(3);});}
+  function syncCases(kind=pressedCase(run)){let at=0;caseButtons.forEach((b,i)=>{const on=b.dataset.cycleCase===kind;b.setAttribute('aria-pressed',String(on));if(on)at=i;});rollCases(at);}
   const events:RunEvents={
     log:r=>log(r),
     hold:()=>{playing=false;},
@@ -275,8 +272,18 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
     // and once the unit has its verdict, it is queued for the next unit (pickCase). While playing it plays on.
     if(run.held)return;const kind=button.dataset.cycleCase as CycleCase,wasPlaying=playing;activate();stop();
     run=pickCase(run,kind);started=true;
-    syncCases();draw();showStage();if(wasPlaying)go();
+    syncCases();draw();if(wasPlaying)go();
   },on);
+  // Scroll or swipe over the roll to step through the cases; at either end the page scrolls on.
+  const pressedAt=()=>caseButtons.findIndex(b=>b.getAttribute('aria-pressed')==='true');
+  const stepCase=(d:number)=>{const to=caseButtons[pressedAt()+d];if(!to||to.disabled)return false;to.click();return true;};
+  let wheelSum=0,wheelAt=0;
+  caseRoll?.addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey)return;const now=performance.now(),d=Math.sign(e.deltaY);
+    if(!caseButtons[pressedAt()+d])return;e.preventDefault();if(now-wheelAt<380)return;
+    wheelSum+=e.deltaY;if(Math.abs(wheelSum)<40)return;wheelSum=0;if(stepCase(d))wheelAt=now;},{passive:false,signal:ctl.signal});
+  let touchY=0;
+  caseRoll?.addEventListener('touchstart',e=>{touchY=e.touches[0].clientY;},{passive:true,signal:ctl.signal});
+  caseRoll?.addEventListener('touchend',e=>{const dy=touchY-e.changedTouches[0].clientY;if(Math.abs(dy)>28)stepCase(Math.sign(dy));},{passive:true,signal:ctl.signal});
   // The one play button always plays the full cycle, even after a contact experiment ran.
   for(const id of ['tour','embed-run'])byId(id).addEventListener('click',e=>{e.stopImmediatePropagation();if(e.detail<2)toggle();},{capture:true,signal:ctl.signal});
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)stop();},on);
@@ -284,7 +291,7 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   const kinds=caseButtons.map(b=>b.dataset.cycleCase as CycleCase),pairs=kinds.flatMap((a,i)=>kinds.slice(i+1).map(b=>[a,b] as const));
   const idle=(cb:()=>void)=>'requestIdleCallback' in window?requestIdleCallback(cb,{timeout:4000}):setTimeout(cb,200);
   const scan=()=>{const pair=pairs.shift();if(!pair||disposed)return;divergesAt(...pair);idle(scan);};idle(scan);
-  document.body.classList.add('process-mode');draw();
+  document.body.classList.add('process-mode');draw();syncCases();
   function deactivate(){stop();active=false;document.body.classList.remove('process-mode');scene.setProcess(null);}
   // For good, e.g. when the 3D view is lost: the player stops, lets go of the scene and removes every listener and
   // timer it added, so nothing it owned runs again. Safe to call more than once.

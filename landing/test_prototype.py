@@ -70,7 +70,7 @@ class PrototypeTests(SimpleTestCase):
             lowered = source.lower()
             for claim in ('learn', 'teach', 'correction', 'first try', 'saved fit', 'reuse fit'):
                 self.assertNotIn(claim, lowered)
-        self.assertIn('<button data-cycle-case="pass" aria-pressed="true">Pass</button>', page)
+        self.assertIn('<button data-cycle-case="pass" aria-pressed="true" aria-label="Pass">passes</button>', page)
         self.assertNotIn('data-cycle-case="latched"', page)
         self.assertIn('<span id="cycle-detail" hidden></span>', page)
         self.assertNotIn('data-controller="reuse"', page)
