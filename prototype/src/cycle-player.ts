@@ -132,7 +132,21 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   const ctl=new AbortController(),on={signal:ctl.signal};
   let run=startRun(),disposed=false,playing=false,active=true,request=0,last=0,lastContacts='',traceKind='',started=false,nudgeTimer=0;
   const steps=byId('process-steps');
-  steps.innerHTML=CYCLE_STEPS.map((s,i)=>`<button data-cycle-step="${i}" aria-current="false"><span>${String(i+1).padStart(2,'0')}</span><strong>${s[0]}</strong></button>`).join('');
+  // How it works, read by scrolling: "The robot" stays put and the steps roll past it, the one beside it dark.
+  // A step is also a button: it scrubs the cycle there and brings the stage back.
+  const SAY=['locates the unit','checks the board','picks the housing','turns it over and regrips','checks the grip','lines it up','presses it in','pulls to test the latch','tests every wire','lets go','moves the next unit in'];
+  steps.innerHTML=CYCLE_STEPS.map((s,i)=>`<li><button data-cycle-step="${i}" aria-current="false" aria-label="${s[0]}">${SAY[i]??s[0].toLowerCase()}</button></li>`).join('');
+  const how=steps.closest<HTMLElement>('.how'),lines=[...steps.querySelectorAll<HTMLButtonElement>('button')];
+  let howRaf=0;
+  const rollHow=()=>{howRaf=0;if(!how)return;
+    const r=how.getBoundingClientRect(),span=Math.max(1,r.height-innerHeight),u=Math.min(1,Math.max(0,-r.top/span)),at=u*(lines.length-1);
+    const step=lines[0]?.offsetHeight??40;
+    steps.style.transform=`translateY(${(-at*step-step/2).toFixed(1)}px)`;
+    // on a phone "The robot" sits above the list, so the steps already passed fade out before they reach it
+    const narrow=innerWidth<=700;
+    lines.forEach((b,i)=>{b.style.opacity=(narrow&&i<at?Math.max(0,1-(at-i)*1.4):Math.max(.16,1-Math.abs(i-at)*.84)).toFixed(3);});};
+  const onHowScroll=()=>{if(!howRaf)howRaf=requestAnimationFrame(rollHow);};
+  addEventListener('scroll',onHowScroll,{passive:true,signal:ctl.signal});addEventListener('resize',onHowScroll,{passive:true,signal:ctl.signal});rollHow();
   const pad=(n:number)=>String(n).padStart(3,'0');
 
   const draw=()=>{
@@ -145,13 +159,12 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
     slider.style.setProperty('--lock',`${end/CYCLE_END*100}%`);slider.dataset.locked=String(held);
     byId('cycle-percent').textContent=`${Math.round(progress/CYCLE_END*100)}%`;
     byId('cycle-title').textContent=f.step===CYCLE_STEPS.length-1?f.title:f.accepted===true&&progress>=95?'Passed':f.rejected?'Rejected':f.title;
-    byId('cycle-index').textContent=String(f.step+1).padStart(2,'0');
     const retry=document.getElementById('cycle-retry');if(retry)retry.hidden=!retryShown(f);
     const d=document.getElementById('cycle-detail');if(d){d.textContent=f.detail;d.hidden=!f.detail;}
     const status=document.getElementById('line-status');
     const count=tally(run,f);
     const queued=queuedNote(run);
-    if(status)status.textContent=`${f.unitLabel} · ${count.passed} passed · ${count.rejected} rejected${f.lineNote?` · ${f.lineNote}`:''}${queued?` · ${queued}`:''}`;
+    if(status)status.textContent=`${count.passed} passed · ${count.rejected} rejected${f.lineNote?` · ${f.lineNote}`:''}${queued?` · ${queued}`:''}`;
     byId('cycle-copy').textContent=f.message;byId('cycle-scope').textContent=f.scope;
     byId('cycle-force').textContent=`${f.force.toFixed(1)} / ${EXAMPLE_LIMITS.press.toFixed(0)} N`;
     byId('cycle-depth').textContent=`${f.depth.toFixed(1)} mm`;

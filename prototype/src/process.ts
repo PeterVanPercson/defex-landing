@@ -163,7 +163,7 @@ export function processFrame(value:number,kind:CycleCase='pass',line:LineState=F
     shift:0,dock:1,liveHarness:true,unloadZ:0,unloadUnit:'none',loadZ:LIFT_DOWN,tote:0,pack:false,swap:false,
     shot:'work',focus:[...NEST],unitLabel:unitLabel(line.unit),lineNote:'',
   };
-  if(step===0)f.message=`${f.unitLabel} is on its pallet, located on pins. The tester is docked.`;
+  if(step===0)f.message='The unit is on its pallet, located on pins. The tester is docked.';
   // The wrist camera, 34 mm X and 5 mm Y off the tool centre, looks straight down at the header from 105 mm.
   const camera:Point=[-34,-5,95];
   const pickup:Point=[NEST[0],NEST[1],NEST[2]-CARRY],nestHover:Point=[NEST[0],NEST[1],60],nestLift:Point=[NEST[0],NEST[1],85.7];
@@ -259,7 +259,6 @@ function lineFrame(f:ProcessFrame,p:number,kind:CycleCase,line:LineState,op:numb
   f.focus=lerp(plug,board,smooth((p-2)/3)*(1-smooth((p-12)/1.5)));
   if(!indexing)return;
   f.step=CYCLE_STEPS.length-1;f.title=CYCLE_STEPS[f.step][0];f.scope=CYCLE_STEPS[f.step][3];f.detail='';f.depth=0;f.force=0;f.camera=false;
-  const next=unitLabel(line.unit+1).toLowerCase();
   if(posting){
     // the close-up stays at bench height under the plug: the harness coming up out of the tray, then going down into the bin
     post(f,s/CLEAR_SPAN*CLEAR_SECONDS);f.focus=[f.plug[0],f.plug[1],Math.max(REJECT_BIN.lid,Math.min(f.plug[2],30))];f.title='Post the reject';f.scope='Planned handling';
@@ -270,7 +269,7 @@ function lineFrame(f:ProcessFrame,p:number,kind:CycleCase,line:LineState,op:numb
   if(!reject)f.plug=[plug[0]-f.shift,plug[1],plug[2]];
   else{f.plug=postedPlug(CLEAR_SECONDS);f.jaw=1;f.tool=[...HOME];}
   f.focus=lerp(reject?postedPlug():f.plug,[NEST[0]+PALLET_PITCH-f.shift,NEST[1],NEST[2]],smooth(x/.35));
-  f.message=reject?`Reject cleared. The board goes back for a new harness; ${next} moves in.`:`Passed. ${f.unitLabel} moves out to be packed; ${next} moves in.`;
+  f.message=reject?'Reject cleared. The board goes back for a new harness; the next unit moves in.':'Passed. The unit moves out to be packed; the next one moves in.';
   // Once the tester has let go of the pallet, the cell is ready for a fresh unit.
   if(x>=.1){Object.assign(f,emptyChecks());f.accepted=null;f.rejected=false;f.retry=0;f.tries=1;f.priorFailure=null;}
 }

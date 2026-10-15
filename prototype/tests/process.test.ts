@@ -21,11 +21,11 @@ test('eleven steps: locate the unit, measure the board, pick, turn over, measure
   assert.deepEqual(CYCLE_STEPS.map(s=>s[1]),[0,2,12,23,34,43,50,62,72,86,100]);
   assert.deepEqual(CYCLE_STEPS.map(s=>s[0]),['Locate the unit','Check the board','Pick the housing','Turn over and regrip','Check the grip','Align','Press','Pull check','Continuity','Release','Next unit']);
   assert.equal(processFrame(66).step,7);assert.equal(processFrame(80).step,8);assert.equal(processFrame(99).step,9);assert.equal(processFrame(104).step,10);
-  assert.equal(processFrame(1).message,'Unit 001 is on its pallet, located on pins. The tester is docked.');
-  assert.equal(processFrame(1,'pass',{unit:8,passed:7,rejected:0,prev:'pass'}).message,'Unit 008 is on its pallet, located on pins. The tester is docked.');
+  assert.equal(processFrame(1).message,'The unit is on its pallet, located on pins. The tester is docked.');
+  assert.equal(processFrame(1,'pass',{unit:8,passed:7,rejected:0,prev:'pass'}).message,'The unit is on its pallet, located on pins. The tester is docked.');
   assert.equal(processFrame(95).message,'Return home. The line moves this unit out.');
-  assert.equal(processFrame(104,'pass',{unit:7,passed:6,rejected:0,prev:'pass'}).message,'Passed. Unit 007 moves out to be packed; unit 008 moves in.');
-  assert.equal(processFrame(104,'open',{unit:7,passed:6,rejected:0,prev:'pass'}).message,'Reject cleared. The board goes back for a new harness; unit 008 moves in.');
+  assert.equal(processFrame(104,'pass',{unit:7,passed:6,rejected:0,prev:'pass'}).message,'Passed. The unit moves out to be packed; the next one moves in.');
+  assert.equal(processFrame(104,'open',{unit:7,passed:6,rejected:0,prev:'pass'}).message,'Reject cleared. The board goes back for a new harness; the next unit moves in.');
   for(const [title,,message] of CYCLE_STEPS){assert.ok(title.split(' ').length<=4);assert.ok(message.split(/[.:] /).length<=2,message);}
 });
 test('no step or message mentions a saved correction, learning or a reused fit',()=>{
