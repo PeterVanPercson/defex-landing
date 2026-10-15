@@ -71,11 +71,36 @@
 .rb__puck.is-on { fill: #8FA6FF; }
 .rb__ring { fill: none; stroke: var(--blue); stroke-width: 3; opacity: 0; }
 .rb__next, .rb__part { transition: none; }
+.rb__base { fill: #34343a; }
+.rb__collar { fill: #2b2b30; }
+.rb__plate { fill: #3a3a41; }
+.rb__pcb { fill: #F4F4F0; }
+.rb__header { fill: #0A0A0A; }
+.rb__plugtop { fill: #0A0A0A; }
+.rb__nest { fill: #1f1f23; }
+.rb__adapter { fill: #26262b; }
+.rb__harness { fill: none; stroke: #9AA1A9; stroke-width: 3; stroke-linecap: round; }
+.rb__car { fill: #34343a; }
+.rb__rod { fill: #3a3a41; }
+.rb__jaw { fill: #BEBEB6; }
+.rb__vault { fill: #2b2b30; }
+.rb__vaultlid { fill: #FF5A1F; }
+.rb__slot { fill: #0A0A0A; }
+.rb__padlock { fill: #BEBEB6; }
+.rb__shackle { fill: none; stroke: #BEBEB6; stroke-width: 3; }
+.rb__dock { fill: #34343a; }
+.rb__wire { fill: #26262b; transition: fill .15s ease; }
+.rb__wire.is-ok { fill: var(--hi); }
+.rb__wire.is-bad { fill: var(--fail); }
+.rb__wcam { fill: #F4F4F0; }
+.rb__wring { fill: #26262b; transition: fill .15s ease; }
+.rb__wring.is-on { fill: var(--blue); }
+.rb__pallet, .rb__lifted, .rb__slotunit, .rb__carriage, .rb__clamp, .rb__harness, .rb__nestplug, .rb__seatplug { transition: none; }
 
 /* what stays lit when a part is picked; everything else steps back */
 .meet[data-focus] .rb [data-part] { opacity: .1; }
 .meet[data-focus="part"] .rb :is([data-part="part"], [data-part="arm"]),
-.meet[data-focus="vision"] .rb :is([data-part="vision"], [data-part="part"]),
+.meet[data-focus="vision"] .rb :is([data-part="vision"], [data-part="part"], [data-part="arm"]),
 .meet[data-focus="touch"] .rb :is([data-part="touch"], [data-part="arm"], [data-part="part"]),
 .meet[data-focus="tester"] .rb :is([data-part="tester"], [data-part="part"]),
 .meet[data-focus="brain"] .rb [data-part="brain"],
@@ -160,3 +185,4 @@
 .meet-cta__btn:active { transform: scale(.97); }
 .meet-cta__btn:focus-visible { outline: 2px solid #F4F4F0; outline-offset: 4px; }
 
+.rb__tote { transition: none; }
