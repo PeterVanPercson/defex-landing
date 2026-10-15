@@ -8,7 +8,7 @@
 @font-face { font-family: 'Newsreader'; font-style: normal; font-weight: 400; font-display: swap; src: url(/static/fonts/newsreader-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400; font-display: swap; src: url(/static/fonts/eb-garamond-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 /* the explorer's highlight is white, not yellow (his call, 2026-10-04) */
-.meet { --ink: #F4F4F0; --mute: rgba(244, 244, 240, .62); --line: rgba(244, 244, 240, .13); --hi: #F4F4F0; --blue: #3D63FF; --fail: #FF5A1F; --m-sans: "EB Garamond", "Garamond Fallback", Georgia, serif; --m-pad: var(--pad, 20px); color: var(--ink); font-family: var(--m-sans); -webkit-font-smoothing: antialiased; --glass: rgba(244, 244, 240, .1); --glass-hi: rgba(244, 244, 240, .16); --list-x: clamp(88px, 8vw, 124px); position: relative; }
+.meet { --ink: #F4F4F0; --mute: rgba(244, 244, 240, .62); --line: rgba(244, 244, 240, .13); --hi: #F4F4F0; --blue: #3D63FF; --fail: #FF5A1F; --m-sans: "EB Garamond", "Garamond Fallback", Georgia, serif; --m-pad: var(--pad, 20px); color: var(--ink); font-family: var(--m-sans); -webkit-font-smoothing: antialiased; --glass: rgba(244, 244, 240, .1); --glass-hi: rgba(244, 244, 240, .16); --pill: #242429; --pill-hi: #303036; --pill-on: #18181C; --list-x: clamp(88px, 8vw, 124px); position: relative; }
 .meet__stage { position: relative; height: clamp(620px, 84svh, 840px); overflow: hidden; border-radius: clamp(28px, 3vw, 44px); background: radial-gradient(120% 95% at 66% 38%, #1a1b20 0%, #0e0e10 58%, #070708 100%); box-shadow: inset 0 0 0 1px var(--line); isolation: isolate; }
 .meet__stage::after { content: ""; position: absolute; inset: auto 0 0; height: 28%; background: linear-gradient(to top, rgba(5, 5, 5, .55), transparent); pointer-events: none; }
 .meet__tag { position: absolute; right: clamp(20px, 2.4vw, 32px); bottom: clamp(18px, 2.2vw, 28px); z-index: 2; padding: 5px 9px; border: 1.5px solid var(--hi); border-radius: 6px; font: 400 14px/1 var(--m-sans); letter-spacing: .04em; color: var(--hi); }
@@ -105,9 +105,11 @@
 
 /* the list: glass pills over the drawing */
 .meet__list { position: absolute; top: 0; bottom: 0; left: var(--list-x); z-index: 3; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 12px; list-style: none; pointer-events: none; }
-.meet__item { overflow: hidden; border-radius: 30px; background: var(--glass); -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); pointer-events: auto; transition: background .25s ease; }
-.meet__item:hover { background: var(--glass-hi); }
-.meet__item.is-on { background: rgba(28, 28, 32, .66); }
+/* the pills are solid: the drawing zooms in behind them and must not
+   read through the words */
+.meet__item { overflow: hidden; border-radius: 30px; background: var(--pill); -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); pointer-events: auto; transition: background .25s ease; }
+.meet__item:hover { background: var(--pill-hi); }
+.meet__item.is-on { background: var(--pill-on); }
 .meet__pill { display: flex; align-items: center; gap: 14px; height: 60px; padding: 0 32px 0 16px; border: 0; background: none; color: var(--ink); font: 400 21px/1 var(--m-sans); letter-spacing: 0; white-space: nowrap; cursor: pointer; animation: meet-in .45s .12s both; }
 .meet__plus { display: grid; width: 26px; height: 26px; transition: transform .45s cubic-bezier(.34, 1.56, .64, 1); }
 .meet__plus svg { width: 100%; height: 100%; fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; }
@@ -162,6 +164,30 @@
     .meet__text { font-size: 19px; }
     .meet__nav { display: none; }
     .meet:not(.is-live) .meet__list { flex-direction: column; align-items: stretch; margin-inline: 0; padding-inline: 0; overflow: visible; }
+}
+
+/* A phone on its side: the drawing fits the screen under the bar (centred,
+   it clears the bar too), and the
+   pills and the open card stand beside it instead of under it, so opening a
+   card never pushes the drawing off the screen. */
+@media (max-width: 899px) and (orientation: landscape) and (max-height: 540px) {
+    .meet.is-live { --m-h: calc(100svh - 2 * var(--nav, 64px) - 8px); display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; align-items: center; }
+    .meet__stage { height: var(--m-h); }
+    .meet.is-live .meet__list { flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 8px; max-height: var(--m-h); margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; scroll-snap-type: none; }
+    .meet.is-live .meet__item, .meet[data-open] .meet__item { width: auto; margin: 0; opacity: 1; }
+    .meet[data-open] .meet__item:first-child, .meet[data-open] .meet__item:last-child { margin: 0; }
+    .meet[data-open] .meet__item:not(.is-on) { opacity: 1; }
+    .meet[data-open] .meet__pill { display: flex; }
+    .meet[data-open] .meet__item.is-on .meet__pill { display: none; }
+    .meet[data-open] .meet__card { display: none; }
+    .meet[data-open] .meet__item.is-on .meet__card { display: block; }
+    .meet__pill { height: 42px; padding: 0 20px 0 10px; font-size: 17px; }
+    .meet__plus, .meet__dot { width: 22px; height: 22px; }
+    .meet__card { width: auto; padding: 14px 18px 16px; }
+    .meet__text { font-size: 16.5px; line-height: 1.4; }
+    .meet__swatches { margin-top: 12px; }
+    .meet__swatch { width: 28px; height: 28px; }
+    .meet__close { top: 12px; right: auto; left: calc((100% - 14px) * .6 - 58px); }
 }
 
 /* home and Prototype: the section around the explorer */

@@ -11,7 +11,7 @@
 {% block page_url %}{{ post.url }}{% endblock %}
 {% block page_name %}{{ post.title }} | Defex Robotics{% endblock %}
 {% block og_type %}article{% endblock %}
-{% block theme_color %}#F4F5F7{% endblock %}
+{% block theme_color %}#F3EFE8{% endblock %}
 {% block color_scheme %}light{% endblock %}
 {% block og_title %}{{ post.title }}{% endblock %}
 {% block og_description %}{{ post.dek }}{% endblock %}
@@ -20,7 +20,8 @@
 {% block twitter_description %}{{ post.dek }}{% endblock %}
 
 {% block extra_head %}
-<meta property="article:published_time" content="{{ post.date|date:'c' }}">
+{% if post.unlisted %}<meta name="robots" content="noindex">
+{% endif %}<meta property="article:published_time" content="{{ post.date|date:'c' }}">
 <meta property="article:author" content="{{ post.author.url }}">
 <!-- The post as a node of the same graph base.html declares: the author and
      publisher are the organisation, so the article links back to it. -->

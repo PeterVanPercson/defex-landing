@@ -1,4 +1,6 @@
+from django.templatetags.static import static
 from django.urls import path
+from django.views.generic import RedirectView
 
 from .discovery import company_json, llms_txt, robots, sitemap, why_us
 from .feeds import BlogFeed
@@ -31,5 +33,7 @@ urlpatterns = [
     path('.well-known/security.txt', security_txt, name='security_txt'),
     path('llms.txt', llms_txt, name='llms_txt'),
     path('robots.txt', robots, name='robots'),
+    # browsers and crawlers ask for /favicon.ico whatever the page links
+    path('favicon.ico', RedirectView.as_view(url=static('img/favicon-32.png'), permanent=True)),
     path('sitemap.xml', sitemap, name='sitemap'),
 ]

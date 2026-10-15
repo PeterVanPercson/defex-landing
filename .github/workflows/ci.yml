@@ -36,6 +36,9 @@ jobs:
           npm test
           npm run build:site
 
+      - name: Generated prototype page is committed in step with its source
+        run: git diff --exit-code -- templates/landing/prototype.html static/prototype
+
       - name: Django system check
         run: python manage.py check
 
@@ -43,17 +46,12 @@ jobs:
         run: python manage.py test
 
       - name: Front-end JavaScript syntax
+        shell: bash
         run: |
-          node --check static/js/hero-film.js
-          node --check static/js/legal.js
-          node --check static/js/origin.js
-          node --check static/js/reveal.js
-          node --check static/js/post.js
-          node --check static/js/spline.js
-          node --check static/js/gridpulse.js
-          node --check static/js/portal.js
-          node --check static/js/why.js
-          node --check static/js/careers.js
+          set -euo pipefail
+          for f in static/js/*.js; do
+            node --check "$f"
+          done
 
       - name: Motion and loading recovery regressions
         run: node --test scripts/test_frontend.cjs

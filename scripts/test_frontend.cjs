@@ -559,6 +559,91 @@ test('Why us stops its animation clock when reduced motion is enabled', () => {
     assert.ok(p.frames.size > 0);
 });
 
+// An SVG node for the Why us drawings: children, removal, and the class
+// attribute as setAttribute writes it.
+class Node extends Element {
+    constructor() { super(); this.children = []; }
+    appendChild(el) { el.parentNode = this; this.children.push(el); return el; }
+    remove() { if (this.parentNode) this.parentNode.children = this.parentNode.children.filter(c => c !== this); }
+    setAttribute(k, v) { super.setAttribute(k, v); if (k === 'class') { this.className = String(v); } }
+}
+function whyLine() {
+    const p = page(), ids = ['loop', 'loop-track', 'loop-carriers', 'loop-flying', 'loop-tool', 'loop-tester', 'loop-lamp', 'loop-lid', 'loop-tote', 'loop-slots'];
+    for (const id of ids) p.ids[id] = new Node();
+    p.doc.createElementNS = () => new Node();
+    p.run('why.js');
+    p.observers[0].enter(p.ids.loop);
+    return p;
+}
+
+test('Why us line: the bin lid is orange only while a reject is held and posted', () => {
+    const p = whyLine();
+    let lidOn = 0, rejects = 0, frames = 0;
+    for (let i = 0; i < 3600; i++) {
+        p.frame();
+        frames++;
+        const lid = p.ids['loop-lid'].classList.contains('is-fail');
+        const halves = p.ids['loop-carriers'].children.flatMap(g => g.children.slice(1));
+        const fly = p.ids['loop-flying'].children[0];
+        const reject = halves.some(h => h.classList.contains('is-fail') && h.style.display !== 'none')
+            || (fly.className.includes('is-fail') && Number(fly.style.opacity) > 0);
+        if (lid) { lidOn++; assert.ok(reject, `lid orange with no reject on frame ${i}`); }
+        if (reject) rejects++;
+        assert.ok(p.ids['loop-carriers'].children.length <= 5, 'pallets pile up');
+    }
+    assert.ok(lidOn > 0, 'a reject never reached the bin');
+    assert.ok(lidOn < frames / 3, 'the lid stays orange');
+});
+
+test('Why us line: good units fill the four slots of the tote, and a full tote is swapped for an empty one', () => {
+    const p = whyLine();
+    const shown = () => p.ids['loop-slots'].children.filter(s => s.style.display !== 'none').length;
+    let most = 0, emptiedAfterFull = false, wasFull = false;
+    assert.equal(p.ids['loop-slots'].children.length, 4);
+    for (let i = 0; i < 3600; i++) {
+        p.frame();
+        const n = shown();
+        most = Math.max(most, n);
+        if (n === 4) wasFull = true;
+        if (wasFull && n === 0) emptiedAfterFull = true;
+    }
+    assert.equal(most, 4);
+    assert.ok(emptiedAfterFull, 'the full tote never rolled out');
+});
+
+test('Why us new part: Seated, Held and Wires tick for one part, clear for the swap, and tick again for the next', () => {
+    const p = page(), morph = new Node(), nodes = {};
+    const pins = Array.from({ length: 6 }, () => new Node()), checks = Array.from({ length: 3 }, () => new Node());
+    morph.querySelector = s => nodes[s] ||= new Node();
+    morph.querySelectorAll = s => (s === '.morph__pin' ? pins : s === '.morph__check' ? checks : []);
+    p.selectors['.morph'] = morph;
+    p.run('why.js');
+    p.observers[0].enter(morph);
+    const states = [];
+    for (let i = 0; i < 520; i++) { p.frame(); states.push(checks.map(c => c.classList.contains('is-on')).join('')); }
+    const runs = states.filter((s, i) => i === 0 || s !== states[i - 1]);
+    const full = runs.filter(s => s === 'truetruetrue').length, none = runs.filter(s => s === 'falsefalsefalse').length;
+    assert.ok(full >= 2, `the checks did not run for both parts: ${runs.join(' > ')}`);
+    assert.ok(none >= 1, 'the checks never cleared for the new part');
+    assert.ok(runs.includes('truefalsefalse') && runs.includes('truetruefalse'), 'the checks did not tick in order');
+});
+
+test('Why us parts world: a part under the words fades with the copy, one clear of them stays', () => {
+    const p = page(), portal = new Node(), field = new Node(), cover = new Node();
+    const under = new Node(), clear = new Node(), word = new Node();
+    under.style['--x'] = '18.750%'; under.style['--w'] = '2.500%';
+    clear.style['--x'] = '83.125%'; clear.style['--w'] = '13.500%';
+    cover.clientWidth = 1440;
+    cover.getBoundingClientRect = () => ({ left: 0, width: 1440 });
+    word.getBoundingClientRect = () => ({ left: 24, right: 640, width: 616 });
+    portal.querySelectorAll = s => (s === '.portal__content .beat > span' ? [word] : []);
+    Object.assign(p.selectors, { '[data-portal]': portal, '.portal__field': field, '.parts': cover, '.part': [under, clear] });
+    p.run('why.js');
+    for (const o of p.observers) if (o.targets.includes(cover)) o.enter(cover);
+    assert.equal(under.classList.contains('part--clear'), true);
+    assert.equal(clear.classList.contains('part--clear'), false);
+});
+
 test('Meet the robot leaves the page alone when the section is missing', () => {
     const p = page();
     p.run('meet.js');
@@ -963,4 +1048,91 @@ test('a still hero with no film still turns the bar dark over a dark band and ba
     p.context.scrollY = 2400;
     p.event('scroll');
     assert.equal(p.root.classList.contains('nav-dark'), false);
+});
+
+// Fixer B (2026-10-15 QA pass): the bar follows the ground over the claim cards and into Meet the robot
+function cardHero({ stacked = true } = {}) {
+    const p = page(), hero = new Element(), sticky = new Element(), list = new Element(), card = new Element();
+    hero.classList.add('hero--card');
+    hero.querySelector = () => sticky;
+    // the list sits at 1500..4000 on the page; the card scrolls with it until it pins 14px under the bar
+    list.getBoundingClientRect = () => ({ top: 1500 - p.context.scrollY, bottom: 4000 - p.context.scrollY });
+    list.querySelectorAll = () => [card];
+    list.closest = () => (stacked ? list : null);
+    card.getBoundingClientRect = () => { const top = stacked ? Math.max(64 + 14, 1500 - p.context.scrollY) : 1500 - p.context.scrollY; return { top, bottom: top + 600 }; };
+    p.selectors['.hero'] = hero;
+    p.selectors['#steps .features'] = list;
+    p.run('hero-film.js');
+    return p;
+}
+
+test('the bar turns dark while a solid claim card is the ground under it, and back to paper above the cards', () => {
+    const p = cardHero();
+    p.context.scrollY = 1000;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), false);
+    p.context.scrollY = 1460;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), true);
+    p.context.scrollY = 2600;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), true);
+    p.context.scrollY = 1200;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), false);
+});
+
+test('cards that are not stacked turn the bar dark only once they reach it', () => {
+    const p = cardHero({ stacked: false });
+    // its top 90px down the screen: 26px of paper still shows under the bar
+    p.context.scrollY = 1410;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), false);
+    p.context.scrollY = 1430;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), true);
+});
+
+test('the bar goes dark a little under half way into a dark band\'s dissolve, not three quarters', () => {
+    const p = page(), hero = new Element(), sticky = new Element(), band = new Element();
+    hero.classList.add('hero--card');
+    hero.querySelector = () => sticky;
+    band.getBoundingClientRect = () => ({ top: 1000 - p.context.scrollY });
+    band.offsetHeight = 1200;
+    p.context.getComputedStyle = (el, pseudo) => ({ height: el === band && pseudo === '::before' ? '200px' : '0', getPropertyValue: () => '64' });
+    p.selectors['.hero'] = hero;
+    p.selectors['[data-nav-dark]'] = [band];
+    p.run('hero-film.js');
+    // 40% into the 200px dissolve, less the 64px bar: 1016
+    p.context.scrollY = 1010;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), false);
+    p.context.scrollY = 1040;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), true);
+});
+
+test('the Partners flick reads its word once to a screen reader, not letter by letter twice', () => {
+    const p = page(), root = new Element(), stage = new Element(), label = new Element();
+    const make = () => {
+        const el = new Element();
+        el.children = [];
+        el.replaceChildren = (...kids) => { el.children = kids; };
+        Object.defineProperty(el, 'innerHTML', { set() { el.firstChild = make(); el.lastChild = make(); } });
+        return el;
+    };
+    p.doc.createElement = make;
+    label.textContent = 'Partners';
+    label.replaceChildren = (...kids) => { label.children = kids; };
+    stage.animate = () => ({ finished: Promise.resolve() });
+    stage.querySelectorAll = () => [];
+    root.querySelector = (s) => (s === '.flick__stage' ? stage : s === '.flick__k' ? label : null);
+    p.selectors['.flick'] = root;
+    p.run('flick.js');
+    const [spoken, shown] = label.children;
+    assert.equal(spoken.textContent, 'Partners');
+    assert.equal(spoken.getAttribute('aria-hidden'), null);
+    assert.equal(shown.getAttribute('aria-hidden'), 'true');
+    assert.equal(shown.children.length, 'Partners'.length);
+    assert.equal(label.getAttribute('aria-label'), null);
 });

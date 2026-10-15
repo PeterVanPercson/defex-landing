@@ -237,7 +237,7 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   function log(r:LineRun){
     const record=processRecord(r.line.unit,r.kind);records.push(record);
     const row=document.createElement('li'),title=document.createElement('strong');
-    title.textContent=`Illustrated unit ${pad(record.id)} · ${record.case} · ${record.accepted?'accepted':'rejected / operator clear required'}${record.flag?` · flagged: ${record.flag.toLowerCase()}`:''}`;row.append(title);
+    title.textContent=`Illustrated unit ${pad(record.id)} · ${record.case} · ${record.accepted?'accepted':'rejected / a person clears it'}${record.flag?` · flagged: ${record.flag.toLowerCase()}`:''}`;row.append(title);
     const measured=document.createElement('p');measured.textContent=`Measured: header ${Math.hypot(...record.measured.header).toFixed(2)} mm from nominal, grip ${Math.hypot(...record.measured.grip).toFixed(2)} mm off centre.`;row.append(measured);
     for(const attempt of record.attempts){
       const line=document.createElement('p');

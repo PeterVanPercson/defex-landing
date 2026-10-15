@@ -143,8 +143,10 @@ class DiscoverabilityTests(SimpleTestCase):
     def test_llms_txt_lists_canonical_pages(self):
         body = self.get_page("/llms.txt")
         self.assertTrue(body.startswith("# Defex\n"))
-        for url in ("/", "/careers/", "/why-us/", "/blog/the-cost-of-the-next-attempt/", "/blog/feed.xml"):
+        for url in ("/", "/prototype/", "/careers/", "/why-us/", "/blog/the-ai-inference-revolution-is-here/", "/blog/feed.xml"):
             self.assertIn(CANONICAL_ORIGIN + url, body)
+        # unlisted with the self-teaching story (2026-10-13), so not offered to crawlers
+        self.assertNotIn("/blog/the-cost-of-the-next-attempt/", body)
         self.assertNotIn("defex.app/", body)
 
     def test_removed_investor_page_is_not_served_or_discoverable(self):

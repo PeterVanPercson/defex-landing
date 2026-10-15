@@ -10,6 +10,7 @@ from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.cache import patch_cache_control
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
@@ -28,7 +29,9 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 # Until there is somewhere durable to put it, the submission goes to the log at
 # ERROR, where Vercel keeps it and it can be read back by hand. What must never
 # happen is the visitor being told it worked.
-LOST_MESSAGE = ("That did not send. Please email husan@defexrobotics.com directly "
+# the address the footer gives for sales, so a failed form never names a person
+FALLBACK_EMAIL = "sales@defexrobotics.com"
+LOST_MESSAGE = ("That did not send. Please email " + FALLBACK_EMAIL + " directly "
                 "and we will pick it up from there.")
 
 CONTACT_LABELS = {"name": "name", "factory": "company",
@@ -49,7 +52,7 @@ def _what_to_fix(form, labels: dict) -> str:
         named = [labels.get(f, f) for f in form.errors if f != "website"]
         if named:
             return "Check " + ", ".join(named) + ", then send it again."
-    return "Something looked off. Try again, or email husan@defexrobotics.com directly."
+    return "Something looked off. Try again, or email " + FALLBACK_EMAIL + " directly."
 
 
 def home(request):
@@ -104,8 +107,11 @@ def careers(request, slug=None):
     return render(request, "landing/careers.html", _careers_context(ApplicationForm(initial=initial), job))
 
 
-@require_http_methods(["POST"])
+@require_http_methods(["GET", "HEAD", "POST"])
 def apply(request):
+    if request.method != "POST":
+        # a bookmarked or typed /careers/apply/ lands on the form, not a blank 405
+        return redirect(reverse("careers") + "#application")
     form = ApplicationForm(request.POST)
     if rate_limited("apply", client_ident(request),
                     settings.CONTACT_RATE_LIMIT, settings.CONTACT_RATE_WINDOW):
@@ -163,6 +169,12 @@ POSTS = (
         "keywords": ("AI inference, AI hardware, GPU memory bandwidth, HBM4, SRAM, "
                      "Cerebras, Groq, d-Matrix, quantization, NVFP4, MXFP4"),
     },
+)
+
+# Off the index, the feed, the sitemap and the crawl files: its thesis (a robot
+# that learns from its own tests) is the story he dropped on 2026-10-13. The
+# URL still answers, marked noindex, so old links do not 404.
+UNLISTED_POSTS = (
     {
         "slug": "the-cost-of-the-next-attempt",
         "title": "The Cost of the Next Attempt",
@@ -173,16 +185,16 @@ POSTS = (
         "date": date(2026, 8, 30),
         "modified": date(2026, 9, 20),
         "minutes": 9,
+        "unlisted": True,
         "author": {"name": "Husan Mavlonov", "url": "https://husanmavlonov.com/", "site": "husanmavlonov.com",
-                   "bio": "Co-founder and CEO of Defex, building robots that test their own work, in San Francisco."},
-        "keywords": ("robot learning, connector assembly, robot reset, acceptance test, "
-                     "trials per hour, self-teaching robots, manufacturing robotics, defex"),
+                   "bio": "Co-founder and CEO of Defex, building robots that plug in connectors and check every connection."},
+        "keywords": "robot reset, acceptance test, connector testing, manufacturing robotics, defex",
     },
 )
 
 
 def _post(slug):
-    for post in POSTS:
+    for post in POSTS + UNLISTED_POSTS:
         if post["slug"] == slug:
             return dict(post, url="https://defexrobotics.com" + reverse("blog_post", kwargs={"slug": slug}))
     raise Http404
@@ -249,8 +261,7 @@ def contact(request):
     if rate_limited("contact", client_ident(request),
                     settings.CONTACT_RATE_LIMIT, settings.CONTACT_RATE_WINDOW):
         messages.error(request, "That is a lot of messages. Try again a little later.")
-        referer = request.META.get("HTTP_REFERER", "/")
-        return redirect(referer.split("#")[0] + "#contact")
+        return redirect(_back_to_form(request))
     form = ContactForm(request.POST)
     if form.is_valid() and form.is_spam():
         # Same reply as a real send, so the bot has nothing to tune against.
@@ -277,8 +288,18 @@ def contact(request):
             messages.success(request, "Got it. We reply within one working day.")
     else:
         messages.error(request, _what_to_fix(form, CONTACT_LABELS))
-    referer = request.META.get("HTTP_REFERER", "/")
-    return redirect(referer.split("#")[0] + "#contact")
+    return redirect(_back_to_form(request))
+
+
+def _back_to_form(request) -> str:
+    """Back to the page the form was sent from, but only if that page is on this
+    site: the Referer is the visitor's to forge, and trusting it made /contact/
+    an open redirect."""
+    referer = request.META.get("HTTP_REFERER", "").split("#")[0]
+    if not url_has_allowed_host_and_scheme(referer, allowed_hosts={request.get_host()},
+                                           require_https=request.is_secure()):
+        referer = "/"
+    return referer + "#contact"
 
 
 # ---------------------------------------------------------------------------

@@ -55,8 +55,18 @@
         slot.lastChild.style.cssText = TUCKED;
         return slot;
     });
-    label.setAttribute('aria-label', label.textContent);
-    label.replaceChildren(...pairs);
+    // a screen reader hears the word once: the letters (each one twice, face
+    // and twin) are hidden from it and a visually hidden copy speaks instead
+    const spoken = document.createElement('span');
+    spoken.className = 'flick__said';
+    spoken.style.cssText = 'position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;';
+    spoken.textContent = label.textContent;
+    const shown = document.createElement('span');
+    shown.className = 'flick__letters';
+    shown.setAttribute('aria-hidden', 'true');
+    shown.style.cssText = 'display: inline-flex;';
+    shown.replaceChildren(...pairs);
+    label.replaceChildren(spoken, shown);
     let labelBusy = false;
     const flickLabel = () => {
         if (labelBusy) return;

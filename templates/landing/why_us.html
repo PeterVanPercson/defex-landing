@@ -105,12 +105,12 @@
         <p class="meet-cta"><a class="meet-cta__btn" href="/prototype/">Test our prototype <span aria-hidden="true">&rarr;</span></a></p>
     </section>
 
-    <!-- It tests every part: two checks tick, then the gauge says pass, or
-         fail and the part is pulled aside. -->
+    <!-- It tests every part: Seated, Held and Wires tick, then the gauge
+         says pass, or fail and the part is taken off. -->
     <section class="wy-sec wy-feat" id="tests" aria-labelledby="tests-title">
         <div class="wy-feat__text">
             <h2 class="wy-h" id="tests-title" data-reveal>It checks every <span class="wy-hl">connection</span>.</h2>
-            <p class="wy-lead" data-reveal>Is it seated? Is it locked? It runs your test on the spot and logs pass or fail.</p>
+            <p class="wy-lead" data-reveal>Seated? Held? Every wire? It runs your test and logs the result.</p>
         </div>
         <figure class="gauge" id="gauge" aria-hidden="true">
             <svg class="gauge__svg" viewBox="0 0 600 380">
@@ -127,8 +127,9 @@
                 <p class="gauge__result"><span class="gauge__wait">Testing</span><span class="gauge__pass">Pass</span><span class="gauge__fail">Fail</span></p>
             </div>
             <ul class="gauge__checks">
-                <li class="gauge__check" data-check="1">Connected</li>
-                <li class="gauge__check" data-check="2">Locked</li>
+                <li class="gauge__check" data-check="1">Seated</li>
+                <li class="gauge__check" data-check="2">Held</li>
+                <li class="gauge__check" data-check="3">Wires</li>
             </ul>
         </figure>
     </section>
@@ -157,27 +158,27 @@
                     <path class="tries__handles" d="M70 300 L190 300 M420 214 L250 120"/>
                     <rect class="tries__a" x="184" y="294" width="12" height="12"/><rect class="tries__a" x="244" y="114" width="12" height="12"/>
                     <circle class="tries__end" cx="420" cy="214" r="9"/>
-                    <text class="tries__label" x="420" y="262">nominal</text>
+                    <text class="tries__label" x="420" y="262">Nominal</text>
                 </g>
                 <g class="tries__try tries__try--1">
                     <path class="tries__path" pathLength="1" d="M70 300 C 200 280, 250 80, 432 160"/>
                     <path class="tries__handles" d="M70 300 L200 280 M432 160 L250 80"/>
                     <rect class="tries__a" x="194" y="274" width="12" height="12"/><rect class="tries__a" x="244" y="74" width="12" height="12"/>
                     <circle class="tries__end" cx="432" cy="160" r="9"/>
-                    <text class="tries__label" x="370" y="182">board</text>
+                    <text class="tries__label" x="370" y="182">Board</text>
                 </g>
                 <g class="tries__try tries__try--2">
                     <path class="tries__path" pathLength="1" d="M70 300 C 220 270, 280 40, 468 118"/>
                     <path class="tries__handles" d="M70 300 L220 270 M468 118 L280 40"/>
                     <rect class="tries__a" x="214" y="264" width="12" height="12"/><rect class="tries__a" x="274" y="34" width="12" height="12"/>
                     <circle class="tries__end" cx="468" cy="118" r="9"/>
-                    <text class="tries__label" x="398" y="140">grip</text>
+                    <text class="tries__label" x="398" y="140">Grip</text>
                 </g>
                 <g class="tries__try tries__try--3 tries__try--hit">
                     <path class="tries__path" pathLength="1" d="M70 300 C 230 260, 300 30, 500 96"/>
                     <path class="tries__handles" d="M70 300 L230 260 M500 96 L300 30"/>
                     <rect class="tries__a" x="224" y="254" width="12" height="12"/><rect class="tries__a" x="294" y="24" width="12" height="12"/>
-                    <text class="tries__label tries__label--hit" x="500" y="182">seated</text>
+                    <text class="tries__label tries__label--hit" x="500" y="182">Seated</text>
                 </g>
                 <circle class="tries__ripple" cx="420" cy="214" r="9"/>
                 <circle class="tries__ripple" cx="432" cy="160" r="9"/>
@@ -189,82 +190,89 @@
         </figure>
     </section>
 
-    <!-- It resets itself: carriers ride a loop. A pair is loaded, joined,
-         tested, and the part leaves for Out or Aside while the empty carrier
-         goes round for the next pair. Drawn by static/js/why.js. -->
+    <!-- The line, the way the prototype runs it: a pallet comes up the lift
+         already loaded, the robot plugs it, the tester docks and checks it,
+         and a good unit goes into the tote. A reject holds the line, then it
+         is posted into the locked bin, whose lid turns orange only then.
+         Drawn by static/js/why.js. -->
     <section class="wy-sec wy-feat" id="resets" aria-labelledby="resets-title">
         <div class="wy-feat__text">
-            <h2 class="wy-h" id="resets-title" data-reveal>It resets <span class="wy-hl">itself</span>.</h2>
-            <p class="wy-lead" data-reveal>Good parts out. Bad parts aside. Next parts in.</p>
+            <h2 class="wy-h" id="resets-title" data-reveal>Next unit <span class="wy-hl">in</span>.</h2>
+            <p class="wy-lead" data-reveal>Good ones to the tote. Rejects locked away.</p>
         </div>
         <figure class="loop" id="loop" aria-hidden="true">
             <svg class="loop__svg" viewBox="0 0 600 380">
-                <path class="loop__track" id="loop-track" d="M120 110 H440 A80 80 0 0 1 440 270 H120 A80 80 0 0 1 120 110 Z"/>
-                <circle class="loop__station" cx="160" cy="110" r="5"/>
-                <circle class="loop__station" cx="350.4" cy="110" r="5"/>
-                <circle class="loop__station" cx="516.2" cy="165.7" r="5"/>
-                <circle class="loop__station" cx="400" cy="270" r="5"/>
-                <circle class="loop__station" cx="209.5" cy="270" r="5"/>
-                <g id="loop-tool" class="loop__tool"><rect x="337.4" y="8" width="26" height="50" rx="7"/><rect x="322.4" y="54" width="56" height="14" rx="6"/></g>
-                <path class="loop__stem" d="M538 152 L556 140"/>
-                <circle id="loop-lamp" class="loop__lamp" cx="572" cy="130" r="20"/>
-                <path class="loop__bin" d="M350 314 v36 h100 v-36"/>
-                <path class="loop__bin loop__bin--aside" d="M160 314 v36 h100 v-36"/>
+                <path class="loop__track" id="loop-track" d="M30 262 H470"/>
+                <path class="loop__lift" d="M70 276 V318 M430 276 V318"/>
+                <circle class="loop__station" cx="70" cy="262" r="5"/>
+                <circle class="loop__station" cx="190" cy="262" r="5"/>
+                <circle class="loop__station" cx="310" cy="262" r="5"/>
+                <circle class="loop__station" cx="430" cy="262" r="5"/>
+                <g id="loop-tool" class="loop__tool"><rect x="177" y="144" width="26" height="48" rx="7"/><rect x="162" y="188" width="56" height="14" rx="6"/></g>
+                <path class="loop__stem" d="M310 120 V176"/>
+                <circle id="loop-lamp" class="loop__lamp" cx="310" cy="112" r="18"/>
+                <g id="loop-tester" class="loop__tester"><rect x="286" y="176" width="48" height="26" rx="7"/><path d="M298 202 v8 M310 202 v8 M322 202 v8"/></g>
+                <g class="loop__bin">
+                    <path class="loop__binbody" d="M212 306 V350 H288 V306"/>
+                    <path id="loop-lid" class="loop__lid" d="M206 300 H234 V306 H206 Z M266 300 H294 V306 H266 Z"/>
+                    <path class="loop__seal" d="M238 301 v5 M244 301 v5 M250 301 v5 M256 301 v5 M262 301 v5"/>
+                    <path class="loop__lock" d="M244 326 v-5 a6 6 0 0 1 12 0 v5 M240 326 h20 v13 h-20 Z"/>
+                </g>
+                <g id="loop-tote" class="loop__tote"><path class="loop__totebody" d="M462 306 V348 H590 V306"/><g id="loop-slots"></g></g>
                 <g id="loop-carriers"></g>
                 <g id="loop-flying"></g>
             </svg>
             <ul class="loop__labels">
-                <li style="--x: 26.7%; --y: 20%;">In</li>
-                <li style="--x: 46%; --y: 8%;">Build</li>
-                <li style="--x: 95.3%; --y: 45%;">Test</li>
-                <li style="--x: 66.7%; --y: 97%;">Out</li>
-                <li style="--x: 35%; --y: 97%;">Aside</li>
+                <li style="--x: 11.7%; --y: 55%;">In</li>
+                <li style="--x: 31.7%; --y: 33%;">Plug</li>
+                <li style="--x: 51.7%; --y: 20%;">Test</li>
+                <li style="--x: 87.7%; --y: 100%;">Tote</li>
+                <li style="--x: 41.7%; --y: 100%;">Rejects</li>
             </ul>
         </figure>
     </section>
 
-    <!-- A new part is not a new project: the path stays; the part
-         under it changes shape. The one number is a target and says so. -->
+    <!-- A new part is not a new project: the pallet and the three checks
+         stay; the fixture and the part on it change shape, and Seated, Held
+         and Wires tick again for the new one. The one number is a target and
+         says so. -->
     <section class="wy-sec wy-feat wy-feat--flip" id="newpart" aria-labelledby="newpart-title">
         <div class="wy-feat__text">
             <h2 class="wy-h" id="newpart-title" data-reveal>A new part is not a new <span class="wy-hl">project</span>.</h2>
-            <p class="wy-lead" data-reveal>Teach it what changed, not the whole job.</p>
+            <p class="wy-lead" data-reveal>A new part needs a new fixture and the same checks.</p>
             <p class="half" data-reveal><span class="half__n">Half</span><span class="half__t">the engineering hours for the next part</span><span class="half__tag">Target</span></p>
         </div>
         <figure class="morph" aria-hidden="true">
-            <svg class="morph__svg" viewBox="40 22 430 352">
-                <path class="morph__skill" d="M80 70 C 200 70, 230 200, 300 222"/>
-                <path class="morph__handles" d="M80 70 H200 M300 222 L230 200"/>
-                <rect class="morph__a" x="194" y="64" width="12" height="12"/>
-                <rect class="morph__a" x="224" y="194" width="12" height="12"/>
-                <rect class="morph__start" x="68" y="58" width="24" height="24" rx="4"/>
-                <text class="morph__label" x="104" y="44">The skill carries over</text>
-                <path class="morph__dim" d="M150 356 H450 M150 348 v16 M450 348 v16"/>
+            <svg class="morph__svg" viewBox="90 150 420 210">
+                <rect class="morph__pallet" x="110" y="306" width="380" height="14" rx="5"/>
+                <path class="morph__dim" d="M150 344 H450 M150 336 v16 M450 336 v16"/>
                 <g class="morph__part">
-                    <rect class="morph__body" x="150" y="230" width="300" height="100" rx="16"/>
-                    <rect class="morph__pin" x="176" y="262" width="26" height="36" rx="6"/>
-                    <rect class="morph__pin" x="220" y="262" width="26" height="36" rx="6"/>
-                    <rect class="morph__pin" x="264" y="262" width="26" height="36" rx="6"/>
-                    <rect class="morph__pin" x="308" y="262" width="26" height="36" rx="6"/>
-                    <rect class="morph__pin morph__pin--new" x="352" y="262" width="26" height="36" rx="6"/>
-                    <rect class="morph__pin morph__pin--new" x="396" y="262" width="26" height="36" rx="6"/>
+                    <rect class="morph__fixture" x="134" y="182" width="332" height="118" rx="22"/>
+                    <rect class="morph__body" x="150" y="196" width="300" height="90" rx="16"/>
+                    <rect class="morph__pin" x="176" y="223" width="26" height="36" rx="6"/>
+                    <rect class="morph__pin" x="220" y="223" width="26" height="36" rx="6"/>
+                    <rect class="morph__pin" x="264" y="223" width="26" height="36" rx="6"/>
+                    <rect class="morph__pin" x="308" y="223" width="26" height="36" rx="6"/>
+                    <rect class="morph__pin morph__pin--new" x="352" y="223" width="26" height="36" rx="6"/>
+                    <rect class="morph__pin morph__pin--new" x="396" y="223" width="26" height="36" rx="6"/>
                 </g>
             </svg>
             <p class="morph__names"><span class="morph__name morph__name--a">Part A</span><span class="morph__name morph__name--b">Part B</span></p>
+            <ul class="morph__checks">
+                <li class="morph__check" data-check="1">Seated</li>
+                <li class="morph__check" data-check="2">Held</li>
+                <li class="morph__check" data-check="3">Wires</li>
+            </ul>
         </figure>
     </section>
 
-    <!-- Proof, dated: the one number that is already true, and where the
-         robot is today. -->
+    <!-- Proof: the one number that is already true, and where the robot is
+         today, in one plain line. -->
     <section class="wy-sec wy-proof" id="proof" aria-labelledby="proof-title">
         <h2 class="wy-h" id="proof-title" data-reveal>Factories are already in <span class="wy-hl">line</span>.</h2>
         <div class="proof">
             <p class="proof__big" data-reveal><span class="proof__n" data-count="{{ company.paid_waitlist.factories }}">{{ company.paid_waitlist.factories }}</span><span class="proof__t">factories paid to be first in line.</span></p>
-            <ul class="proof__now">
-                <li class="proof__i proof__i--done" data-reveal><span class="proof__k">Built</span><span class="proof__v">Vision inspection, run on a live camera.</span></li>
-                <li class="proof__i proof__i--now" data-reveal><span class="proof__k">Now</span><span class="proof__v">Building the robot, starting with connectors.</span></li>
-                <li class="proof__i" data-reveal><span class="proof__k">Next</span><span class="proof__v">Running on its own.</span></li>
-            </ul>
+            <p class="proof__v" data-reveal>Building the robot, starting with connectors.</p>
         </div>
     </section>
 
@@ -297,7 +305,7 @@
     </section>
 
     <section class="wy-sec wy-faq" id="faq" aria-labelledby="faq-title">
-        <h2 class="wy-h" id="faq-title" data-reveal>Straight <span class="wy-hl">answers</span>.</h2>
+        <h2 class="wy-h" id="faq-title" data-reveal>Questions.</h2>
         <div class="faq">
             <details class="faq__i">
                 <summary class="faq__q">What can it do?</summary>
@@ -306,10 +314,6 @@
             <details class="faq__i">
                 <summary class="faq__q">What does my team still do?</summary>
                 <p class="faq__a">Load the parts, say what counts as a good part, and handle the odd problem. The robot does the rest.</p>
-            </details>
-            <details class="faq__i">
-                <summary class="faq__q">Will it try new things on my line?</summary>
-                <p class="faq__a">No. It runs the job you signed off on and checks every connection.</p>
             </details>
             <details class="faq__i">
                 <summary class="faq__q">Is it ready today?</summary>
