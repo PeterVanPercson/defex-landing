@@ -416,10 +416,13 @@ body.tour-active .roll,body.focused .roll,body.exploded .roll,.embed .roll{displ
 /* phones: one line under the logo, clear of the arm and the controls */
 @media(max-width:700px){
   /* phones: in the floating stack over the scene, just above the tally, light type like the rest of it */
-  body.process-mode .roll{top:auto;bottom:226px;right:auto;left:50%;transform:translateX(-50%);flex-direction:row;align-items:center;gap:.3em;font-size:19px;color:#f4f6f1;text-shadow:0 1px 2px #000b,0 0 14px #0009}
-  .roll__win{width:9.4em;height:3.9em}
-  .roll__list{top:50%}
+  body.process-mode .roll{top:23%;bottom:auto;right:16px;left:auto;transform:translateY(-50%);flex-direction:column;align-items:flex-end;gap:0;font-size:18px;color:#f4f6f1;text-shadow:0 1px 2px #000b,0 0 14px #0009}
+  .roll__win{width:8.6em;height:5.2em}
+  .roll__list{top:1.95em;right:0;left:auto}
+  .roll__list button{margin-left:auto;text-align:right}
+  /* the opening shot is the bright hall: dark type with a light halo there, like on desktop */
+  body.process-mode[data-shot="wide"] .roll{color:#1f2b24;text-shadow:0 0 3px #eef0ea,0 0 10px #eef0ea,0 0 22px #eef0eacc}
+  body.process-mode[data-shot="wide"] .roll__list button[aria-pressed="true"]{color:#16201a}
   .roll__list button[aria-pressed="true"]{color:#fff}
-  body.process-mode:has(#cycle-clear-fault:not([hidden])) .roll{bottom:252px}
 }
 @media(orientation:landscape) and (max-height:500px){body.process-mode .roll{top:14px;right:20px;left:auto;transform:none;font-size:17px}.roll__win{height:3.9em}}
