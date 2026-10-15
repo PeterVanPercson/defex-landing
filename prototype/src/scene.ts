@@ -104,7 +104,7 @@ export class WorkcellScene {
     this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFShadowMap;this.renderer.shadowMap.autoUpdate=false;
     container.append(this.renderer.domElement);this.renderer.domElement.setAttribute('role','img');
     this.renderer.domElement.style.opacity='0';
-    this.renderer.domElement.setAttribute('aria-label','Interactive rendered connector workcell in an empty factory hall. White six-joint arm, two-finger gripper, six-wire harness, green circuit board, fixture, tester and reject tray.');
+    this.renderer.domElement.setAttribute('aria-label','The robot on its line, in 3D: a white six-joint arm with a two-finger gripper plugs a harness into a board on a pallet, a tester checks it, passed units go into a tote and rejects into a locked red bin.');
     this.camera.up.set(0,0,1);this.scene.background=new T.Color(0xb8bbbb);this.scene.fog=new T.FogExp2(0xb8bbbb,.0000105);
     this.controls=new OrbitControls(this.camera,this.renderer.domElement);
     // A pinch (ctrlKey wheel, deltaY = 100 ln scale) at zoomSpeed 1.95 scales the distance by the pinch itself.
@@ -217,7 +217,7 @@ export class WorkcellScene {
     const tip=this.hud?.tooltip;this.hovered=id;if(!tip)return;
     if(!id){tip.classList.remove('visible');if(!this.gesture)this.renderer.domElement.style.cursor='grab';return;}
     const r=this.container.getBoundingClientRect(),name=PARTS.find(p=>p.id===id)?.name??id,strong=tip.querySelector('strong'),p=tip.querySelector('p');
-    if(strong&&strong.textContent!==name)strong.textContent=name;if(p)p.hidden=true;
+    if(strong&&strong.textContent!==name){strong.textContent=name;tip.setAttribute('aria-label',name);}if(p)p.hidden=true;
     tip.style.transform=`translate(${Math.round(x-r.left+14)}px,${Math.round(y-r.top+16)}px)`;tip.classList.add('visible');
   }
   // The person takes the camera: the guided move stops where it is and their orbit starts from there.

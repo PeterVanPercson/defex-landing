@@ -415,14 +415,29 @@ body.process-mode .roll{display:flex;flex-direction:column;align-items:flex-star
 body.tour-active .roll,body.focused .roll,body.exploded .roll,.embed .roll{display:none!important}
 /* phones: one line under the logo, clear of the arm and the controls */
 @media(max-width:700px){
-  /* phones: in the floating stack over the scene, just above the tally, light type like the rest of it */
-  body.process-mode .roll{top:23%;bottom:auto;right:16px;left:auto;transform:translateY(-50%);flex-direction:column;align-items:flex-end;gap:0;font-size:18px;color:#f4f6f1;text-shadow:0 1px 2px #000b,0 0 14px #0009}
+  /* phones: high on the right, over the light hall: dark type with the paper halo on every shot, as on desktop */
+  body.process-mode .roll{top:23%;bottom:auto;right:16px;left:auto;transform:translateY(-50%);flex-direction:column;align-items:flex-end;gap:0;font-size:18px}
   .roll__win{width:8.6em;height:5.2em}
   .roll__list{top:1.95em;right:0;left:auto}
   .roll__list button{margin-left:auto;text-align:right}
-  /* the opening shot is the bright hall: dark type with a light halo there, like on desktop */
-  body.process-mode[data-shot="wide"] .roll{color:#1f2b24;text-shadow:0 0 3px #eef0ea,0 0 10px #eef0ea,0 0 22px #eef0eacc}
-  body.process-mode[data-shot="wide"] .roll__list button[aria-pressed="true"]{color:#16201a}
-  .roll__list button[aria-pressed="true"]{color:#fff}
 }
-@media(orientation:landscape) and (max-height:500px){body.process-mode .roll{top:14px;right:20px;left:auto;transform:none;font-size:17px}.roll__win{height:3.9em}}
+/* a phone on its side: under the topbar, clear of "Get in touch" above and the dock below */
+@media(orientation:landscape) and (max-height:500px){body.process-mode .roll{top:64px;right:20px;left:auto;transform:none;font-size:17px}.roll__win{height:min(3.9em,calc(100svh - 64px - 120px - 1.3em))}}
+/* the held-reject shot frames the tray and the locked bin: the roll steps aside for it, like the headline */
+body.process-mode .roll{transition:opacity .25s}
+body.process-mode[data-shot="reject"] .roll,body.process-mode[data-cam="reject"] .roll{opacity:0;pointer-events:none}
+/* the About dialog opens with the focus on Close, so its ring shows however the dialog was opened */
+#close-notes:focus{outline:2px solid #365c3f;outline-offset:3px;border-radius:4px}
+/* "Try it yourself" stays one line; its subtitle is the muted ink (4.5:1 on the ground) and steps aside on phones */
+.tryit>summary{white-space:nowrap}
+.tryit>summary span{color:var(--muted);overflow:hidden;text-overflow:ellipsis;min-width:0}
+@media(max-width:600px){.tryit>summary span{display:none}}
+/* below the stage: while the guide's heading, steps and records are all hidden it takes no room, so no empty band */
+.process-guide>[hidden]{display:none!important}
+.process-guide:not(:has(>:not([hidden]))){padding:0}
+/* past the top edge (overscroll) the hall's grey at the top of the stage, as the theme colour; once the page has
+   moved, the light ground of everything under the stage, which is what shows past the bottom edge */
+:root{background:#919491}
+@media(max-width:600px){:root{background:#C9CBC6}}
+@supports (animation-timeline:scroll()){:root{animation:edge-to-ground linear both;animation-timeline:scroll(root block)}@keyframes edge-to-ground{0%{background-color:#919491}1%,100%{background-color:#eceee6}}@media(max-width:600px){@keyframes edge-to-ground{0%{background-color:#C9CBC6}1%,100%{background-color:#eceee6}}}}
+@supports not (animation-timeline:scroll()){:root{background:#eceee6}}

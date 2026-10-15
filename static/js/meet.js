@@ -444,10 +444,17 @@
                 { duration: 700, easing: spring });
         });
     };
+    // a phone on its side stands the list beside the drawing as a column (meet.css)
+    const column = () => list.scrollWidth <= list.clientWidth + 1 && getComputedStyle(list).flexDirection === 'column';
     const centre = (i, smooth = true) => {
         const li = items[i];
         if (!li || !narrow.matches) return;
         steering = performance.now() + 700;
+        if (column()) {
+            const r = li.getBoundingClientRect(), box = list.getBoundingClientRect();
+            if (r.top < box.top || r.bottom > box.bottom) list.scrollTo({ top: list.scrollTop + r.top - box.top - (box.height - r.height) / 2, behavior: smooth && !reduced ? 'smooth' : 'auto' });
+            return;
+        }
         const at = li.getBoundingClientRect().left - list.getBoundingClientRect().left + list.scrollLeft;
         list.scrollTo({ left: at - (list.clientWidth - li.offsetWidth) / 2, behavior: smooth && !reduced ? 'smooth' : 'auto' });
     };
@@ -500,7 +507,7 @@
     // middle is the one the camera shows
     let scrollRaf = 0;
     list.addEventListener('scroll', () => {
-        if (!narrow.matches || active < 0 || scrollRaf) return;
+        if (!narrow.matches || active < 0 || scrollRaf || column()) return;
         scrollRaf = requestAnimationFrame(() => {
             scrollRaf = 0;
             if (performance.now() < steering) return;

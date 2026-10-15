@@ -23,6 +23,13 @@
     // the scroll handler forces a synchronous layout on every event, and a
     // trackpad fires around a hundred a second. Measure on resize instead.
     let heroTop = 0, scrubSpan = 0, navFlipAt = 0, navDarkAgainAt = Infinity, darkBands = [];
+    // The claim cards under "Robots are cheap." are solid ink and pin just
+    // under the bar (steps.js), so the bar is dark while a card is the ground
+    // right under it. Their pinned positions move with the scroll, so they are
+    // read live, but only while the page is inside their section.
+    const cardList = document.querySelector('#steps .features');
+    const cards = cardList ? [...cardList.querySelectorAll('.feature')] : [];
+    let cardsFrom = Infinity, cardsTo = -Infinity, navLine = 64;
     function measureGeometry() {
         heroTop = hero.offsetTop;
         scrubSpan = hero.offsetHeight - sticky.offsetHeight;
@@ -32,6 +39,12 @@
         // clamp() expression and a custom property reports its raw text, so
         // the band's own computed height is read instead.
         const nav = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav')) || 64;
+        navLine = nav;
+        if (cards.length) {
+            const box = cardList.getBoundingClientRect();
+            cardsFrom = box.top + scrollY - innerHeight;
+            cardsTo = box.bottom + scrollY;
+        }
         const fade = parseFloat(getComputedStyle(hero, '::after').height) || 0;
         navFlipAt = heroTop + hero.offsetHeight + fade * .75 - nav;
         // The card hero sits on the paper, so the bar is paper from the top
@@ -39,14 +52,14 @@
         if (card) navFlipAt = -Infinity;
         // Dark bands in the middle of the page ([data-nav-dark], Meet the
         // robot) dissolve in from the paper and back out again, so the bar
-        // goes dark three quarters of the way into the top dissolve and back
-        // to paper three quarters of the way through the bottom one: the same
-        // rule as the hero, run both ways.
+        // goes dark a little under half way into the top dissolve, where the
+        // ground behind the bar is already more black than paper, and back to
+        // paper three quarters of the way through the bottom one.
         darkBands = [...document.querySelectorAll('[data-nav-dark]')].map((band) => {
             const top = band.getBoundingClientRect().top + scrollY;
             const into = parseFloat(getComputedStyle(band, '::before').height) || 0;
             const out = parseFloat(getComputedStyle(band, '::after').height) || 0;
-            return [top + into * .75 - nav, top + band.offsetHeight - out * .25 - nav];
+            return [top + into * .4 - nav, top + band.offsetHeight - out * .25 - nav];
         });
         // The page ends on the dark again, so the bar flips back before the
         // closing block, measured from the top of that block's own dissolve.
@@ -55,11 +68,20 @@
         const closeFade = parseFloat(getComputedStyle(close, '::before').height) || 0;
         navDarkAgainAt = close.offsetTop - closeFade * .25 - nav;
     }
+    // a card is the ground under the bar when it fills the strip just below
+    // it (a pinned card sits 14px under the bar, 34px while it is still
+    // rising into place, so a stacked card counts from a little lower)
+    function cardUnderBar(y) {
+        if (y < cardsFrom || y > cardsTo) return false;
+        const stacked = cardList.closest('.is-stacked');
+        const top = navLine + (stacked ? 36 : 12), bottom = navLine + 12;
+        return cards.some((card) => { const r = card.getBoundingClientRect(); return r.top <= top && r.bottom > bottom; });
+    }
     let navPast = null;
     function syncNav() {
         const y = scrollY;
         // a band's start counts as inside it, so two dark bands that touch hand over with no paper frame between them
-        const past = y > navFlipAt && y < navDarkAgainAt && !darkBands.some(([a, b]) => y >= a && y < b);
+        const past = y > navFlipAt && y < navDarkAgainAt && !darkBands.some(([a, b]) => y >= a && y < b) && !cardUnderBar(y);
         if (past === navPast) return;
         navPast = past;
         document.documentElement.classList.toggle('past-hero', past);

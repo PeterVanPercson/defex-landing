@@ -852,7 +852,10 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
     .legal__toc:not([hidden]) { display: block; }
     .doc .post__head { box-sizing: border-box; max-width: calc(240px + clamp(40px, 6vw, 96px) + 700px + 2 * var(--pad)); padding-inline: var(--pad); }
     .legal { display: grid; grid-template-columns: minmax(0, 240px) minmax(0, 700px); justify-content: center; gap: clamp(40px, 6vw, 96px); max-width: var(--max); margin-inline: auto; padding-inline: var(--pad); }
-    .legal .prose--legal { display: block; }
+    /* both columns are fixed before legal.js unhides the list, so the
+       article never jumps sideways when it appears (CLS) */
+    .legal .prose--legal { display: block; grid-column: 2; grid-row: 1; }
+    .legal .legal__toc { grid-column: 1; grid-row: 1; }
     .legal .prose--legal > p:first-child { margin-top: 0; }
     .legal .prose--legal > h2:first-of-type { margin-top: clamp(40px, 6vh, 64px); }
     .legal__toc { position: sticky; top: calc(var(--nav) + 44px); align-self: start; margin-top: clamp(28px, 4vh, 44px); border-left: 1px solid var(--line); }
@@ -1782,6 +1785,16 @@ body { font: 400 16px/1.6 var(--font); }
     .footer__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .sheet.inline .roll__i { --roll-h: 32px; width: 108px; }
 }
+/* A phone on its side: one card is wider than the screen is tall, so the
+   card keeps its drawing beside the line, the drawing capped at a little over
+   half the height, and both are on screen together. */
+@media (orientation: landscape) and (max-height: 540px) {
+    .feature { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+    .feature__art { aspect-ratio: auto; height: 55svh; min-height: 0; margin: 10px; }
+    .feature__copy { padding: 18px 22px; }
+    .feature__t { font-size: clamp(24px, 3.4vw, 30px); }
+    .feature__d { margin-top: 10px; font-size: 16px; }
+}
 @media (prefers-reduced-motion: reduce) {
     .art * { animation: none; }
     .art__try { stroke-dashoffset: 0; }
@@ -1887,6 +1900,13 @@ body { font: 400 16px/1.6 var(--font); }
    Agility and Skild frame their machines. The humanoid film and its dark
    band are gone; everything here overrides that band for .hero--card. */
 html:has(.hero--card) { background-color: var(--page); }
+/* what shows past the bottom edge (overscroll) is the black footer's colour,
+   past the top the paper: the root's colour steps from one to the other half
+   way down the page, driven by the scroll itself */
+@supports (animation-timeline: scroll()) {
+    html:has(.hero--card) { animation: edge-to-footer linear both; animation-timeline: scroll(root block); }
+    @keyframes edge-to-footer { 0%, 49.9% { background-color: var(--page); } 50%, 100% { background-color: #020506; } }
+}
 .hero.hero--card { --bg: var(--page); --surface: #EAE5DC; --ink: #1A1815; --ink-soft: rgba(26, 24, 21, .74); --mute: rgba(26, 24, 21, .58); --line: rgba(26, 24, 21, .12); --rule: rgba(26, 24, 21, .32); --on-accent: #1A1815; --em: var(--ink); --card-gutter: clamp(10px, 1.5vw, 24px); --film-ground: #D9D4CB; background: var(--grain), var(--page); color: var(--ink); }
 .hero--card::after { display: none; }
 /* the bar is paper over the card hero and turns dark only over the dark

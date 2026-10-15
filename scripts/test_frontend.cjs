@@ -964,3 +964,90 @@ test('a still hero with no film still turns the bar dark over a dark band and ba
     p.event('scroll');
     assert.equal(p.root.classList.contains('nav-dark'), false);
 });
+
+// Fixer B (2026-10-15 QA pass): the bar follows the ground over the claim cards and into Meet the robot
+function cardHero({ stacked = true } = {}) {
+    const p = page(), hero = new Element(), sticky = new Element(), list = new Element(), card = new Element();
+    hero.classList.add('hero--card');
+    hero.querySelector = () => sticky;
+    // the list sits at 1500..4000 on the page; the card scrolls with it until it pins 14px under the bar
+    list.getBoundingClientRect = () => ({ top: 1500 - p.context.scrollY, bottom: 4000 - p.context.scrollY });
+    list.querySelectorAll = () => [card];
+    list.closest = () => (stacked ? list : null);
+    card.getBoundingClientRect = () => { const top = stacked ? Math.max(64 + 14, 1500 - p.context.scrollY) : 1500 - p.context.scrollY; return { top, bottom: top + 600 }; };
+    p.selectors['.hero'] = hero;
+    p.selectors['#steps .features'] = list;
+    p.run('hero-film.js');
+    return p;
+}
+
+test('the bar turns dark while a solid claim card is the ground under it, and back to paper above the cards', () => {
+    const p = cardHero();
+    p.context.scrollY = 1000;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), false);
+    p.context.scrollY = 1460;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), true);
+    p.context.scrollY = 2600;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), true);
+    p.context.scrollY = 1200;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), false);
+});
+
+test('cards that are not stacked turn the bar dark only once they reach it', () => {
+    const p = cardHero({ stacked: false });
+    // its top 90px down the screen: 26px of paper still shows under the bar
+    p.context.scrollY = 1410;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), false);
+    p.context.scrollY = 1430;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), true);
+});
+
+test('the bar goes dark a little under half way into a dark band\'s dissolve, not three quarters', () => {
+    const p = page(), hero = new Element(), sticky = new Element(), band = new Element();
+    hero.classList.add('hero--card');
+    hero.querySelector = () => sticky;
+    band.getBoundingClientRect = () => ({ top: 1000 - p.context.scrollY });
+    band.offsetHeight = 1200;
+    p.context.getComputedStyle = (el, pseudo) => ({ height: el === band && pseudo === '::before' ? '200px' : '0', getPropertyValue: () => '64' });
+    p.selectors['.hero'] = hero;
+    p.selectors['[data-nav-dark]'] = [band];
+    p.run('hero-film.js');
+    // 40% into the 200px dissolve, less the 64px bar: 1016
+    p.context.scrollY = 1010;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), false);
+    p.context.scrollY = 1040;
+    p.event('scroll');
+    assert.equal(p.root.classList.contains('nav-dark'), true);
+});
+
+test('the Partners flick reads its word once to a screen reader, not letter by letter twice', () => {
+    const p = page(), root = new Element(), stage = new Element(), label = new Element();
+    const make = () => {
+        const el = new Element();
+        el.children = [];
+        el.replaceChildren = (...kids) => { el.children = kids; };
+        Object.defineProperty(el, 'innerHTML', { set() { el.firstChild = make(); el.lastChild = make(); } });
+        return el;
+    };
+    p.doc.createElement = make;
+    label.textContent = 'Partners';
+    label.replaceChildren = (...kids) => { label.children = kids; };
+    stage.animate = () => ({ finished: Promise.resolve() });
+    stage.querySelectorAll = () => [];
+    root.querySelector = (s) => (s === '.flick__stage' ? stage : s === '.flick__k' ? label : null);
+    p.selectors['.flick'] = root;
+    p.run('flick.js');
+    const [spoken, shown] = label.children;
+    assert.equal(spoken.textContent, 'Partners');
+    assert.equal(spoken.getAttribute('aria-hidden'), null);
+    assert.equal(shown.getAttribute('aria-hidden'), 'true');
+    assert.equal(shown.children.length, 'Partners'.length);
+    assert.equal(label.getAttribute('aria-label'), null);
+});

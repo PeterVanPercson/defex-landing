@@ -105,3 +105,76 @@ class PrototypeTests(SimpleTestCase):
         process = (root / 'src/process.ts').read_text()
         self.assertIn("'Locate the unit'", process)
         self.assertIn("'Next unit'", process)
+
+
+@override_settings(SECURE_SSL_REDIRECT=False)
+class PrototypeQaTests(SimpleTestCase):
+    """2026-10-15 QA pass on /prototype/: the case roll, the band under the stage,
+    the words a screen reader and a share card get, and the browser edges."""
+    root = Path(settings.BASE_DIR) / 'prototype'
+
+    def css(self):
+        return (self.root / 'src/style.css').read_text()
+
+    def test_the_case_roll_clears_the_topbar_on_a_phone_on_its_side(self):
+        css = self.css()
+        self.assertIn('@media(orientation:landscape) and (max-height:500px){body.process-mode .roll{top:64px;', css)
+        self.assertNotIn('body.process-mode .roll{top:14px', css)
+
+    def test_the_case_roll_is_dark_type_on_its_halo_on_phones_on_every_shot(self):
+        css = self.css()
+        phone = css[css.index('@media(max-width:700px){\n  /* phones: high on the right'):]
+        phone = phone[:phone.index('\n}\n')]
+        self.assertNotIn('#f4f6f1', phone)
+        self.assertNotIn('color:#fff', phone)
+        self.assertIn('text-shadow:0 0 3px #eef0ea,0 0 10px #eef0ea,0 0 22px #eef0eacc', css)
+
+    def test_the_case_roll_steps_aside_on_the_held_reject_shot(self):
+        self.assertIn('body.process-mode[data-shot="reject"] .roll,body.process-mode[data-cam="reject"] .roll{opacity:0;pointer-events:none}', self.css())
+
+    def test_no_empty_band_under_the_stage_and_the_try_it_line_stays_one_line(self):
+        css = self.css()
+        self.assertIn('.process-guide>[hidden]{display:none!important}', css)
+        self.assertIn('.process-guide:not(:has(>:not([hidden]))){padding:0}', css)
+        self.assertIn('.tryit>summary{white-space:nowrap}', css)
+        self.assertIn('@media(max-width:600px){.tryit>summary span{display:none}}', css)
+        self.assertIn('.tryit>summary span{color:var(--muted);', css)
+        self.assertIn('.table-scroll{overflow-x:auto;', css)
+
+    def test_the_page_describes_the_robot_not_a_cell(self):
+        page = self.client.get('/prototype/').content.decode()
+        line = 'An interactive simulation of the robot: it measures every unit, feels its way in and checks every connection.'
+        self.assertEqual(page.count(line), 3)
+        for gone in ('connector cell', 'Connector lab', 'Workcell controls', 'Build the cell'):
+            self.assertNotIn(gone, page)
+        self.assertIn('<section class="stage" aria-label="The robot: 3D simulation">', page)
+        self.assertIn('<nav class="dock" aria-label="Simulation controls">', page)
+        self.assertIn('<dt>Next</dt><dd>Build the robot and run it on customer parts.', page)
+        # his call: the h1 stays
+        self.assertIn('<h1>Connector<br>workcell.</h1>', page)
+        scene = (self.root / 'src/scene.ts').read_text()
+        self.assertIn('passed units go into a tote and rejects into a locked red bin', scene)
+        player = (self.root / 'src/cycle-player.ts').read_text()
+        self.assertNotIn('operator clear required', player)
+        self.assertIn("'rejected / a person clears it'", player)
+
+    def test_the_share_image_is_versioned_like_every_other_page(self):
+        page = self.client.get('/prototype/').content.decode()
+        v = settings.DEFEX_ASSET_VERSION
+        self.assertIn(f'<meta property="og:image" content="https://defexrobotics.com/static/img/og.jpg?v={v}" />', page)
+        self.assertIn(f'<meta name="twitter:image" content="https://defexrobotics.com/static/img/og.jpg?v={v}" />', page)
+
+    def test_tooltip_close_button_and_labels_are_accessible(self):
+        page = (self.root / 'index.html').read_text()
+        self.assertIn('<div id="tooltip" class="tooltip" role="tooltip" aria-label="Part name">', page)
+        scene = (self.root / 'src/scene.ts').read_text()
+        self.assertIn("tip.setAttribute('aria-label',name)", scene)
+        self.assertIn('#close-notes:focus{outline:2px solid #365c3f;', self.css())
+
+    def test_the_browser_edges_match_the_stage_and_the_ground_under_it(self):
+        page = self.client.get('/prototype/').content.decode()
+        self.assertIn('<meta name="theme-color" media="(max-width: 600px)" content="#C9CBC6" />', page)
+        self.assertIn('<meta name="theme-color" content="#919491" />', page)
+        self.assertNotIn('#161918', page)
+        css = self.css()
+        self.assertIn('@keyframes edge-to-ground{0%{background-color:#919491}1%,100%{background-color:#eceee6}}', css)

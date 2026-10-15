@@ -110,6 +110,8 @@ class CareersTests(SimpleTestCase):
 
     def test_csrf_honeypot_and_post_only_submission_remain_enforced(self):
         self.assertEqual(Client(enforce_csrf_checks=True).post("/careers/apply/", self.data).status_code, 403)
-        self.assertEqual(self.client.get("/careers/apply/").status_code, 405)
+        # a GET is never a submission: it lands on the form instead of a blank 405
+        get = self.client.get("/careers/apply/")
+        self.assertEqual((get.status_code, get["Location"]), (302, "/careers/#application"))
         self.assertEqual(self.client.post("/careers/apply/", {**self.data, "website": "bot.example"}).status_code, 400)
         self.mail.assert_not_called()
