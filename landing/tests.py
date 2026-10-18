@@ -443,7 +443,9 @@ class SiteTests(SimpleTestCase):
         body = response.content.decode()
         self.assertIn("<title>Why Defex | Robots that plug in and check every connector</title>", body)
         self.assertIn('data-word="WHY US"', body)
-        self.assertIn('id="why-title"><span class="wy-sr">Why us: </span>Robots that plug in and check every', body)
+        # his call 2026-10-17: the page opens on WHY US alone; the line under it is for screen readers only
+        self.assertIn('<h1 class="wy-sr" id="why-title">Why us: robots that plug in and check every connector.</h1>', body)
+        self.assertNotIn("portal__title", body)
         for section in ("portal", "problem", "promise", "meet", "tests", "learns", "resets", "newpart", "proof", "pricing", "faq", "talk"):
             self.assertIn(f'id="{section}"', body)
         # his call, 2026-10-04: no "Watch it work" section and no link to it
@@ -939,18 +941,16 @@ class StoryCopyTests(SimpleTestCase):
         self.assertEqual(re.findall(r'<li class="morph__check" data-check="\d">([^<]+)</li>', newpart), ["Seated", "Held", "Wires"])
         home = self.client.get("/").content.decode()
         card = home.split('<li class="feature" style="--i: 3">', 1)[1].split("</li>", 1)[0]
-        for gone in ("art__hop", "art__fillbar"):
-            self.assertNotIn(gone, card)
-        self.assertIn("art__swap--a", card)
-        self.assertIn("art__swap--b", card)
-        self.assertEqual(card.count("art__tick"), 3)
+        # his call 2026-10-17: the card keeps the original square-to-hexagon
+        # drawing, its settings bars filling and the dots hopping across
+        self.assertEqual(card.count("art__fillbar"), 4)
+        self.assertEqual(card.count("art__hop"), 3)
         for page in (why, home):
             self.assertIn("A new part needs a new fixture and the same checks.", page)
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
-        for gone in ("art-hop", "art-fill", ".morph__skill"):
-            self.assertNotIn(gone, css)
-        # without motion the second part stays hidden instead of sitting on the first
-        self.assertRegex(css, r"\.art__swap--b \{ opacity: 0;")
+        self.assertNotIn(".morph__skill", css)
+        for kept in ("@keyframes art-hop", "@keyframes art-fill"):
+            self.assertIn(kept, css)
 
     def test_the_checks_are_seated_held_wires(self):
         why = self.client.get("/why-us/").content.decode()
