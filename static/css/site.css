@@ -1213,8 +1213,6 @@ body:has(.wy) .topbar { --bg: #050505; --ink: #F4F4F0; --ink-soft: rgba(244, 244
 .portal[data-choosing="true"] .portal__choices { visibility: visible; }
 .portal__choices button { position: absolute; margin: 0; padding: 0; border: 0; background: transparent; cursor: crosshair; pointer-events: auto; touch-action: pan-y; }
 .portal__choices button:disabled { pointer-events: none; }
-.portal__front { position: absolute; inset: 0; opacity: var(--gp-caption, 1); pointer-events: none; }
-.portal__title { position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--gp-word-bottom, 62%) + clamp(30px, 5vh, 56px)); margin-inline: auto; max-width: 20ch; text-align: center; font: 600 clamp(28px, 3.4vw, 54px)/1.06 var(--sans); letter-spacing: -.035em; color: var(--ink); text-wrap: balance; }
 .portal__fallback { position: absolute; inset: 0; display: none; place-items: center; font: 400 min(19cqw, 34cqh)/1 var(--serif); letter-spacing: -.012em; color: var(--gp-field); }
 .portal[data-ready] .portal__fallback { visibility: hidden; }
 /* Inside the letter: the problem, in black on the yellow, scrolling over the
@@ -1671,22 +1669,16 @@ body { font: 400 16px/1.6 var(--font); }
 .art__drop { animation: art-drop 5s ease infinite; }
 .art__orbit { transform-origin: 200px 150px; animation: art-spin 9s linear infinite; }
 .art__orbit--back { animation-duration: 26s; animation-direction: reverse; }
-/* card 4: one part slides off the same pallet and the next slides on; the
-   same three checks light for each. Without motion the first part stands
-   checked. */
-.art__swap { will-change: transform, opacity; }
-.art__swap--a { animation: art-swap-a 8s cubic-bezier(.6, 0, .3, 1) infinite; }
-.art__swap--b { opacity: 0; animation: art-swap-b 8s cubic-bezier(.6, 0, .3, 1) infinite; }
-.art__tick { transform-box: fill-box; transform-origin: center; animation: art-tick 8s ease infinite; animation-delay: calc(var(--i) * .35s); }
+.art__fillbar { transform-box: fill-box; transform-origin: left; animation: art-fill 5s cubic-bezier(.3, 0, .2, 1) infinite; }
+.art__hop { animation: art-hop 5s cubic-bezier(.3, 0, .2, 1) infinite; }
 @keyframes art-draw { 0% { stroke-dashoffset: 1; } 12%, 86% { stroke-dashoffset: 0; } 94%, 100% { stroke-dashoffset: 0; opacity: 0; } }
 @keyframes art-land { 0%, 62% { transform: scale(.6); opacity: .3; } 72% { transform: scale(1.25); opacity: 1; } 80%, 92% { transform: scale(1); opacity: 1; } 100% { transform: scale(.6); opacity: .3; } }
 @keyframes art-scan { 0%, 6% { transform: translateX(0); } 62%, 100% { transform: translateX(300px); } }
 @keyframes art-pass { 0%, 8% { opacity: .22; transform: scale(.86); } 22%, 90% { opacity: 1; transform: none; } 100% { opacity: .22; transform: scale(.86); } }
 @keyframes art-drop { 0%, 34% { transform: none; } 48%, 90% { transform: translateY(62px); } 100% { transform: none; } }
 @keyframes art-spin { to { transform: rotate(360deg); } }
-@keyframes art-swap-a { 0%, 42% { transform: none; opacity: 1; } 52% { transform: translateX(-120px); opacity: 0; } 53%, 91% { transform: translateX(120px); opacity: 0; } 100% { transform: none; opacity: 1; } }
-@keyframes art-swap-b { 0%, 52% { transform: translateX(120px); opacity: 0; } 62%, 90% { transform: none; opacity: 1; } 99% { transform: translateX(-120px); opacity: 0; } 100% { transform: translateX(120px); opacity: 0; } }
-@keyframes art-tick { 0%, 6% { transform: scale(0); opacity: 0; } 10% { transform: scale(1.25); opacity: 1; } 12%, 38% { transform: scale(1); opacity: 1; } 42%, 64% { transform: scale(0); opacity: 0; } 68% { transform: scale(1.25); opacity: 1; } 70%, 88% { transform: scale(1); opacity: 1; } 92%, 100% { transform: scale(0); opacity: 0; } }
+@keyframes art-fill { 0%, 30% { transform: scaleX(0); } 62%, 92% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
+@keyframes art-hop { 0%, 8% { transform: translateX(0); opacity: 0; } 14% { opacity: 1; } 34%, 100% { transform: translateX(118px); opacity: 0; } }
 
 /* Registered and Partners: one quiet band, readable labels, soft edges */
 .sheet.inline { padding-block: clamp(30px, 5vh, 54px); border-top: 0; }
@@ -1895,7 +1887,7 @@ body { font: 400 16px/1.6 var(--font); }
    every other word, the drawings' labels included, takes the text face. Its
    blue stays on the buttons and in the drawings, never on a word.
    ------------------------------------------------------------------------ */
-.wy :is(.portal__title, .beat, .wy-h, .story__t, .gauge__result, .half__n, .half__t, .proof__n, .proof__t, .price__n, .price__t, .price__p, .price__v strong, .faq__q, .face__name, .city__n) { font-family: var(--serif); font-weight: 400; letter-spacing: -.015em; color: var(--ink); }
+.wy :is(.beat, .wy-h, .story__t, .gauge__result, .half__n, .half__t, .proof__n, .proof__t, .price__n, .price__t, .price__p, .price__v strong, .faq__q, .face__name, .city__n) { font-family: var(--serif); font-weight: 400; letter-spacing: -.015em; color: var(--ink); }
 .wy :is(.wy-lead, .wy-kicker, .wy-link, .wy-btn, .story__d, .gauge__check, .proof__v, .price__s, .price__v, .faq__a, .face__bio, .price__go, .talk__pick) { font-family: var(--text); font-weight: 400; letter-spacing: 0; }
 /* its small labels read in normal case, like every other word on the site */
 .wy :is(.tries__label, .loop__labels li, .morph__names, .half__tag, .price__per, .face__role, .city__t, .window__bar, .inline__k) { font-family: var(--text); font-weight: 400; font-size: 13.5px; letter-spacing: .04em; text-transform: none; }
