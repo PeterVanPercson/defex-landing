@@ -817,12 +817,14 @@ function steps({ roomy = true, reduced = false } = {}) {
     svg.querySelector = sel => sel === '[data-log]' ? log : null;
     svg.querySelectorAll = sel => sel === '[data-mark]' ? marks : sel === '[data-unit]' ? units : [];
     const feeds = rows.map((row, i) => {
-        const feed = new Element(), head = new Element();
+        const feed = new Element(), head = new Element(), art = new Element();
+        art.textContent = '[#] [ ]\n ok  |';
+        row.art = art;
         feed.dataset = i === 1 ? { scene: 'check' } : {};
         feed.querySelector = () => svg;
         feed.getBoundingClientRect = () => { const t = top(i) + 80; return { top: t, bottom: t + 460 }; };
         row.getBoundingClientRect = () => ({ top: top(i) });
-        row.querySelector = sel => sel === '.feed' ? feed : sel === '.feature__row' ? head : null;
+        row.querySelector = sel => sel === '.feed' ? feed : sel === '.feature__row' ? head : sel === '.feature__ascii' ? art : null;
         row.offsetHeight = 700;
         row.head = head;
         return feed;
@@ -856,6 +858,17 @@ test('the rows stack, the open one is marked and only the feed on show runs', ()
     assert.deepEqual(p.live(), [false, true, false, false]);
     // the check feed has been drawing: its log is written
     assert.match(p.log.textContent, /^Passed \d · Rejected \d$/);
+});
+
+test('a row\'s ASCII drawing is blank until its row opens, then types itself in once', () => {
+    const p = steps();
+    assert.equal(p.rows[0].art.textContent, '       \n      ');
+    p.scroll(3000 - 64 + 10);
+    for (let i = 0; i < 80; i++) p.frame();
+    assert.equal(p.rows[0].art.textContent, '[#] [ ]\n ok  |');
+    assert.equal(p.rows[1].art.textContent, '       \n      ');
+    // under reduced motion it is never blanked
+    assert.equal(steps({ reduced: true }).rows[2].art.textContent, '[#] [ ]\n ok  |');
 });
 
 test('a folded header takes you back to where its row pins', () => {
