@@ -266,12 +266,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
 
 /* Why us: three claims as ruled rows, the way origami lists its roles. A
    number, the claim cut into the page, and the one sentence behind it. */
-.features { margin-top: clamp(36px, 6vh, 64px); list-style: none; border-top: 1px solid var(--line); }
-.feature { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: baseline; gap: clamp(18px, 3vw, 48px); padding: clamp(34px, 5.5vh, 56px) 8px; border-bottom: 1px solid var(--line); }
-.feature__t { max-width: 17ch; font-size: clamp(27px, 2.7vw, 38px); line-height: 1.12; }
-.feature__d { max-width: 44ch; font: 400 16px/1.7 var(--mono); color: var(--ink-soft); }
-.feature__cta { margin-top: 26px; }
-.features__more { margin-top: clamp(32px, 5vh, 48px); }
 /* Registered: the companies by name, rolling, after origami-robotics.com's partners
    row: greyed, quiet, one steady speed. The files are theirs, served as sent, so the
    look is all in the filter. Two of them sit on a white ground instead of a clear
@@ -700,7 +694,6 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
     .field input { height: 48px; }
     .form .cta { width: 100%; }
     .rolecard { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-    .feature { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 30px 0; }
     .sechead__sub { text-align: left; }
     .group__head { flex-direction: column; align-items: flex-start; gap: 8px; }
     .footer { flex-direction: column; align-items: flex-start; gap: 12px; }
@@ -1615,70 +1608,10 @@ body { font: 400 16px/1.6 var(--font); }
 .origin__copy p em { font-style: normal; color: var(--em); }
 .origin--home .origin__copy p.origin__note, .origin__copy p.origin__note { max-width: 30ch; margin-top: clamp(20px, 3vh, 32px); font: 500 clamp(18px, 1.6vw, 23px)/1.4 var(--sans); letter-spacing: -.01em; color: var(--ink-soft); }
 
-/* What the robot does about it. Each claim is a card in the ink with its
-   drawing on a darker panel; without the script (or with Reduce Motion) the
-   cards simply sit one under another. */
-.steps { position: relative; margin-top: clamp(36px, 6vh, 72px); }
-.features { margin-top: 0; border-top: 0; display: grid; gap: 14px; list-style: none; }
-.feature { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: stretch; gap: 0; padding: 0; border: 0; border-radius: 22px; overflow: hidden; background: var(--card); color: var(--card-ink); }
-.feature__art { position: relative; min-height: clamp(260px, 34vw, 480px); margin: 10px; border-radius: 14px; background: #100F0D; overflow: hidden; }
-.feature__copy { display: flex; flex-direction: column; justify-content: center; padding: clamp(28px, 4vw, 64px); }
-.feature__t { max-width: 14ch; font-size: clamp(28px, 2.9vw, 44px); font-weight: 400; line-height: 1.08; letter-spacing: -.012em; color: var(--card-ink); }
-/* on the ink card the title is plain paper-coloured type, not a cut */
-.feature .engraved { color: var(--card-ink); background: none; text-shadow: none; }
 /* The cut is for display titles, as origami keeps it: below about 32px its
    lit lip blurs the letters, so section heads inside an article, a policy or
    the careers list are plain ink in the same serif. */
 :is(.prose, .group__head) .engraved { color: var(--ink); background: none; text-shadow: none; }
-.feature__d { max-width: 36ch; margin-top: clamp(14px, 2vh, 22px); font: 400 18px/1.55 var(--text); letter-spacing: 0; color: rgba(243, 239, 232, .7); }
-.features__more { margin-top: clamp(28px, 5vh, 52px); }
-
-/* The stack (his call, 2026-10-12, Skiper's sticky cards): every card pins
-   22px below the one before, so the edges of the earlier ones show above it,
-   and steps.js shrinks each one back (--s) and dims it (--dim) as the cards
-   after it arrive. The gap between the cards is the scroll each one gets. */
-.steps.is-stacked .features { gap: 34svh; padding-bottom: 14svh; }
-.steps.is-stacked .feature { position: sticky; top: calc(var(--nav) + 14px + var(--i) * 22px); height: min(calc(100svh - var(--nav) - 110px), 700px); transform: scale(var(--s, 1)); transform-origin: 50% 0; will-change: transform; box-shadow: 0 -10px 40px rgba(26, 24, 21, .12); }
-.steps.is-stacked .feature::after { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; background: #0B0A09; opacity: var(--dim, 0); pointer-events: none; }
-.steps.is-stacked .feature__art { min-height: 0; }
-/* wider than the text column (his call, 2026-10-12: "a bit wider"): from
-   1100px the cards break out to the page, up to 1600px, centred */
-@media (min-width: 1100px) {
-    .steps { width: min(calc(100vw - 96px), 1600px); left: 50%; translate: -50% 0; }
-}
-.feature { position: relative; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
-@media (max-width: 900px) {
-    .steps.is-stacked .features { gap: 26svh; }
-    .steps.is-stacked .feature { top: calc(var(--nav) + 10px + var(--i) * 14px); height: auto; grid-template-rows: auto 1fr; }
-}
-
-/* The four drawings: flat shapes, white and yellow on ink. Each one moves
-   only while its card is the one showing (.is-on), or always when stacked. */
-.art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.art__w { fill: none; stroke: #F4F4F0; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.art__dim { fill: none; stroke: rgba(244, 244, 240, .26); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.art__y { fill: #F4F4F0; }
-.art__ys { fill: none; stroke: #F4F4F0; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
-.art__f { fill: #F4F4F0; }
-.art__bad { fill: none; stroke: #FF5A1F; stroke-width: 3; stroke-linejoin: round; }
-.art__ghost { fill: rgba(244, 244, 240, .12); }
-.art__try { stroke-dasharray: 1; stroke-dashoffset: 1; animation: art-draw 6s linear infinite; animation-delay: calc(var(--i) * .9s); }
-.art__land { transform-box: fill-box; transform-origin: center; animation: art-land 6s ease-in-out infinite; }
-.art__scan { animation: art-scan 5s cubic-bezier(.6, 0, .4, 1) infinite; }
-.art__part { transform-box: fill-box; transform-origin: center; animation: art-pass 5s ease infinite; animation-delay: calc(var(--i) * .45s); }
-.art__drop { animation: art-drop 5s ease infinite; }
-.art__orbit { transform-origin: 200px 150px; animation: art-spin 9s linear infinite; }
-.art__orbit--back { animation-duration: 26s; animation-direction: reverse; }
-.art__fillbar { transform-box: fill-box; transform-origin: left; animation: art-fill 5s cubic-bezier(.3, 0, .2, 1) infinite; }
-.art__hop { animation: art-hop 5s cubic-bezier(.3, 0, .2, 1) infinite; }
-@keyframes art-draw { 0% { stroke-dashoffset: 1; } 12%, 86% { stroke-dashoffset: 0; } 94%, 100% { stroke-dashoffset: 0; opacity: 0; } }
-@keyframes art-land { 0%, 62% { transform: scale(.6); opacity: .3; } 72% { transform: scale(1.25); opacity: 1; } 80%, 92% { transform: scale(1); opacity: 1; } 100% { transform: scale(.6); opacity: .3; } }
-@keyframes art-scan { 0%, 6% { transform: translateX(0); } 62%, 100% { transform: translateX(300px); } }
-@keyframes art-pass { 0%, 8% { opacity: .22; transform: scale(.86); } 22%, 90% { opacity: 1; transform: none; } 100% { opacity: .22; transform: scale(.86); } }
-@keyframes art-drop { 0%, 34% { transform: none; } 48%, 90% { transform: translateY(62px); } 100% { transform: none; } }
-@keyframes art-spin { to { transform: rotate(360deg); } }
-@keyframes art-fill { 0%, 30% { transform: scaleX(0); } 62%, 92% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
-@keyframes art-hop { 0%, 8% { transform: translateX(0); opacity: 0; } 14% { opacity: 1; } 34%, 100% { transform: translateX(118px); opacity: 0; } }
 
 /* Registered and Partners: one quiet band, readable labels, soft edges */
 .sheet.inline { padding-block: clamp(30px, 5vh, 54px); border-top: 0; }
@@ -1771,8 +1704,6 @@ body { font: 400 16px/1.6 var(--font); }
 .inline--black + .contact.dark::before { height: 0; }
 
 @media (max-width: 900px) {
-    .feature { grid-template-columns: minmax(0, 1fr); }
-    .feature__art { min-height: 0; aspect-ratio: 4 / 3; margin: 10px 10px 0; }
     .rolecard { grid-template-columns: minmax(0, 1fr); gap: 16px; }
     .rolecard__go { justify-self: start; }
 }
@@ -1781,24 +1712,10 @@ body { font: 400 16px/1.6 var(--font); }
     .navlink { font-size: 15px; letter-spacing: .02em; }
     .glass-button-wrap--nav .glass-button-text { font-size: 15px; padding: 0 13px; gap: 6px; }
     .lede h1 { font-weight: 400; letter-spacing: -.012em; line-height: 1.04; }
-    .feature { padding: 0; gap: 0; }
-    .feature__copy { padding: 26px 22px 30px; }
     .footer__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .sheet.inline .roll__i { --roll-h: 32px; width: 108px; }
 }
-/* A phone on its side: one card is wider than the screen is tall, so the
-   card keeps its drawing beside the line, the drawing capped at a little over
-   half the height, and both are on screen together. */
-@media (orientation: landscape) and (max-height: 540px) {
-    .feature { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
-    .feature__art { aspect-ratio: auto; height: 55svh; min-height: 0; margin: 10px; }
-    .feature__copy { padding: 18px 22px; }
-    .feature__t { font-size: clamp(24px, 3.4vw, 30px); }
-    .feature__d { margin-top: 10px; font-size: 16px; }
-}
 @media (prefers-reduced-motion: reduce) {
-    .art * { animation: none; }
-    .art__try { stroke-dashoffset: 0; }
     .rolecard, .rolecard__go, .cta { transition: none; }
 }
 
@@ -1809,8 +1726,6 @@ body { font: 400 16px/1.6 var(--font); }
 .group__head h2, .apply h2, .role__title { font-weight: 400; letter-spacing: -.01em; }
 .masthead__lead { max-width: 52ch; font: 400 clamp(19px, 1.6vw, 22px)/1.5 var(--text); }
 .postrow__title { font-weight: 400; letter-spacing: -.01em; }
-.steps.is-stacked .feature__t { font-size: clamp(30px, 3.2vw, 48px); }
-.steps.is-stacked .feature__d { font-size: clamp(17px, 1.3vw, 20px); }
 
 /* Fields as Skiper UI's Smooth Input draws them (his pick, 2026-10-04): a
    filled box a shade lighter than the ground, no border, 16px corners and
@@ -1973,3 +1888,127 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
 }
 .hero-opening .hero--still .hero__screen:not(.is-open) { clip-path: inset(calc(50% - 64px) round 8px); opacity: 0; filter: blur(10px); }
 .hero-opening .hero--still .hero__screen.is-open { animation: hero-open 1.8s cubic-bezier(.22, 1, .36, 1) backwards; }
+
+/* What the robot does about it: four ruled rows (his call, 2026-10-22,
+   after roboflow.com's platform list and the Roboflow summit's camera
+   feeds). Each row is a one-line header (a short label, the claim) over the
+   pitch's line and a dark camera feed that draws the mechanism. On a big
+   enough window the rows stack: each pins 56px under the one before
+   (.steps.is-stacked, static/js/steps.js), so the finished ones fold to their
+   header and the open one shows its feed. Without the script, on a phone or
+   under Reduce Motion they simply sit one under another. */
+.steps { --row: 56px; --k: clamp(110px, 12vw, 210px); position: relative; margin-top: clamp(36px, 6vh, 72px); }
+.features { list-style: none; border-bottom: 1px solid var(--line); }
+.feature { position: relative; background: var(--grain), var(--sheet); }
+.feature__row { display: grid; grid-template-columns: var(--k) minmax(0, 1fr); align-items: center; min-height: var(--row); border-top: 1px solid var(--line); }
+.feature__k { font: 400 15px/1.2 var(--text); letter-spacing: .02em; color: var(--ink-soft); transition: color .3s ease; }
+.feature__t { font: 400 clamp(18px, 1.35vw, 21px)/1.2 var(--serif); letter-spacing: -.005em; color: var(--ink); }
+.feature .engraved { color: var(--ink); background: none; text-shadow: none; }
+.feature__body { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr); gap: clamp(28px, 4vw, 72px); margin-left: var(--k); padding: clamp(10px, 1.6vh, 18px) 0 clamp(30px, 4.5vh, 48px); }
+.feature__copy { display: flex; flex-direction: column; }
+.feature__d { max-width: 17em; font: 400 clamp(25px, 2.3vw, 36px)/1.14 var(--serif); letter-spacing: -.012em; color: var(--ink); text-wrap: pretty; }
+.features__more { margin-top: clamp(28px, 5vh, 52px); }
+.steps.is-stacked .feature { position: sticky; top: calc(var(--nav) + var(--i) * var(--row)); }
+.steps.is-stacked .features::after { content: ""; display: block; height: 22vh; }
+.steps.is-stacked .feature__row { cursor: pointer; }
+.steps.is-stacked .feature__row:hover .feature__k, .feature.is-on .feature__k { color: var(--ink); }
+
+/* The feed: a dark camera frame on the paper, a dot grid for the sensor,
+   corner brackets and the camera's name. Its drawing moves only while it
+   is on screen and not covered (.is-live). */
+.feature__art { min-width: 0; }
+.feed { position: relative; height: clamp(260px, calc(100svh - var(--nav) - 4 * var(--row) - 100px), 470px); border-radius: 10px; overflow: hidden; color: #F4F4F0; background: radial-gradient(circle, rgba(244, 244, 240, .07) 1px, transparent 1.4px) 0 0 / 14px 14px, #100F0D; }
+.feed::before { content: ""; position: absolute; inset: 12px; z-index: 2; pointer-events: none; --b: rgba(244, 244, 240, .5);
+    background: linear-gradient(var(--b), var(--b)) 0 0 / 14px 1px, linear-gradient(var(--b), var(--b)) 0 0 / 1px 14px,
+        linear-gradient(var(--b), var(--b)) 100% 0 / 14px 1px, linear-gradient(var(--b), var(--b)) 100% 0 / 1px 14px,
+        linear-gradient(var(--b), var(--b)) 0 100% / 14px 1px, linear-gradient(var(--b), var(--b)) 0 100% / 1px 14px,
+        linear-gradient(var(--b), var(--b)) 100% 100% / 14px 1px, linear-gradient(var(--b), var(--b)) 100% 100% / 1px 14px;
+    background-repeat: no-repeat; }
+.feed__cam { position: absolute; top: 18px; left: 26px; z-index: 2; font: 400 14px/1 var(--text); letter-spacing: .02em; color: rgba(244, 244, 240, .62); }
+.feed .art { position: absolute; inset: 44px 18px 18px; width: calc(100% - 36px); height: calc(100% - 62px); display: block; }
+
+/* the drawings: white on the feed, detections in the brand blue, a fail in orange */
+.art { overflow: visible; }
+.art text { font-family: var(--text); font-size: 14px; }
+.art__w { fill: none; stroke: #F4F4F0; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.art__dim { fill: none; stroke: rgba(244, 244, 240, .3); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.art__thin { stroke-width: 1.5; }
+.art__solid { fill: #100F0D; }
+.art__board { stroke: rgba(244, 244, 240, .22); stroke-width: 1.5; }
+.art__f, .art__y { fill: #F4F4F0; }
+.art__soft { fill-opacity: .9; }
+.art__blue { fill: #3D63FF; }
+.art__ghost { fill: rgba(244, 244, 240, .12); }
+.art__ink { fill: none; stroke: #100F0D; stroke-width: 3; stroke-linecap: round; }
+.art__wire { fill: none; stroke: rgba(244, 244, 240, .7); stroke-width: 3; stroke-linecap: round; }
+.art__box { fill: rgba(61, 99, 255, .08); stroke: #3D63FF; stroke-width: 2; }
+.art__bad { fill: rgba(255, 90, 31, .1); stroke: #FF5A1F; stroke-width: 2; }
+.art__chip { fill: #3D63FF; }
+.art__chipw { fill: #F4F4F0; }
+.art__badchip { fill: #FF5A1F; }
+.art__tx { fill: #FFFFFF; }
+.art__txi { fill: #100F0D; }
+.art__lab { fill: rgba(244, 244, 240, .55); }
+.art__log { fill: rgba(244, 244, 240, .8); }
+.art__dash { fill: none; stroke: #3D63FF; stroke-width: 1.5; stroke-dasharray: 4 5; }
+.art__ret { fill: none; stroke: #3D63FF; stroke-width: 2; }
+.art__inset { fill: #0B0A09; stroke: rgba(244, 244, 240, .3); stroke-width: 1.5; }
+.art__bracket { fill: none; stroke: rgba(244, 244, 240, .5); stroke-width: 1.5; }
+
+/* Plug in: the connector comes down a little off, feels its way to the
+   port, presses home; the port's tag turns to Seated and the force rises. */
+.art__plug { animation: f1-plug 7s cubic-bezier(.45, 0, .2, 1) infinite; }
+.art__lock { transform-box: fill-box; transform-origin: center; animation: f1-lock 7s ease infinite; }
+.art__c1 { animation: f1-c1 7s linear infinite; }
+.art__c2 { animation: f1-c2 7s linear infinite; }
+.art__click { transform-box: fill-box; transform-origin: center; opacity: 0; animation: f1-click 7s ease-out infinite; }
+.art__force { transform-box: fill-box; transform-origin: 50% 100%; animation: f1-force 7s cubic-bezier(.3, 0, .2, 1) infinite; }
+@keyframes f1-plug { 0% { transform: translate(-70px, -150px); opacity: 0; } 6% { transform: translate(-70px, -150px); opacity: 1; } 26% { transform: translate(-6px, -22px); } 33% { transform: translate(5px, -16px); } 39% { transform: translate(-2px, -12px); } 44% { transform: translate(0, -10px); } 54%, 86% { transform: translate(0, 34px); opacity: 1; } 93% { transform: translate(0, 34px); opacity: 0; } 100% { transform: translate(-70px, -150px); opacity: 0; } }
+@keyframes f1-lock { 0%, 10% { transform: scale(1.35); opacity: 0; } 20%, 88% { transform: none; opacity: 1; } 95%, 100% { transform: none; opacity: 0; } }
+@keyframes f1-c1 { 0%, 18% { opacity: 0; } 22%, 53% { opacity: 1; } 55%, 100% { opacity: 0; } }
+@keyframes f1-c2 { 0%, 54% { opacity: 0; } 57%, 88% { opacity: 1; } 95%, 100% { opacity: 0; } }
+@keyframes f1-click { 0%, 53% { transform: scale(.4); opacity: 0; } 54% { transform: scale(.5); opacity: .9; } 68%, 100% { transform: scale(1.5); opacity: 0; } }
+@keyframes f1-force { 0%, 44% { transform: scaleY(.03); } 54% { transform: scaleY(.92); } 59%, 86% { transform: scaleY(.78); } 94%, 100% { transform: scaleY(.03); } }
+
+/* New part (his pick, 2026-10-17: the square and the hexagon): the checks
+   hop across and fill as they are, the new part's fixture draws in and
+   its bar fills last. */
+.art__fillbar { transform-box: fill-box; transform-origin: left; animation: art-fill 5s cubic-bezier(.3, 0, .2, 1) infinite; }
+.art__new { animation-name: f4-new; }
+.art__hop { animation: art-hop 5s cubic-bezier(.3, 0, .2, 1) infinite; }
+.art__nest { stroke-dasharray: 1; stroke-dashoffset: 1; fill: none; animation: f4-nest 5s cubic-bezier(.3, 0, .2, 1) infinite; }
+@keyframes art-fill { 0%, 30% { transform: scaleX(0); } 62%, 92% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
+@keyframes art-hop { 0%, 8% { transform: translateX(0); opacity: 0; } 14% { opacity: 1; } 34%, 100% { transform: translateX(108px); opacity: 0; } }
+@keyframes f4-new { 0%, 52% { transform: scaleX(0); } 84%, 92% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
+@keyframes f4-nest { 0%, 10% { stroke-dashoffset: 1; } 50%, 92% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 1; } }
+
+.feed:not(.is-live) .art * { animation-play-state: paused; }
+
+@media (max-width: 900px), (max-height: 639px) {
+    .steps { --k: 0px; }
+    .feature__row { grid-template-columns: minmax(0, 1fr); gap: 2px; padding-block: 14px; }
+    .feature__body { grid-template-columns: minmax(0, 1fr); gap: 18px; padding-top: 4px; }
+    .feature__d { font-size: clamp(24px, 6.4vw, 30px); }
+    .feed { height: auto; aspect-ratio: 480 / 400; }
+}
+@media (max-width: 480px) {
+    .feed { aspect-ratio: 480 / 430; }
+    .feed .art { inset: 40px 10px 10px; width: calc(100% - 20px); height: calc(100% - 50px); }
+    .feed__cam { top: 16px; left: 22px; font-size: 13px; }
+}
+/* A phone on its side: the line beside its feed, the feed a little over
+   half the height, so both are on screen together. */
+@media (orientation: landscape) and (max-height: 540px) {
+    .feature__body { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; }
+    .feature__d { font-size: clamp(20px, 3vw, 26px); }
+    .feed { height: 62svh; aspect-ratio: auto; }
+}
+/* Reduce Motion: every feed holds its finished frame */
+@media (prefers-reduced-motion: reduce) {
+    .art * { animation: none !important; }
+    .art__plug { transform: translate(0, 34px); }
+    .art__c1, .art__click { opacity: 0; }
+    .art__force { transform: scaleY(.78); }
+    .art__hop { opacity: 0; }
+    .art__nest { stroke-dashoffset: 0; }
+}

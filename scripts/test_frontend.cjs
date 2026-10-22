@@ -802,50 +802,83 @@ test('duplicate application clicks are blocked and back navigation restores subm
     assert.equal(p.form.hasAttribute('aria-busy'), false);
 });
 
-// The stacked claims (static/js/steps.js): four cards in a list whose top the
-// test places, and a media query the test answers.
-function steps({ tall = true, reduced = false } = {}) {
+// The claim rows (static/js/steps.js): four rows the test places on the
+// page (each 700px tall from y=3000, so row i's natural top is 3000+700i),
+// pinning 56px apart under a 64px bar when stacked; a media query the test
+// answers. Row 1 carries a scripted feed (data-scene="check").
+function steps({ roomy = true, reduced = false } = {}) {
     const p = page({ reduced }), root = new Element(), list = new Element();
-    const cards = [0, 1, 2, 3].map(() => new Element());
+    const rows = [0, 1, 2, 3].map(() => new Element());
     const media = p.context.matchMedia;
-    p.context.matchMedia = query => query.includes('min-height') ? { matches: tall, addEventListener() {} } : media(query);
-    list.getBoundingClientRect = () => ({ top: 3000 - p.context.scrollY, height: 3600 });
-    root.querySelectorAll = () => cards;
+    p.context.matchMedia = query => query.includes('min-height') ? { matches: roomy, addEventListener() {} } : media(query);
+    const pinned = () => root.classList.contains('is-stacked');
+    const top = i => { const natural = 3000 + 700 * i - p.context.scrollY; return pinned() ? Math.max(64 + 56 * i, natural) : natural; };
+    const svg = new Element(), log = new Element(), marks = [0, 1, 2, 3, 4].map(() => new Element()), units = marks.map(() => new Element());
+    svg.querySelector = sel => sel === '[data-log]' ? log : null;
+    svg.querySelectorAll = sel => sel === '[data-mark]' ? marks : sel === '[data-unit]' ? units : [];
+    const feeds = rows.map((row, i) => {
+        const feed = new Element(), head = new Element();
+        feed.dataset = i === 1 ? { scene: 'check' } : {};
+        feed.querySelector = () => svg;
+        feed.getBoundingClientRect = () => { const t = top(i) + 80; return { top: t, bottom: t + 460 }; };
+        row.getBoundingClientRect = () => ({ top: top(i) });
+        row.querySelector = sel => sel === '.feed' ? feed : sel === '.feature__row' ? head : null;
+        row.offsetHeight = 700;
+        row.head = head;
+        return feed;
+    });
+    list.getBoundingClientRect = () => ({ top: 3000 - p.context.scrollY });
+    root.querySelectorAll = () => rows;
     root.querySelector = () => list;
     p.ids.steps = root;
+    const moves = [];
+    p.context.scrollTo = (o) => moves.push(o.top);
     p.run('steps.js');
     const scroll = (y) => { p.context.scrollY = y; p.event('scroll'); p.frame(); };
-    const s = i => Number(cards[i].style['--s']);
-    return { ...p, root, cards, scroll, s };
+    const on = () => rows.findIndex(r => r.classList.contains('is-on'));
+    const live = () => feeds.map(f => f.classList.contains('is-live'));
+    return { ...p, root, rows, feeds, log, scroll, on, live, moves };
 }
 
-test('the claims stack and each card shrinks back as the ones after it arrive', () => {
+test('the rows stack, the open one is marked and only the feed on show runs', () => {
     const p = steps();
     assert.equal(p.root.classList.contains('is-stacked'), true);
-    // before the list: every card at full size
     p.scroll(0);
-    for (let i = 0; i < 4; i++) assert.equal(p.s(i), 1);
-    // halfway through: the first card is on its way back, the last never moves
-    const start = 3000 - 720 * 0.15, span = 3600 - 720 * 0.6;
-    p.scroll(start + span * .5);
-    assert.ok(p.s(0) < 1 && p.s(0) > 0.85);
-    assert.equal(p.s(3), 1);
-    // the end: each card a step further back than the one after it
-    p.scroll(start + span * 2);
-    assert.equal(p.s(0), 0.85);
-    assert.equal(p.s(1), 0.9);
-    assert.equal(p.s(2), 0.95);
-    assert.equal(p.s(3), 1);
-    assert.ok(Number(p.cards[0].style['--dim']) > Number(p.cards[2].style['--dim']));
+    assert.equal(p.on(), -1);
+    assert.deepEqual(p.live(), [false, false, false, false]);
+    // row 0 pinned under the bar, row 1 still below the fold
+    p.scroll(3000 - 64 + 10);
+    assert.equal(p.on(), 0);
+    assert.deepEqual(p.live(), [true, false, false, false]);
+    // row 1 has slid over row 0 and pinned 56px under it: row 0 folds to its header
+    p.scroll(3700 - 120 + 10);
+    assert.equal(p.on(), 1);
+    assert.deepEqual(p.live(), [false, true, false, false]);
+    // the check feed has been drawing: its log is written
+    assert.match(p.log.textContent, /^Passed \d · Rejected \d$/);
 });
 
-test('the claims simply sit one under another on a short window and under reduced motion', () => {
-    for (const options of [{ tall: false }, { reduced: true }]) {
+test('a folded header takes you back to where its row pins', () => {
+    const p = steps();
+    p.scroll(5000);
+    p.rows[1].head.emit('click');
+    // list top 3000 + row 0's 700, less the bar and one folded header
+    assert.equal(p.moves.at(-1), 3000 + 700 - 64 - 56);
+});
+
+test('the rows simply sit one under another on a small window and under reduced motion', () => {
+    for (const options of [{ roomy: false }, { reduced: true }]) {
         const p = steps(options);
         assert.equal(p.root.classList.contains('is-stacked'), false);
-        p.scroll(4000);
-        assert.equal(p.cards[0].style['--s'], undefined);
+        p.scroll(3100);
+        p.rows[1].head.emit('click');
+        assert.equal(p.moves.length, 0);
     }
+    // under reduced motion no feed runs, and the scripted one shows its finished frame
+    const still = steps({ reduced: true });
+    still.scroll(3100);
+    assert.deepEqual(still.live(), [false, false, false, false]);
+    assert.equal(still.log.textContent, 'Passed 4 · Rejected 1');
 });
 
 // The eased wheel (static/js/smooth.js).
@@ -1050,47 +1083,22 @@ test('a still hero with no film still turns the bar dark over a dark band and ba
     assert.equal(p.root.classList.contains('nav-dark'), false);
 });
 
-// Fixer B (2026-10-15 QA pass): the bar follows the ground over the claim cards and into Meet the robot
-function cardHero({ stacked = true } = {}) {
-    const p = page(), hero = new Element(), sticky = new Element(), list = new Element(), card = new Element();
+// The claim rows sit on the paper (2026-10-22), so the bar stays paper over them
+test('the bar stays paper over the claim rows', () => {
+    const p = page(), hero = new Element(), sticky = new Element(), list = new Element(), row = new Element();
     hero.classList.add('hero--card');
     hero.querySelector = () => sticky;
-    // the list sits at 1500..4000 on the page; the card scrolls with it until it pins 14px under the bar
     list.getBoundingClientRect = () => ({ top: 1500 - p.context.scrollY, bottom: 4000 - p.context.scrollY });
-    list.querySelectorAll = () => [card];
-    list.closest = () => (stacked ? list : null);
-    card.getBoundingClientRect = () => { const top = stacked ? Math.max(64 + 14, 1500 - p.context.scrollY) : 1500 - p.context.scrollY; return { top, bottom: top + 600 }; };
+    list.querySelectorAll = () => [row];
+    row.getBoundingClientRect = () => ({ top: 64, bottom: 664 });
     p.selectors['.hero'] = hero;
     p.selectors['#steps .features'] = list;
     p.run('hero-film.js');
-    return p;
-}
-
-test('the bar turns dark while a solid claim card is the ground under it, and back to paper above the cards', () => {
-    const p = cardHero();
-    p.context.scrollY = 1000;
-    p.event('scroll');
-    assert.equal(p.root.classList.contains('nav-dark'), false);
-    p.context.scrollY = 1460;
-    p.event('scroll');
-    assert.equal(p.root.classList.contains('nav-dark'), true);
-    p.context.scrollY = 2600;
-    p.event('scroll');
-    assert.equal(p.root.classList.contains('nav-dark'), true);
-    p.context.scrollY = 1200;
-    p.event('scroll');
-    assert.equal(p.root.classList.contains('nav-dark'), false);
-});
-
-test('cards that are not stacked turn the bar dark only once they reach it', () => {
-    const p = cardHero({ stacked: false });
-    // its top 90px down the screen: 26px of paper still shows under the bar
-    p.context.scrollY = 1410;
-    p.event('scroll');
-    assert.equal(p.root.classList.contains('nav-dark'), false);
-    p.context.scrollY = 1430;
-    p.event('scroll');
-    assert.equal(p.root.classList.contains('nav-dark'), true);
+    for (const y of [1000, 1460, 2600]) {
+        p.context.scrollY = y;
+        p.event('scroll');
+        assert.equal(p.root.classList.contains('nav-dark'), false);
+    }
 });
 
 test('the bar goes dark a little under half way into a dark band\'s dissolve, not three quarters', () => {
