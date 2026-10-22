@@ -149,6 +149,62 @@
         requestAnimationFrame(step);
     }
 
+    // Each row's words start as a field of ASCII characters and resolve,
+    // left to right with a little jitter, into the type (his ask,
+    // 2026-10-22). Every letter keeps its place while it is noise (a span
+    // with the real letter, invisible, and the noise drawn over it), so no
+    // line moves; when the row is done the plain text goes back in. A copy
+    // for screen readers sits beside the noise. Without this file or under
+    // Reduce Motion the words are simply there.
+    const GLYPHS = '#%&*+=-:./\\|<>01';
+    const glyph = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+    const words = rows.map((row) => [...row.querySelectorAll('.feature__t, .feature__d')].map((el) => {
+        const text = el.textContent;
+        if (still.matches || !document.createElement) return null;
+        const sr = document.createElement('span');
+        sr.classList.add('wy-sr');
+        sr.textContent = text;
+        const noise = document.createElement('span');
+        noise.setAttribute('aria-hidden', 'true');
+        const chars = [];
+        for (const c of text) {
+            if (/\s/.test(c)) { noise.appendChild(document.createTextNode(c)); continue; }
+            const span = document.createElement('span');
+            span.classList.add('dc', 'is-noise');
+            span.textContent = c;
+            span.setAttribute('data-g', glyph());
+            noise.appendChild(span);
+            chars.push(span);
+        }
+        el.textContent = '';
+        el.appendChild(sr);
+        el.appendChild(noise);
+        return { el, text, chars, started: false };
+    }).filter(Boolean)).flat();
+    function decode(w) {
+        if (w.started) return;
+        w.started = true;
+        {
+            const n = w.chars.length, T = 520 + n * 9, start = performance.now();
+            const at = w.chars.map((_, j) => (j / n) * T * .7 + Math.random() * T * .3);
+            let shuffled = 0;
+            const step = (now) => {
+                const t = now - start;
+                const shuffle = now - shuffled > 55;
+                if (shuffle) shuffled = now;
+                let left = 0;
+                w.chars.forEach((span, j) => {
+                    if (!span.classList.contains('is-noise')) return;
+                    if (t >= at[j]) span.classList.remove('is-noise');
+                    else { left++; if (shuffle) span.setAttribute('data-g', glyph()); }
+                });
+                if (left) requestAnimationFrame(step);
+                else setTimeout(() => { w.el.textContent = w.text; }, 300);
+            };
+            requestAnimationFrame(step);
+        }
+    }
+
     function setLive(i, live) {
         const feed = feeds[i];
         if (!feed) return;
@@ -168,6 +224,8 @@
         });
         rows.forEach((row, i) => row.classList.toggle('is-on', i === on));
         if (on >= 0) type(on);
+        // each line resolves once it is about a third of the way up the screen
+        words.forEach((w) => { if (!w.started && w.el.getBoundingClientRect().top < vh * .72) decode(w); });
         // a drawing also starts once it is on screen and clear of the row after it
         arts.forEach((el, i) => {
             if (!el || typed.has(i) || !el.getBoundingClientRect) return;
