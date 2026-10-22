@@ -75,11 +75,11 @@ class LayoutTests(SimpleTestCase):
 
     def test_claim_cards_keep_drawing_and_line_together_on_a_phone_on_its_side(self):
         side = media_block(CSS, "(orientation: landscape) and (max-height: 540px)")
-        self.assertIn(".feature { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }", side)
-        self.assertIn("height: 55svh", side)
+        self.assertIn(".feature__body { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; }", side)
+        self.assertIn(".feed { height: 62svh; aspect-ratio: auto; }", side)
         # it comes after the one-column phone rules, so it wins on a landscape phone
         self.assertGreater(CSS.index("@media (orientation: landscape) and (max-height: 540px)"),
-                           CSS.index(".feature__art { min-height: 0; aspect-ratio: 4 / 3;"))
+                           CSS.index(".feed { height: auto; aspect-ratio: 480 / 400; }"))
 
     def test_meet_fits_a_phone_on_its_side_with_the_cards_beside_the_drawing(self):
         side = media_block(MEET_CSS, "(max-width: 899px) and (orientation: landscape) and (max-height: 540px)")
