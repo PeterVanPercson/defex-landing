@@ -42,6 +42,7 @@ class Element {
     querySelector() { return null; }
     querySelectorAll() { return []; }
     closest() { return this.parent; }
+    appendChild(child) { (this.children ||= []).push(child); return child; }
 }
 
 function page({ reduced = false, saveData = false } = {}) {
@@ -56,6 +57,7 @@ function page({ reduced = false, saveData = false } = {}) {
     doc.querySelectorAll = selector => selectors[selector] || [];
     doc.head = { appendChild: el => el };
     doc.createElement = () => new Element();
+    doc.createTextNode = text => ({ textContent: text });
     class Observer {
         constructor(callback) { this.callback = callback; this.targets = []; observers.push(this); }
         observe(target) { this.targets.push(target); }
@@ -825,6 +827,11 @@ function steps({ roomy = true, reduced = false } = {}) {
         feed.getBoundingClientRect = () => { const t = top(i) + 80; return { top: t, bottom: t + 460 }; };
         row.getBoundingClientRect = () => ({ top: top(i) });
         row.querySelector = sel => sel === '.feed' ? feed : sel === '.feature__row' ? head : sel === '.feature__ascii' ? art : null;
+        const line = new Element();
+        line.textContent = 'It checks every one.';
+        line.getBoundingClientRect = () => ({ top: top(i) + 100 });
+        row.line = line;
+        row.querySelectorAll = sel => sel.includes('.feature__d') ? [line] : [];
         row.offsetHeight = 700;
         row.head = head;
         return feed;
@@ -869,6 +876,32 @@ test('a row\'s ASCII drawing is blank until its row opens, then types itself in 
     assert.equal(p.rows[1].art.textContent, '       \n      ');
     // under reduced motion it is never blanked
     assert.equal(steps({ reduced: true }).rows[2].art.textContent, '[#] [ ]\n ok  |');
+});
+
+test('a row\'s words start as ASCII noise and resolve into the text once its row comes up', () => {
+    const p = steps();
+    const line = p.rows[0].line;
+    // wrapped: a screen reader copy, then one noise span per letter
+    assert.equal(line.textContent, '');
+    const [sr, noise] = line.children;
+    assert.equal(sr.textContent, 'It checks every one.');
+    assert.equal(noise.getAttribute('aria-hidden'), 'true');
+    const letters = noise.children.filter(c => c.classList);
+    assert.equal(letters.length, 'Itcheckseveryone.'.length);
+    assert.ok(letters.every(c => c.classList.contains('is-noise') && c.getAttribute('data-g')));
+    // just below the trigger line it is still noise
+    p.scroll(3100 - 720 * .72 - 10);
+    assert.equal(line.textContent, '');
+    // row 0's line a third of the way up the screen: it resolves and the plain text goes back
+    p.scroll(3100 - 720 * .72 + 10);
+    for (let i = 0; i < 90; i++) p.frame();
+    assert.ok(letters.every(c => !c.classList.contains('is-noise')));
+    p.advance(400);
+    assert.equal(line.textContent, 'It checks every one.');
+    // a row further down is still noise
+    assert.equal(p.rows[3].line.textContent, '');
+    // under reduced motion the words are never touched
+    assert.equal(steps({ reduced: true }).rows[1].line.textContent, 'It checks every one.');
 });
 
 test('a folded header takes you back to where its row pins', () => {
