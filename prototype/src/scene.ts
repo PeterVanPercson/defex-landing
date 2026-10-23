@@ -409,7 +409,7 @@ export class WorkcellScene {
       this.target.set(t[0],t[1],t[2]);
       // Parts follows the plug across the bench, so a held reject's harness is in the middle of it too.
       if(parts&&f){this.target.x+=(f.plug[0]-HEADER[0])*.6;this.target.y+=(f.plug[1]-HEADER[1])*.5;}
-      const d=def.dist*(portrait?def.pdist??1:!portrait&&this.height<=500?def.ldist??1:1)*fit**.5*Math.max(1,this.width/this.height/1.6)**(portrait?0:def.wide??0);
+      const d=def.dist*(def===SHOTS.wide||def===SHOTS.parts?1:DEMO_PULLBACK)*(portrait?def.pdist??1:!portrait&&this.height<=500?def.ldist??1:1)*fit**.5*Math.max(1,this.width/this.height/1.6)**(portrait?0:def.wide??0);
       const lk=portrait&&def.plook?def.plook:def.look;
       if(lk){look.set(lk[0],lk[1],lk[2]);this.position.copy(look).addScaledVector(new T.Vector3(...dir).normalize(),d);}
       else this.position.copy(this.target).addScaledVector(new T.Vector3(...dir).normalize(),d);
@@ -607,6 +607,8 @@ export class WorkcellScene {
 // readouts down the left side, and a longer stand-off for the short frame. wide: how much further a frame wider than
 // 16:10 stands off (an exponent of the excess), for a shot whose subject is tall.
 interface ShotDef {t:number[];dir:number[];dist:number;lens:number;look?:number[];pt?:number[];pdir?:number[];pdist?:number;plens?:number;plook?:number[];lsx?:number;ldist?:number;wide?:number}
+// Desk demo (2026-10-23): the guided shots stand further back so the whole cell reads from a few steps away.
+const DEMO_PULLBACK=1.45;
 const REJECT_FIT=5.2,TOTE_FOAM=0x55595a,PACK_FROM=1;
 const SHOTS:Record<'wide'|'work'|'line'|'reject'|'parts'|'pack',ShotDef>={
   // The home page's photo: low and side on, the arm's base on the right, the hall behind; it turns about the bench.
