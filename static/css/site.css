@@ -1911,9 +1911,6 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
 .feature .engraved { color: var(--ink); background: none; text-shadow: none; }
 .feature__body { display: grid; grid-template-columns: minmax(0, .78fr) minmax(0, 1.22fr); gap: clamp(28px, 4vw, 72px); margin-left: var(--k); padding: clamp(10px, 1.6vh, 18px) 0 clamp(30px, 4.5vh, 48px); }
 .feature__copy { display: flex; flex-direction: column; }
-/* a little ASCII drawing of the claim, quiet, at the foot of the line's
-   column; it types itself in the first time its row opens (steps.js) */
-.feature__ascii { margin-top: auto; padding-top: 24px; font: 400 12.5px/1.32 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0; color: rgba(26, 24, 21, .42); white-space: pre; overflow: hidden; user-select: none; }
 .feature__d { max-width: 17em; font: 400 clamp(25px, 2.3vw, 36px)/1.14 var(--serif); letter-spacing: -.012em; color: var(--ink); text-wrap: pretty; }
 .features__more { margin-top: clamp(28px, 5vh, 52px); }
 /* a letter still in its ASCII state (steps.js): the letter holds its place,
@@ -2003,7 +2000,6 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
     .feature__body { grid-template-columns: minmax(0, 1fr); gap: 18px; padding-top: 4px; }
     .feature__d { font-size: clamp(24px, 6.4vw, 30px); }
     .feed { height: auto; aspect-ratio: 480 / 400; }
-    .feature__ascii { display: none; }
 }
 @media (max-width: 480px) {
     .feed { aspect-ratio: 480 / 430; }
