@@ -130,7 +130,7 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   const records:ProcessRecord[]=[];
   // Every listener the player adds goes with dispose().
   const ctl=new AbortController(),on={signal:ctl.signal};
-  let run=startRun(),disposed=false,playing=false,active=true,request=0,last=0,lastContacts='',traceKind='',started=false,nudgeTimer=0;
+  let run=startRun(),disposed=false,playing=false,resumeOnShow=false,autoClear=0,active=true,request=0,last=0,lastContacts='',traceKind='',started=false,nudgeTimer=0;
   const steps=byId('process-steps');
   steps.innerHTML=CYCLE_STEPS.map((s,i)=>`<li><button data-cycle-step="${i}" aria-current="false">${s[0]}</button></li>`).join('');
   const pad=(n:number)=>String(n).padStart(3,'0');
@@ -211,7 +211,7 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   function tick(now:number){
     if(!playing)return;
     run=advanceRun(run,Math.min(80,now-last),events);last=now;
-    if(run.held){stop();return;}
+    if(run.held){stop();clearTimeout(autoClear);autoClear=window.setTimeout(()=>clearFault.click(),2500);return;}
     draw();request=requestAnimationFrame(tick);
   }
   function go(){playing=true;last=performance.now();draw();cancelAnimationFrame(request);request=requestAnimationFrame(tick);}
@@ -286,7 +286,7 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   caseRoll?.addEventListener('touchend',e=>{const dy=touchY-e.changedTouches[0].clientY;if(Math.abs(dy)>28)stepCase(Math.sign(dy));},{passive:true,signal:ctl.signal});
   // The one play button always plays the full cycle, even after a contact experiment ran.
   for(const id of ['tour','embed-run'])byId(id).addEventListener('click',e=>{e.stopImmediatePropagation();if(e.detail<2)toggle();},{capture:true,signal:ctl.signal});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)stop();},on);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){resumeOnShow=playing||resumeOnShow;if(playing)stop();}else if(resumeOnShow){resumeOnShow=false;if(!run.held)go();}},on);
   // Scan the case pairs a click can ask about while the page is idle.
   const kinds=caseButtons.map(b=>b.dataset.cycleCase as CycleCase),pairs=kinds.flatMap((a,i)=>kinds.slice(i+1).map(b=>[a,b] as const));
   const idle=(cb:()=>void)=>'requestIdleCallback' in window?requestIdleCallback(cb,{timeout:4000}):setTimeout(cb,200);
@@ -295,6 +295,6 @@ export function setupCycle(scene:WorkcellScene,onActivate:()=>void,onEnter:()=>v
   function deactivate(){stop();active=false;document.body.classList.remove('process-mode');scene.setProcess(null);}
   // For good, e.g. when the 3D view is lost: the player stops, lets go of the scene and removes every listener and
   // timer it added, so nothing it owned runs again. Safe to call more than once.
-  function dispose(){if(disposed)return;deactivate();disposed=true;ctl.abort();clearTimeout(nudgeTimer);clearFault.classList.remove('nudge');tour.classList.remove('show-tip');}
+  function dispose(){if(disposed)return;deactivate();disposed=true;ctl.abort();clearTimeout(nudgeTimer);clearTimeout(autoClear);clearFault.classList.remove('nudge');tour.classList.remove('show-tip');}
   return {refresh:()=>{if(!disposed)draw();},toggle:()=>{if(!disposed)toggle();},restart:()=>{if(!disposed)restart();},deactivate,dispose,isActive:()=>active&&!disposed,isHeld:()=>run.held};
 }

@@ -263,12 +263,7 @@ function scheduleNext(delay:number){
   tourDeadline=performance.now()+delay;
   tourTimer=setTimeout(()=>{
     tourTimer=null;
-    if(tourIndex<3){tourIndex++;tourStep();}
-    else{
-      stopTour();
-      el('endcard').hidden=false;document.body.classList.add('ended');
-      outcome('idle','Your turn.','');
-    }
+    tourIndex=(tourIndex+1)%stories.length;tourStep();
   },delay);
   refreshControls();
 }
@@ -464,7 +459,7 @@ if(!scene)startWorker();
 // The stage shows once the scene has compiled and drawn; the rope tracks finish in the background (Clear reject waits on
 // them in the rare case it comes first).
 const stageReady=scene?scene.ready:Promise.resolve();
-stageReady.then(()=>{if(scene&&cyclePlayer)el('loading').hidden=true;startWorker();});
+stageReady.then(()=>{if(scene&&cyclePlayer){el('loading').hidden=true;setTimeout(()=>cyclePlayer?.toggle(),600);}startWorker();});
 if(scene)cyclePlayer=setupCycle(scene,()=>{stopTour();if(currentMode==='parts')selectMode('machine',false);send({type:'pause'});},
   // Back from an experiment run: drop its end card and close-up camera.
   ()=>{el('endcard').hidden=true;document.body.classList.remove('ended');scene?.direct(false);selectView('overview',false);});
