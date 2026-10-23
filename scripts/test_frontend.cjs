@@ -888,7 +888,8 @@ test('a row\'s words start as ASCII noise and resolve into the text once its row
     assert.equal(noise.getAttribute('aria-hidden'), 'true');
     const letters = noise.children.filter(c => c.classList);
     assert.equal(letters.length, 'Itcheckseveryone.'.length);
-    assert.ok(letters.every(c => c.classList.contains('is-noise') && c.getAttribute('data-g')));
+    // each letter's noise is a tiny 2x3 block of characters
+    assert.ok(letters.every(c => c.classList.contains('is-noise') && /^\S{3}\n\S{3}$/.test(c.getAttribute('data-g'))));
     // just below the trigger line it is still noise
     p.scroll(3100 - 720 * .72 - 10);
     assert.equal(line.textContent, '');
@@ -896,7 +897,7 @@ test('a row\'s words start as ASCII noise and resolve into the text once its row
     p.scroll(3100 - 720 * .72 + 10);
     for (let i = 0; i < 90; i++) p.frame();
     assert.ok(letters.every(c => !c.classList.contains('is-noise')));
-    p.advance(400);
+    p.advance(200);
     assert.equal(line.textContent, 'It checks every one.');
     // a row further down is still noise
     assert.equal(p.rows[3].line.textContent, '');
