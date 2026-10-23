@@ -13,7 +13,6 @@
     if (!rows.length) return;
     const list = root.querySelector('.features') || root;
     const feeds = rows.map((row) => row.querySelector('.feed'));
-    const arts = rows.map((row) => row.querySelector('.feature__ascii'));
 
     const roomy = matchMedia('(min-width: 901px) and (min-height: 640px)');
     const still = matchMedia('(prefers-reduced-motion: reduce)');
@@ -121,34 +120,6 @@
         };
     });
 
-    // Each row's ASCII drawing types itself in, left to right with a short
-    // run of noise ahead of the cursor, the first time its row opens or it
-    // comes fully into view. Until
-    // then it is blank (the same spaces, so nothing moves); without this
-    // file or under Reduce Motion it simply shows.
-    const NOISE = '#=+-:.*/<>o';
-    const art = arts.map((el) => el && el.textContent);
-    const typed = new Set();
-    if (!still.matches) arts.forEach((el, i) => { if (el) el.textContent = art[i].replace(/[^\s]/g, ' '); });
-    function type(i) {
-        const el = arts[i], text = art[i];
-        if (!el || typed.has(i)) return;
-        typed.add(i);
-        if (still.matches) { el.textContent = text; return; }
-        const start = performance.now(), T = 1100;
-        const step = (now) => {
-            const p = clamp((now - start) / T);
-            let out = '';
-            for (let k = 0; k < text.length; k++) {
-                const c = text[k], x = k / text.length;
-                out += /\s/.test(c) || x < p ? c : x < p + .1 ? NOISE[(k * 7 + Math.floor(now / 45)) % NOISE.length] : ' ';
-            }
-            el.textContent = p < 1 ? out : text;
-            if (p < 1) requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
-    }
-
     // Each row's words start as a field of ASCII characters and resolve,
     // left to right with a little jitter, into the type (his ask,
     // 2026-10-22). Every letter keeps its place while it is noise (a span
@@ -226,16 +197,8 @@
             if (stacked ? top <= nav + i * ROW + 1 : top < vh * .5) on = i;
         });
         rows.forEach((row, i) => row.classList.toggle('is-on', i === on));
-        if (on >= 0) type(on);
         // each line resolves once it is about a third of the way up the screen
         words.forEach((w) => { if (!w.started && w.el.getBoundingClientRect().top < vh * .72) decode(w); });
-        // a drawing also starts once it is on screen and clear of the row after it
-        arts.forEach((el, i) => {
-            if (!el || typed.has(i) || !el.getBoundingClientRect) return;
-            const r = el.getBoundingClientRect();
-            const cover = i + 1 < tops.length && stacked ? tops[i + 1] : Infinity;
-            if (r.bottom < Math.min(vh, cover) && r.top > nav) type(i);
-        });
         feeds.forEach((feed, i) => {
             if (!feed) return;
             const r = feed.getBoundingClientRect();
