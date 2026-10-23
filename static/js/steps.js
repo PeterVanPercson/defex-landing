@@ -157,7 +157,10 @@
     // for screen readers sits beside the noise. Without this file or under
     // Reduce Motion the words are simply there.
     const GLYPHS = '#%&*+=-:./\\|<>01';
-    const glyph = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+    const one = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+    // a letter's noise is a tiny two-by-three block of characters, a texture
+    // rather than a sign (his call: "small ascii art type, not big signs")
+    const glyph = () => one() + one() + one() + '\n' + one() + one() + one();
     const words = rows.map((row) => [...row.querySelectorAll('.feature__t, .feature__d')].map((el) => {
         const text = el.textContent;
         if (still.matches || !document.createElement) return null;
@@ -185,12 +188,12 @@
         if (w.started) return;
         w.started = true;
         {
-            const n = w.chars.length, T = 520 + n * 9, start = performance.now();
+            const n = w.chars.length, T = 240 + n * 3, start = performance.now();
             const at = w.chars.map((_, j) => (j / n) * T * .7 + Math.random() * T * .3);
             let shuffled = 0;
             const step = (now) => {
                 const t = now - start;
-                const shuffle = now - shuffled > 55;
+                const shuffle = now - shuffled > 40;
                 if (shuffle) shuffled = now;
                 let left = 0;
                 w.chars.forEach((span, j) => {
@@ -199,7 +202,7 @@
                     else { left++; if (shuffle) span.setAttribute('data-g', glyph()); }
                 });
                 if (left) requestAnimationFrame(step);
-                else setTimeout(() => { w.el.textContent = w.text; }, 300);
+                else setTimeout(() => { w.el.textContent = w.text; }, 120);
             };
             requestAnimationFrame(step);
         }

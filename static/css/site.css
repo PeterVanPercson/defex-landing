@@ -1920,7 +1920,7 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
    unseen, and a monospace character stands over it, then gives way */
 .dc { position: relative; }
 .dc.is-noise { color: transparent; }
-.dc.is-noise::after { content: attr(data-g); position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 400 .74em/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: rgba(26, 24, 21, .46); }
+.dc.is-noise::after { content: attr(data-g); position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; white-space: pre; font: 400 .17em/1.1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0; color: rgba(26, 24, 21, .38); }
 .steps.is-stacked .feature { position: sticky; top: calc(var(--nav) + var(--i) * var(--row)); }
 .steps.is-stacked .features::after { content: ""; display: block; height: 22vh; }
 .steps.is-stacked .feature__row { cursor: pointer; }
