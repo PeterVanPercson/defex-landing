@@ -1004,7 +1004,7 @@ class StoryCopyTests(SimpleTestCase):
         self.assertEqual(company["product"]["approach"], "It measures every unit, feels its way in and checks every connection.")
         self.assertEqual(company["product"]["stage"], "Building the robot, starting with connectors.")
         self.assertEqual(company["paid_waitlist"]["definition"], "Factories that paid to be first in line.")
-        self.assertEqual(company["paid_waitlist"]["factories"], 21)
+        self.assertEqual(company["paid_waitlist"]["factories"], 27)
         self.assertNotIn("technical_note", company["links"])
 
         def keys(node):

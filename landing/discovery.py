@@ -35,7 +35,7 @@ PUBLIC_COMPANY = {
         "prior_product": "Vision inspection on NVIDIA Jetson Orin, run on a live camera",
     },
     "paid_waitlist": {
-        "factories": 21,
+        "factories": 27,
         "definition": "Factories that paid to be first in line.",
     },
     "founders": [
@@ -61,6 +61,7 @@ PUBLIC_COMPANY = {
 # crest grow past the row height so it reads as big as the wordmarks. Kept out of PUBLIC_COMPANY,
 # which is dumped whole into /company.json.
 IN_LINE = [
+    {"name": "ghost", "logo": "img/factories/ghost.svg", "width": 1384, "height": 512, "on_dark": "mono"},
     {"name": "GRAND", "logo": "img/factories/grand.png", "width": 309, "height": 356, "opaque": True, "tall": True, "on_dark": "mono"},
     {"name": "UzChasys", "logo": "img/factories/uzchasys.png", "width": 159, "height": 60},
     {"name": "ATH", "logo": "img/factories/ath.png", "width": 1520, "height": 1034},
