@@ -16,10 +16,10 @@ class SiteTests(SimpleTestCase):
         home = self.client.get("/")
         # the headline and the three steps must match the deck, not the
         # superseded vision-inspection positioning they replaced
-        self.assertContains(home, "The robot that plugs <br>in your connectors.")
+        self.assertContains(home, "AI-powered robots that plug&nbsp;in <br>and test your connectors.")
         self.assertNotContains(home, "self-teaching")
         # the case in the pitch's own words: what it does for a factory, as ruled rows
-        for claim in ("The robot plugs it in.", "It checks every one.",
+        for claim in ("The robot plugs it in.", "It tests every one.",
                       "It measures every unit.", "A new part is not a new project."):
             self.assertContains(home, f'class="feature__t engraved">{claim}</h3>')
         for slop in ("walk away from", "feel what", "A new way, not a new project", "harder to fixture",
@@ -441,10 +441,10 @@ class SiteTests(SimpleTestCase):
         response = self.client.get("/why-us/")
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()
-        self.assertIn("<title>Why Defex | Robots that plug in and check every connector</title>", body)
+        self.assertIn("<title>Why Defex | Robots that plug in and test every connector</title>", body)
         self.assertIn('data-word="WHY US"', body)
         # his call 2026-10-17: the page opens on WHY US alone; the line under it is for screen readers only
-        self.assertIn('<h1 class="wy-sr" id="why-title">Why us: robots that plug in and check every connector.</h1>', body)
+        self.assertIn('<h1 class="wy-sr" id="why-title">Why us: robots that plug in and test every connector.</h1>', body)
         self.assertNotIn("portal__title", body)
         for section in ("portal", "problem", "promise", "meet", "tests", "learns", "resets", "newpart", "proof", "pricing", "faq", "talk"):
             self.assertIn(f'id="{section}"', body)
@@ -819,7 +819,7 @@ class SiteTests(SimpleTestCase):
                           "learn from each test", "learning from each test", "self-teaching",
                           "every miss makes it"):
                 self.assertNotIn(claim, body, f"{claim!r} is back on {path}")
-        self.assertIn("measure every unit and check every connection", self.client.get("/company.json").json()["description"])
+        self.assertIn("then test that each one is actually connected", self.client.get("/company.json").json()["description"])
 
     def test_emails_carry_the_current_positioning(self):
         """The auto-reply asked visitors for "photos of typical defects, the
@@ -827,7 +827,7 @@ class SiteTests(SimpleTestCase):
         to self-teaching robots. It signs off with the positioning instead."""
         from landing.notify import autoresponder_email
         subject, html = autoresponder_email("Ada Lovelace", "Analytical Engines")
-        self.assertIn("Robots that plug in and check connectors", html)
+        self.assertIn("Robots that plug in and test connectors", html)
         for stale in ("inspection", "defect", "vision"):
             self.assertNotIn(stale, html.lower())
 
@@ -946,7 +946,7 @@ class StoryCopyTests(SimpleTestCase):
         self.assertEqual(card.count("art__fillbar"), 4)
         self.assertEqual(card.count("art__hop"), 3)
         for page in (why, home):
-            self.assertIn("A new part needs a new fixture and the same checks.", page)
+            self.assertIn("No weeks of an engineer programming it. A new fixture and the same tests.", page)
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
         self.assertNotIn(".morph__skill", css)
         for kept in ("@keyframes art-hop", "@keyframes art-fill"):
@@ -956,9 +956,9 @@ class StoryCopyTests(SimpleTestCase):
         why = self.client.get("/why-us/").content.decode()
         gauge = why.split('id="gauge"', 1)[1].split("</figure>", 1)[0]
         self.assertEqual(re.findall(r'<li class="gauge__check" data-check="\d">([^<]+)</li>', gauge), ["Seated", "Held", "Wires"])
-        line = "Seated? Held? Every wire? It runs your test and logs the result."
+        line = "A connector can look seated without being latched. Nobody notices until final test."
         self.assertIn(line, why.split('id="tests"', 1)[1].split("</section>", 1)[0])
-        self.assertIn(line, self.client.get("/").content.decode())
+        self.assertIn("connector can look seated without being latched. Nobody notices until final test.", self.client.get("/").content.decode())
         self.assertIn("on.push('is-c3')", (Path(settings.BASE_DIR) / "static/js/why.js").read_text())
         self.assertIn('.gauge.is-c3 [data-check="3"]::before', (Path(settings.BASE_DIR) / "static/css/site.css").read_text())
 

@@ -143,7 +143,7 @@ class PrototypeQaTests(SimpleTestCase):
 
     def test_the_page_describes_the_robot_not_a_cell(self):
         page = self.client.get('/prototype/').content.decode()
-        line = 'An interactive simulation of the robot: it measures every unit, feels its way in and checks every connection.'
+        line = 'An interactive simulation of the robot: it measures every unit, feels its way in and tests every connection.'
         self.assertEqual(page.count(line), 3)
         for gone in ('connector cell', 'Connector lab', 'Workcell controls', 'Build the cell'):
             self.assertNotIn(gone, page)
