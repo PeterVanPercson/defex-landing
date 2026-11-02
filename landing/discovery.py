@@ -20,7 +20,7 @@ PUBLIC_COMPANY = {
     "address": {"street": "128 York Street, 2nd floor", "city": "San Francisco", "region": "California",
                 "postal_code": "94110", "country": "United States"},
     "url": CANONICAL_ORIGIN + "/",
-    "description": "Defex is developing robots that plug in connectors, measure every unit and check every connection.",
+    "description": "Defex is building AI-powered robots that plug connectors into circuit boards and wiring harnesses, then test that each one is actually connected. For electronics and AI server factories.",
     "location": "San Francisco, California, United States",
     # headquarters first, then the other two offices, west to east
     "offices": [
@@ -186,7 +186,7 @@ def llms_txt(request):
         "## Pages",
         "- [Home](" + PUBLIC_COMPANY["url"] + "): what the robot does",
         "- [Prototype](" + CANONICAL_ORIGIN + reverse("prototype") + "): the robot on an endless line, in simulation",
-        "- [Why us](" + CANONICAL_ORIGIN + reverse("why_us") + "): why robots that plug in and check every connector: the check, feeling its way in, new parts, and where we are today",
+        "- [Why us](" + CANONICAL_ORIGIN + reverse("why_us") + "): why robots that plug in and test every connector: the test, feeling its way in, new parts, and where we are today",
         "- [Careers](" + CANONICAL_ORIGIN + reverse("careers") + "): open roles",
         "- [Security](" + CANONICAL_ORIGIN + reverse("security") + "): data handling and vulnerability reporting",
         "- [Privacy](" + CANONICAL_ORIGIN + reverse("privacy") + ") and [Terms](" + CANONICAL_ORIGIN + reverse("terms") + ")", "",
