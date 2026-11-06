@@ -1878,27 +1878,29 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
     .hero--still .hero__screen { flex: 0 0 auto; aspect-ratio: 4 / 5; }
 }
 
-/* His server-tray photo (2026-11-06). His call the same day, twice: "zoom a
-   bit and widen", then "bigger, wider, cut the up part": the photo fills the
-   whole card under the headline, top of the scene cropped, with the button and
-   the partners laid over its bottom corners on a soft shade. On a narrow
-   window it runs full width with them under it. */
-.hero--photo .hero__screen { background: transparent; border-radius: 0; overflow: visible; }
-.hero--photo .hero__photo { inset: 0; width: 100%; height: 100%; border-radius: clamp(16px, 1.8vw, 28px); overflow: hidden; background: #3A3D40; }
-.hero--photo .hero__photo .hero__film { object-position: 50% 82%; }
-.hero--photo .hero__photo::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 34%; background: linear-gradient(to bottom, transparent, rgba(8, 9, 10, .55)); pointer-events: none; }
-.hero--photo .lede__actions { padding: clamp(12px, 1.6vw, 24px); }
-.hero--photo .flick__stage { filter: brightness(0) invert(1); opacity: .92; }
-.hero--photo .glass-button { background: color-mix(in srgb, var(--page) 94%, transparent); }
-.hero--photo .flick__k, .hero--photo .flick:hover .flick__k { color: rgba(255, 255, 255, .82); }
+/* His server-tray photo (2026-11-06), after a run of his calls the same day:
+   wide, not small, zoomed out a bit from the full-bleed crop, and the button
+   and the partners sit on the paper in notches cut into its bottom corners,
+   not on the photo. On a narrow window it runs full width with them under it. */
+.hero--photo { --notch-gap: 12px; --notch-r: clamp(16px, 1.8vw, 28px); }
+.hero--photo .hero__sticky { height: auto; min-height: 0; padding-top: clamp(12px, 3vh, 44px); gap: clamp(12px, 2vh, 28px); }
+.hero--photo .hero__screen { flex: 0 0 auto; aspect-ratio: 9 / 4; max-height: 76svh; background: transparent; overflow: visible; }
+.hero--photo .hero__photo { inset: 0; width: 100%; height: 100%; border-radius: var(--notch-r); overflow: hidden; background: #3A3D40; }
+.hero--photo .hero__photo .hero__film { object-position: 50% 72%; }
+.hero--photo .lede__actions { padding: 0; }
+.hero--photo .glass-button-wrap, .hero--photo .flick { position: relative; z-index: 2; }
+.hero--photo .flick { padding: 0; }
+.hero--photo .glass-button-wrap::before, .hero--photo .flick::before { content: ""; position: absolute; z-index: -1; bottom: 0; background: var(--grain), var(--page); pointer-events: none; }
+.hero--photo .glass-button-wrap::before { left: 0; right: calc(-1 * var(--notch-gap)); top: calc(-1 * var(--notch-gap)); border-top-right-radius: var(--notch-r); }
+.hero--photo .flick::before { right: 0; left: calc(-1 * var(--notch-gap)); top: calc(-1 * var(--notch-gap)); border-top-left-radius: var(--notch-r); }
+.hero--photo .glass-button-wrap::after, .hero--photo .flick::after { content: ""; position: absolute; z-index: -1; bottom: 0; top: calc(-1 * (var(--notch-gap) + var(--notch-r))); pointer-events: none; background-repeat: no-repeat; background-size: var(--notch-r) var(--notch-r); }
+.hero--photo .glass-button-wrap::after { left: 0; right: calc(-1 * (var(--notch-gap) + var(--notch-r))); background-image: radial-gradient(circle var(--notch-r) at 100% 0, transparent calc(var(--notch-r) - .5px), var(--page) var(--notch-r)), radial-gradient(circle var(--notch-r) at 100% 0, transparent calc(var(--notch-r) - .5px), var(--page) var(--notch-r)); background-position: 0 0, 100% 100%; }
+.hero--photo .flick::after { right: 0; left: calc(-1 * (var(--notch-gap) + var(--notch-r))); background-image: radial-gradient(circle var(--notch-r) at 0 0, transparent calc(var(--notch-r) - .5px), var(--page) var(--notch-r)), radial-gradient(circle var(--notch-r) at 0 0, transparent calc(var(--notch-r) - .5px), var(--page) var(--notch-r)); background-position: 100% 0, 0 100%; }
 @media (max-aspect-ratio: 6/5) {
-    .hero--photo .hero__sticky { height: auto; min-height: 0; }
-    .hero--photo .hero__screen { flex: 0 0 auto; aspect-ratio: auto; }
-    .hero--photo .hero__photo { position: relative; inset: auto; width: 100%; height: auto; aspect-ratio: 4 / 3; }
-    .hero--photo .hero__photo::after { display: none; }
+    .hero--photo .hero__screen { aspect-ratio: 4 / 3; max-height: none; }
+    .hero--photo .hero__photo { position: relative; inset: auto; }
     .hero--photo .lede__actions { position: static; padding: clamp(14px, 2.2vh, 22px) 0 0; }
-    .hero--photo .flick__stage { filter: brightness(0); opacity: .86; }
-    .hero--photo .flick__k { color: rgba(26, 24, 21, .58); }
+    .hero--photo .glass-button-wrap::before, .hero--photo .flick::before, .hero--photo .glass-button-wrap::after, .hero--photo .flick::after { display: none; }
 }
 
 /* The picture opens out of a small square in its middle (fous.com's reveal,
