@@ -6,7 +6,7 @@
 {% block color_scheme %}light{% endblock %}
 
 {% block extra_head %}
-<link rel="preload" as="image" fetchpriority="high" imagesrcset="{% static 'defex/cobot/still/server-cell-832.avif' %}?v={{ asset_v }} 832w, {% static 'defex/cobot/still/server-cell-1664.avif' %}?v={{ asset_v }} 1664w" imagesizes="(max-aspect-ratio: 6/5) 100vw, 120vh" type="image/avif">
+<link rel="preload" as="image" fetchpriority="high" imagesrcset="{% static 'defex/cobot/still/server-cell-832.avif' %}?v={{ asset_v }} 832w, {% static 'defex/cobot/still/server-cell-1664.avif' %}?v={{ asset_v }} 1664w" imagesizes="100vw" type="image/avif">
 <!-- The hero picture opens out of a small square (fous.com's reveal, his
      call): set before first paint so the card never flashes in whole first. -->
 <script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('hero-opening');</script>
@@ -37,8 +37,8 @@
                  on a desk, full width with them under it on narrower screens. -->
             <div class="hero__screen">
                 <picture class="hero__photo">
-                    <source type="image/avif" srcset="{% static 'defex/cobot/still/server-cell-832.avif' %}?v={{ asset_v }} 832w, {% static 'defex/cobot/still/server-cell-1664.avif' %}?v={{ asset_v }} 1664w" sizes="(max-aspect-ratio: 6/5) 100vw, 120vh">
-                    <source type="image/webp" srcset="{% static 'defex/cobot/still/server-cell-832.webp' %}?v={{ asset_v }} 832w, {% static 'defex/cobot/still/server-cell-1664.webp' %}?v={{ asset_v }} 1664w" sizes="(max-aspect-ratio: 6/5) 100vw, 120vh">
+                    <source type="image/avif" srcset="{% static 'defex/cobot/still/server-cell-832.avif' %}?v={{ asset_v }} 832w, {% static 'defex/cobot/still/server-cell-1664.avif' %}?v={{ asset_v }} 1664w" sizes="100vw">
+                    <source type="image/webp" srcset="{% static 'defex/cobot/still/server-cell-832.webp' %}?v={{ asset_v }} 832w, {% static 'defex/cobot/still/server-cell-1664.webp' %}?v={{ asset_v }} 1664w" sizes="100vw">
                     <img class="hero__film" src="{% static 'defex/cobot/still/server-cell-1664.webp' %}?v={{ asset_v }}" width="1664" height="1556" alt="Two collaborative robot arms plugging cables into an AI server tray on a test bench" fetchpriority="high" decoding="async">
                 </picture>
                 <div class="lede__actions">
