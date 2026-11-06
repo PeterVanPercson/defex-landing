@@ -1882,7 +1882,7 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
    the photo stands BETWEEN the button and the partners, as tall as the space
    under the headline, never under or over either of them, zoomed out from the
    full-bleed crop. On a narrow window it runs full width with them under it. */
-.hero--photo { --side: calc(clamp(170px, 13vw, 200px) + clamp(14px, 1.6vw, 28px)); }
+.hero--photo { --side: calc(clamp(176px, 12.5vw, 180px) + 14px); }
 .hero--photo .hero__screen { background: transparent; border-radius: 0; overflow: visible; }
 .hero--photo .hero__photo { top: 0; bottom: 0; left: var(--side); right: var(--side); width: auto; height: auto; border-radius: clamp(16px, 1.8vw, 28px); overflow: hidden; background: #3A3D40; }
 .hero--photo .hero__photo .hero__film { object-position: 50% 68%; }
