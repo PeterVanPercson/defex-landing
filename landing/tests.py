@@ -584,7 +584,7 @@ class SiteTests(SimpleTestCase):
             self.assertNotIn(gone, home.split('id="why"')[0], gone)
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
         # his server-tray photo keeps its own shape, never cropped to the card
-        self.assertIn("aspect-ratio: 4 / 3;", css)
+        self.assertIn("100cqh * 16 / 9", css)
         js = (Path(settings.BASE_DIR) / "static/js/hero-film.js").read_text()
         self.assertIn("if (!film) {", js)
         # it opens out of a small square (fous.com's reveal), never under
