@@ -1879,28 +1879,20 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
 }
 
 /* His server-tray photo (2026-11-06), after a run of his calls the same day:
-   wide, not small, zoomed out a bit from the full-bleed crop, and the button
-   and the partners sit on the paper in notches cut into its bottom corners,
-   not on the photo. On a narrow window it runs full width with them under it. */
-.hero--photo { --notch-gap: 12px; --notch-r: clamp(16px, 1.8vw, 28px); }
-.hero--photo .hero__sticky { height: auto; min-height: 0; padding-top: clamp(12px, 3vh, 44px); gap: clamp(12px, 2vh, 28px); }
-.hero--photo .hero__screen { flex: 0 0 auto; aspect-ratio: 9 / 4; max-height: 76svh; background: transparent; overflow: visible; }
-.hero--photo .hero__photo { inset: 0; width: 100%; height: 100%; border-radius: var(--notch-r); overflow: hidden; background: #3A3D40; }
-.hero--photo .hero__photo .hero__film { object-position: 50% 72%; }
+   the photo stands BETWEEN the button and the partners, as tall as the space
+   under the headline, never under or over either of them, zoomed out from the
+   full-bleed crop. On a narrow window it runs full width with them under it. */
+.hero--photo { --side: calc(clamp(170px, 13vw, 200px) + clamp(14px, 1.6vw, 28px)); }
+.hero--photo .hero__screen { background: transparent; border-radius: 0; overflow: visible; }
+.hero--photo .hero__photo { top: 0; bottom: 0; left: var(--side); right: var(--side); width: auto; height: auto; border-radius: clamp(16px, 1.8vw, 28px); overflow: hidden; background: #3A3D40; }
+.hero--photo .hero__photo .hero__film { object-position: 50% 68%; }
 .hero--photo .lede__actions { padding: 0; }
-.hero--photo .glass-button-wrap, .hero--photo .flick { position: relative; z-index: 2; }
 .hero--photo .flick { padding: 0; }
-.hero--photo .glass-button-wrap::before, .hero--photo .flick::before { content: ""; position: absolute; z-index: -1; bottom: 0; background: var(--grain), var(--page); pointer-events: none; }
-.hero--photo .glass-button-wrap::before { left: 0; right: calc(-1 * var(--notch-gap)); top: calc(-1 * var(--notch-gap)); border-top-right-radius: var(--notch-r); }
-.hero--photo .flick::before { right: 0; left: calc(-1 * var(--notch-gap)); top: calc(-1 * var(--notch-gap)); border-top-left-radius: var(--notch-r); }
-.hero--photo .glass-button-wrap::after, .hero--photo .flick::after { content: ""; position: absolute; z-index: -1; bottom: 0; top: calc(-1 * (var(--notch-gap) + var(--notch-r))); pointer-events: none; background-repeat: no-repeat; background-size: var(--notch-r) var(--notch-r); }
-.hero--photo .glass-button-wrap::after { left: 0; right: calc(-1 * (var(--notch-gap) + var(--notch-r))); background-image: radial-gradient(circle var(--notch-r) at 100% 0, transparent calc(var(--notch-r) - .5px), var(--page) var(--notch-r)), radial-gradient(circle var(--notch-r) at 100% 0, transparent calc(var(--notch-r) - .5px), var(--page) var(--notch-r)); background-position: 0 0, 100% 100%; }
-.hero--photo .flick::after { right: 0; left: calc(-1 * (var(--notch-gap) + var(--notch-r))); background-image: radial-gradient(circle var(--notch-r) at 0 0, transparent calc(var(--notch-r) - .5px), var(--page) var(--notch-r)), radial-gradient(circle var(--notch-r) at 0 0, transparent calc(var(--notch-r) - .5px), var(--page) var(--notch-r)); background-position: 100% 0, 0 100%; }
 @media (max-aspect-ratio: 6/5) {
-    .hero--photo .hero__screen { aspect-ratio: 4 / 3; max-height: none; }
-    .hero--photo .hero__photo { position: relative; inset: auto; }
+    .hero--photo .hero__sticky { height: auto; min-height: 0; }
+    .hero--photo .hero__screen { flex: 0 0 auto; aspect-ratio: auto; }
+    .hero--photo .hero__photo { position: relative; inset: auto; width: 100%; aspect-ratio: 4 / 3; }
     .hero--photo .lede__actions { position: static; padding: clamp(14px, 2.2vh, 22px) 0 0; }
-    .hero--photo .glass-button-wrap::before, .hero--photo .flick::before, .hero--photo .glass-button-wrap::after, .hero--photo .flick::after { display: none; }
 }
 
 /* The picture opens out of a small square in its middle (fous.com's reveal,
