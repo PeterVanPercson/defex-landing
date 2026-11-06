@@ -1878,6 +1878,20 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
     .hero--still .hero__screen { flex: 0 0 auto; aspect-ratio: 4 / 5; }
 }
 
+/* His server-tray photo (2026-11-06) is nearly square, so it keeps its own
+   shape rather than being cropped to a wide card: on a wide window it stands
+   centred under the headline with the button and the partners on the paper
+   either side; on a narrower one it runs full width with them under it. */
+.hero--photo .hero__screen { background: transparent; border-radius: 0; overflow: visible; }
+.hero--photo .hero__photo { left: 50%; right: auto; width: auto; height: 100%; max-width: 100%; aspect-ratio: 1664 / 1556; transform: translateX(-50%); border-radius: clamp(16px, 1.8vw, 28px); overflow: hidden; background: #3A3D40; }
+.hero--photo .lede__actions { padding: 0; }
+@media (max-aspect-ratio: 6/5) {
+    .hero--photo .hero__sticky { height: auto; min-height: 0; }
+    .hero--photo .hero__screen { flex: 0 0 auto; aspect-ratio: auto; }
+    .hero--photo .hero__photo { position: relative; left: auto; width: 100%; height: auto; transform: none; }
+    .hero--photo .lede__actions { position: static; padding: clamp(14px, 2.2vh, 22px) 0 0; }
+}
+
 /* The picture opens out of a small square in its middle (fous.com's reveal,
    his call, 2026-10-12): the clip grows to the card, the picture itself never
    scales. The head script sets .hero-opening, the inline script after the
