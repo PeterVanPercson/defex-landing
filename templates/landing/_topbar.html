@@ -1,12 +1,8 @@
 {% load static %}
 <header class="topbar">
-    <div class="topbar__start">
-        <a href="/" class="brand" aria-label="defex home">
-            <svg viewBox="0 0 20 64" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="currentColor"/><circle cx="10" cy="32" r="7" fill="#FF5A1F"/><circle cx="10" cy="54" r="7" fill="currentColor"/></svg>
-        </a>
-        {# Husan's call (2026-11-08): the YC mark sits right of the logo #}
-        <a href="https://www.ycombinator.com/" class="yc-mark" target="_blank" rel="noopener" aria-label="Y Combinator"><img src="{% static 'img/backers/ycombinator.svg' %}" alt="" width="22" height="22"></a>
-    </div>
+    <a href="/" class="brand" aria-label="defex home">
+        <svg viewBox="0 0 20 64" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="currentColor"/><circle cx="10" cy="32" r="7" fill="#FF5A1F"/><circle cx="10" cy="54" r="7" fill="currentColor"/></svg>
+    </a>
     <nav class="topbar__end">
         <a href="{% url 'careers' %}" class="navlink"{% if page == 'careers' %} aria-current="page"{% endif %}>Careers</a>
         {# Husan's call: "Test our product" sits under the hero film, and the blog took its place up here #}

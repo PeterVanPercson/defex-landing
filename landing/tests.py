@@ -386,9 +386,9 @@ class SiteTests(SimpleTestCase):
         self.assertCountEqual(HERO_PARTNER_ORDER, [p["name"] for p in PARTNERS])
         home = self.client.get("/").content.decode()
         stage = home.split('class="flick__stage"', 1)[1].split("</span>", 1)[0]
-        logos = [p["logo"] for p in PARTNERS]
-        shown = [next(l for l in logos if l in src) for src in re.findall(r'src="([^"]+)"', stage)]
-        self.assertEqual(shown, [next(p["logo"] for p in PARTNERS if p["name"] == n) for n in HERO_PARTNER_ORDER])
+        logos = [p.get("flick_logo", p["logo"]) for p in PARTNERS]
+        shown = [next(l for l in logos if l + "?" in src) for src in re.findall(r'src="([^"]+)"', stage)]
+        self.assertEqual(shown, [next(p.get("flick_logo", p["logo"]) for p in PARTNERS if p["name"] == n) for n in HERO_PARTNER_ORDER])
 
     def test_the_home_page_ends_on_an_email_field(self):
         """His call, 2026-10-05: no booking calendar, anywhere. The close asks
