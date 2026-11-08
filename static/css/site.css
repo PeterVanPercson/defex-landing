@@ -183,7 +183,10 @@ body:has(.hero) .topbar { transition: background .25s ease, color .25s ease, box
    the rule it overrides. */
 .past-hero body:has(.hero) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: rgba(26, 24, 21, .74); --on-accent: #1A1815; --rule: rgba(26, 24, 21, .32); background: var(--grain), var(--page); color: #0B0D10; box-shadow: inset 0 -1px 0 rgba(11, 13, 16, .12); }
 .brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-family: var(--brand); font-size: 19px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
-.topbar > .brand { justify-content: center; min-width: 44px; flex-shrink: 0; margin-left: -17.5px; }
+.topbar > .brand, .topbar__start > .brand { justify-content: center; min-width: 44px; flex-shrink: 0; margin-left: -17.5px; }
+.topbar__start { display: flex; align-items: center; gap: 4px; }
+.yc-mark { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; margin-left: -6px; }
+.yc-mark img { display: block; width: 22px; height: 22px; }
 .brand svg { width: 9px; height: 29px; display: block; }
 .brand--small { font-size: 16px; }
 .topbar__end { display: flex; align-items: center; gap: clamp(14px, 2vw, 26px); }
@@ -1530,7 +1533,7 @@ body:has(.wy) .footer.dark { --bg: #050505; background: #050505; }
 
 @media (max-width: 380px) {
     .topbar { padding-inline: 12px; gap: 6px; }
-    .topbar > .brand { margin-left: 0; }
+    .topbar > .brand, .topbar__start > .brand { margin-left: 0; }
     .topbar__end { gap: 6px; }
     .glass-button-wrap--nav .glass-button-text { padding-inline: 10px; gap: 6px; font-size: 9.5px; letter-spacing: .05em; }
 }
