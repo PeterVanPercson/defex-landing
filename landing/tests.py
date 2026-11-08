@@ -29,8 +29,8 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, 'id="why-title" data-reveal>Robots are cheap.<br> Setting them up is <em>not</em>.</h2>')
         self.assertNotContains(home, "the test becomes the teacher")
         page = home.content.decode()
-        # no "Backed by" credit in the hero; a16z sits in Partners by his call (2026-10-04)
-        for gone in ("lede__backed", "Backed by"):
+        # the old a16z "Backed by" credit stays gone; since 2026-11-08 the corner credits YC alone (his call)
+        for gone in ("lede__backed",):
             self.assertNotIn(gone, page)
         self.assertNotIn('class="marquee', page)
         self.assertNotIn("marquee__", page)
@@ -206,7 +206,6 @@ class SiteTests(SimpleTestCase):
         home = self.client.get("/").content.decode()
         row = home.split('id="partners"', 1)[1].split("</ul>", 1)[0]
         self.assertIn('alt="Microsoft Azure" width="1280" height="369" loading="lazy" decoding="async" style="--s: 0.92; --lift: 0.1"', row)
-        self.assertIn('data-scale="0.92"', home.split('class="flick__stage"', 1)[1].split("</span>", 1)[0])
         works = home.split('id="in-line"', 1)[1].split("</ul>", 1)[0]
         self.assertIn('alt="NOVA Solutions"', works)
         self.assertIn('data-on-dark="flip"', works)
@@ -214,7 +213,6 @@ class SiteTests(SimpleTestCase):
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
         self.assertIn(":is(.inline--black, .inline--dark) .roll__i:is(:hover, .is-touched) .roll__logo { filter: none; opacity: 1; }", css)
         self.assertIn("max-height: calc(var(--roll-h) * var(--s, 1))", css)
-        self.assertIn("scale: parseFloat(img.dataset.scale) || 1", (Path(settings.BASE_DIR) / "static/js/flick.js").read_text())
 
     def test_past_its_edges_the_home_page_is_paper(self):
         """What shows when a page is pulled past its top is the root's colour.
@@ -381,14 +379,14 @@ class SiteTests(SimpleTestCase):
             self.assertTrue((Path(settings.BASE_DIR) / "static" / partner["logo"]).exists(), partner["logo"])
         self.assertEqual(home.count('id="roll-ink"'), 1)
 
-    def test_hero_flick_shows_every_partner_in_his_order(self):
-        from landing.discovery import HERO_PARTNER_ORDER, PARTNERS
-        self.assertCountEqual(HERO_PARTNER_ORDER, [p["name"] for p in PARTNERS])
+    def test_hero_corner_says_backed_by_yc(self):
+        """His call, 2026-11-08: the hero's bottom-right is "Backed by" and the YC mark, no partner flick."""
         home = self.client.get("/").content.decode()
-        stage = home.split('class="flick__stage"', 1)[1].split("</span>", 1)[0]
-        logos = [p.get("flick_logo", p["logo"]) for p in PARTNERS]
-        shown = [next(l for l in logos if l + "?" in src) for src in re.findall(r'src="([^"]+)"', stage)]
-        self.assertEqual(shown, [next(p.get("flick_logo", p["logo"]) for p in PARTNERS if p["name"] == n) for n in HERO_PARTNER_ORDER])
+        corner = home.split('class="backed"', 1)[1].split("</a>", 1)[0]
+        self.assertIn('<span class="backed__k">Backed by</span>', corner)
+        self.assertIn('img/partners/ycombinator.svg', corner)
+        self.assertIn('alt="Y Combinator"', corner)
+        self.assertNotIn('class="flick"', home)
 
     def test_the_home_page_ends_on_an_email_field(self):
         """His call, 2026-10-05: no booking calendar, anywhere. The close asks
