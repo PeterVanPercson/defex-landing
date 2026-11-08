@@ -1862,6 +1862,9 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
     .hero--card .flick { gap: 6px; padding: 8px 11px 9px; }
     .hero--card .flick__k { font-size: 12px; }
     .hero--card .flick__stage { width: 92px; height: 26px; }
+    .backed { gap: 6px; }
+    .backed__k { font-size: 12px; }
+    .backed__logo { width: 24px; }
     .hero--card .glass-button-wrap { font-size: 14px; }
     .hero--card .glass-button-text { min-height: 40px; padding: 0 18px; font-size: 12.5px; }
 }
@@ -1888,6 +1891,10 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
 .hero--photo .hero__photo .hero__film { object-position: 50% 68%; }
 .hero--photo .lede__actions { padding: 0; }
 .hero--photo .flick { padding: 0; }
+.backed { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 9px; margin-left: auto; color: var(--ink); -webkit-tap-highlight-color: transparent; }
+.backed__k { font: 400 13.5px/1.4 var(--label); letter-spacing: .04em; color: rgba(26, 24, 21, .58); transition: color .3s ease; }
+.backed:hover .backed__k { color: var(--ink); }
+.backed__logo { display: block; width: clamp(28px, 2.4vw, 34px); height: auto; }
 @media (max-aspect-ratio: 6/5) {
     .hero--photo .hero__sticky { height: auto; min-height: 0; }
     .hero--photo .hero__screen { flex: 0 0 auto; aspect-ratio: auto; }

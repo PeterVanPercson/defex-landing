@@ -48,12 +48,10 @@
                             <span class="glass-button-shadow" aria-hidden="true"></span>
                         </span>
                     </a>
-                    <!-- Every partner, one at a time (static/js/flick.js), in ink on a
-                         square-cornered block of the page's paper (his call). -->
-                    <a class="flick" href="#partners">
-                        <span class="flick__k">Partners</span>
-                        <span class="flick__names">: {% for p in hero_partners %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
-                        <span class="flick__stage" aria-hidden="true">{% for p in hero_partners %}<img class="flick__logo" {% if forloop.first %}src{% else %}data-src{% endif %}="{% if p.flick_logo %}{% static p.flick_logo %}{% else %}{% static p.logo %}{% endif %}?v={{ asset_v }}" alt="" width="{{ p.width }}" height="{{ p.height }}"{% if p.scale %} data-scale="{{ p.scale }}"{% endif %} decoding="async"{% if not forloop.first %} hidden{% endif %}>{% endfor %}</span>
+                    {# his call, 2026-11-08: the corner says who backs us, YC alone #}
+                    <a class="backed" href="https://www.ycombinator.com/" target="_blank" rel="noopener">
+                        <span class="backed__k">Backed by</span>
+                        <img class="backed__logo" src="{% static 'img/partners/ycombinator.svg' %}?v={{ asset_v }}" alt="Y Combinator" width="48" height="48" decoding="async">
                     </a>
                 </div>
             </div>
@@ -180,5 +178,4 @@
 <script src="{% static 'js/steps.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/reveal.js' %}?v={{ asset_v }}" defer></script>
 <script src="{% static 'js/roll.js' %}?v={{ asset_v }}" defer></script>
-<script src="{% static 'js/flick.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}

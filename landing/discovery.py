@@ -77,9 +77,8 @@ PARTNERS = [
     {"name": "NVIDIA", "logo": "img/partners/nvidia.png", "width": 576, "height": 116},
     # his call, 2026-10-04; since 2026-10-05 the caps serif wordmark, in the site's engraved idiom
     {"name": "Andreessen Horowitz", "logo": "img/partners/andreessen-horowitz.png", "width": 2042, "height": 649},
-    # his call, 2026-11-08: YC sits in the line with the others; the hero flick paints every
-    # logo white, so it gets the mark with the Y cut out instead of a white Y on orange
-    {"name": "Y Combinator", "logo": "img/partners/ycombinator.svg", "flick_logo": "img/partners/ycombinator-mono.svg", "width": 48, "height": 48},
+    # his call, 2026-11-08: YC sits in the line with the others
+    {"name": "Y Combinator", "logo": "img/partners/ycombinator.svg", "width": 48, "height": 48},
     {"name": "Ansys", "logo": "img/partners/ansys.png", "width": 792, "height": 256},
     {"name": "AWS", "logo": "img/partners/aws.png", "width": 557, "height": 335},
     # the triangle runs below the word's baseline, so the word sat small and low next to
@@ -90,11 +89,6 @@ PARTNERS = [
     {"name": "University of Michigan", "logo": "img/partners/michigan.png", "width": 1865, "height": 374},
     {"name": "Google", "logo": "img/partners/google.png", "width": 743, "height": 250},
 ]
-
-# The hero's flick (static/js/flick.js) opens on the same names as the roll, his order. Every partner, once; the tests hold it to that.
-HERO_PARTNER_ORDER = ["MathWorks", "GMI Cloud", "NVIDIA", "Andreessen Horowitz", "Y Combinator", "Ansys", "AWS",
-                      "Microsoft Azure", "Onshape", "Lambda", "University of Michigan", "Google"]
-HERO_PARTNERS = [next(p for p in PARTNERS if p["name"] == name) for name in HERO_PARTNER_ORDER]
 
 # Kept out of PUBLIC_COMPANY on purpose: that dict is dumped whole into /company.json.
 PRICING = {
