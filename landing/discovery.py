@@ -69,26 +69,6 @@ IN_LINE = [
     {"name": "Texnopark", "logo": "img/factories/texnopark.webp", "width": 3719, "height": 577},
 ]
 
-# Big, known names lead the roll; Google and the niche ones come last (his call, 2026-10-05)
-PARTNERS = [
-    {"name": "MathWorks", "logo": "img/partners/mathworks.png", "width": 537, "height": 106},
-    {"name": "GMI Cloud", "logo": "img/partners/gmi-cloud.png", "width": 2991, "height": 672},
-    {"name": "NVIDIA", "logo": "img/partners/nvidia.png", "width": 576, "height": 116},
-    # his call, 2026-10-04; since 2026-10-05 the caps serif wordmark, in the site's engraved idiom
-    {"name": "Andreessen Horowitz", "logo": "img/partners/andreessen-horowitz.png", "width": 2042, "height": 649},
-    # his call, 2026-11-08: YC sits in the line with the others
-    {"name": "Y Combinator", "logo": "img/partners/ycombinator.svg", "width": 48, "height": 48},
-    {"name": "Ansys", "logo": "img/partners/ansys.png", "width": 792, "height": 256},
-    {"name": "AWS", "logo": "img/partners/aws.png", "width": 557, "height": 335},
-    # the triangle runs below the word's baseline, so the word sat small and low next to
-    # the others (his notes, 2026-10-04/05): drawn at 92% and lifted a tenth of its height
-    {"name": "Microsoft Azure", "logo": "img/partners/azure.png", "width": 1280, "height": 369, "scale": 0.92, "lift": 0.1},
-    {"name": "Onshape", "logo": "img/partners/onshape.png", "width": 1556, "height": 347},
-    {"name": "Lambda", "logo": "img/partners/lambda.png", "width": 480, "height": 110},
-    {"name": "University of Michigan", "logo": "img/partners/michigan.png", "width": 1865, "height": 374},
-    {"name": "Google", "logo": "img/partners/google.png", "width": 743, "height": 250},
-]
-
 # Kept out of PUBLIC_COMPANY on purpose: that dict is dumped whole into /company.json.
 PRICING = {
     "robot": {"price": "$65,000", "what": "One robot, running your part on your floor.",
