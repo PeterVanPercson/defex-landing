@@ -375,6 +375,8 @@ class SiteTests(SimpleTestCase):
         self.assertIn('img/partners/ycombinator.svg', corner)
         self.assertIn('alt="Y Combinator"', corner)
         self.assertNotIn("Andreessen", corner)
+        # his call, 2026-11-24: a press on the mark goes down to the investors
+        self.assertIn('<a class="backed" href="#backers">', home)
         self.assertNotIn("img/partners/a16z.png", home)
 
     def test_investors_stand_in_a_quiet_block_like_etched(self):
@@ -384,7 +386,8 @@ class SiteTests(SimpleTestCase):
         self.assertLess(home.index('id="why"'), home.index('id="backers"'))
         self.assertLess(home.index('id="backers"'), home.index('id="meet"'))
         block = home.split('id="backers"', 1)[1].split("</section>", 1)[0]
-        self.assertIn("grateful for the support of our investors, <em>including:</em>", block)
+        self.assertIn("grateful for the support of our investors.</p>", block)
+        self.assertNotIn("including", block)
         self.assertEqual(block.count('class="backers__logo"'), 2)
         self.assertLess(block.index('alt="Andreessen Horowitz"'), block.index('alt="Y Combinator"'))
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
