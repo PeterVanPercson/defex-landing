@@ -111,10 +111,10 @@ class LayoutTests(SimpleTestCase):
             self.assertNotIn("#F4F5F7", page.split("</head>", 1)[0], path)
 
     def test_partner_and_factory_logos_stay_small(self):
-        """ath.png was 656 KB for a 64x44 mark. grand.png and michigan.png are
-        already at their lossless floor at full size; shrinking them is a
-        visible-quality call that is his, so they are listed, not hidden."""
-        his_call = {"factories/grand.png", "partners/michigan.png"}
+        """ath.png was 656 KB for a 64x44 mark. grand.png is
+        already at its lossless floor at full size; shrinking it is a
+        visible-quality call that is his, so it is listed, not hidden."""
+        his_call = {"factories/grand.png"}
         for folder in ("partners", "factories"):
             for path in (ROOT / "static/img" / folder).iterdir():
                 name = folder + "/" + path.name

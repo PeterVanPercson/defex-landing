@@ -124,12 +124,12 @@ class SiteTests(SimpleTestCase):
                 self.assertGreaterEqual(depth, 0, f"{name}: a brace closes nothing near {css[max(0, at - 80):at + 1]!r}")
             self.assertEqual(depth, 0, f"{name}: {depth} brace(s) never close")
 
-    def test_home_opens_on_the_case_then_partners(self):
+    def test_home_opens_on_the_case_then_the_robot(self):
         """His call, 2026-10-04: the "how we started" phone film is gone; the case
-        ("Robots are cheap.") comes straight after the hero, then Partners, then
-        Meet the robot. Nothing links to the film any more."""
+        ("Robots are cheap.") comes straight after the hero, then Meet the robot
+        (the Partners row went on 2026-11-23, his call). Nothing links to the film any more."""
         home = self.client.get("/").content.decode()
-        order = ['id="top"', 'id="why"', 'id="partners"', 'id="meet"', 'id="in-line"', 'id="contact"']
+        order = ['id="top"', 'id="why"', 'id="meet"', 'id="in-line"', 'id="contact"']
         for before, after in zip(order, order[1:]):
             self.assertLess(home.index(before), home.index(after), (before, after))
         self.assertNotIn("#origin-film", self.client.get("/why-us/").content.decode())
@@ -144,8 +144,6 @@ class SiteTests(SimpleTestCase):
         script = (Path(settings.BASE_DIR) / "static/js/roll.js").read_text()
         for gone in ("pointermove", "setPointerCapture", "is-held"):
             self.assertNotIn(gone, script)
-        home = self.client.get("/").content.decode()
-        self.assertIn('alt="Andreessen Horowitz"', home.split('id="partners"', 1)[1].split("</ul>", 1)[0])
 
     def test_text_fields_get_the_smooth_caret(self):
         """Skiper UI's Smooth Input on every text field (his call, 2026-10-04):
@@ -170,8 +168,7 @@ class SiteTests(SimpleTestCase):
         self.assertIn(".inline--black .roll__logo { filter: grayscale(1) invert(1) contrast(.9);", css)
         self.assertIn(".meet-sec.meet-sec--flow:has(+ .inline--black)::after { height: 0; }", css)
         self.assertIn(".inline--black + .contact.dark::before { height: 0; }", css)
-        # Partners stays on paper, and /why-us/ keeps its own dark row
-        self.assertIn('class="inline sheet" id="partners"', home)
+        # /why-us/ keeps its own dark row
         self.assertNotIn("inline--black", self.client.get("/why-us/").content.decode())
 
     def test_cookie_policy_and_notice(self):
@@ -201,11 +198,8 @@ class SiteTests(SimpleTestCase):
 
     def test_logos_show_colour_on_black_and_azure_sits_level(self):
         """His calls, 2026-10-04: on the black Works with us rows a pointer or a
-        tap shows a mark's own colours; Azure is drawn smaller and lifted so it reads level
-        with the other partners, in the row and in the hero's badge."""
+        tap shows a mark's own colours."""
         home = self.client.get("/").content.decode()
-        row = home.split('id="partners"', 1)[1].split("</ul>", 1)[0]
-        self.assertIn('alt="Microsoft Azure" width="1280" height="369" loading="lazy" decoding="async" style="--s: 0.92; --lift: 0.1"', row)
         works = home.split('id="in-line"', 1)[1].split("</ul>", 1)[0]
         self.assertIn('alt="NOVA Solutions"', works)
         self.assertIn('data-on-dark="flip"', works)
@@ -363,21 +357,15 @@ class SiteTests(SimpleTestCase):
         self.assertRegex(css, r"prefers-reduced-motion: reduce\) \{\s*\.roll__track \{ animation: none;")
         self.assertNotIn("in_line", self.client.get("/company.json").content.decode())
 
-    def test_partners_roll_after_the_case(self):
-        from landing.discovery import PARTNERS
+    def test_the_partners_row_is_gone(self):
+        """His call, 2026-11-23: with Y Combinator behind us the Partners row
+        is off the home page; the hero's badge is the only backer mark."""
         home = self.client.get("/").content.decode()
-        self.assertLess(home.index('id="why"'), home.index('id="partners"'))
-        self.assertLess(home.index('id="partners"'), home.index('id="in-line"'))
-        row = home.split('id="partners"', 1)[1].split("</ul>", 1)[0]
-        # the marks alone, with no word over them (his call, 2026-10-04); the name is for screen readers
-        self.assertIn('id="partners" aria-label="Partners"', home)
-        self.assertNotIn(">Partners<", row)
-        self.assertNotIn("roll__defs", row)
-        self.assertEqual(row.count('class="roll__i"'), len(PARTNERS))
-        for partner in PARTNERS:
-            self.assertEqual(row.count(f'alt="{partner["name"]}"'), 1)
-            self.assertTrue((Path(settings.BASE_DIR) / "static" / partner["logo"]).exists(), partner["logo"])
+        self.assertNotIn('id="partners"', home)
+        for gone in ("NVIDIA", "University of Michigan", "MathWorks", "Andreessen Horowitz"):
+            self.assertNotIn(f'alt="{gone}"', home)
         self.assertEqual(home.count('id="roll-ink"'), 1)
+        self.assertEqual(sorted(p.name for p in (Path(settings.BASE_DIR) / "static/img/partners").iterdir()), ["ycombinator.svg"])
 
     def test_hero_corner_says_backed_by_yc(self):
         """His call, 2026-11-08: the hero's bottom-right is "Backed by" and the YC mark, no partner flick."""
@@ -484,10 +472,9 @@ class SiteTests(SimpleTestCase):
             self.assertIn(f'aria-controls="meet-{key}"', body)
             self.assertIn(f'id="meet-{key}"', body)
         self.assertEqual(body.count('class="rb"'), 1)
-        # The shared explorer remains on home after the case and Partners.
+        # The shared explorer remains on home after the case.
         home = self.client.get("/").content.decode()
         self.assertLess(home.index('id="why"'), home.index('id="meet"'))
-        self.assertLess(home.index('id="partners"'), home.index('id="meet"'))
         # the bar turns dark over it, like over the hero (hero-film.js)
         self.assertIn('id="meet" data-nav-dark', home)
         proto = self.client.get("/prototype/").content.decode()
