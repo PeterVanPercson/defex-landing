@@ -1865,7 +1865,6 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
     .backed { gap: 6px; }
     .backed__k { font-size: 12px; }
     .backed__logo { width: 24px; }
-    .backed__logo--word { width: auto; height: 24px; }
     .backed__row { gap: 10px; }
     .hero--card .glass-button-wrap { font-size: 14px; }
     .hero--card .glass-button-text { min-height: 40px; padding: 0 18px; font-size: 12.5px; }
@@ -1896,11 +1895,9 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
 .backed { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 9px; margin-left: auto; color: var(--ink); -webkit-tap-highlight-color: transparent; }
 .backed__k { font: 400 13.5px/1.4 var(--label); letter-spacing: .04em; color: rgba(26, 24, 21, .58); transition: color .3s ease; }
 .backed:hover .backed__k { color: var(--ink); }
-.backed__row { display: flex; align-items: center; gap: 14px; }
+.backed__row { display: flex; align-items: center; gap: 10px; }
 .backed__a { display: block; -webkit-tap-highlight-color: transparent; }
 .backed__logo { display: block; width: clamp(28px, 2.4vw, 34px); height: auto; }
-/* the a16z wordmark stands as tall as the YC square beside it */
-.backed__logo--word { width: auto; height: clamp(28px, 2.4vw, 34px); }
 @media (max-aspect-ratio: 6/5) {
     .hero--photo .hero__sticky { height: auto; min-height: 0; }
     .hero--photo .hero__screen { flex: 0 0 auto; aspect-ratio: auto; }

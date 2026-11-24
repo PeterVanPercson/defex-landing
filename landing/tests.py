@@ -365,7 +365,7 @@ class SiteTests(SimpleTestCase):
         for gone in ("NVIDIA", "University of Michigan", "MathWorks", "Google"):
             self.assertNotIn(f'alt="{gone}"', home)
         self.assertEqual(home.count('id="roll-ink"'), 1)
-        self.assertEqual(sorted(p.name for p in (Path(settings.BASE_DIR) / "static/img/partners").iterdir()), ["andreessen-horowitz.png", "ycombinator.svg"])
+        self.assertEqual(sorted(p.name for p in (Path(settings.BASE_DIR) / "static/img/partners").iterdir()), ["a16z.png", "ycombinator.svg"])
 
     def test_hero_corner_says_backed_by_yc_and_a16z(self):
         """His calls: the hero's bottom-right is "Backed by" with the YC mark (2026-11-08)
@@ -376,7 +376,9 @@ class SiteTests(SimpleTestCase):
         self.assertLess(corner.index("Backed by"), corner.index('alt="Y Combinator"'))
         self.assertLess(corner.index('alt="Y Combinator"'), corner.index('alt="Andreessen Horowitz"'))
         self.assertIn('img/partners/ycombinator.svg', corner)
-        self.assertIn('img/partners/andreessen-horowitz.png', corner)
+        # his call, 2026-11-23: a16z's red square, not the slate wordmark
+        self.assertIn('img/partners/a16z.png', corner)
+        self.assertNotIn('andreessen-horowitz.png', home)
         self.assertIn('href="https://a16z.com/"', corner)
         self.assertNotIn('class="flick"', home)
 
