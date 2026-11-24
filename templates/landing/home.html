@@ -48,8 +48,8 @@
                             <span class="glass-button-shadow" aria-hidden="true"></span>
                         </span>
                     </a>
-                    {# his calls: the corner says who backs us, YC alone (2026-11-08, again 2026-11-24) #}
-                    <a class="backed" href="https://www.ycombinator.com/" target="_blank" rel="noopener">
+                    {# his calls: the corner says who backs us, YC alone (2026-11-08, again 2026-11-24); a press goes down to the investors #}
+                    <a class="backed" href="#backers">
                         <span class="backed__k">Backed by</span>
                         <img class="backed__logo" src="{% static 'img/partners/ycombinator.svg' %}?v={{ asset_v }}" alt="Y Combinator" width="48" height="48" decoding="async">
                     </a>
@@ -133,7 +133,7 @@
          Y is cut out of its square. -->
     <section class="backers sheet" id="backers" aria-label="Investors">
         <svg class="roll__defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><filter id="backers-ink" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -0.4252 -1.4304 -0.1444 2 0"/></filter></defs></svg>
-        <p class="backers__k">We&rsquo;re grateful for the support of our investors, <em>including:</em></p>
+        <p class="backers__k">We&rsquo;re grateful for the support of our investors.</p>
         <div class="backers__panel">
             <ul class="backers__grid">
                 <li class="backers__cell"><img class="backers__logo" src="{% static 'img/partners/andreessen-horowitz.png' %}?v={{ asset_v }}" alt="Andreessen Horowitz" width="2042" height="649" loading="lazy" decoding="async"></li>

@@ -1897,9 +1897,10 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
 /* Investors, measured off etched.com (2026-11-24): a 17px line at 70% ink, then
    a block 4% darker than the page at half strength, the marks in one ink,
    50px tall cells 30px apart. */
+/* the hero's YC mark lands here: the line sits a third of the way down, clear of the bar */
+section.backers { scroll-margin-top: 33vh; }
 .backers { padding: 0 var(--pad) clamp(60px, 9vh, 80px); border-top: 0; box-shadow: none; display: flex; flex-direction: column; align-items: center; gap: 30px; }
 .backers__k { font-size: 17px; line-height: 1.6; text-align: center; color: rgba(26, 24, 21, .7); text-wrap: balance; }
-.backers__k em { font-style: italic; }
 .backers__panel { width: 100%; max-width: 436px; padding: 38px; background: rgba(0, 0, 0, .04); opacity: .5; }
 .backers__grid { list-style: none; display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; }
 .backers__cell { position: relative; height: 50px; }
