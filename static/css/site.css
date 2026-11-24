@@ -1865,7 +1865,6 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
     .backed { gap: 6px; }
     .backed__k { font-size: 12px; }
     .backed__logo { width: 24px; }
-    .backed__row { gap: 10px; }
     .hero--card .glass-button-wrap { font-size: 14px; }
     .hero--card .glass-button-text { min-height: 40px; padding: 0 18px; font-size: 12.5px; }
 }
@@ -1895,8 +1894,16 @@ body:has(.hero--card) .topbar { --bg: var(--page); --ink: #1A1815; --ink-soft: r
 .backed { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 9px; margin-left: auto; color: var(--ink); -webkit-tap-highlight-color: transparent; }
 .backed__k { font: 400 13.5px/1.4 var(--label); letter-spacing: .04em; color: rgba(26, 24, 21, .58); transition: color .3s ease; }
 .backed:hover .backed__k { color: var(--ink); }
-.backed__row { display: flex; align-items: center; gap: 10px; }
-.backed__a { display: block; -webkit-tap-highlight-color: transparent; }
+/* Investors, measured off etched.com (2026-11-24): a 17px line at 70% ink, then
+   a block 4% darker than the page at half strength, the marks in one ink,
+   50px tall cells 30px apart. */
+.backers { padding: 0 var(--pad) clamp(60px, 9vh, 80px); border-top: 0; box-shadow: none; display: flex; flex-direction: column; align-items: center; gap: 30px; }
+.backers__k { font-size: 17px; line-height: 1.6; text-align: center; color: rgba(26, 24, 21, .7); text-wrap: balance; }
+.backers__k em { font-style: italic; }
+.backers__panel { width: 100%; max-width: 436px; padding: 38px; background: rgba(0, 0, 0, .04); opacity: .5; }
+.backers__grid { list-style: none; display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; }
+.backers__cell { position: relative; height: 50px; }
+.backers__logo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: url(#backers-ink); }
 .backed__logo { display: block; width: clamp(28px, 2.4vw, 34px); height: auto; }
 @media (max-aspect-ratio: 6/5) {
     .hero--photo .hero__sticky { height: auto; min-height: 0; }

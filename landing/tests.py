@@ -29,7 +29,7 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, 'id="why-title" data-reveal>Robots are cheap.<br> Setting them up is <em>not</em>.</h2>')
         self.assertNotContains(home, "the test becomes the teacher")
         page = home.content.decode()
-        # the old a16z-only "Backed by" credit stays gone; the corner credits YC and a16z (his calls, 2026-11-08 and 2026-11-23)
+        # the old a16z-only "Backed by" credit stays gone; the corner credits YC alone (his calls, 2026-11-08 and 2026-11-24)
         for gone in ("lede__backed",):
             self.assertNotIn(gone, page)
         self.assertNotIn('class="marquee', page)
@@ -359,27 +359,37 @@ class SiteTests(SimpleTestCase):
 
     def test_the_partners_row_is_gone(self):
         """His call, 2026-11-23: with Y Combinator behind us the Partners row
-        is off the home page; the hero's corner holds the only backer marks."""
+        is off the home page; the investors stand in their own block (2026-11-24)."""
         home = self.client.get("/").content.decode()
         self.assertNotIn('id="partners"', home)
         for gone in ("NVIDIA", "University of Michigan", "MathWorks", "Google"):
             self.assertNotIn(f'alt="{gone}"', home)
         self.assertEqual(home.count('id="roll-ink"'), 1)
-        self.assertEqual(sorted(p.name for p in (Path(settings.BASE_DIR) / "static/img/partners").iterdir()), ["a16z.png", "ycombinator.svg"])
+        self.assertEqual(sorted(p.name for p in (Path(settings.BASE_DIR) / "static/img/partners").iterdir()), ["andreessen-horowitz.png", "ycombinator.svg"])
 
-    def test_hero_corner_says_backed_by_yc_and_a16z(self):
-        """His calls: the hero's bottom-right is "Backed by" with the YC mark (2026-11-08)
-        and a16z beside it under the words (2026-11-23), no partner flick."""
+    def test_hero_corner_says_backed_by_yc(self):
+        """His calls, 2026-11-08 and 2026-11-24: the hero's bottom-right is "Backed by" and the YC mark alone."""
         home = self.client.get("/").content.decode()
-        corner = home.split('class="backed"', 1)[1].split("</div>", 1)[0]
+        corner = home.split('class="backed"', 1)[1].split("</a>", 1)[0]
         self.assertIn('<span class="backed__k">Backed by</span>', corner)
-        self.assertLess(corner.index("Backed by"), corner.index('alt="Y Combinator"'))
-        self.assertLess(corner.index('alt="Y Combinator"'), corner.index('alt="Andreessen Horowitz"'))
         self.assertIn('img/partners/ycombinator.svg', corner)
-        # his call, 2026-11-23: a16z's red square, not the slate wordmark
-        self.assertIn('img/partners/a16z.png', corner)
-        self.assertNotIn('andreessen-horowitz.png', home)
-        self.assertIn('href="https://a16z.com/"', corner)
+        self.assertIn('alt="Y Combinator"', corner)
+        self.assertNotIn("Andreessen", corner)
+        self.assertNotIn("img/partners/a16z.png", home)
+
+    def test_investors_stand_in_a_quiet_block_like_etched(self):
+        """His call, 2026-11-24: after etched.com, one line and the investors'
+        marks in one grey ink on a faint block, between the case and the robot."""
+        home = self.client.get("/").content.decode()
+        self.assertLess(home.index('id="why"'), home.index('id="backers"'))
+        self.assertLess(home.index('id="backers"'), home.index('id="meet"'))
+        block = home.split('id="backers"', 1)[1].split("</section>", 1)[0]
+        self.assertIn("grateful for the support of our investors, <em>including:</em>", block)
+        self.assertEqual(block.count('class="backers__logo"'), 2)
+        self.assertLess(block.index('alt="Andreessen Horowitz"'), block.index('alt="Y Combinator"'))
+        css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
+        self.assertIn("filter: url(#backers-ink); }", css)
+        self.assertIn('<filter id="backers-ink"', block)
         self.assertNotIn('class="flick"', home)
 
     def test_the_home_page_ends_on_an_email_field(self):
