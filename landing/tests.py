@@ -29,7 +29,7 @@ class SiteTests(SimpleTestCase):
         self.assertContains(home, 'id="why-title" data-reveal>Robots are cheap.<br> Setting them up is <em>not</em>.</h2>')
         self.assertNotContains(home, "the test becomes the teacher")
         page = home.content.decode()
-        # the old a16z "Backed by" credit stays gone; since 2026-11-08 the corner credits YC alone (his call)
+        # the old a16z-only "Backed by" credit stays gone; the corner credits YC and a16z (his calls, 2026-11-08 and 2026-11-23)
         for gone in ("lede__backed",):
             self.assertNotIn(gone, page)
         self.assertNotIn('class="marquee', page)
@@ -359,21 +359,25 @@ class SiteTests(SimpleTestCase):
 
     def test_the_partners_row_is_gone(self):
         """His call, 2026-11-23: with Y Combinator behind us the Partners row
-        is off the home page; the hero's badge is the only backer mark."""
+        is off the home page; the hero's corner holds the only backer marks."""
         home = self.client.get("/").content.decode()
         self.assertNotIn('id="partners"', home)
-        for gone in ("NVIDIA", "University of Michigan", "MathWorks", "Andreessen Horowitz"):
+        for gone in ("NVIDIA", "University of Michigan", "MathWorks", "Google"):
             self.assertNotIn(f'alt="{gone}"', home)
         self.assertEqual(home.count('id="roll-ink"'), 1)
-        self.assertEqual(sorted(p.name for p in (Path(settings.BASE_DIR) / "static/img/partners").iterdir()), ["ycombinator.svg"])
+        self.assertEqual(sorted(p.name for p in (Path(settings.BASE_DIR) / "static/img/partners").iterdir()), ["andreessen-horowitz.png", "ycombinator.svg"])
 
-    def test_hero_corner_says_backed_by_yc(self):
-        """His call, 2026-11-08: the hero's bottom-right is "Backed by" and the YC mark, no partner flick."""
+    def test_hero_corner_says_backed_by_yc_and_a16z(self):
+        """His calls: the hero's bottom-right is "Backed by" with the YC mark (2026-11-08)
+        and a16z beside it under the words (2026-11-23), no partner flick."""
         home = self.client.get("/").content.decode()
-        corner = home.split('class="backed"', 1)[1].split("</a>", 1)[0]
+        corner = home.split('class="backed"', 1)[1].split("</div>", 1)[0]
         self.assertIn('<span class="backed__k">Backed by</span>', corner)
+        self.assertLess(corner.index("Backed by"), corner.index('alt="Y Combinator"'))
+        self.assertLess(corner.index('alt="Y Combinator"'), corner.index('alt="Andreessen Horowitz"'))
         self.assertIn('img/partners/ycombinator.svg', corner)
-        self.assertIn('alt="Y Combinator"', corner)
+        self.assertIn('img/partners/andreessen-horowitz.png', corner)
+        self.assertIn('href="https://a16z.com/"', corner)
         self.assertNotIn('class="flick"', home)
 
     def test_the_home_page_ends_on_an_email_field(self):
