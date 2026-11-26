@@ -189,12 +189,15 @@ class SiteTests(SimpleTestCase):
             self.assertIn("js/cookies.js?v=", html, path)
         self.assertIn('href="/cookies/">cookie policy</a>', self.client.get("/privacy/").content.decode())
         self.assertIn("/cookies/", self.client.get("/sitemap.xml").content.decode())
-        # the notice's words are the ones he sent, as he sent them (2026-10-04)
+        # his call, 2026-11-26: one slim pill at the bottom centre, off the hero's
+        # YC mark and its button, in the site's paper and ink (the shadcn card went)
         script = (Path(settings.BASE_DIR) / "static/js/cookies.js").read_text()
-        self.assertIn("We Value Your Privacy 🍪", script)
-        self.assertIn("We use cookies to improve your experience, and show personalized content.", script)
+        self.assertIn('We use <a href="/cookies/">cookies</a> to improve your experience.', script)
+        for gone in ("We Value Your Privacy", "personalized content", "cookie__close"):
+            self.assertNotIn(gone, script)
         css = (Path(settings.BASE_DIR) / "static/css/site.css").read_text()
-        self.assertIn(".cookie { position: fixed;", css)
+        self.assertIn(".cookie { position: fixed; left: 50%; bottom:", css)
+        self.assertNotIn("#FFFFFF; color: #09090B", css)
 
     def test_logos_show_colour_on_black_and_azure_sits_level(self):
         """His calls, 2026-10-04: on the black Works with us rows a pointer or a

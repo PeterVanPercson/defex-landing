@@ -1762,24 +1762,25 @@ body { font: 400 16px/1.6 var(--font); }
    classes: a 400px card, 8px corners, hairline border, soft shadow, and its
    small buttons (32px tall, 8px corners, a faint shadow), the dark Accept
    and the outlined Decline. Its words are in the site's text face. */
-.cookie { position: fixed; right: 16px; bottom: 16px; z-index: 100; width: min(400px, calc(100vw - 32px)); padding: 16px; border: 1px solid #E4E4E7; border-radius: 8px; background: #FFFFFF; color: #09090B; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .05), 0 4px 6px -4px rgba(0, 0, 0, .05); font: 400 16px/22px var(--text); letter-spacing: 0; text-align: left; opacity: 0; transform: translateY(8px); transition: opacity .2s ease, transform .2s ease; }
-.cookie.is-in { opacity: 1; transform: none; }
-.cookie__row { display: flex; gap: 8px; }
-.cookie__content { flex-grow: 1; display: grid; gap: 4px; min-width: 0; }
-.cookie__title { margin: 0; font: 400 17px/22px var(--text); color: #09090B; }
-.cookie__text { margin: 0; color: #71717A; }
-.cookie__text a { color: #09090B; text-decoration: underline; text-underline-offset: 3px; }
-.cookie__actions { display: flex; gap: 8px; padding-top: 12px; }
-.cookie__btn { height: 32px; padding: 0 12px; border: 1px solid #E4E4E7; border-radius: 8px; background: #FFFFFF; color: #09090B; font: 400 15px/16px var(--text); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .05); cursor: pointer; transition: background .15s ease; }
-.cookie__btn:hover { background: #F4F4F5; }
-.cookie__btn--primary { border-color: #18181B; background: #18181B; color: #FAFAFA; }
-.cookie__btn--primary:hover { background: rgba(24, 24, 27, .9); }
-.cookie__close { flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin: -6px -8px -6px 0; padding: 0; border: 0; border-radius: 8px; background: none; color: #09090B; cursor: pointer; }
-.cookie__close svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; opacity: .6; transition: opacity .15s ease; }
-.cookie__close:hover svg { opacity: 1; }
-.cookie :focus-visible { outline: 2px solid rgba(9, 9, 11, .45); outline-offset: 2px; }
+.cookie { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 100; display: flex; align-items: center; gap: 14px; width: max-content; max-width: calc(100vw - 24px); padding: 7px 7px 7px 20px; border: 1px solid rgba(26, 24, 21, .12); border-radius: 9999px; background: rgba(247, 244, 238, .96); -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2); color: #1A1815; box-shadow: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 12px 32px -12px rgba(26, 24, 21, .28), 0 2px 6px -2px rgba(26, 24, 21, .12); font: 400 15px/1.35 var(--text); letter-spacing: 0; text-align: left; opacity: 0; transform: translate(-50%, 10px); transition: opacity .3s ease, transform .3s cubic-bezier(.2, .8, .2, 1); }
+.cookie.is-in { opacity: 1; transform: translate(-50%, 0); }
+.cookie__text { margin: 0; color: rgba(26, 24, 21, .78); }
+.cookie__text a { color: inherit; text-decoration: underline; text-decoration-color: rgba(26, 24, 21, .32); text-underline-offset: 3px; transition: text-decoration-color .15s ease; }
+.cookie__text a:hover { text-decoration-color: currentColor; }
+.cookie__actions { flex: none; display: flex; align-items: center; gap: 2px; }
+.cookie__btn { height: 34px; padding: 0 14px; border: 0; border-radius: 9999px; background: none; color: rgba(26, 24, 21, .72); font: 400 15px/1 var(--text); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .15s ease, color .15s ease; }
+.cookie__btn:hover { background: rgba(26, 24, 21, .07); color: #1A1815; }
+.cookie__btn--primary { padding: 0 18px; background: #1A1815; color: #F7F4EE; }
+.cookie__btn--primary:hover { background: #33302B; color: #F7F4EE; }
+.cookie :focus-visible { outline: 2px solid rgba(26, 24, 21, .5); outline-offset: 2px; }
 @media (max-width: 480px) {
-    .cookie { left: 16px; right: 16px; width: auto; }
+    .cookie { gap: 8px; padding: 6px 6px 6px 16px; font-size: 14px; }
+    .cookie__btn { height: 32px; padding: 0 10px; font-size: 14px; }
+    .cookie__btn--primary { padding: 0 14px; }
+}
+/* a short screen: sit lower, clear of the hero's button and mark */
+@media (max-height: 600px) {
+    .cookie { bottom: 6px; }
 }
 @media (prefers-reduced-motion: reduce) {
     .cookie { transition: none; }
