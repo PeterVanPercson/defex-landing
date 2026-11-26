@@ -1089,10 +1089,10 @@ test('the cookie notice asks once and keeps the answer in local storage', () => 
     assert.equal(again.made.length, 0, 'an answer already given is not asked again');
 });
 
-test('the cross puts the question off for the visit without answering it', () => {
+test('Escape puts the question off for the visit without answering it', () => {
     const p = cookiePage();
     p.advance(700);
-    p.click(p.made[0]);
+    p.made[0].emit('keydown', { key: 'Escape' });
     assert.equal(p.context.localStorage.data['defex-cookies'], undefined);
     assert.equal(p.context.sessionStorage.data['defex-cookies'], 'later');
 });
