@@ -980,6 +980,16 @@ class StoryCopyTests(SimpleTestCase):
         card = home.split('<li class="feature" style="--i: 2">', 1)[1].split("</li>", 1)[0]
         self.assertIn("Two cameras check the board and the grip before every press.", card)
 
+    def test_the_footer_links_x_and_linkedin(self):
+        """His call, 2026-11-27: the company's X and LinkedIn pages, as two
+        round marks under the name in every page's footer."""
+        for path in ("/", "/why-us/", "/careers/", "/blog/", "/privacy/"):
+            footer = self.client.get(path).content.decode().split("<footer", 1)[1]
+            self.assertIn('href="https://x.com/defexrobotics" target="_blank" rel="me noopener" aria-label="Defex on X, @defexrobotics"', footer, path)
+            self.assertIn('href="https://www.linkedin.com/company/defexrobotics" target="_blank" rel="me noopener" aria-label="Defex Robotics on LinkedIn"', footer, path)
+            self.assertEqual(footer.count('class="follow__a"'), 2, path)
+            self.assertNotIn("X (@defexrobotics)", footer, path)
+
     def test_the_footer_contact_link_says_get_in_touch(self):
         for path in ("/", "/why-us/", "/careers/", "/blog/", "/privacy/"):
             footer = self.client.get(path).content.decode().split("<footer", 1)[1]

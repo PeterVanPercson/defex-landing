@@ -1660,6 +1660,24 @@ body { font: 400 16px/1.6 var(--font); }
 .footer__a, .footer__blog, .footer__company { font: 400 16px/1.6 var(--text); }
 .footer__fine, .footer__line { font: 400 14px/1.6 var(--text); }
 .footer__base { border-top: 0; }
+/* X and LinkedIn (2026-11-27): two round marks pressed into the paper under
+   the name. A pointer or the keyboard opens one into its handle and warms it
+   to the mark's orange; a finger just gets the two marks. */
+.footer__id { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(22px, 3.4vh, 34px); }
+.follow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.follow__k { flex: 0 0 100%; margin-bottom: 4px; font: 400 13.5px/1.4 var(--label); letter-spacing: .04em; color: var(--mute); }
+.follow__a { display: inline-flex; align-items: center; height: 40px; padding: 0 11px; border: 1px solid var(--line); border-radius: 9999px; color: var(--ink); text-decoration: none; box-shadow: inset 0 1px 2px rgba(26, 24, 21, .08); -webkit-tap-highlight-color: transparent; transition: background .25s ease, border-color .25s ease, color .25s ease, box-shadow .25s ease; }
+.follow__i { flex: none; width: 16px; height: 16px; fill: currentColor; }
+.follow__t { max-width: 0; overflow: hidden; white-space: nowrap; font: 400 15px/1 var(--text); opacity: 0; transition: max-width .45s cubic-bezier(.2, .8, .2, 1), margin .45s cubic-bezier(.2, .8, .2, 1), opacity .25s ease; }
+.follow__a:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.follow__a:focus-visible .follow__t { max-width: 150px; margin-left: 9px; margin-right: 3px; opacity: 1; }
+@media (hover: hover) {
+    .follow__a:hover { background: #FF5A1F; border-color: #FF5A1F; color: #FFFFFF; box-shadow: 0 8px 18px -10px rgba(255, 90, 31, .8); }
+    .follow__a:hover .follow__t { max-width: 150px; margin-left: 9px; margin-right: 3px; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .follow__a, .follow__t { transition: none; }
+}
 
 /* The case is the first thing under the hero (his call, 2026-10-04): it lets
    the hero's dissolve show through instead of laying its sheet over it, and
