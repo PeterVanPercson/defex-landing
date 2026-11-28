@@ -8,18 +8,17 @@ becomes back-to-top on the long home page. here: the page ends on its own
             <svg viewBox="0 0 20 64" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="currentColor"/><circle cx="10" cy="32" r="7" fill="#FF5A1F"/><circle cx="10" cy="54" r="7" fill="currentColor"/></svg>
             <span>defex<span class="dot">.</span></span>
         </a>
-        {# his call, 2026-11-27: X and LinkedIn. Two round marks under the name; a pointer opens one into its handle #}
-        <div class="follow">
-            <p class="follow__k">Follow the build</p>
-            <a class="follow__a" href="https://x.com/defexrobotics" target="_blank" rel="me noopener" aria-label="Defex on X, @defexrobotics">
-                <svg class="follow__i" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.19L2 3h6.33l4.37 5.77L17.75 3Zm-1.08 16.17h1.7L7.4 4.74H5.58l11.09 14.43Z"/></svg>
-                <span class="follow__t" aria-hidden="true">@defexrobotics</span>
-            </a>
-            <a class="follow__a" href="https://www.linkedin.com/company/defexrobotics" target="_blank" rel="me noopener" aria-label="Defex Robotics on LinkedIn">
-                <svg class="follow__i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9.75h4V21H3V9.75Zm6.5 0h3.83v1.54h.05c.53-1 1.84-1.84 3.78-1.84 4.04 0 4.84 2.5 4.84 5.76V21h-4v-5.1c0-1.22-.02-2.78-1.7-2.78-1.7 0-1.96 1.32-1.96 2.69V21H9.5V9.75Z"/></svg>
-                <span class="follow__t" aria-hidden="true">Defex Robotics</span>
-            </a>
-        </div>
+        {# his calls, 2026-11-27: X and LinkedIn, drawn after the 21st.dev "social tooltip" he sent: a round mark fills from the bottom in the network's colour and its name drops in under it #}
+        <ul class="follow" aria-label="Follow Defex">
+            <li class="follow__li follow__li--x">
+                <a class="follow__a" href="https://x.com/defexrobotics" target="_blank" rel="me noopener" aria-label="Defex on X, @defexrobotics"><span class="follow__fill" aria-hidden="true"></span><svg class="follow__i" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.19L2 3h6.33l4.37 5.77L17.75 3Zm-1.08 16.17h1.7L7.4 4.74H5.58l11.09 14.43Z"/></svg></a>
+                <span class="follow__tip" aria-hidden="true">X</span>
+            </li>
+            <li class="follow__li follow__li--in">
+                <a class="follow__a" href="https://www.linkedin.com/company/defexrobotics" target="_blank" rel="me noopener" aria-label="Defex Robotics on LinkedIn"><span class="follow__fill" aria-hidden="true"></span><svg class="follow__i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9.75h4V21H3V9.75Zm6.5 0h3.83v1.54h.05c.53-1 1.84-1.84 3.78-1.84 4.04 0 4.84 2.5 4.84 5.76V21h-4v-5.1c0-1.22-.02-2.78-1.7-2.78-1.7 0-1.96 1.32-1.96 2.69V21H9.5V9.75Z"/></svg></a>
+                <span class="follow__tip" aria-hidden="true">LinkedIn</span>
+            </li>
+        </ul>
         </div>
         <nav class="footer__cols" aria-label="Footer">
             <div class="footer__col">

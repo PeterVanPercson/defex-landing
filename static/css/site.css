@@ -1660,23 +1660,30 @@ body { font: 400 16px/1.6 var(--font); }
 .footer__a, .footer__blog, .footer__company { font: 400 16px/1.6 var(--text); }
 .footer__fine, .footer__line { font: 400 14px/1.6 var(--text); }
 .footer__base { border-top: 0; }
-/* X and LinkedIn (2026-11-27): two round marks pressed into the paper under
-   the name. A pointer or the keyboard opens one into its handle and warms it
-   to the mark's orange; a finger just gets the two marks. */
+/* X and LinkedIn (2026-11-27), after the 21st.dev "social tooltip" he sent,
+   to its measures: a 48px round mark with a 28px glyph; under a pointer or
+   the keyboard it fills from the bottom in the network's colour, the glyph
+   turns, and the name drops 10px into place under it. X is black on paper
+   and white on the dark footers. */
 .footer__id { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(22px, 3.4vh, 34px); }
-.follow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.follow__k { flex: 0 0 100%; margin-bottom: 4px; font: 400 13.5px/1.4 var(--label); letter-spacing: .04em; color: var(--mute); }
-.follow__a { display: inline-flex; align-items: center; height: 40px; padding: 0 11px; border: 1px solid var(--line); border-radius: 9999px; color: var(--ink); text-decoration: none; box-shadow: inset 0 1px 2px rgba(26, 24, 21, .08); -webkit-tap-highlight-color: transparent; transition: background .25s ease, border-color .25s ease, color .25s ease, box-shadow .25s ease; }
-.follow__i { flex: none; width: 16px; height: 16px; fill: currentColor; }
-.follow__t { max-width: 0; overflow: hidden; white-space: nowrap; font: 400 15px/1 var(--text); opacity: 0; transition: max-width .45s cubic-bezier(.2, .8, .2, 1), margin .45s cubic-bezier(.2, .8, .2, 1), opacity .25s ease; }
-.follow__a:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
-.follow__a:focus-visible .follow__t { max-width: 150px; margin-left: 9px; margin-right: 3px; opacity: 1; }
+.follow { list-style: none; display: flex; align-items: center; gap: 16px; margin-left: -10px; }
+.follow__li { position: relative; --c: #1A1815; --on: #FFFFFF; }
+.follow__li--in { --c: #0A66C2; }
+.footer.dark .follow__li--x { --c: #F4F4F0; --on: #050505; }
+.follow__a { position: relative; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; color: var(--ink); -webkit-tap-highlight-color: transparent; transition: color .3s ease-in-out, box-shadow .3s ease-in-out; }
+.follow__fill { position: absolute; left: 0; bottom: 0; width: 100%; height: 0; background: var(--c); transition: height .3s ease-in-out; }
+.follow__i { position: relative; z-index: 1; width: 28px; height: 28px; fill: currentColor; }
+.follow__tip { position: absolute; left: 50%; bottom: -40px; z-index: 2; padding: 6px 10px; border-radius: 6px; background: var(--c); color: var(--on); font: 400 15px/1.35 var(--text); white-space: nowrap; opacity: 0; visibility: hidden; transform: translateX(-50%); pointer-events: none; transition: opacity .3s ease-in-out, bottom .3s ease-in-out, visibility .3s; }
+.follow__a:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; color: var(--on); }
+.follow__a:focus-visible .follow__fill { height: 100%; }
+.follow__a:focus-visible + .follow__tip { bottom: -50px; opacity: 1; visibility: visible; }
 @media (hover: hover) {
-    .follow__a:hover { background: #FF5A1F; border-color: #FF5A1F; color: #FFFFFF; box-shadow: 0 8px 18px -10px rgba(255, 90, 31, .8); }
-    .follow__a:hover .follow__t { max-width: 150px; margin-left: 9px; margin-right: 3px; opacity: 1; }
+    .follow__li:hover .follow__a { color: var(--on); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .18), 0 4px 6px -4px rgba(0, 0, 0, .18); }
+    .follow__li:hover .follow__fill { height: 100%; }
+    .follow__li:hover .follow__tip { bottom: -50px; opacity: 1; visibility: visible; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .follow__a, .follow__t { transition: none; }
+    .follow__a, .follow__fill, .follow__tip { transition: none; }
 }
 
 /* The case is the first thing under the hero (his call, 2026-10-04): it lets
