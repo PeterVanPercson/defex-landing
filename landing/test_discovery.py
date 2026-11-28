@@ -29,7 +29,8 @@ class DiscoverabilityTests(SimpleTestCase):
         self.assertEqual(response.status_code, 301)
         self.assertEqual(response["Location"], "/")
         for path in ("/", "/careers/", "/why-us/", "/blog/", "/blog/the-cost-of-the-next-attempt/", "/llms.txt", "/sitemap.xml"):
-            self.assertNotIn("/company/", self.get_page(path), path)
+            # LinkedIn's own address has /company/ in it (the footer links it since 2026-11-27)
+            self.assertNotIn("/company/", self.get_page(path).replace("linkedin.com/company/", ""), path)
         self.assertNotIn("/company/", self.client.get("/company.json").content.decode())
 
     def test_company_json_is_public_subset_not_a_data_room(self):
