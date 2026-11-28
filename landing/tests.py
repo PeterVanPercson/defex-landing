@@ -988,6 +988,10 @@ class StoryCopyTests(SimpleTestCase):
             self.assertIn('href="https://x.com/defexrobotics" target="_blank" rel="me noopener" aria-label="Defex on X, @defexrobotics"', footer, path)
             self.assertIn('href="https://www.linkedin.com/company/defexrobotics" target="_blank" rel="me noopener" aria-label="Defex Robotics on LinkedIn"', footer, path)
             self.assertEqual(footer.count('class="follow__a"'), 2, path)
+            # the 21st.dev social tooltip he sent: a fill and a name under each mark
+            self.assertEqual(footer.count('class="follow__fill"'), 2, path)
+            self.assertIn('<span class="follow__tip" aria-hidden="true">LinkedIn</span>', footer, path)
+            self.assertNotIn("Follow the build", footer, path)
             self.assertNotIn("X (@defexrobotics)", footer, path)
 
     def test_the_footer_contact_link_says_get_in_touch(self):
